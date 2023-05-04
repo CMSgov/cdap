@@ -21,4 +21,4 @@ https://jira.cms.gov/browse/PLT-xxx
 - [ ] This PR stores or transmits data that was not stored or transmitted before.
 - [ ] This PR requires additional review of its security implications for other reasons.
 
-If any of the security implications are checked, please add Jason Ashbaugh (GitHub username: StewGoin) as a reviewer, and note that this PR should not be merged unless he also approves it.
+If any security implications apply, add Jason Ashbaugh (GitHub username: StewGoin) as a reviewer, and note that this PR should not be merged unless he also approves it.
