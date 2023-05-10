@@ -1,6 +1,6 @@
 ## 🎫 Ticket
 
-https://jira.cms.gov/browse/PLT-xxx
+https://jira.cms.gov/browse/xxx
 
 ## 🛠 Changes
 
