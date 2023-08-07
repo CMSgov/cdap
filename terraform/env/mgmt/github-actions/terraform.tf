@@ -2,7 +2,7 @@ provider "aws" {
   region = "us-east-1"
   default_tags {
     tags = {
-      business = "oeda"
+      business  = "oeda"
       component = "github-actions"
       Terraform = true
     }
