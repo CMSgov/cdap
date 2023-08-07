@@ -3,3 +3,8 @@ node_modules
 # Ignore built ts files
 /actions/aws-params-env-action/__tests__/runner/*
 /actions/aws-params-env-action/lib/**/*
+
+**/lambdas-download/*.zip
+
+terraform.tfstate
+.terraform
