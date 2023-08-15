@@ -56,4 +56,9 @@ module "github-actions" {
   enable_ssm_on_runners = true
 
   runner_additional_security_group_ids = [data.aws_security_group.vpn.id]
+
+  instance_target_capacity_type = "on-demand"
+  instance_types = [
+    "t3.medium",
+  ]
 }
