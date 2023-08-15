@@ -7,4 +7,5 @@ node_modules
 **/lambdas-download/*.zip
 
 terraform.tfstate
+terraform.tfvars
 .terraform
