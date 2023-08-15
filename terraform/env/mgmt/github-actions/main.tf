@@ -19,8 +19,11 @@ data "aws_iam_policy" "developer_boundary_policy" {
   name = "developer-boundary-policy"
 }
 
-data "aws_security_group" "cmscloud_shared_services" {
-  name = "cmscloud-shared-services"
+data "aws_security_group" "vpn" {
+  filter {
+    name   = "description"
+    values = ["bcda-managed-vpn-private"]
+  }
 }
 
 module "github-actions" {
@@ -52,5 +55,5 @@ module "github-actions" {
 
   enable_ssm_on_runners = true
 
-  runner_additional_security_group_ids = [data.aws_security_group.cmscloud_shared_services.id]
+  runner_additional_security_group_ids = [data.aws_security_group.vpn.id]
 }
