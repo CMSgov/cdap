@@ -1,0 +1,24 @@
+name: Test aws-params-env-action
+
+on:
+  push:
+    paths:
+      - 'actions/aws-params-env-action/**'
+      - '!actions/aws-params-env-action/**.md'
+  pull_request:
+    paths:
+      - 'actions/aws-params-env-action/**'
+      - '!actions/aws-params-env-action/**.md'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: actions/aws-params-env-action
+
+jobs:
+  test-and-check-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm ci
+      - run: npm run all
