@@ -5,6 +5,10 @@ on:
     paths:
       - 'actions/aws-params-env-action/**'
       - '!actions/aws-params-env-action/**.md'
+  pull_request:
+    paths:
+      - 'actions/aws-params-env-action/**'
+      - '!actions/aws-params-env-action/**.md'
   workflow_dispatch:
 
 defaults:
