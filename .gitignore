@@ -8,4 +8,4 @@ terraform.tfstate
 terraform.tfvars
 .terraform
 
-/terraform/env/mgmt/github-actions/lambdas-download/*.zip
+/terraform/services/github-actions/lambdas-download/*.zip
