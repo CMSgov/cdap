@@ -11,12 +11,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "bcda-terraform-state"
-    key            = "github-runners/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "bcda-terraform-table"
-    encrypt        = "1"
-    kms_key_id     = "alias/bcda-terraform-state"
+    key = "github-runners/terraform.tfstate"
   }
   required_providers {
     aws = {
@@ -24,5 +19,5 @@ terraform {
       version = "~> 5.8.0"
     }
   }
-  required_version = "~> 1.5.3"
+  required_version = "~> 1.5.5"
 }
