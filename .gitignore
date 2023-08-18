@@ -4,7 +4,7 @@ node_modules
 /actions/aws-params-env-action/__tests__/runner/*
 /actions/aws-params-env-action/lib/**/*
 
-terraform.tfstate
+terraform.tfstate*
 terraform.tfvars
 .terraform
 
