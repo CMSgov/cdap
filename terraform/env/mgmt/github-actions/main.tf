@@ -19,6 +19,25 @@ data "aws_iam_policy" "developer_boundary_policy" {
   name = "developer-boundary-policy"
 }
 
+resource "aws_iam_policy" "runner" {
+  name = "github-action-runner"
+
+  description = "Runner has access to everything within the permissions boundary to allow for terraform and other deploy steps"
+
+  policy = <<EOT
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "*",
+      "Resource": "*"
+    }
+  ]
+}
+EOT
+}
+
 data "aws_security_group" "vpn" {
   filter {
     name   = "description"
@@ -55,6 +74,7 @@ module "github-actions" {
 
   enable_ssm_on_runners = true
 
+  runner_iam_role_managed_policy_arns  = [aws_iam_policy.runner.arn]
   runner_additional_security_group_ids = [data.aws_security_group.vpn.id]
 
   instance_target_capacity_type = "on-demand"
