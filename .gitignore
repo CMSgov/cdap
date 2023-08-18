@@ -4,8 +4,8 @@ node_modules
 /actions/aws-params-env-action/__tests__/runner/*
 /actions/aws-params-env-action/lib/**/*
 
-**/lambdas-download/*.zip
-
 terraform.tfstate
 terraform.tfvars
 .terraform
+
+/terraform/env/mgmt/github-actions/lambdas-download/*.zip
