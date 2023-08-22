@@ -1,17 +1,21 @@
+locals {
+  release_tag = "v4.1.1"
+}
+
 module "lambdas" {
   source = "github.com/philips-labs/terraform-aws-github-runner//modules/download-lambda"
   lambdas = [
     {
       name = "webhook"
-      tag  = var.module_version
+      tag  = local.release_tag
     },
     {
       name = "runners"
-      tag  = var.module_version
+      tag  = local.release_tag
     },
     {
       name = "runner-binaries-syncer"
-      tag  = var.module_version
+      tag  = local.release_tag
     }
   ]
 }

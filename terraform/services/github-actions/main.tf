@@ -47,7 +47,7 @@ data "aws_security_group" "vpn" {
 
 module "github-actions" {
   source  = "philips-labs/github-runner/aws"
-  version = "4.0.1"
+  version = "4.1.1"
 
   aws_region = "us-east-1"
   vpc_id     = data.aws_vpc.managed.id
