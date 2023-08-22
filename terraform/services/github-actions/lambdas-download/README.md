@@ -1,42 +1,6 @@
 # Wrapper to download lambdas for github runners
 
-Download Lambda distribution from the GitHub release.
+Download Lambda zip files from the GitHub release for terraform-aws-github-runner. Copied from [the lambdas-download example](https://github.com/philips-labs/terraform-aws-github-runner/tree/d0e89608f52ff0db4abe204af6718a73e780ea98/examples/lambdas-download). Before applying terraform in the parent "github-actions" directory, apply terraform in this directory with the following commands, specifying the module version:
 
-```bash
-terraform init
-terraform apply -var=module_version=<VERSION>
-```
-
-<!-- BEGIN_TF_DOCS -->
-## Requirements
-
-| Name | Version |
-|------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1 |
-
-## Providers
-
-No providers.
-
-## Modules
-
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_lambdas"></a> [lambdas](#module\_lambdas) | github.com/philips-labs/terraform-aws-github-runner//modules/download-lambda | n/a |
-
-## Resources
-
-No resources.
-
-## Inputs
-
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_module_version"></a> [module\_version](#input\_module\_version) | Module release version. | `string` | n/a | yes |
-
-## Outputs
-
-| Name | Description |
-|------|-------------|
-| <a name="output_files"></a> [files](#output\_files) | n/a |
-<!-- END_TF_DOCS -->
+    terraform init
+    terraform apply -var=module_version=<VERSION>
