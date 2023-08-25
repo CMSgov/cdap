@@ -20,7 +20,7 @@ data "aws_iam_policy" "developer_boundary_policy" {
 }
 
 resource "aws_iam_policy" "runner" {
-  name = "github-action-runner"
+  name = "github-actions-runner"
 
   description = "Runner has access to everything within the permissions boundary to allow for terraform and other deploy steps"
 
