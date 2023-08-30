@@ -12,14 +12,6 @@ resource "aws_iam_role" "runner" {
   assume_role_policy = jsonencode({
     Statement = [
       {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      },
-      {
         Effect = "Allow",
         Principal = {
           AWS = var.runner_arn
@@ -39,7 +31,7 @@ resource "aws_iam_role" "runner" {
           Action   = ["*"]
           Effect   = "Allow"
           Resource = "*"
-        },
+        }
       ]
     })
   }
