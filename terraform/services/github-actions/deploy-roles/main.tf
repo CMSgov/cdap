@@ -4,23 +4,11 @@ data "aws_iam_policy" "developer_boundary_policy" {
 
 
 resource "aws_iam_role" "runner" {
-  name                 = "github-actions-runner-role"
-  path                 = "/delegatedadmin/developer/"
-  inline_policy {
-    name = "all_within_boundary"
+  name = "github-actions-runner-role"
+  path = "/delegatedadmin/developer/"
 
-    policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Action   = ["*"]
-          Effect   = "Allow"
-          Resource = "*"
-        },
-      ]
-    })
-  }
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
+
   assume_role_policy = jsonencode({
     Statement = [
       {
@@ -40,4 +28,19 @@ resource "aws_iam_role" "runner" {
       }
     ]
   })
+
+  inline_policy {
+    name = "all_within_boundary"
+
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Action   = ["*"]
+          Effect   = "Allow"
+          Resource = "*"
+        },
+      ]
+    })
+  }
 }
