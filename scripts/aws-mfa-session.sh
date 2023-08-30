@@ -22,7 +22,9 @@ fi
 printf >&2 '%s ' 'Enter MFA code:'
 read -r mfa_code
 
+# Use default profile in ~/.aws/credentials if one is not specified
 profile="${2:-default}"
+
 tmpfile=$(mktemp)
 
 cleanup() {
