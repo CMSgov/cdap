@@ -23,7 +23,7 @@ resource "aws_iam_role" "opt_out_import_lambda_role" {
 
 resource "aws_iam_policy" "opt_out_import_lambda_policy" {
   name = var.policy_name
-  description = var.policy_description   
+  description =  "Beneficiary Opt-Out Lambda Policy"  
 
   policy = <<EOF
 {
@@ -54,16 +54,24 @@ resource "aws_iam_policy" "opt_out_import_lambda_policy" {
             "Action": [
               "ssm:GetParameters"
             ],
-           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.service_name}/${var.env}/consent/db_pass_${var.service_name}_consent"
+           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.environment}/${var.env}/consent/db_pass_${var.environment}_consent"
         },
         {
             "Effect": "Allow",
             "Action": [
               "ssm:GetParameters"
             ],
-           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.service_name}/${var.env}/consent/db_pass_${var.service_name}_consent"
+           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.environment}/${var.env}/consent/db_pass_${var.environment}_consent"
         }
-    ]
+         {
+        Effect = "Allow",
+        Action = ["s3:GetObject", "s3:ListBucket"],
+        Resource = [
+          "arn:aws:s3:::"lambda-zip-file-storage-${var.account_number}-${var.environment}"/*",
+          "arn:aws:s3:::"lambda-zip-file-storage-${var.account_number}-${var.environment}"",
+        ],
+      },
+    ],
 }
 EOF
 }
@@ -74,26 +82,33 @@ resource "aws_iam_role_policy_attachment" "opt_out_import_lambda" {
 
 resource "aws_kms_key" "env_vars_kms_key" {
   description = var.key_description
-  deletion_window_in_days = var.deletion_window_in_days
-  enable_key_rotation = var.enable_key_rotation
+  deletion_window_in_days = 10
+  enable_key_rotation = true
 }
 
 resource "aws_kms_alias" "a" {
   name = var.kms_alias_name
   target_key_id = aws_kms_key.env_vars_kms_key.key_id
 }
+resource "aws_s3_bucket" "lambda_zip_file" {
+  bucket = var.s3_bucket
+  acl    = "private"  
+  versioning {
+    enabled = true
+  }
+}
 
 resource "aws_lambda_function" "opt_out_import_lambda" {
-  filename         = var.filename
-  source_code_hash = var.source_code_hash
+  description      = "Ingests the most recent beneficiary opt-out list from BFD"
+  s3_key           = var.s3_object_key
+  s3_bucket        = var.s3_bucket
   function_name    = var.function_name
-  description      = var.description
   role             = var.role
   kms_key_arn      = var.kms_key_arn
   handler          = var.handler
   runtime          = var.runtime
-  timeout          = var.timeout
-  memory_size      = var.memory_size
+  timeout          = 900
+  memory_size      = 128
 
   tracing_config {
     mode = "Active"

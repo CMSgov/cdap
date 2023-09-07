@@ -1,7 +1,4 @@
 locals {
-  lambda_src = "${path.module}/lambda/main"
-  lambda_zip = "${path.module}/lambda/lambda.zip"
-  lambda_name = "dpcOptOutImportLambda-${var.env}"
   common_security_groups = [
     data.aws_security_group.vpn.id,
     data.aws_security_group.tools.id,

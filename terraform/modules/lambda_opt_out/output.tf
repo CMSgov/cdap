@@ -33,12 +33,6 @@ output "az2_subnet" {
   value = data.aws_subnet.az2
 }
 
-/*output "lambda_zip_output" {
-  value = data.archive_file.lambda_zip.output_path
-}
-output "lambda_zip_source_file" {
-  value = data.archive_file.lambda_zip.source_file
-}*/
 output "common_security_group_ids" {
   value = [
     data.aws_security_group.vpn.id,
