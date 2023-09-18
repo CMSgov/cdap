@@ -16,7 +16,10 @@ resource "aws_iam_role" "runner" {
         Principal = {
           AWS = var.runner_arn
         },
-        Action = "sts:AssumeRole"
+        Action = [
+          "sts:AssumeRole",
+          "sts:TagSession"
+        ]
       }
     ]
   })
