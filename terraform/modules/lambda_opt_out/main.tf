@@ -54,21 +54,21 @@ resource "aws_iam_policy" "opt_out_import_lambda_policy" {
             "Action": [
               "ssm:GetParameters"
             ],
-           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.environment}/${var.env}/consent/db_pass_${var.environment}_consent"
+           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.team_name}/${var.environment_name}/consent/db_pass_${var.team_name}_consent"
         },
         {
             "Effect": "Allow",
             "Action": [
               "ssm:GetParameters"
             ],
-           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.environment}/${var.env}/consent/db_pass_${var.environment}_consent"
+           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.team_name}/${var.environment_name}/consent/db_pass_${var.team_name}_consent"
         }
          {
         Effect = "Allow",
         Action = ["s3:GetObject", "s3:ListBucket"],
         Resource = [
-          "arn:aws:s3:::"lambda-zip-file-storage-${var.account_number}-${var.environment}"/*",
-          "arn:aws:s3:::"lambda-zip-file-storage-${var.account_number}-${var.environment}"",
+          "arn:aws:s3:::"lambda-zip-file-storage-${var.account_number}-${var.team_name}"/*",
+          "arn:aws:s3:::"lambda-zip-file-storage-${var.account_number}-${var.team_name}"",
         ],
       },
     ],
@@ -81,13 +81,13 @@ resource "aws_iam_role_policy_attachment" "opt_out_import_lambda" {
 }
 
 resource "aws_kms_key" "env_vars_kms_key" {
-  description = var.key_description
+  description = "opt-out-import-env-vars"
   deletion_window_in_days = 10
   enable_key_rotation = true
 }
 
 resource "aws_kms_alias" "a" {
-  name = var.kms_alias_name
+  name = "alias/opt-out-import-env-vars"
   target_key_id = aws_kms_key.env_vars_kms_key.key_id
 }
 resource "aws_s3_bucket" "lambda_zip_file" {
@@ -104,12 +104,9 @@ resource "aws_lambda_function" "opt_out_import_lambda" {
   s3_bucket        = var.s3_bucket
   function_name    = var.function_name
   role             = var.role
-  kms_key_arn      = var.kms_key_arn
   handler          = var.handler
   runtime          = var.runtime
-  timeout          = 900
-  memory_size      = 128
-
+  kms_key_arn      = "arn:aws:kms:us-east-1:${var.account_number}:key/${var.team_name}-kms-key-arn"
   tracing_config {
     mode = "Active"
   }

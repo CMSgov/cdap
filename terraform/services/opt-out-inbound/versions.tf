@@ -8,14 +8,16 @@ provider "aws" {
     }
   }
 }
+
 terraform {
+  backend "s3" {
+    key = "opt-out-inbound/terraform.tfstate"
+  }
   required_providers {
-    archive = {
-      source = "hashicorp/archive"
-    }
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
+      version = "~> 5.8.0"
     }
   }
-  required_version = "= 1.5.5"
+  required_version = "~> 1.5.5"
 }

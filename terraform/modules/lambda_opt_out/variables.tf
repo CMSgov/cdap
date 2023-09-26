@@ -6,14 +6,6 @@ variable "iam_role_name" {
   description = "Name of the IAM role"
   type   =  string
 }
-variable "key_description" {
-  description = "Description for the KMS key"
-  type = string
-}
-variable "kms_alias_name" {
-  description = "Name for the kms alias"
-  type = string
-}
 variable "function_name" {
   description = "Name of the lambda function"
   type = string
@@ -21,11 +13,6 @@ variable "function_name" {
 
 variable "role" {
   description = "ARN of the IAM role for the Lambda function"
-  type        = string
-}
-
-variable "kms_key_arn" {
-  description = "ARN of the KMS key for environment variables"
   type        = string
 }
 
@@ -54,12 +41,11 @@ variable "environment_variables" {
   type        = map(string)
 }
 
-variable "env" {
+variable "environment_name" {
   type        = string
-  description = "The environment to target"
-  default     = "prod"
+  description = "The environment to target (dev,test,prod,sbx)"
 }
-variable "environment" {
+variable "team_name" {
   description = "The name of the service (e.g., dpc or ab2d)"
   type        = string
 }
