@@ -3,7 +3,7 @@ variable "environment_name" {
   description = "The environment to target (dev, test, prod, sbx)"
 }
 variable "team_name" {
-  description = "The name of the service (e.g., dpc or ab2d)"
+  description = "The name of the team (e.g., dpc or ab2d)"
   type        = string
   default     = "dpc"
 }
