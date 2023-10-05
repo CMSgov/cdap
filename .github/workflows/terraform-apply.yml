@@ -1,0 +1,66 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/services/github-actions/**' # Specify the path to trigger the workflow
+  workflow_dispatch: # Allow manual trigger
+
+env:
+    TEAM: ${{ github.event.inputs.team }}
+    ENVIRONMENT: ${{ github.event.inputs.environment }}
+    ACTION: ${{ github.event.inputs.action }}
+
+permissions:
+    id-token: write   # This is required for requesting the JWT
+    contents: read    # This is required for actions/checkout
+
+jobs:
+  terraform-apply:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install tfenv
+        run: |
+          git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+          echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bashrc
+          source ~/.bashrc
+        shell: bash
+
+      - name: Set Terraform version
+        run: |
+          expect=1.5.5
+          tfenv install "${expect}"
+          tfenv use "${expect}"
+        shell: bash
+
+      - name: Check Terraform version
+        run: |
+          terraform version
+        shell: bash
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/github-to-aws-oidc
+          aws-region: us-east-1
+
+      - name: Download and Unzip Lambda Zip Files
+        run: |
+          mkdir -p lambda
+          wget -O lambdas/lambda.zip https://github.com/philips-labs/terraform-aws-github-runner/tree/d0e89608f52ff0db4abe204af6718a73e780ea98/examples/lambdas-dowhnload
+          unzip lambdas/lambda.zip -d lambda/
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init -reconfigure -backend-config=../../backends/${TEAM}-${ENVIRONMENT}.s3.tfbackend
+
+      - name: Terraform apply
+        run: terraform ${{ env.ACTION }} 
