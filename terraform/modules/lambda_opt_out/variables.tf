@@ -10,6 +10,10 @@ variable "function_name" {
   description = "Name of the lambda function"
   type = string
 }
+variable "filename" {
+  description = "Name of the lambda function file"
+  type = string
+}
 
 variable "role" {
   description = "ARN of the IAM role for the Lambda function"
@@ -61,14 +65,7 @@ variable "vpc_subnet_security_group_service_name" {
   description = "service name for vpc, subnet, security group"
   type        = string
 }
-variable "s3_object_key" {
-  description = "S3 key (object key or file name) for Lambda deployment package"
-  type        = string
-}
-variable "s3_bucket" {
-  description = "S3 key (object key or file name) for Lambda deployment package"
-  type        = string
-}
+
 variable "account_number" {
   description = "AWS account number"
   type        = string

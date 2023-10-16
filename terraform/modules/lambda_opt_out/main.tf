@@ -90,19 +90,11 @@ resource "aws_kms_alias" "a" {
   name = "alias/opt-out-import-env-vars"
   target_key_id = aws_kms_key.env_vars_kms_key.key_id
 }
-resource "aws_s3_bucket" "lambda_zip_file" {
-  bucket = var.s3_bucket
-  acl    = "private"  
-  versioning {
-    enabled = true
-  }
-}
 
 resource "aws_lambda_function" "opt_out_import_lambda" {
   description      = "Ingests the most recent beneficiary opt-out list from BFD"
-  s3_key           = var.s3_object_key
-  s3_bucket        = var.s3_bucket
   function_name    = var.function_name
+  filename         = "opt-out-import-lambda/lambda_function.zip"
   role             = var.role
   handler          = var.handler
   runtime          = var.runtime

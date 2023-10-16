@@ -3,8 +3,6 @@ module "dpc_opt_out_inbound" {
   role                                   = module.dpc_opt_out_inbound.opt_out_lambda_role_arn
   iam_role_name                          = "${var.team_name}-${var.environment_name}-opt-out-import-lambda"
   policy_name                            = "${var.team_name}-${var.environment_name}-opt-out-import-lambda"
-  s3_object_key                          = "opt-out-import-lambda/lambda_function.zip"
-  s3_bucket                              = "lambda-zip-file-storage-${var.account_number}-${var.team_name}"
   vpc_id                                 = module.dpc_opt_out_inbound.vpc_id
   subnet_ids                             = module.dpc_opt_out_inbound.subnet_ids
   security_group_ids                     = module.dpc_opt_out_inbound.common_security_group_ids
@@ -13,6 +11,7 @@ module "dpc_opt_out_inbound" {
   account_number                         = var.account_number
   vpc_subnet_security_group_service_name = var.team_name
   function_name                          = "OptOutImportLambda-${var.environment_name}"
+  filename                               = "opt-out-import-lambda/lambda_function.zip"
   handler                                = var.lambda_handler
   runtime                                = var.lambda_runtime
   environment_name                       = var.environment_name
