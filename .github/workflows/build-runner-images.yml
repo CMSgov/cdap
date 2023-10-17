@@ -1,0 +1,48 @@
+name: Build Runner EC2 Images
+
+on:
+  schedule:
+    # 00:00 on Monday each week
+    - cron: "0 0 * * 1"
+    
+jobs:
+  build-image:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: ["ab2d", "bcda", "dpc"]
+    defaults:
+      run:
+        working-directory: packer/${{ matrix.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/github-to-aws-oidc
+          aws-region: us-east-1
+
+      - name: Setup `packer`
+        uses: hashicorp/setup-packer@main
+        id: setup
+        with:
+          version: "latest"
+
+      - name: Run `packer init`
+        id: init
+        run: packer init .
+
+      - name: Run `packer validate`
+        id: validate
+        run: packer validate .
+
+      - name: Packer Build
+        id: build
+        run: packer build -color=false -on-error=cleanup ${{ matrix.image }}.pkr.hcl
+
+  update-registry:
+    name: Update Registry
+    runs-on: ubuntu-latest
