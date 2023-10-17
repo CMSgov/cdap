@@ -9,12 +9,9 @@ jobs:
   build-image:
     name: Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        image: ["ab2d", "bcda", "dpc"]
     defaults:
       run:
-        working-directory: packer/${{ matrix.image }}
+        working-directory: packer/github-actions
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,7 +38,7 @@ jobs:
 
       - name: Packer Build
         id: build
-        run: packer build -color=false -on-error=cleanup ${{ matrix.image }}.pkr.hcl
+        run: packer build -color=false -on-error=cleanup github-actions-runner.pkr.hcl
 
   update-registry:
     name: Update Registry
