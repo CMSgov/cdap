@@ -1,12 +1,3 @@
-packer {
-  required_plugins {
-    amazon = {
-      version = ">= 0.0.2"
-      source  = "github.com/hashicorp/amazon"
-    }
-  }
-}
-
 variable "region" {
   description = "The region to build the image in"
   type        = string
@@ -16,7 +7,7 @@ variable "region" {
 variable "instance_type" {
   description = "The instance type Packer will use for the builder"
   type        = string
-  default     = "m5.xlarge"
+  default     = "t3.xlarge"
 }
 
 variable "security_group_id" {
@@ -61,40 +52,20 @@ variable "snapshot_tags" {
   default     = {}
 }
 
-source "amazon-ebs" "github-actions-runner" {
-  ami_name                                  = "github-actions-runner-${formatdate("YYYYMMDDhhmm", timestamp())}"
-  instance_type                             = var.instance_type
-  region                                    = var.region
-  security_group_id                         = var.security_group_id
-  subnet_id                                 = var.subnet_id
-  associate_public_ip_address               = var.associate_public_ip_address
-  temporary_security_group_source_public_ip = var.temporary_security_group_source_public_ip
-
-  source_ami_filter {
-    ami_filter = { name = ["${ vars.AMI_FILTER }"] }
-    ami_owners = ["${ vars.AMI_ACCOUNT }"]
-    enable_userdata = false
-  }
-
-  ssh_username = "ec2-user"
+variable "custom_shell_commands" {
+  description = "Additional commands to run on the EC2 instance, to customize the instance, like installing packages"
+  type        = list(string)
+  default     = []
 }
 
-build {
-  name = "github-actions-runner"
-  sources = [
-    "source.amazon-ebs.github-actions-runner"
-  ]
-
-  provisioner "shell" {
-    environment_vars = []
-    inline = concat([
-      "sudo yum update -y",
-      "sudo yum install -y amazon-cloudwatch-agent curl jq git",
-      "sudo amazon-linux-extras install docker",
-      "sudo systemctl enable docker.service",
-      "sudo systemctl enable containerd.service",
-      "sudo service docker start",
-      "sudo usermod -a -G docker ec2-user",
-    ], var.custom_shell_commands)
+data "http" github_runner_release_json {
+  url = "https://api.github.com/repos/actions/runner/releases/latest"
+  request_headers = {
+    Accept = "application/vnd.github+json"
+    X-GitHub-Api-Version : "2022-11-28"
   }
+}
+
+locals {
+  runner_version = coalesce(var.runner_version, trimprefix(jsondecode(data.http.github_runner_release_json.body).tag_name, "v"))
 }

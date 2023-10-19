@@ -4,6 +4,7 @@ on:
   schedule:
     # 00:00 on Monday each week
     - cron: "0 0 * * 1"
+  workflow_dispatch:
     
 jobs:
   build-image:
@@ -11,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: packer/github-actions
+        working-directory: packer/github-actions-runner
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,7 +20,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/github-to-aws-oidc
+          role-to-assume: arn:aws:iam::${{ vars.RUNNER_ACCOUNT }}:role/github-to-aws-oidc
           aws-region: us-east-1
 
       - name: Setup `packer`
@@ -38,8 +39,4 @@ jobs:
 
       - name: Packer Build
         id: build
-        run: packer build -color=false -on-error=cleanup github-actions-runner.pkr.hcl
-
-  update-registry:
-    name: Update Registry
-    runs-on: ubuntu-latest
+        run: packer build -color=false -on-error=cleanup build.pkr.hcl
