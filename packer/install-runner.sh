@@ -3,6 +3,7 @@
 user_name=$(cat /tmp/install-user.txt)
 
 ## install the runner
+## source: https://github.com/philips-labs/terraform-aws-github-runner/blob/e232af5b01f91addf7f143453e72f67a4c35fa36/modules/runners/templates/install-runner.sh
 
 s3_location=${S3_LOCATION_RUNNER_DISTRIBUTION}
 architecture=${RUNNER_ARCHITECTURE}
