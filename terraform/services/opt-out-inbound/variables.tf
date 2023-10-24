@@ -5,7 +5,6 @@ variable "environment_name" {
 variable "team_name" {
   description = "The name of the team (e.g., dpc or ab2d)"
   type        = string
-  default     = "dpc"
 }
 variable "account_number" {
   description = "AWS account number"
@@ -20,3 +19,13 @@ variable "lambda_runtime" {
   type        = string
 }
 
+
+variable "bfd_aws_account" {
+  description = "BFD environment account number"
+  type        = string
+}
+
+variable "env" {
+  description = "environment associated to the bfd_env logic,either dev or test.If so,the result of condition is test; otherwise, it's prod"
+  type        = string
+}

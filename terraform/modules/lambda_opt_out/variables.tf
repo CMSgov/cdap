@@ -10,13 +10,18 @@ variable "function_name" {
   description = "Name of the lambda function"
   type = string
 }
-variable "filename" {
-  description = "Name of the lambda function file"
-  type = string
-}
 
 variable "role" {
   description = "ARN of the IAM role for the Lambda function"
+  type        = string
+}
+
+variable "s3_object_key" {
+  description = "S3 key (object key or file name) for Lambda deployment package"
+  type        = string
+}
+variable "s3_bucket" {
+  description = "S3 key (object key or file name) for Lambda deployment package"
   type        = string
 }
 
@@ -68,5 +73,14 @@ variable "vpc_subnet_security_group_service_name" {
 
 variable "account_number" {
   description = "AWS account number"
+  type        = string
+}
+
+/*variable "bfd_env" {
+  description = "Environment-specific value for bfd_env"
+  type        = string
+}*/
+variable "env" {
+  description = "environment associated to the BFD assume role logic"
   type        = string
 }

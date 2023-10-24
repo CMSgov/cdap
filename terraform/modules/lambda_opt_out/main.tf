@@ -54,17 +54,26 @@ resource "aws_iam_policy" "opt_out_import_lambda_policy" {
             "Action": [
               "ssm:GetParameters"
             ],
-           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.team_name}/${var.environment_name}/consent/db_pass_${var.team_name}_consent"
+           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/*"
         },
         {
             "Effect": "Allow",
             "Action": [
               "ssm:GetParameters"
             ],
-           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/${var.team_name}/${var.environment_name}/consent/db_pass_${var.team_name}_consent"
-        }
+           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface"
+            ],
+            "Resource": "*"
+        },
          {
-        Effect = "Allow",
+        "Effect" = "Allow",
         Action = ["s3:GetObject", "s3:ListBucket"],
         Resource = [
           "arn:aws:s3:::"lambda-zip-file-storage-${var.account_number}-${var.team_name}"/*",
@@ -91,10 +100,19 @@ resource "aws_kms_alias" "a" {
   target_key_id = aws_kms_key.env_vars_kms_key.key_id
 }
 
+resource "aws_s3_bucket" "lambda_zip_file" {
+  bucket = var.s3_bucket
+  acl    = "private"
+  versioning {
+    enabled = true
+  }
+}
+
 resource "aws_lambda_function" "opt_out_import_lambda" {
   description      = "Ingests the most recent beneficiary opt-out list from BFD"
   function_name    = var.function_name
-  filename         = "opt-out-import-lambda/lambda_function.zip"
+  s3_key           = var.s3_object_key
+  s3_bucket        = var.s3_bucket
   role             = var.role
   handler          = var.handler
   runtime          = var.runtime

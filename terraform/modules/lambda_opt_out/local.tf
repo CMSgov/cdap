@@ -7,4 +7,5 @@ locals {
   ]
   vpc_id           = data.aws_vpc.main.id
   subnets          = [data.aws_subnet.az1.id, data.aws_subnet.az2.id]
+  bfd_env          = var.team_name == "dpc" ? (var.env == "dev" || var.env == "test" ? "test" : "prod") : ""
 }
