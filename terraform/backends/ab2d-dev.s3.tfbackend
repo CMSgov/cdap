@@ -1,0 +1,5 @@
+bucket         = "ab2d-dev-tfstate"
+region         = "us-east-1"
+dynamodb_table = "ab2d-dev-tfstate"
+kms_key_id     = "alias/ab2d-dev-tfstate-kms"
+encrypt        = true

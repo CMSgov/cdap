@@ -1,0 +1,5 @@
+bucket         = "ab2d-sbx-sandbox-tfstate"
+region         = "us-east-1"
+dynamodb_table = "ab2d-sbx-sandbox-tfstate"
+kms_key_id     = "alias/ab2d-sbx-sandbox-tfstate-kms"
+encrypt        = true
