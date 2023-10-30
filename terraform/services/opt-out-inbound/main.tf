@@ -1,5 +1,5 @@
 module "dpc_opt_out_inbound" {
-  source                                 = "../../modules/lambda_opt_out"
+  source                                 = "../../modules/lambda"
   role                                   = module.dpc_opt_out_inbound.opt_out_lambda_role_arn
   iam_role_name                          = "${var.team_name}-${var.environment_name}-opt-out-import-lambda"
   policy_name                            = "${var.team_name}-${var.environment_name}-opt-out-import-lambda"
