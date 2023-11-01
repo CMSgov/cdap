@@ -1,0 +1,21 @@
+name: Terraform plan for github-actions terraform
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/services/github-actions/**' # Specify the path to trigger the workflow
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
+
+jobs:
+  check-terraform-fmt:
+    uses: ./.github/workflows/terraform-fmt.yml
+    with:
+      working-directory: ./terraform/services/github-actions
+
+  terraform-plan:
+    steps:
+      - run: echo "TODO Create a reusable terraform-plan workflow to call'
