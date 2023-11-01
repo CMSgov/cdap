@@ -1,0 +1,25 @@
+name: Check terraform formatting
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: ./terraform
+
+jobs:
+  terraform-fmt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tfenv
+        run: |
+          git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+          echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
+
+      - run: terraform fmt -check -diff -recursive .
