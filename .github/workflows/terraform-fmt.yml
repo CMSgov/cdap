@@ -14,12 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install tfenv and terraform
-        working-directory: ./terraform
+      - name: Install tfenv
         run: |
           git clone https://github.com/tfutils/tfenv.git ~/.tfenv
           echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
           echo "TFENV_CURL_OUTPUT=0" >> "$GITHUB_ENV"
+
+      - name: Install terraform
+        working-directory: ./terraform
+        run: |
           tfenv install
           tfenv use
 
