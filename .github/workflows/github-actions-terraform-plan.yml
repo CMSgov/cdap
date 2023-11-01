@@ -14,7 +14,7 @@ jobs:
   check-terraform-fmt:
     uses: ./.github/workflows/terraform-fmt.yml
     with:
-      working-directory: ./terraform/services/github-actions
+      targets: ./terraform/services/github-actions
 
   terraform-plan:
     needs: check-terraform-fmt
