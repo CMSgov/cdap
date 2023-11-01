@@ -16,7 +16,7 @@ jobs:
 
       - name: Install tfenv
         run: |
-          git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+          git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
           echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
 
       - name: Install terraform
