@@ -18,4 +18,4 @@ jobs:
 
   terraform-plan:
     steps:
-      run: echo "TODO Create a reusable terraform-plan workflow to call'
+      - run: echo "TODO Create a reusable terraform-plan workflow to call'
