@@ -2,13 +2,14 @@ name: Check terraform formatting
 
 on:
   workflow_call:
-
-permissions:
-  contents: read
+    inputs:
+      working-directory:
+        required: true
+        type: string
 
 defaults:
   run:
-    working-directory: ./terraform
+    working-directory: ${{ inputs.working-directory }}
 
 jobs:
   terraform-fmt:
@@ -22,4 +23,5 @@ jobs:
           git clone https://github.com/tfutils/tfenv.git ~/.tfenv
           echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
 
-      - run: terraform fmt -check -diff -recursive .
+      - name: Check terraform format
+        run: terraform fmt -check -diff -recursive .
