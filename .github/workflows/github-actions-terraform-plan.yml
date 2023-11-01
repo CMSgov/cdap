@@ -3,7 +3,10 @@ name: Terraform plan for github-actions terraform
 on:
   pull_request:
     paths:
-      - 'terraform/services/github-actions/**' # Specify the path to trigger the workflow
+      - .github/workflows/github-actions-terraform-plan.yml
+      - .github/workflows/terraform-fmt.yml
+      - actions/setup-tfenv-terraform/**
+      - terraform/services/github-actions/**
   workflow_dispatch: # Allow manual trigger
 
 permissions:
