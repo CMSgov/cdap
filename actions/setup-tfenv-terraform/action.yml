@@ -11,6 +11,8 @@ runs:
     - run: |
         git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
         echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
+      shell: bash
 
     - working-directory: ${{ inputs.directory }}
       run: TFENV_CURL_OUTPUT=0 tfenv use
+      shell: bash
