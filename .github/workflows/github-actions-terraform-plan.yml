@@ -17,5 +17,6 @@ jobs:
       working-directory: ./terraform/services/github-actions
 
   terraform-plan:
+    runs-on: ubuntu-latest
     steps:
       - run: echo "TODO Create a reusable terraform-plan workflow to call'
