@@ -14,14 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install tfenv
-        run: |
-          git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
-          echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
-
       - name: Install terraform
-        working-directory: ./terraform
-        run: TFENV_CURL_OUTPUT=0 tfenv use
+        uses: ./actions/setup-tfenv-terraform
 
       - name: Check terraform format
         run: terraform fmt -check -diff -recursive ${{ inputs.targets }}
