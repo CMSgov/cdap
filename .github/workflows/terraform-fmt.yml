@@ -7,10 +7,6 @@ on:
         required: true
         type: string
 
-defaults:
-  run:
-    working-directory: ${{ inputs.working-directory }}
-
 jobs:
   terraform-fmt:
     runs-on: ubuntu-latest
@@ -24,4 +20,5 @@ jobs:
           echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
 
       - name: Check terraform format
+        working-directory: ${{ inputs.working-directory }}
         run: terraform fmt -check -diff -recursive .
