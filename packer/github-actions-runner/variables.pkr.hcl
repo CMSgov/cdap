@@ -4,6 +4,11 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "runner_version" {
+  description = "The version (no v prefix) of the runner software to install https://github.com/actions/runner/releases. The latest release will be fetched from GitHub if not provided."
+  default     = null
+}
+
 variable "instance_type" {
   description = "The instance type Packer will use for the builder"
   type        = string
