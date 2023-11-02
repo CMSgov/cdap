@@ -4,7 +4,14 @@ on:
   workflow_call:
     inputs:
       targets:
-        required: true
+        required: false
+        default: ./terraform
+        type: string
+  workflow_dispatch:
+    inputs:
+      targets:
+        required: false
+        default: ./terraform
         type: string
 
 jobs:
