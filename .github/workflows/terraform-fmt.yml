@@ -1,0 +1,28 @@
+name: Check terraform formatting
+
+on:
+  workflow_call:
+    inputs:
+      targets:
+        required: false
+        default: ./terraform
+        type: string
+  workflow_dispatch:
+    inputs:
+      targets:
+        required: false
+        default: ./terraform
+        type: string
+
+jobs:
+  terraform-fmt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install terraform
+        uses: ./actions/setup-tfenv-terraform
+
+      - name: Check terraform format
+        run: terraform fmt -check -diff -recursive ${{ inputs.targets }}
