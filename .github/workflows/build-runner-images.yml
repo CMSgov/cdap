@@ -44,7 +44,7 @@ jobs:
 
       - name: Run `packer validate`
         id: validate
-        run: packer validate -var ami_account="$AMI_ACCOUNT" -var ami_filter="$AMI_FILTER" .
+        run: packer validate -var ami_account="$AMI_ACCOUNT" -var ami_filter="$AMI_FILTER" -evaluate-datasources .
 
       - name: Packer Build
         id: build
