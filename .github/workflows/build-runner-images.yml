@@ -1,6 +1,9 @@
 name: Build Runner EC2 Images
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/build-runner-images.yml
   schedule:
     # 00:00 on Monday each week
     - cron: "0 0 * * 1"
@@ -42,4 +45,4 @@ jobs:
 
       - name: Packer Build
         id: build
-        run: packer build -color=false -on-error=cleanup build.pkr.hcl
+        run: packer build -color=false -on-error=cleanup --var ami_account=${{ vars.AMI_ACCOUNT }} --var ami_filter=${{ vars.AMI_FILTER }} build.pkr.hcl

@@ -8,8 +8,8 @@ source "amazon-ebs" "github-actions-runner" {
   temporary_security_group_source_public_ip = var.temporary_security_group_source_public_ip
 
   source_ami_filter {
-    filters = { name = "${ vars.AMI_FILTER }" }
-    owners = ["${ vars.AMI_ACCOUNT }"]
+    filters = { name = var.ami_filter }
+    owners = [ var.ami_account ]
   }
 
   ssh_username = "ec2-user"
