@@ -45,4 +45,4 @@ jobs:
 
       - name: Packer Build
         id: build
-        run: packer build -color=false -on-error=cleanup -var "ami_account=${{ vars.AMI_ACCOUNT }}" -var "ami_filter=${{ vars.AMI_FILTER }}" build.pkr.hcl
+        run: packer build -color=false -on-error=cleanup -var ami_account=${{ vars.AMI_ACCOUNT }} -var ami_filter=${{ vars.AMI_FILTER }} .
