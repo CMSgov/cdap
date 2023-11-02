@@ -19,6 +19,9 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    env:
+      AMI_ACCOUNT: ${{ vars.AMI_ACCOUNT }}
+      AMI_FILTER: ${{ vars.AMI_FILTER }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,8 +44,8 @@ jobs:
 
       - name: Run `packer validate`
         id: validate
-        run: packer validate .
+        run: packer validate -var ami_account="$AMI_ACCOUNT" -var ami_filter="$AMI_FILTER" .
 
       - name: Packer Build
         id: build
-        run: packer build -color=false -on-error=cleanup -var ami_account=${{ vars.AMI_ACCOUNT }} -var ami_filter=${{ vars.AMI_FILTER }} .
+        run: packer build -color=false -on-error=cleanup -var ami_account="$AMI_ACCOUNT" -var ami_filter="$AMI_FILTER" .
