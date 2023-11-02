@@ -3,7 +3,10 @@ name: Terraform plan for github-actions terraform
 on:
   pull_request:
     paths:
-      - 'terraform/services/github-actions/**' # Specify the path to trigger the workflow
+      - .github/workflows/github-actions-terraform-plan.yml
+      - .github/workflows/terraform-fmt.yml
+      - actions/setup-tfenv-terraform/**
+      - terraform/services/github-actions/**
   workflow_dispatch: # Allow manual trigger
 
 permissions:
@@ -14,8 +17,10 @@ jobs:
   check-terraform-fmt:
     uses: ./.github/workflows/terraform-fmt.yml
     with:
-      working-directory: ./terraform/services/github-actions
+      targets: ./terraform/services/github-actions
 
   terraform-plan:
+    needs: check-terraform-fmt
+    runs-on: ubuntu-latest
     steps:
-      - run: echo "TODO Create a reusable terraform-plan workflow to call'
+      - run: echo "TODO Create a reusable terraform-plan workflow to call"

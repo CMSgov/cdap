@@ -3,13 +3,16 @@ name: Check terraform formatting
 on:
   workflow_call:
     inputs:
-      working-directory:
-        required: true
+      targets:
+        required: false
+        default: ./terraform
         type: string
-
-defaults:
-  run:
-    working-directory: ${{ inputs.working-directory }}
+  workflow_dispatch:
+    inputs:
+      targets:
+        required: false
+        default: ./terraform
+        type: string
 
 jobs:
   terraform-fmt:
@@ -18,10 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install tfenv
-        run: |
-          git clone https://github.com/tfutils/tfenv.git ~/.tfenv
-          echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
+      - name: Install terraform
+        uses: ./actions/setup-tfenv-terraform
 
       - name: Check terraform format
-        run: terraform fmt -check -diff -recursive .
+        run: terraform fmt -check -diff -recursive ${{ inputs.targets }}
