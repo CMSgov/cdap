@@ -10,8 +10,8 @@ source "amazon-ebs" "github-actions-runner" {
   source_ami_filter {
     filters = { name = "${var.ami_filter}" }
     owners = ["${var.ami_account}"]
+    most_recent = true
   }
-  
-  most_recent = true
+
   ssh_username = "ec2-user"
 }
