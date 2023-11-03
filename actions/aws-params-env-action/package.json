@@ -1,6 +1,6 @@
 {
   "name": "aws-params-env-action",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "private": false,
   "description": "GitHub Action to set workflow environment variables from values in AWS Parameter Store. Parameters of type SecureString are masked.",
   "main": "lib/main.js",
@@ -11,7 +11,7 @@
     "lint": "eslint src/**/*.ts",
     "package": "ncc build --source-map --license licenses.txt",
     "test": "jest",
-    "all": "npm run format-check && npm run lint && npm test && npm run build && npm run package"
+    "all": "npm install & npm run format-check && npm run lint && npm test && npm run build && npm run package"
   },
   "repository": {
     "type": "git",
