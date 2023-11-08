@@ -23,7 +23,7 @@ jobs:
           role-to-assume: ${{ vars.RUNNER_ACCOUNT_ROLE }}
           aws-region: us-east-1
       - run: terraform init -reconfigure -backend-config=../../backends/bcda.s3.tfbackend
-      - run: terraform apply
+      - run: terraform apply -auto-approve
         env:
           TF_VAR_ami_account: ${{ vars.RUNNER_AMI_ACCOUNT }}
           TF_VAR_ami_filter: ${{ vars.RUNNER_AMI_FILTER }}
