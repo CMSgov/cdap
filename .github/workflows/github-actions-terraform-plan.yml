@@ -28,6 +28,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
+      - name: Download lambdas
+        run: |
+          cd lambdas-download
+          terraform init
+          terraform apply
+          cd ..
       - uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ vars.RUNNER_ACCOUNT_ROLE }}
