@@ -26,6 +26,7 @@ jobs:
       directory: ./terraform/services/github-actions
       role: ${{ vars.RUNNER_ACCOUNT_ROLE }}
       backends: ./terraform/backends/bcda.s3.tfbackend
+    secrets:
       tf-vars: >-
         ami_account=${{ vars.RUNNER_AMI_ACCOUNT }}
         ami_filter=${{ vars.RUNNER_AMI_FILTER }}

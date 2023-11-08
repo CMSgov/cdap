@@ -15,6 +15,7 @@ on:
         description: Space-separated backend configuration files.
         required: true
         type: string
+    secrets:
       tf-vars:
         description: Space-separated variables for terraform plan.
         required: true
@@ -48,5 +49,5 @@ jobs:
 
       - name: Terraform plan
         run: |
-          tf_vars="-var $(echo '${{ inputs.tf-vars }}' | sed -E 's/[[:space:]]+/ -var /g')"
+          tf_vars="-var $(echo '${{ secrets.tf-vars }}' | sed -E 's/[[:space:]]+/ -var /g')"
           terraform plan $tf_vars
