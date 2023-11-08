@@ -4,8 +4,6 @@ on:
   pull_request:
     paths:
       - .github/workflows/github-actions-terraform-plan.yml
-      - .github/workflows/terraform-fmt.yml
-      - .github/workflows/terraform-plan.yml
       - actions/setup-tfenv-terraform/**
       - terraform/services/github-actions/**
   workflow_dispatch: # Allow manual trigger
