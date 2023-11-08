@@ -1,10 +1,9 @@
 name: Terraform apply for github-actions terraform
 
 on:
-  pull_request:
-    paths:
-      - .github/workflows/github-actions-terraform-apply.yml
-      - terraform/services/github-actions/**
+  push:
+    branches:
+      - main
   workflow_dispatch: # Allow manual trigger
 
 jobs:
