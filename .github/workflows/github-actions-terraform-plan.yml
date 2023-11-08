@@ -5,13 +5,10 @@ on:
     paths:
       - .github/workflows/github-actions-terraform-plan.yml
       - .github/workflows/terraform-fmt.yml
+      - .github/workflows/terraform-plan.yml
       - actions/setup-tfenv-terraform/**
       - terraform/services/github-actions/**
   workflow_dispatch: # Allow manual trigger
-
-permissions:
-  id-token: write # This is required for requesting the JWT
-  contents: read  # This is required for actions/checkout
 
 jobs:
   check-terraform-fmt:
@@ -21,6 +18,17 @@ jobs:
 
   terraform-plan:
     needs: check-terraform-fmt
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "TODO Create a reusable terraform-plan workflow to call"
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/terraform-plan.yml
+    with:
+      directory: ./terraform/services/github-actions
+      role: ${{ vars.RUNNER_ACCOUNT_ROLE }}
+      backends: ./terraform/backends/bcda.s3.tfbackend
+      tf-vars: >-
+        ami_account=${{ vars.RUNNER_AMI_ACCOUNT }}
+        ami_filter=${{ vars.RUNNER_AMI_FILTER }}
+        app_id=${{ vars.RUNNER_APP_ID }}
+        key_base64=${{ secrets.RUNNER_APP_KEY_BASE64 }}
+        webhook_secret=${{ secrets.RUNNER_WEBHOOK_SECRET }}

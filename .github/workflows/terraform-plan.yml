@@ -2,41 +2,51 @@ name: Terraform Plan
 
 on:
   workflow_call:
-
-env:
-    TEAM: ${{ github.event.inputs.team }}
-    ENVIRONMENT: ${{ github.event.inputs.environment }}
-    ACTION: ${{ github.event.inputs.action }}
+    inputs:
+      directory:
+        description: The directory in which init and plan will be run.
+        required: true
+        type: string
+      role:
+        description: The AWS IAM role to run as via OIDC.
+        required: true
+        type: string
+      backends:
+        description: Space-separated backend configuration files.
+        required: true
+        type: string
+      tf-vars:
+        description: Space-separated variables for terraform plan.
+        required: true
+        type: string
 
 permissions:
-    id-token: write   # This is required for requesting the JWT
-    contents: read    # This is required for actions/checkout
-
-defaults:
-  run:
-    working-directory: ./terraform
+  contents: read # Required for actions/checkout
+  id-token: write # Required for requesting the JWT for OIDC
 
 jobs:
   terraform-apply:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.directory }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install tfenv
-        run: |
-          git clone https://github.com/tfutils/tfenv.git ~/.tfenv
-          echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
+      - uses: ./actions/setup-tfenv-terraform
 
-      - name: configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v3
+      - uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_NUMBER }}:role/github-to-aws-oidc
+          role-to-assume: ${{ inputs.role }}
           aws-region: us-east-1
 
-      - name: Terraform Init
-        run: terraform init -reconfigure -backend-config=../../backends/${TEAM}-${ENVIRONMENT}.s3.tfbackend
+      - name: Terraform init
+        run: |
+          backends="-backend-config=${{ github.workspace }}/$(echo '${{ inputs.backends }}' | sed -E 's|[[:space:]]+| -backend-config=${{ github.workspace }}|g')"
+          terraform init -reconfigure $backends
 
       - name: Terraform plan
-        run: terraform ${{ env.ACTION }}
+        run: |
+          tf_vars="-var $(echo '${{ inputs.tf-vars }}' | sed -E 's/[[:space:]]+/ -var /g')"
+          terraform plan $tf_vars
