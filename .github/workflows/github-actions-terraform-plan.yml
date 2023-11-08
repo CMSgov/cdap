@@ -32,7 +32,7 @@ jobs:
         run: |
           cd lambdas-download
           terraform init
-          terraform apply
+          terraform apply -auto-approve
           cd ..
       - uses: aws-actions/configure-aws-credentials@v3
         with:
