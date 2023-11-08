@@ -12,24 +12,33 @@ on:
 
 jobs:
   check-terraform-fmt:
-    uses: ./.github/workflows/terraform-fmt.yml
-    with:
-      targets: ./terraform/services/github-actions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - run: terraform fmt -check -diff -recursive ./terraform/services/github-actions
 
   terraform-plan:
     needs: check-terraform-fmt
     permissions:
       contents: read
       id-token: write
-    uses: ./.github/workflows/terraform-plan.yml
-    with:
-      directory: ./terraform/services/github-actions
-      role: ${{ vars.RUNNER_ACCOUNT_ROLE }}
-      backends: ./terraform/backends/bcda.s3.tfbackend
-    secrets:
-      tf-vars: >-
-        ami_account=${{ vars.RUNNER_AMI_ACCOUNT }}
-        ami_filter=${{ vars.RUNNER_AMI_FILTER }}
-        app_id=${{ vars.RUNNER_APP_ID }}
-        key_base64=${{ secrets.RUNNER_APP_KEY_BASE64 }}
-        webhook_secret=${{ secrets.RUNNER_WEBHOOK_SECRET }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform/services/github-actions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ vars.RUNNER_ACCOUNT_ROLE }}
+          aws-region: us-east-1
+      - run: terraform init -reconfigure -backend-config=../../backends/bcda.s3.tfbackend
+      - run: terraform plan
+        env:
+          TF_VAR_ami_account: ${{ vars.RUNNER_AMI_ACCOUNT }}
+          TF_VAR_ami_filter: ${{ vars.RUNNER_AMI_FILTER }}
+          TF_VAR_app_id: ${{ vars.RUNNER_APP_ID }}
+          TF_VAR_key_base64: ${{ secrets.RUNNER_APP_KEY_BASE64 }}
+          TF_VAR_webhook_secret: ${{ secrets.RUNNER_WEBHOOK_SECRET }}
