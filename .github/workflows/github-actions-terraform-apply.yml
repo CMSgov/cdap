@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - .github/workflows/github-actions-terraform-plan.yml
+      - .github/workflows/github-actions-terraform-apply.yml
       - terraform/services/github-actions/**
   workflow_dispatch: # Allow manual trigger
 
