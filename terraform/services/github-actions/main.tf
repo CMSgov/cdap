@@ -74,6 +74,13 @@ module "github-actions" {
 
   enable_ssm_on_runners = true
 
+  idle_config = [{
+   cron             = "* * 9-17 * * 1-5"
+   timeZone         = "America/New_York"
+   idleCount        = 2
+   evictionStrategy = "oldest_first"
+  }]
+
   runner_iam_role_managed_policy_arns  = [aws_iam_policy.runner.arn]
   runner_additional_security_group_ids = [data.aws_security_group.vpn.id]
 
