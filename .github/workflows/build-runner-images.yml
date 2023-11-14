@@ -35,7 +35,7 @@ jobs:
       - name: Retrieve default VPC ID and subnet
         id: vpc
         run: |
-          VPC_ID=`aws ec2 describe-vpcs --filters "Name=bcda-managed-vpc, Values=true" --query 'Vpcs[].VpcId' --output text`
+          VPC_ID=`aws ec2 describe-vpcs --filters "Name=tag:Name, Values=bcda-managed-vpc" --query 'Vpcs[].VpcId' --output text`
           echo "VPC_ID=$VPC_ID" >> "$GITHUB_ENV"
 
           SUBNET_ID=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query 'Subnets[0].SubnetId' --output text`
