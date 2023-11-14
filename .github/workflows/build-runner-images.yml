@@ -20,8 +20,8 @@ jobs:
       id-token: write
       contents: read
     env:
-      AMI_ACCOUNT: ${{ vars.AMI_ACCOUNT }}
-      AMI_FILTER: ${{ vars.AMI_FILTER }}
+      AMI_ACCOUNT: ${{ vars.RUNNER_AMI_ACCOUNT }}
+      AMI_FILTER: ${{ vars.RUNNER_AMI_FILTER }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::${{ vars.RUNNER_ACCOUNT }}:role/github-to-aws-oidc
+          role-to-assume: ${{ vars.RUNNER_ACCOUNT_ROLE }}
           aws-region: us-east-1
 
       - name: Retrieve default VPC ID and subnet
