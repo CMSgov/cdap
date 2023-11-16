@@ -16,5 +16,10 @@ source "amazon-ebs" "github-actions-runner" {
 
   ssh_username = "ec2-user"
   ssh_interface = "session_manager"
+  ssh_timeout = "1h"
   iam_instance_profile = "bcda-packer"
+  aws_polling {
+    delay_seconds = 60
+    max_attempts = 60
+  }
 }
