@@ -42,7 +42,7 @@ jobs:
           echo "SUBNET_ID=$SUBNET_ID" >> "$GITHUB_ENV"
 
           SECURITY_GROUP_ID=`aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$VPC_ID" "Name=description,Values=bcda-managed-remote-management" --query 'SecurityGroups[].GroupId' --output text`
-          echo "SUBNET_ID=$SUBNET_ID" >> "$GITHUB_ENV"
+          echo "SECURITY_GROUP_ID=$SECURITY_GROUP_ID" >> "$GITHUB_ENV"
 
       - name: Setup `packer`
         uses: hashicorp/setup-packer@main
