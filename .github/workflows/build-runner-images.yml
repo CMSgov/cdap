@@ -35,23 +35,23 @@ jobs:
       - name: Retrieve default VPC ID and subnet
         id: vpc
         run: |
-          VPC_ID=`aws ec2 describe-vpcs --filters "Name=tag:Name, Values=bcda-managed-vpc" --query 'Vpcs[].VpcId' --output text`
+          VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name, Values=bcda-managed-vpc" --query 'Vpcs[].VpcId' --output text)
           echo "VPC_ID=$VPC_ID" >> "$GITHUB_ENV"
 
-          SUBNET_ID=`aws ec2 describe-subnets \
+          SUBNET_ID=$(aws ec2 describe-subnets \
             --filters \
               "Name=vpc-id,Values=$VPC_ID" \
               "Name=tag:Layer,Values=management"
             --query 'Subnets[0].SubnetId' \
-            --output text`
+            --output text)
           echo "SUBNET_ID=$SUBNET_ID" >> "$GITHUB_ENV"
 
-          SECURITY_GROUP_ID=`aws ec2 describe-security-groups \
+          SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
             --filters \
               "Name=vpc-id,Values=$VPC_ID" \
               "Name=description,Values=bcda-managed-remote-management" \
             --query 'SecurityGroups[].GroupId' \
-            --output text`
+            --output text)
           echo "SECURITY_GROUP_ID=$SECURITY_GROUP_ID" >> "$GITHUB_ENV"
 
       - name: Setup `packer`
