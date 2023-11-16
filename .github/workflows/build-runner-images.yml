@@ -56,20 +56,22 @@ jobs:
 
       - name: Run `packer validate`
         id: validate
-        run: packer validate \
-          -var ami_account="$AMI_ACCOUNT" \
-          -var ami_filter="$AMI_FILTER" \
-          -var vpc_id="$VPC_ID" \
-          -var subnet_id="$SUBNET_ID" \
-          -var security_group_id="$SECURITY_GROUP_ID" \
-          -evaluate-datasources .
+        run: |
+          packer validate \
+            -var ami_account="$AMI_ACCOUNT" \
+            -var ami_filter="$AMI_FILTER" \
+            -var vpc_id="$VPC_ID" \
+            -var subnet_id="$SUBNET_ID" \
+            -var security_group_id="$SECURITY_GROUP_ID" \
+            -evaluate-datasources .
 
       - name: Packer Build
         id: build
-        run: packer build \
-          -var ami_account="$AMI_ACCOUNT" \
-          -var ami_filter="$AMI_FILTER" \
-          -var vpc_id="$VPC_ID" \
-          -var subnet_id="$SUBNET_ID" \
-          -var security_group_id="$SECURITY_GROUP_ID" \
-          -color=false -on-error=cleanup .
+        run: |
+          packer build \
+            -var ami_account="$AMI_ACCOUNT" \
+            -var ami_filter="$AMI_FILTER" \
+            -var vpc_id="$VPC_ID" \
+            -var subnet_id="$SUBNET_ID" \
+            -var security_group_id="$SECURITY_GROUP_ID" \
+            -color=false -on-error=cleanup .
