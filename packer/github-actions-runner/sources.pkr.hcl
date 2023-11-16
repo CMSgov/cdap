@@ -14,8 +14,8 @@ source "amazon-ebs" "github-actions-runner" {
     most_recent = true
   }
 
+  communicator = "ssh"
   ssh_username = "ec2-user"
-  ssh_interface = "session_manager"
   ssh_timeout = "1h"
   iam_instance_profile = "bcda-packer"
   aws_polling {
