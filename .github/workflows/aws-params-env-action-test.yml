@@ -1,10 +1,6 @@
 name: Test aws-params-env-action
 
 on:
-  push:
-    paths:
-      - 'actions/aws-params-env-action/**'
-      - '!actions/aws-params-env-action/**.md'
   pull_request:
     paths:
       - 'actions/aws-params-env-action/**'

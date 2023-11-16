@@ -1,23 +1,16 @@
-name: Terraform plan for github-actions terraform
+name: Terraform apply for github-actions terraform
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
-      - .github/workflows/github-actions-terraform-plan.yml
-      - actions/setup-tfenv-terraform/**
+      - .github/workflows/github-actions-terraform-apply.yml
       - terraform/services/github-actions/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  check-terraform-fmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./actions/setup-tfenv-terraform
-      - run: terraform fmt -check -diff -recursive ./terraform/services/github-actions
-
-  terraform-plan:
-    needs: check-terraform-fmt
+  terraform-apply:
     permissions:
       contents: read
       id-token: write
@@ -33,7 +26,7 @@ jobs:
           role-to-assume: ${{ vars.RUNNER_ACCOUNT_ROLE }}
           aws-region: us-east-1
       - run: terraform init -reconfigure -backend-config=../../backends/bcda.s3.tfbackend
-      - run: terraform plan
+      - run: terraform apply -auto-approve
         env:
           TF_VAR_ami_account: ${{ vars.RUNNER_AMI_ACCOUNT }}
           TF_VAR_ami_filter: ${{ vars.RUNNER_AMI_FILTER }}
