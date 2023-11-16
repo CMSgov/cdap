@@ -16,5 +16,5 @@ source "amazon-ebs" "github-actions-runner" {
 
   ssh_username = "ec2-user"
   ssh_interface = "session_manager"
-  iam_instance_profile = "bcda_packer"
+  iam_instance_profile = "bcda-packer"
 }
