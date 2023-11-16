@@ -41,7 +41,7 @@ jobs:
           SUBNET_ID=`aws ec2 describe-subnets \
             --filters \
               "Name=vpc-id,Values=$VPC_ID" \
-              "Name=Layer,Values=management"
+              "Name=tag:Layer,Values=management"
             --query 'Subnets[0].SubnetId' \
             --output text`
           echo "SUBNET_ID=$SUBNET_ID" >> "$GITHUB_ENV"
