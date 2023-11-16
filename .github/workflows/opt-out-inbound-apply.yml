@@ -1,0 +1,53 @@
+name: Terraform apply for opt-out-inbound
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/opt-out-inbound-apply.yml
+      - terraform/services/opt-out-inbound/**
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  terraform-apply:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform/services/opt-out-inbound
+    strategy:
+      matrix:
+        app: [ab2d, bcda, dpc]
+        env: [dev, test, sbx, prod]
+        include:
+          - app: ab2d
+            env: dev
+            role: ${{ vars.AB2D_DEV_ROLE }}
+          - app: ab2d
+            env: test
+            role: ${{ vars.AB2D_TEST_ROLE }} # Maps to AB2D IMPL account
+          - app: ab2d
+            env: sbx
+            role: ${{ vars.AB2D_SBX_ROLE }}
+          - app: ab2d
+            env: prod
+            role: ${{ vars.AB2D_PROD_ROLE }}
+          - app: bcda
+            role: ${{ vars.BCDA_ROLE }}
+          - app: dpc
+            role: ${{ vars.BCDA_ROLE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ matrix.role }}
+          aws-region: us-east-1
+      - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: terraform apply -auto-approve
+        env:
+          TF_VAR_app: ${{ matrix.app }}
+          TF_VAR_env: ${{ matrix.env }}
