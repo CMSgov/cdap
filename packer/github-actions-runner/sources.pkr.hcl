@@ -15,5 +15,5 @@ source "amazon-ebs" "github-actions-runner" {
   }
 
   ssh_username = "ec2-user"
-  ssh_interface = "session_manager"
+  ssh_interface = "private_ip"
 }
