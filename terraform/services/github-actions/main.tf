@@ -81,6 +81,9 @@ module "github-actions" {
     evictionStrategy = "oldest_first"
   }]
 
+  # Set minimum running time to avoid terminating instances before user data is executed
+  minimum_running_time_in_minutes = 10
+
   runner_iam_role_managed_policy_arns  = [aws_iam_policy.runner.arn]
   runner_additional_security_group_ids = [data.aws_security_group.vpn.id]
 
