@@ -89,6 +89,6 @@ module "github-actions" {
 
   instance_target_capacity_type = "on-demand"
   instance_types = [
-    "t3.medium",
+    "t3.large",
   ]
 }
