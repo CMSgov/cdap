@@ -19,8 +19,12 @@ source "amazon-ebs" "github-actions-runner" {
   ssh_timeout = "1h"
   ssh_interface = "private_ip"
   iam_instance_profile = "bcda-packer"
-  aws_polling {
-    delay_seconds = 60
-    max_attempts = 60
-  }
+
+  tags = merge(
+    var.global_tags,
+    var.ami_tags,
+    {
+        Name = "github-actions-runner-ami-build"
+        Base_AMI_Name = "{{ .SourceAMIName }}"
+    })
 }
