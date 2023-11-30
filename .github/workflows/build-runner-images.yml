@@ -41,18 +41,10 @@ jobs:
           SUBNET_ID=$(aws ec2 describe-subnets \
             --filters \
               "Name=vpc-id,Values=$VPC_ID" \
-              "Name=tag:Layer,Values=management" \
+              "Name=tag:Layer,Values=app" \
             --query 'Subnets[0].SubnetId' \
             --output text)
           echo "SUBNET_ID=$SUBNET_ID" >> "$GITHUB_ENV"
-
-          SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
-            --filters \
-              "Name=vpc-id,Values=$VPC_ID" \
-              "Name=description,Values=bcda-managed-remote-management" \
-            --query 'SecurityGroups[].GroupId' \
-            --output text)
-          echo "SECURITY_GROUP_ID=$SECURITY_GROUP_ID" >> "$GITHUB_ENV"
 
       - name: Setup `packer`
         uses: hashicorp/setup-packer@main
@@ -72,7 +64,6 @@ jobs:
             -var ami_filter="$AMI_FILTER" \
             -var vpc_id="$VPC_ID" \
             -var subnet_id="$SUBNET_ID" \
-            -var security_group_id="$SECURITY_GROUP_ID" \
             -evaluate-datasources .
 
       - name: Packer Build
@@ -83,5 +74,4 @@ jobs:
             -var ami_filter="$AMI_FILTER" \
             -var vpc_id="$VPC_ID" \
             -var subnet_id="$SUBNET_ID" \
-            -var security_group_id="$SECURITY_GROUP_ID" \
             -color=false -on-error=cleanup .

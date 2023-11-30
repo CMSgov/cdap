@@ -14,17 +14,20 @@ source "amazon-ebs" "github-actions-runner" {
     most_recent = true
   }
 
+  security_group_filter {
+    filters = {
+      "tag:Name": "packer_sg"
+    }
+  }
+
   communicator = "ssh"
   ssh_username = "ec2-user"
   ssh_timeout = "1h"
-  ssh_interface = "private_ip"
+  ssh_pty = true
   iam_instance_profile = "bcda-packer"
 
-  tags = merge(
-    var.global_tags,
-    var.ami_tags,
-    {
-        Name = "github-actions-runner-ami-build"
-        Base_AMI_Name = "{{ .SourceAMIName }}"
-    })
+  tags = {
+    Name = "github-actions-runner-ami-build",
+    Base_AMI_Name = "{{ .SourceAMIName }}"
+  }
 }
