@@ -69,9 +69,9 @@ jobs:
       - name: Packer Build
         id: build
         run: |
-          packer build \
+          PACKER_LOG=1 packer build \
             -var ami_account="$AMI_ACCOUNT" \
             -var ami_filter="$AMI_FILTER" \
             -var vpc_id="$VPC_ID" \
             -var subnet_id="$SUBNET_ID" \
-            -debug -color=false -on-error=cleanup .
+            -color=false -on-error=cleanup .
