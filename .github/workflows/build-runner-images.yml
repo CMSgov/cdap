@@ -74,4 +74,4 @@ jobs:
             -var ami_filter="$AMI_FILTER" \
             -var vpc_id="$VPC_ID" \
             -var subnet_id="$SUBNET_ID" \
-            -color=false -on-error=cleanup .
+            -debug -color=false -on-error=cleanup .
