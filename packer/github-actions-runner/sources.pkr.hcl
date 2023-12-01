@@ -27,7 +27,7 @@ source "amazon-ebs" "github-actions-runner" {
   iam_instance_profile = "bcda-packer"
 
   tags = {
-    Name = "github-actions-runner-ami-build",
+    Name = "github-actions-runner-ami",
     Base_AMI_Name = "{{ .SourceAMIName }}"
   }
 }
