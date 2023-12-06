@@ -1,132 +1,131 @@
-data "aws_caller_identity" "current" {}
-# IAM role for the function
-resource "aws_iam_role" "opt_out_import_lambda_role" {
-  name = var.iam_role_name
-  #tags = local.tags
+data "aws_iam_policy_document" "lambda_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
 
-  assume_role_policy = <<-EOF
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Action": "sts:AssumeRole",
-        "Principal": {
-          "Service": "lambda.amazonaws.com"
-        },
-        "Effect": "Allow",
-        "Sid": ""
-      }
-    ]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
   }
-  EOF
 }
 
-resource "aws_iam_policy" "opt_out_import_lambda_policy" {
-  name = var.policy_name
-  description =  "Beneficiary Opt-Out Lambda Policy"  
-
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "AllowDecryption",
-            "Effect": "Allow",
-            "Action": [
-                "kms:Decrypt",
-                "kms:Encrypt"
-            ],
-            "Resource": [
-               "${aws_kms_key.env_vars_kms_key.arn}"
-            ]
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-              "logs:CreateLogGroup",
-              "logs:CreateLogStream",
-              "logs:PutLogEvents"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-              "ssm:GetParameters"
-            ],
-           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-              "ssm:GetParameters"
-            ],
-           "Resource": "arn:aws:ssm:us-east-1:${data.aws_caller_identity .current.account_id}:parameter/*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeNetworkInterfaces",
-                "ec2:CreateNetworkInterface",
-                "ec2:DeleteNetworkInterface"
-            ],
-            "Resource": "*"
-        },
-         {
-        "Effect" = "Allow",
-        Action = ["s3:GetObject", "s3:ListBucket"],
-        Resource = [
-          "arn:aws:s3:::"lambda-zip-file-storage-${var.account_number}-${var.team_name}"/*",
-          "arn:aws:s3:::"lambda-zip-file-storage-${var.account_number}-${var.team_name}"",
-        ],
-      },
-    ],
-}
-EOF
-}
-resource "aws_iam_role_policy_attachment" "opt_out_import_lambda" {
-  role       = aws_iam_role.opt_out_import_lambda_role.name
-  policy_arn = aws_iam_policy.opt_out_import_lambda_policy.arn
-}
-
-resource "aws_kms_key" "env_vars_kms_key" {
-  description = "opt-out-import-env-vars"
+resource "aws_kms_key" "env_vars" {
+  description             = "For ${var.function_name} lambda to decrypt and encrypt environment variables"
   deletion_window_in_days = 10
-  enable_key_rotation = true
+  enable_key_rotation     = true
 }
 
-resource "aws_kms_alias" "a" {
-  name = "alias/opt-out-import-env-vars"
-  target_key_id = aws_kms_key.env_vars_kms_key.key_id
+resource "aws_kms_alias" "env_vars" {
+  name          = "alias/${var.function_name}-env-vars"
+  target_key_id = aws_kms_key.env_vars.key_id
+}
+
+data "aws_caller_identity" "current" {}
+
+data "aws_iam_policy_document" "lambda_inline" {
+  statement {
+    actions   = ["ec2:DescribeAccountAttributes"]
+    resources = ["*"]
+  }
+  statement {
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+    ]
+    resources = [aws_kms_key.env_vars.arn]
+  }
+  statement {
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = ["*"]
+  }
+  statement {
+    actions = [
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:CreateNetworkInterface",
+      "ec2:DeleteNetworkInterface",
+    ]
+    resources = ["*"]
+  }
+  statement {
+    actions = [
+      "ssm:GetParameters",
+    ]
+    resources = ["arn:aws:ssm:us-east-1:${data.aws_caller_identity.current.account_id}:parameter/*"]
+  }
+}
+
+resource "aws_iam_role" "lambda" {
+  name = "${var.function_name}-lambda"
+  path = "/delegatedadmin/developer/"
+
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+
+  inline_policy {
+    name   = "default-lambda"
+    policy = data.aws_iam_policy_document.lambda_inline.json
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "managed_policies" {
+  count      = length(var.lambda_role_managed_policy_arns)
+  role       = aws_iam_role.lambda.name
+  policy_arn = element(var.lambda_role_managed_policy_arns, count.index)
 }
 
 resource "aws_s3_bucket" "lambda_zip_file" {
-  bucket = var.s3_bucket
-  acl    = "private"
-  versioning {
-    enabled = true
+  bucket = "${var.function_name}-lambda"
+}
+
+resource "aws_s3_bucket_versioning" "lambda_zip_file" {
+  bucket = aws_s3_bucket.lambda_zip_file.id
+
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
-resource "aws_lambda_function" "opt_out_import_lambda" {
-  description      = "Ingests the most recent beneficiary opt-out list from BFD"
-  function_name    = var.function_name
-  s3_key           = var.s3_object_key
-  s3_bucket        = var.s3_bucket
-  role             = var.role
-  handler          = var.handler
-  runtime          = var.runtime
-  kms_key_arn      = "arn:aws:kms:us-east-1:${var.account_number}:key/${var.team_name}-kms-key-arn"
+resource "aws_security_group" "lambda" {
+  count = length(var.security_group_ids) > 0 ? 0 : 1
+
+  name        = "${var.function_name}-lambda"
+  description = "For the ${var.function_name} lambda"
+  vpc_id      = var.vpc_id
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+}
+
+resource "aws_lambda_function" "this" {
+  description   = var.function_description
+  function_name = var.function_name
+  s3_key        = "function.zip"
+  s3_bucket     = aws_s3_bucket.lambda_zip_file.id
+  role          = aws_iam_role.lambda.arn
+  handler       = var.handler
+  runtime       = var.runtime
+  kms_key_arn   = aws_kms_key.env_vars.arn
+
   tracing_config {
     mode = "Active"
   }
 
   vpc_config {
     subnet_ids         = var.subnet_ids
-    security_group_ids = var.common_security_group_ids 
+    security_group_ids = length(var.security_group_ids) > 0 ? var.security_group_ids : [aws_security_group.lambda[0].id]
   }
 
   environment {
     variables = var.environment_variables
   }
-} 
+}

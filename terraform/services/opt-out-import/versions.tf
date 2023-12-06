@@ -3,7 +3,7 @@ provider "aws" {
   default_tags {
     tags = {
       business  = "oeda"
-      component = "opt-out-inbound"
+      component = "opt-out-import"
       Terraform = true
     }
   }
@@ -11,7 +11,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "opt-out-inbound/terraform.tfstate"
+    key = "opt-out-import/terraform.tfstate"
   }
   required_providers {
     aws = {
