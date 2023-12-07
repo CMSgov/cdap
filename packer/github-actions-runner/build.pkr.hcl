@@ -18,7 +18,7 @@ build {
     inline = concat([
       "sudo yum -y upgrade-minimal",
       "sudo yum -y install amazon-cloudwatch-agent jq git docker",
-      "sudo yum -y install --allowerasing curl",
+      "sudo yum -y install curl",
       "sudo systemctl enable docker.service",
       "sudo systemctl enable containerd.service",
       "sudo service docker start",
