@@ -4,6 +4,18 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "ami_filter" {
+  description = "The filter for searching the AMI"
+  type        = string
+  default     = null
+}
+
+variable "ami_account" {
+  description = "The target AMI account"
+  type        = string
+  default     = null
+}
+
 variable "instance_type" {
   description = "The instance type Packer will use for the builder"
   type        = string
@@ -12,6 +24,12 @@ variable "instance_type" {
 
 variable "security_group_id" {
   description = "The ID of the security group Packer will associate with the builder to enable access"
+  type        = string
+  default     = null
+}
+
+variable "vpc_id" {
+  description = "The name of the VPC where the instance will be launched"
   type        = string
   default     = null
 }
@@ -56,6 +74,11 @@ variable "custom_shell_commands" {
   description = "Additional commands to run on the EC2 instance, to customize the instance, like installing packages"
   type        = list(string)
   default     = []
+}
+
+variable "runner_version" {
+  description = "The version (no v prefix) of the runner software to install https://github.com/actions/runner/releases. The latest release will be fetched from GitHub if not provided."
+  default     = null
 }
 
 data "http" github_runner_release_json {

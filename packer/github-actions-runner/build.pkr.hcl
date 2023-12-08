@@ -16,9 +16,9 @@ build {
   provisioner "shell" {
     environment_vars = []
     inline = concat([
-      "sudo yum update -y",
-      "sudo yum install -y amazon-cloudwatch-agent curl jq git",
-      "sudo amazon-linux-extras install docker",
+      "sudo yum -y upgrade-minimal",
+      "sudo yum -y install amazon-cloudwatch-agent jq git docker",
+      "sudo yum -y install curl",
       "sudo systemctl enable docker.service",
       "sudo systemctl enable containerd.service",
       "sudo service docker start",
