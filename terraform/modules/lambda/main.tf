@@ -79,7 +79,7 @@ resource "aws_iam_role_policy_attachment" "managed_policies" {
 }
 
 resource "aws_s3_bucket" "lambda_zip_file" {
-  bucket = "${var.function_name}-lambda"
+  bucket_prefix = "${var.function_name}-lambda-"
 }
 
 resource "aws_s3_bucket_versioning" "lambda_zip_file" {
