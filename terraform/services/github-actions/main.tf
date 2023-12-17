@@ -81,11 +81,15 @@ module "github-actions" {
     evictionStrategy = "oldest_first"
   }]
 
+  # Set boot time to avoid terminating instances before user data is executed
+  # Defaults to 5 minutes
+  runner_boot_time_in_minutes = 10
+
   runner_iam_role_managed_policy_arns  = [aws_iam_policy.runner.arn]
   runner_additional_security_group_ids = [data.aws_security_group.vpn.id]
 
   instance_target_capacity_type = "on-demand"
   instance_types = [
-    "t3.medium",
+    "t3.large",
   ]
 }

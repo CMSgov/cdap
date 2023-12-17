@@ -1,6 +1,9 @@
 name: Build Runner EC2 Images
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/build-runner-images.yml
   schedule:
     # 00:00 on Monday each week
     - cron: "0 0 * * 1"
@@ -9,19 +12,39 @@ on:
 jobs:
   build-image:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     defaults:
       run:
         working-directory: packer/github-actions-runner
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      AMI_ACCOUNT: ${{ vars.RUNNER_AMI_ACCOUNT }}
+      AMI_FILTER: ${{ vars.RUNNER_AMI_FILTER }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: arn:aws:iam::${{ vars.RUNNER_ACCOUNT }}:role/github-to-aws-oidc
+          role-to-assume: ${{ vars.RUNNER_ACCOUNT_ROLE }}
           aws-region: us-east-1
+
+      - name: Retrieve default VPC ID and subnet
+        id: vpc
+        run: |
+          VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name, Values=bcda-managed-vpc" --query 'Vpcs[].VpcId' --output text)
+          echo "VPC_ID=$VPC_ID" >> "$GITHUB_ENV"
+
+          SUBNET_ID=$(aws ec2 describe-subnets \
+            --filters \
+              "Name=vpc-id,Values=$VPC_ID" \
+              "Name=tag:Layer,Values=app" \
+            --query 'Subnets[0].SubnetId' \
+            --output text)
+          echo "SUBNET_ID=$SUBNET_ID" >> "$GITHUB_ENV"
 
       - name: Setup `packer`
         uses: hashicorp/setup-packer@main
@@ -35,8 +58,20 @@ jobs:
 
       - name: Run `packer validate`
         id: validate
-        run: packer validate .
+        run: |
+          packer validate \
+            -var ami_account="$AMI_ACCOUNT" \
+            -var ami_filter="$AMI_FILTER" \
+            -var vpc_id="$VPC_ID" \
+            -var subnet_id="$SUBNET_ID" \
+            -evaluate-datasources .
 
       - name: Packer Build
         id: build
-        run: packer build -color=false -on-error=cleanup build.pkr.hcl
+        run: |
+          PACKER_LOG=1 packer build \
+            -var ami_account="$AMI_ACCOUNT" \
+            -var ami_filter="$AMI_FILTER" \
+            -var vpc_id="$VPC_ID" \
+            -var subnet_id="$SUBNET_ID" \
+            -color=false -on-error=cleanup .
