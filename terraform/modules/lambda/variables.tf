@@ -11,11 +11,13 @@ variable "function_description" {
 variable "handler" {
   description = "Lambda function handler"
   type        = string
+  default     = "lambda_handler"
 }
 
 variable "runtime" {
   description = "Lambda function runtime"
   type        = string
+  default     = "python3.11"
 }
 
 variable "vpc_id" {
@@ -44,4 +46,10 @@ variable "environment_variables" {
   description = "Map of environment variables for the Lambda function"
   type        = map(string)
   default     = {}
+}
+
+variable "create_function_zip" {
+  description = "Create the function zip file, necessary for initialization (defaults to true)"
+  type        = bool
+  default     = true
 }
