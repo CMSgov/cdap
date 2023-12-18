@@ -2,7 +2,7 @@ data "aws_iam_policy" "developer_boundary_policy" {
   name = "developer-boundary-policy"
 }
 
-data "aws_iam_policy_document" "github_actions_assume" {
+data "aws_iam_policy_document" "github_actions_deploy_assume" {
   statement {
     actions = ["sts:AssumeRole", "sts:TagSession"]
 
@@ -34,22 +34,23 @@ data "aws_iam_policy_document" "github_actions_assume" {
   }
 }
 
-data "aws_iam_policy_document" "github_actions_inline" {
+data "aws_iam_policy_document" "github_actions_deploy_inline" {
   statement {
     actions   = ["*"]
     resources = ["*"]
   }
 }
 
-resource "aws_iam_role" "github_actions" {
-  name = "github-actions"
+resource "aws_iam_role" "github_actions_deploy" {
+  name = "github-actions-deploy"
   path = "/delegatedadmin/developer/"
 
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
-  assume_role_policy   = data.aws_iam_policy_document.github_actions_assume.json
+
+  assume_role_policy = data.aws_iam_policy_document.github_actions_deploy_assume.json
 
   inline_policy {
-    name   = "github-actions"
-    policy = data.aws_iam_policy_document.github_actions_inline.json
+    name   = "github-actions-deploy"
+    policy = data.aws_iam_policy_document.github_actions_deploy_inline.json
   }
 }
