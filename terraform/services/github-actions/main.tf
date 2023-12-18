@@ -31,7 +31,7 @@ resource "aws_iam_policy" "runner" {
 
   description = "The runner has permission to assume the GitHub Actions deploy role in any account"
 
-  policy = data.aws_iam_policy_document.github_actions_runner_inline.json
+  policy = data.aws_iam_policy_document.runner.json
 }
 
 data "aws_security_group" "vpn" {
