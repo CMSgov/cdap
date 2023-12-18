@@ -1,4 +1,4 @@
-# Terraform for the GitHub Actions role in target accounts
+# Terraform for the GitHub Actions deploy role in target accounts
 
 This terraform code sets up the role for GitHub Actions to assume in target accounts (prod and non-prod) to deploy application and infrastructure changes.
 
