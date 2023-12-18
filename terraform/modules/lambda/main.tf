@@ -94,7 +94,7 @@ resource "aws_s3_object" "empty_function_zip" {
   count = var.create_function_zip ? 1 : 0
 
   bucket = aws_s3_bucket.lambda_zip_file.id
-  key = "function.zip"
+  key    = "function.zip"
   source = "${path.module}/dummy_function.zip"
 
   # This resource only exists to initialize the function, not manage it

@@ -1,11 +1,11 @@
 variable "function_name" {
   description = "Name of the lambda function"
-  type = string
+  type        = string
 }
 
 variable "function_description" {
   description = "Description of the lambda function"
-  type = string
+  type        = string
 }
 
 variable "handler" {
