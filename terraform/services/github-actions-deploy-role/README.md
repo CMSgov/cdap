@@ -7,7 +7,7 @@ This terraform code sets up the role for GitHub Actions to assume in target acco
 Pass in a backend file when running terraform init. Example:
 
 ```bash
-terraform init -backend-config=../../backends/ab2d-dev.s3.tfbackend
+terraform init -reconfigure -backend-config=../../backends/ab2d-dev.s3.tfbackend
 terraform plan
 terraform apply
 ```
