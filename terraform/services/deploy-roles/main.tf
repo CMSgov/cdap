@@ -2,11 +2,7 @@ data "aws_iam_policy" "developer_boundary_policy" {
   name = "developer-boundary-policy"
 }
 
-#
-# Runner role section
-#
-
-data "aws_iam_policy_document" "runner_assume" {
+data "aws_iam_policy_document" "github_actions_assume" {
   statement {
     actions = ["sts:AssumeRole", "sts:TagSession"]
 
@@ -15,33 +11,7 @@ data "aws_iam_policy_document" "runner_assume" {
       identifiers = [var.runner_arn]
     }
   }
-}
 
-data "aws_iam_policy_document" "runner_inline" {
-  statement {
-    actions   = ["*"]
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_role" "runner" {
-  name = "github-actions-runner"
-  path = "/delegatedadmin/developer/"
-
-  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
-  assume_role_policy   = data.aws_iam_policy_document.runner_assume.json
-
-  inline_policy {
-    name   = "all-within-boundary"
-    policy = data.aws_iam_policy_document.runner_inline.json
-  }
-}
-
-#
-# OIDC role section
-#
-
-data "aws_iam_policy_document" "oidc_assume" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
 
@@ -64,22 +34,22 @@ data "aws_iam_policy_document" "oidc_assume" {
   }
 }
 
-data "aws_iam_policy_document" "oidc_inline" {
+data "aws_iam_policy_document" "github_actions_inline" {
   statement {
     actions   = ["*"]
     resources = ["*"]
   }
 }
 
-resource "aws_iam_role" "oidc" {
-  name = "github-actions-oidc"
+resource "aws_iam_role" "github_actions" {
+  name = "github-actions"
   path = "/delegatedadmin/developer/"
 
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
-  assume_role_policy   = data.aws_iam_policy_document.oidc_assume.json
+  assume_role_policy   = data.aws_iam_policy_document.github_actions_assume.json
 
   inline_policy {
-    name   = "all-within-boundary"
-    policy = data.aws_iam_policy_document.oidc_inline.json
+    name   = "github-actions"
+    policy = data.aws_iam_policy_document.github_actions_inline.json
   }
 }
