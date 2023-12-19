@@ -23,29 +23,19 @@ data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "lambda_inline" {
   statement {
-    actions   = ["ec2:DescribeAccountAttributes"]
-    resources = ["*"]
-  }
-  statement {
     actions = [
+      "ec2:CreateNetworkInterface",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeAccountAttributes",
+      "ec2:DescribeNetworkInterfaces",
       "kms:Decrypt",
       "kms:Encrypt",
-    ]
-    resources = [aws_kms_key.env_vars.arn]
-  }
-  statement {
-    actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
-    ]
-    resources = ["*"]
-  }
-  statement {
-    actions = [
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:CreateNetworkInterface",
-      "ec2:DeleteNetworkInterface",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:ReceiveMessage",
     ]
     resources = ["*"]
   }
