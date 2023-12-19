@@ -1,5 +1,2 @@
 bucket         = "bcda-mgmt-tfstate"
 dynamodb_table = "bcda-mgmt-tfstate"
-region         = "us-east-1"
-encrypt        = true
-kms_key_id     = "alias/bcda-mgmt-tfstate"

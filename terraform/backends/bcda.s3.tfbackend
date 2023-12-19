@@ -1,5 +1,2 @@
 bucket         = "bcda-terraform-state"
-region         = "us-east-1"
 dynamodb_table = "bcda-terraform-table"
-encrypt        = true
-kms_key_id     = "alias/bcda-terraform-state"
