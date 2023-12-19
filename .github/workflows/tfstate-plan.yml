@@ -1,0 +1,59 @@
+name: Terraform plan for tfstate service
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/tfstate-plan.yml
+      - terraform/services/tfstate/**
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-terraform-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - run: terraform fmt -check -diff -recursive terraform/services/tfstate
+
+  terraform-plan:
+    needs: check-terraform-fmt
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform/services/tfstate
+    strategy:
+      matrix:
+        app: [ab2d, bcda, dpc]
+        environment: [dev, test, sbx, prod]
+        include:
+          - app: ab2d
+            env: dev
+            role: ${{ vars.AB2D_DEV_ROLE }}
+          - app: ab2d
+            env: test
+            role: ${{ vars.AB2D_TEST_ROLE }} # Maps to AB2D IMPL account
+          - app: ab2d
+            env: sbx
+            role: ${{ vars.AB2D_SBX_ROLE }}
+          - app: ab2d
+            env: prod
+            role: ${{ vars.AB2D_PROD_ROLE }}
+          - app: bcda
+            role: ${{ vars.BCDA_ROLE }}
+          - app: dpc
+            role: ${{ vars.BCDA_ROLE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ matrix.role }}
+          aws-region: us-east-1
+      - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: terraform plan
+        env:
+          TF_VAR_app: ${{ matrix.app }}
+          TF_VAR_env: ${{ matrix.env }}
