@@ -1,4 +1,4 @@
-name: Terraform plan for tfstate service
+name: Terraform plan for tfstate
 
 on:
   pull_request:

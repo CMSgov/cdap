@@ -1,12 +1,12 @@
-name: Terraform apply for opt-out-import
+name: Terraform apply for tfstate
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/opt-out-import-apply.yml
-      - terraform/services/opt-out-import/**
+      - .github/workflows/tfstate-apply.yml
+      - terraform/services/tfstate/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/opt-out-import
+        working-directory: ./terraform/services/tfstate
     strategy:
       matrix:
         app: [ab2d, bcda, dpc]
