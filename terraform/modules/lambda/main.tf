@@ -10,9 +10,8 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 resource "aws_kms_key" "env_vars" {
-  description             = "For ${var.function_name} lambda to decrypt and encrypt environment variables"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
+  description         = "For ${var.function_name} lambda to decrypt and encrypt environment variables"
+  enable_key_rotation = true
 }
 
 resource "aws_kms_alias" "env_vars" {
