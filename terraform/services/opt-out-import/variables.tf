@@ -26,7 +26,12 @@ variable "lambda_runtime" {
   type        = string
 }
 
-variable "bfd_bucket_role" {
-  description = "AWS account number for BFD"
+variable "bfd_bucket_role_arn" {
+  description = "ARN for the role to assume to access the BFD bucket"
+  type        = string
+}
+
+variable "bfd_sns_topic_arn" {
+  description = "ARN for the SNS topic set up by BFD to notify on file updates"
   type        = string
 }
