@@ -36,14 +36,9 @@ data "aws_iam_policy_document" "lambda_inline" {
       "sqs:DeleteMessage",
       "sqs:GetQueueAttributes",
       "sqs:ReceiveMessage",
-    ]
-    resources = ["*"]
-  }
-  statement {
-    actions = [
       "ssm:GetParameters",
     ]
-    resources = ["arn:aws:ssm:us-east-1:${data.aws_caller_identity.current.account_id}:parameter/*"]
+    resources = ["*"]
   }
 }
 
