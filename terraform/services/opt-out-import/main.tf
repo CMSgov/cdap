@@ -17,6 +17,21 @@ module "subnets" {
   layer    = "data"
 }
 
+data "aws_iam_policy_document" "assume_bucket_role" {
+  statement {
+    actions   = ["sts:AssumeRole"]
+    resources = [var.bfd_bucket_role_arn]
+  }
+}
+
+resource "aws_iam_policy" "assume_bucket_role" {
+  name = "${local.full_name}-assume-bucket-role"
+
+  description = "Allows the ${local.full_name} lambda role to assume the bucket role in the BFD account"
+
+  policy = data.aws_iam_policy_document.assume_bucket_role.json
+}
+
 module "opt_out_import_lambda" {
   source = "../../modules/lambda"
 
@@ -29,10 +44,11 @@ module "opt_out_import_lambda" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.subnets.subnet_ids
 
+  lambda_role_managed_policy_arns = [aws_iam_policy.assume_bucket_role.arn]
+
   environment_variables = {
-    ENV                 = var.app_env
-    APP_NAME            = "${var.app_team}-${var.app_env}-opt-out-import"
-    AWS_ASSUME_ROLE_ARN = var.bfd_bucket_role_arn
+    ENV      = var.app_env
+    APP_NAME = "${var.app_team}-${var.app_env}-opt-out-import"
   }
 }
 
