@@ -3,7 +3,7 @@ output "lambda_role_arn" {
 }
 
 output "sqs_queue_arn" {
-  value = aws_sqs_queue.file_updates.arn
+  value = module.opt_out_import_queue.arn
 }
 
 output "zip_file_bucket" {
