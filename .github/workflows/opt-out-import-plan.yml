@@ -32,7 +32,8 @@ jobs:
         env: [dev]
         include:
           - app: ab2d
-            caps_app: "AB2D"
+            handler: gov.cms.ab2d.optout.OptOutHandler
+            runtime: java11
           #- app: bcda
           #  role: ${{ vars.BCDA_ROLE }}
           #- app: dpc
