@@ -26,15 +26,17 @@ jobs:
         working-directory: ./terraform/services/opt-out-import
     strategy:
       matrix:
-        app: [ab2d, bcda, dpc]
-        environment: [dev, test, sbx, prod]
+        #app: [ab2d, bcda, dpc]
+        app: [ab2d]
+        #environment: [dev, test, sbx, prod]
+        environment: [dev]
         include:
           - app: ab2d
             role: ${{ vars.AB2D_ROLE }}
-          - app: bcda
-            role: ${{ vars.BCDA_ROLE }}
-          - app: dpc
-            role: ${{ vars.DPC_ROLE }}
+          #- app: bcda
+          #  role: ${{ vars.BCDA_ROLE }}
+          #- app: dpc
+          #  role: ${{ vars.DPC_ROLE }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
