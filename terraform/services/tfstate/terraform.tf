@@ -9,8 +9,8 @@ provider "aws" {
 }
 
 terraform {
-  # Uncomment backend and init with -backend-config to migrate to and manage remote state
-  #backend "s3" {
-  #  key = "tfstate/terraform.tfstate"
-  #}
+  # Comment out backend block and init without -backend-config for initial creation of resources
+  backend "s3" {
+    key = "tfstate/terraform.tfstate"
+  }
 }
