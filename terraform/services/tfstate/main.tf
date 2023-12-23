@@ -1,9 +1,8 @@
 data "aws_partition" "current" {}
 
 resource "aws_kms_key" "this" {
-  description             = "For ${var.name} bucket and table for terraform state"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
+  description         = "For ${var.name} bucket and table for terraform state"
+  enable_key_rotation = true
 }
 
 resource "aws_kms_alias" "this" {
