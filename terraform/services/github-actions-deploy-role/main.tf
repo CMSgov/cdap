@@ -1,10 +1,17 @@
-data "aws_iam_policy" "developer_boundary_policy" {
-  name = "developer-boundary-policy"
+locals {
+  provider_domain = "token.actions.githubusercontent.com"
+}
+
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://${local.provider_domain}"
 }
 
 data "aws_iam_policy_document" "github_actions_deploy_assume" {
   statement {
-    actions = ["sts:AssumeRole", "sts:TagSession"]
+    actions = [
+      "sts:AssumeRole",
+      "sts:TagSession",
+    ]
 
     principals {
       type        = "AWS"
@@ -13,25 +20,32 @@ data "aws_iam_policy_document" "github_actions_deploy_assume" {
   }
 
   statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
+    actions = [
+      "sts:AssumeRoleWithWebIdentity",
+      "sts:TagSession",
+    ]
 
     principals {
       type        = "Federated"
-      identifiers = [var.oidc_provider_arn]
+      identifiers = [data.aws_iam_openid_connect_provider.github.arn]
     }
 
     condition {
       test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
+      variable = "${local.provider_domain}:aud"
       values   = ["sts.amazonaws.com"]
     }
 
     condition {
       test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
+      variable = "${local.provider_domain}:sub"
       values   = ["repo:CMSgov/*"]
     }
   }
+}
+
+data "aws_iam_policy" "developer_boundary_policy" {
+  name = "developer-boundary-policy"
 }
 
 data "aws_iam_policy_document" "github_actions_deploy_inline" {
@@ -45,9 +59,9 @@ resource "aws_iam_role" "github_actions_deploy" {
   name = "${var.app_team}-${var.app_env}-github-actions-deploy"
   path = "/delegatedadmin/developer/"
 
-  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
-
   assume_role_policy = data.aws_iam_policy_document.github_actions_deploy_assume.json
+
+  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
 
   inline_policy {
     name   = "github-actions-deploy"
