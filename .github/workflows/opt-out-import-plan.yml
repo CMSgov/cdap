@@ -43,7 +43,16 @@ jobs:
           role-to-assume: ${{ matrix.role }}
           aws-region: us-east-1
       - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.environment }}.s3.tfbackend
+      - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            TF_VAR_bfd_bucket_role_arn=/opt-out-import/bfd-bucket-role-arn
+            TF_VAR_bfd_sns_topic_arn=/opt-out-import/bfd-sns-topic-arn
       - run: terraform plan
         env:
-          TF_VAR_app: ${{ matrix.app }}
-          TF_VAR_env: ${{ matrix.environment }}
+          TF_VAR_app_team: ${{ matrix.app }}
+          TF_VAR_app_env: ${{ matrix.environment }}
+          TF_VAR_lambda_handler: ${{ matrix.handler }}
+          TF_VAR_lambda_runtime: ${{ matrix.runtime }}
