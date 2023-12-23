@@ -28,8 +28,8 @@ jobs:
       matrix:
         #app: [ab2d, bcda, dpc]
         app: [ab2d]
-        #environment: [dev, test, sbx, prod]
-        environment: [dev]
+        #env: [dev, test, sbx, prod]
+        env: [dev]
         include:
           - app: ab2d
             role_var: "AB2D_ROLE"
@@ -37,6 +37,7 @@ jobs:
           #  role: ${{ vars.BCDA_ROLE }}
           #- app: dpc
           #  role: ${{ vars.DPC_ROLE }}
+    environment: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
@@ -44,7 +45,7 @@ jobs:
         with:
           role-to-assume: ${{ vars.AB2D_ROLE }}
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.environment }}.s3.tfbackend
+      - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
       - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -55,6 +56,6 @@ jobs:
       - run: terraform plan
         env:
           TF_VAR_app_team: ${{ matrix.app }}
-          TF_VAR_app_env: ${{ matrix.environment }}
+          TF_VAR_app_env: ${{ matrix.env }}
           TF_VAR_lambda_handler: ${{ matrix.handler }}
           TF_VAR_lambda_runtime: ${{ matrix.runtime }}
