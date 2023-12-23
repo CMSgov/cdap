@@ -25,6 +25,7 @@ jobs:
       run:
         working-directory: ./terraform/services/tfstate
     strategy:
+      fail-fast: false
       matrix:
         app: [ab2d, bcda, dpc]
         environment: [dev, test, sbx, prod]
