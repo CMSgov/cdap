@@ -42,8 +42,8 @@ jobs:
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ matrix.role }}
-          aws-region: us-east-1
+          role-to-assume: ${{ matrix.app }}
+          aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.environment }}.s3.tfbackend
       - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
