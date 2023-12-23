@@ -32,18 +32,18 @@ jobs:
         env: [dev]
         include:
           - app: ab2d
-            role: ${{ vars.AB2D_ROLE }}
+            caps_app: "AB2D"
           #- app: bcda
           #  role: ${{ vars.BCDA_ROLE }}
           #- app: dpc
           #  role: ${{ vars.DPC_ROLE }}
-    environment: ${{ matrix.env }}
+    environment: ${{ matrix.app }}-${{ matrix.env }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ matrix.role }}
+          role-to-assume: ${{ vars.DEPLOY_ROLE }}
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
       - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
