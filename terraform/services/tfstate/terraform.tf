@@ -2,8 +2,8 @@ provider "aws" {
   default_tags {
     tags = {
       Terraform = true
-      business = "oeda"
-      code = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/tfstate"
+      business  = "oeda"
+      code      = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/tfstate"
     }
   }
 }
