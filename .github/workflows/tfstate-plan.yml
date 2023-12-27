@@ -40,7 +40,7 @@ jobs:
         with:
           role-to-assume: ${{ vars.DEPLOY_ROLE }}
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
       - run: terraform plan
         env:
           TF_VAR_name: ${{ matrix.app }}-${{ matrix.env }}
