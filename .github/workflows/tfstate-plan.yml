@@ -43,4 +43,4 @@ jobs:
       - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
       - run: terraform plan
         env:
-          TF_VAR_name: ${{ matrix.app }}-${{ matrix.env }}
+          TF_VAR_name: ${{ matrix.app }}-${{ matrix.env }}-tfstate
