@@ -1,0 +1,44 @@
+name: Terraform plan for github-actions-deploy-role
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/github-actions-deploy-role-plan.yml
+      - terraform/services/github-actions-deploy-role/**
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  check-terraform-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - run: terraform fmt -check -diff -recursive terraform/services/github-actions-deploy-role
+
+  terraform-plan:
+    needs: check-terraform-fmt
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform/services/github-actions-deploy-role
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [ab2d, bcda, dpc]
+        env: [dev, test, sbx, prod]
+        include:
+          - app: bcda
+            env: mgmt
+    environment: ${{ matrix.app }}-${{ matrix.env }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ vars.DEPLOY_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: terraform init -backend-config=../../backends/${{ github.event.deployment.environment }}.s3.tfbackend
+      - run: terraform plan
