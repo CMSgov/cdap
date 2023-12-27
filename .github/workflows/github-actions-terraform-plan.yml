@@ -25,14 +25,15 @@ jobs:
     defaults:
       run:
         working-directory: ./terraform/services/github-actions
+    environment: bcda-mgmt
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ vars.RUNNER_ACCOUNT_ROLE }}
-          aws-region: us-east-1
-      - run: terraform init -reconfigure -backend-config=../../backends/bcda-mgmt.s3.tfbackend
+          role-to-assume: ${{ vars.DEPLOY_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: terraform init -backend-config=../../backends/${{ github.event.deployment.environment }}.s3.tfbackend
       - run: terraform plan
         env:
           TF_VAR_ami_account: ${{ vars.RUNNER_AMI_ACCOUNT }}
