@@ -34,5 +34,5 @@ jobs:
         with:
           role-to-assume: ${{ vars.DEPLOY_ROLE }}
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -backend-config=../../backends/${{ github.event.deployment.environment }}.s3.tfbackend
+      - run: terraform init -backend-config=../../backends/${{ matrix.app}}-${{ matrix.env }}.s3.tfbackend
       - run: terraform apply -auto-approve
