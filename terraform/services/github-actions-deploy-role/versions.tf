@@ -11,7 +11,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "github-actions/terraform.tfstate"
+    key = "github-actions-deploy-role/terraform.tfstate"
   }
   required_providers {
     aws = {

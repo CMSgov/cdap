@@ -6,7 +6,7 @@ This terraform outputs the `webhook_endpoint`, which must be updated in the GitH
 
 See variables.tf for input variables, which include info for the corresponding GitHub App and the AMI for the runners. Before applying this terraform, the lambda zip files must also be downloaded by applying terraform in the "lambdas-download" child directory.
 
-The terraform for this service is only applied to the "management" environment. Reference the bcda backend when initializing:
+The terraform for this service is only applied to the management environment in the bcda account:
 
-    terraform init -reconfigure -backend-config=../../backends/bcda.s3.tfbackend
+    terraform init -reconfigure -backend-config=../../backends/bcda-mgmt.s3.tfbackend
     terraform apply

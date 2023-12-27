@@ -19,23 +19,19 @@ data "aws_iam_policy" "developer_boundary_policy" {
   name = "developer-boundary-policy"
 }
 
+data "aws_iam_policy_document" "runner" {
+  statement {
+    actions   = ["sts:AssumeRole"]
+    resources = ["arn:aws:iam::*:role/delegatedadmin/developer/github-actions-deploy"]
+  }
+}
+
 resource "aws_iam_policy" "runner" {
   name = "github-actions-runner"
 
-  description = "Runner has access to everything within the permissions boundary to allow for terraform and other deploy steps"
+  description = "The runner has permission to assume the GitHub Actions deploy role in any account"
 
-  policy = <<EOT
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "*",
-      "Resource": "*"
-    }
-  ]
-}
-EOT
+  policy = data.aws_iam_policy_document.runner.json
 }
 
 data "aws_security_group" "vpn" {
