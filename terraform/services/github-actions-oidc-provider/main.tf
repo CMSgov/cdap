@@ -11,6 +11,6 @@ module "iam_github_oidc_provider" {
     business  = "oeda"
     code      = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/github-actions-oidc-provider"
     component = "github-actions"
-    Terraform = true
+    terraform = true
   }
 }

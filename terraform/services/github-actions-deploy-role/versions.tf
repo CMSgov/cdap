@@ -4,7 +4,7 @@ provider "aws" {
     tags = {
       business  = "oeda"
       component = "github-actions"
-      Terraform = true
+      terraform = true
     }
   }
 }
