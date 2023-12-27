@@ -1,2 +1,2 @@
-bucket         = "ab2d-sbx-sandbox-tfstate"
-dynamodb_table = "ab2d-sbx-sandbox-tfstate"
+bucket         = "ab2d-sbx-tfstate"
+dynamodb_table = "ab2d-sbx-tfstate"

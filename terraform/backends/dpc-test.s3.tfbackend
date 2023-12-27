@@ -1,0 +1,2 @@
+bucket         = "dpc-test-tfstate"
+dynamodb_table = "dpc-test-tfstate"

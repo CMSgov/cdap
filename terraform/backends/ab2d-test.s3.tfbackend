@@ -1,2 +1,2 @@
-bucket         = "ab2d-east-impl-tfstate"
-dynamodb_table = "ab2d-east-impl-tfstate"
+bucket         = "ab2d-test-tfstate"
+dynamodb_table = "ab2d-test-tfstate"

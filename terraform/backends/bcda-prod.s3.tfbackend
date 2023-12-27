@@ -1,0 +1,2 @@
+bucket         = "bcda-prod-tfstate"
+dynamodb_table = "bcda-prod-tfstate"

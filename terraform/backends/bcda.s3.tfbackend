@@ -1,2 +1,0 @@
-bucket         = "bcda-terraform-state"
-dynamodb_table = "bcda-terraform-table"
