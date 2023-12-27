@@ -1,0 +1,38 @@
+name: Terraform apply for github-actions-oidc-provider
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/github-actions-oidc-provider-apply.yml
+      - terraform/services/github-actions-oidc-provider/**
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  terraform-apply:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform/services/github-actions-oidc-provider
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [ab2d]
+        env: [dev, test, sbx, prod]
+        include:
+          - app: bcda
+            env: mgmt
+    environment: ${{ matrix.app }}-${{ matrix.env }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ vars.DEPLOY_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: terraform apply -auto-approve
