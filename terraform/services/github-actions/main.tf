@@ -22,7 +22,7 @@ data "aws_iam_policy" "developer_boundary_policy" {
 data "aws_iam_policy_document" "runner" {
   statement {
     actions   = ["sts:AssumeRole"]
-    resources = ["arn:aws:iam::*:role/delegatedadmin/developer/github-actions-deploy"]
+    resources = ["arn:aws:iam::*:role/delegatedadmin/developer/*-github-actions-deploy"]
   }
 }
 
