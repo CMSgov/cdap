@@ -28,6 +28,7 @@ data "aws_iam_policy_document" "runner" {
 
 resource "aws_iam_policy" "runner" {
   name = "github-actions-runner"
+  path = "/delegatedadmin/developer/"
 
   description = "The runner has permission to assume the GitHub Actions deploy role in any account"
 
