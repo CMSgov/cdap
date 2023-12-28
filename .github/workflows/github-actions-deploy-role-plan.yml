@@ -37,7 +37,7 @@ jobs:
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ vars[format('{0}_{1}_DEPLOY_ROLE, matrix.app, matrix.env)] }}
+          role-to-assume: ${{ vars[format('{0}_{1}_DEPLOY_ROLE', matrix.app, matrix.env)] }}
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -backend-config=../../backends/${{ matrix.app}}-${{ matrix.env }}.s3.tfbackend
       - run: terraform plan
