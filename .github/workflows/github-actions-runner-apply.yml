@@ -1,0 +1,40 @@
+name: Terraform apply for github-actions terraform
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/github-actions-terraform-apply.yml
+      - terraform/services/github-actions/**
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  terraform-apply:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform/services/github-actions
+    environment: bcda-mgmt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ vars.BCDA_MGMT_DEPLOY_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: terraform init -backend-config=../../backends/bcda-mgmt.s3.tfbackend
+      - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            TF_VAR_ami_account=/github-runner/ami-account
+            TF_VAR_ami_filter=/github-runner/ami-filter
+            TF_VAR_app_id=/github-runner/app-id
+            TF_VAR_key_base64=/github-runner/app-key-base64
+            TF_VAR_webhook_secret=/github-runner/webhook-secret
+      - run: terraform apply -auto-approve
