@@ -8,7 +8,7 @@ on:
     # 00:00 on Monday each week
     - cron: "0 0 * * 1"
   workflow_dispatch:
-    
+
 jobs:
   build-image:
     name: Build
@@ -29,7 +29,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ vars.RUNNER_ACCOUNT_ROLE }}
+          role-to-assume: ${{ vars.BCDA_MGMT_DEPLOY_ROLE }}
           aws-region: us-east-1
 
       - name: Retrieve default VPC ID and subnet
