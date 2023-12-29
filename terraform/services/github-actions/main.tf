@@ -22,12 +22,13 @@ data "aws_iam_policy" "developer_boundary_policy" {
 data "aws_iam_policy_document" "runner" {
   statement {
     actions   = ["sts:AssumeRole"]
-    resources = ["arn:aws:iam::*:role/delegatedadmin/developer/github-actions-deploy"]
+    resources = ["arn:aws:iam::*:role/delegatedadmin/developer/*-github-actions-deploy"]
   }
 }
 
 resource "aws_iam_policy" "runner" {
   name = "github-actions-runner"
+  path = "/delegatedadmin/developer/"
 
   description = "The runner has permission to assume the GitHub Actions deploy role in any account"
 
