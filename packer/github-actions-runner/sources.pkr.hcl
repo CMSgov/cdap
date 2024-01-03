@@ -24,7 +24,7 @@ source "amazon-ebs" "github-actions-runner" {
   ssh_username = "ec2-user"
   ssh_timeout = "1h"
   ssh_pty = true
-  iam_instance_profile = "bcda-packer"
+  iam_instance_profile = "bcda-mgmt-github-actions-deploy"
 
   tags = {
     Name = "github-actions-runner-ami",
