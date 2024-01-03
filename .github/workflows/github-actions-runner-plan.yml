@@ -1,11 +1,11 @@
-name: Terraform plan for github-actions terraform
+name: Terraform plan for github-actions-runner terraform
 
 on:
   pull_request:
     paths:
-      - .github/workflows/github-actions-terraform-plan.yml
+      - .github/workflows/github-actions-runner-plan.yml
       - actions/setup-tfenv-terraform/**
-      - terraform/services/github-actions/**
+      - terraform/services/github-actions-runner/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
-      - run: terraform fmt -check -diff -recursive ./terraform/services/github-actions
+      - run: terraform fmt -check -diff -recursive ./terraform/services/github-actions-runner
 
   terraform-plan:
     needs: check-terraform-fmt
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/github-actions
+        working-directory: ./terraform/services/github-actions-runner
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
