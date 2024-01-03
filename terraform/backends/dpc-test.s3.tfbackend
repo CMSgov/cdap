@@ -1,5 +1,2 @@
 bucket         = "dpc-test-tfstate"
-region         = "us-east-1"
-dynamodb_table = "dpc-test-terraform-table"
-encrypt        = true
-kms_key_id     = "alias/dpc-terraform-state"
+dynamodb_table = "dpc-test-tfstate"
