@@ -45,11 +45,6 @@ data "aws_security_group" "vpn" {
   }
 }
 
-moved {
-  from = module.github-actions
-  to   = module.github-actions-runner
-}
-
 module "github-actions-runner" {
   source  = "philips-labs/github-runner/aws"
   version = "4.1.1"
