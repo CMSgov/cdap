@@ -21,7 +21,7 @@ data "aws_iam_policy" "developer_boundary_policy" {
 
 data "aws_iam_policy_document" "runner" {
   statement {
-    actions   = [
+    actions = [
       "sts:AssumeRole",
       "sts:TagSession",
     ]
