@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/build-runner-images.yml
+      - packer/github-actions-runner
   schedule:
     # 00:00 on Monday each week
     - cron: "0 0 * * 1"
