@@ -68,3 +68,8 @@ resource "aws_iam_role" "github_actions_deploy" {
     policy = data.aws_iam_policy_document.github_actions_deploy_inline.json
   }
 }
+
+resource "aws_iam_instance_profile" "github_actions_deploy" {
+  name = "${var.app_team}-${var.app_env}-github-actions-deploy"
+  role = aws_iam_role.github_actions_deploy.name
+}
