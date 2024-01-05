@@ -24,6 +24,10 @@ data "aws_iam_policy_document" "runner" {
     actions   = ["sts:AssumeRole"]
     resources = ["arn:aws:iam::*:role/delegatedadmin/developer/*-github-actions-deploy"]
   }
+  statement {
+    actions = ["ssm:GetParameter"]
+    resources = ["*"]
+  }
 }
 
 # Due to the developer-boundary-policy permissions boundary, this policy cannot be created by
@@ -33,7 +37,7 @@ resource "aws_iam_policy" "runner" {
   name = "github-actions-runner"
   path = "/delegatedadmin/developer/"
 
-  description = "The runner has permission to assume the GitHub Actions deploy role in any account"
+  description = "The runner has permission to assume the GitHub Actions deploy role in any account and get individual parameters"
 
   policy = data.aws_iam_policy_document.runner.json
 }
