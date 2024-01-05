@@ -71,5 +71,6 @@ resource "aws_iam_role" "github_actions_deploy" {
 
 resource "aws_iam_instance_profile" "github_actions_deploy" {
   name = "${var.app_team}-${var.app_env}-github-actions-deploy"
+  path = "/delegatedadmin/developer/"
   role = aws_iam_role.github_actions_deploy.name
 }
