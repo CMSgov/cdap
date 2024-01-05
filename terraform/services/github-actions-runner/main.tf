@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "runner" {
     resources = ["arn:aws:iam::*:role/delegatedadmin/developer/*-github-actions-deploy"]
   }
   statement {
-    actions = ["ssm:GetParameters"]
+    actions   = ["ssm:GetParameters"]
     resources = ["*"]
   }
 }
