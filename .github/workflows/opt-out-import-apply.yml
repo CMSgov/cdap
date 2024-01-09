@@ -19,35 +19,38 @@ jobs:
       run:
         working-directory: ./terraform/services/opt-out-import
     strategy:
+      fail-fast: false
       matrix:
         app: [ab2d, bcda, dpc]
         env: [dev, test, sbx, prod]
         include:
           - app: ab2d
-            env: dev
-            role: ${{ vars.AB2D_DEV_ROLE }}
-          - app: ab2d
-            env: test
-            role: ${{ vars.AB2D_TEST_ROLE }} # Maps to AB2D IMPL account
-          - app: ab2d
-            env: sbx
-            role: ${{ vars.AB2D_SBX_ROLE }}
-          - app: ab2d
-            env: prod
-            role: ${{ vars.AB2D_PROD_ROLE }}
+            handler: gov.cms.ab2d.optout.OptOutHandler
+            runtime: java11
           - app: bcda
-            role: ${{ vars.BCDA_ROLE }}
+            handler: bootstrap
+            runtime: provided.al2
           - app: dpc
-            role: ${{ vars.BCDA_ROLE }}
+            handler: bootstrap
+            runtime: provided.al2
+    environment: ${{ matrix.app }}-${{ matrix.env }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ matrix.role }}
-          aws-region: us-east-1
+          role-to-assume: ${{ vars[format('{0}_{1}_DEPLOY_ROLE', matrix.app, matrix.env)] }}
+          aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: echo "BFD_ENV=${{ (matrix.env == 'dev' || matrix.env == 'test') && 'test' || 'prod' }}" >> "$GITHUB_ENV"
+      - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        with:
+          params: |
+            TF_VAR_bfd_bucket_role_arn=/opt-out-import/bfd-${{ env.BFD_ENV }}-bucket-role-arn
+            TF_VAR_bfd_sns_topic_arn=/opt-out-import/bfd-${{ env.BFD_ENV }}-sns-topic-arn
       - run: terraform apply -auto-approve
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
+          TF_VAR_lambda_handler: ${{ matrix.handler }}
+          TF_VAR_lambda_runtime: ${{ matrix.runtime }}
