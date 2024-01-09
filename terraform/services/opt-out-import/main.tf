@@ -26,6 +26,7 @@ data "aws_iam_policy_document" "assume_bucket_role" {
 
 resource "aws_iam_policy" "assume_bucket_role" {
   name = "${local.full_name}-assume-bucket-role"
+  path = "/delegatedadmin/developer/"
 
   description = "Allows the ${local.full_name} lambda role to assume the bucket role in the BFD account"
 
