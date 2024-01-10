@@ -25,10 +25,10 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "lambda_role_managed_policy_arns" {
-  description = "Attach AWS or customer-managed IAM policies (by ARN) to the lambda IAM role"
-  type        = list(string)
-  default     = []
+variable "lambda_role_inline_policies" {
+  description = "Inline policies (in JSON) for the lambda IAM role"
+  type        = map(string)
+  default     = {}
 }
 
 variable "subnet_ids" {

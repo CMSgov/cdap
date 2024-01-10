@@ -54,12 +54,14 @@ resource "aws_iam_role" "lambda" {
     name   = "default-lambda"
     policy = data.aws_iam_policy_document.lambda_inline.json
   }
-}
 
-resource "aws_iam_role_policy_attachment" "managed_policies" {
-  count      = length(var.lambda_role_managed_policy_arns)
-  role       = aws_iam_role.lambda.name
-  policy_arn = element(var.lambda_role_managed_policy_arns, count.index)
+  dynamic "inline_policy" {
+    for_each = var.lambda_role_inline_policies
+    content {
+      name   = inline_policy.key
+      policy = inline_policy.value
+    }
+  }
 }
 
 resource "aws_s3_bucket" "lambda_zip_file" {

@@ -24,15 +24,6 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
-resource "aws_iam_policy" "assume_bucket_role" {
-  name = "${local.full_name}-assume-bucket-role"
-  path = "/delegatedadmin/developer/"
-
-  description = "Allows the ${local.full_name} lambda role to assume the bucket role in the BFD account"
-
-  policy = data.aws_iam_policy_document.assume_bucket_role.json
-}
-
 module "opt_out_import_lambda" {
   source = "../../modules/lambda"
 
@@ -45,7 +36,9 @@ module "opt_out_import_lambda" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.subnets.subnet_ids
 
-  lambda_role_managed_policy_arns = [aws_iam_policy.assume_bucket_role.arn]
+  lambda_role_inline_policies = {
+    assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
+  }
 
   environment_variables = {
     ENV      = var.app_env
