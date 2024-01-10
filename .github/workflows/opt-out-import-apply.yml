@@ -42,15 +42,14 @@ jobs:
           role-to-assume: ${{ vars[format('{0}_{1}_DEPLOY_ROLE', matrix.app, matrix.env)] }}
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
-      - run: echo "BFD_ENV=${{ (matrix.env == 'dev' || matrix.env == 'test') && 'test' || 'prod' }}" >> "$GITHUB_ENV"
       - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         with:
           params: |
-            TF_VAR_bfd_bucket_role_arn=/opt-out-import/bfd-${{ env.BFD_ENV }}-bucket-role-arn
-            TF_VAR_bfd_sns_topic_arn=/opt-out-import/bfd-${{ env.BFD_ENV }}-sns-topic-arn
+            TF_VAR_bfd_bucket_role_arn=/opt-out-import/${{ matrix.app }}/${{ matrix.env }}/bfd-bucket-role-arn
+            TF_VAR_bfd_sns_topic_arn=/opt-out-import/${{ matrix.app }}/${{ matrix.env }}/bfd-sns-topic-arn
       - run: terraform apply -auto-approve
         env:
-          TF_VAR_app: ${{ matrix.app }}
-          TF_VAR_env: ${{ matrix.env }}
+          TF_VAR_app_team: ${{ matrix.app }}
+          TF_VAR_app_env: ${{ matrix.env }}
           TF_VAR_lambda_handler: ${{ matrix.handler }}
           TF_VAR_lambda_runtime: ${{ matrix.runtime }}
