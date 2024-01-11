@@ -17,8 +17,3 @@ variable "ami_account" {
   description = "Account number for AMI owner"
   type        = string
 }
-
-variable "ami_filter" {
-  description = "Name filter for AMI"
-  type        = string
-}
