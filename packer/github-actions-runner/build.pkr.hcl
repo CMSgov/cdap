@@ -47,6 +47,20 @@ build {
     ]
   }
 
+  provisioner "file" {
+    content = templatefile("../start-runner.sh", {
+      start_runner = templatefile("../start-runner.sh", { metadata_tags = "enabled" })
+    })
+    destination = "/tmp/start-runner.sh"
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo mv /tmp/start-runner.sh /var/lib/cloud/scripts/per-boot/start-runner.sh",
+      "sudo chmod +x /var/lib/cloud/scripts/per-boot/start-runner.sh",
+    ]
+  }
+
   post-processor "manifest" {
     output     = "manifest.json"
     strip_path = true
