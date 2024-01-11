@@ -72,7 +72,7 @@ module "github-actions-runner" {
 
   ami_owners = [var.ami_account]
   ami_filter = {
-    name  = [var.ami_filter],
+    name  = ["amzn2legacy-gi-*"],
     state = ["available"]
   }
 
