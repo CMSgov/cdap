@@ -8,5 +8,3 @@ terraform.tfstate*
 terraform.tfvars
 .terraform
 
-# macos cruft
-.DS_Store
