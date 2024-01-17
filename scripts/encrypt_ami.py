@@ -41,7 +41,6 @@ def create_encrypted_ami_copy(ami_id, region='us-east-1', description='Encrypted
 
     return new_ami_id
 
-
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python script.py <AMI_ID>")

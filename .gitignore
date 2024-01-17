@@ -7,4 +7,3 @@ node_modules
 terraform.tfstate*
 terraform.tfvars
 .terraform
-
