@@ -28,7 +28,7 @@ build {
 
 
   provisioner "file" {
-    content = templatefile("../install-runner.sh", {
+    content = templatefile("./install-runner.sh", {
       ARM_PATCH                       = ""
       S3_LOCATION_RUNNER_DISTRIBUTION = ""
       RUNNER_ARCHITECTURE             = "x64"
@@ -48,7 +48,7 @@ build {
   }
 
   provisioner "file" {
-    content = templatefile("../start-runner.sh", {
+    content = templatefile("./start-runner.sh", {
       start_runner = templatefile("../start-runner.sh", { metadata_tags = "enabled" })
     })
     destination = "/tmp/start-runner.sh"
