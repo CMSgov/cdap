@@ -28,6 +28,17 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
+# Prod and sbx deploy roles are only needed in the test environment
+data "aws_ssm_parameter" "prod_deploy_role_arn" {
+  count = var.app_env == "test" ? 1 : 0
+  name  = "/${var.app_team}/prod/deploy-role-arn"
+}
+
+data "aws_ssm_parameter" "sbx_deploy_role_arn" {
+  count = var.app_env == "test" ? 1 : 0
+  name  = "/${var.app_team}/sbx/deploy-role-arn"
+}
+
 module "opt_out_import_lambda" {
   source = "../../modules/lambda"
 
@@ -48,6 +59,11 @@ module "opt_out_import_lambda" {
     ENV      = var.app_env
     APP_NAME = "${var.app_team}-${var.app_env}-opt-out-import"
   }
+
+  promotion_roles = var.app_env != "test" ? [] : [
+    data.aws_ssm_parameter.prod_deploy_role_arn[0].value,
+    data.aws_ssm_parameter.sbx_deploy_role_arn[0].value,
+  ]
 }
 
 data "aws_ssm_parameter" "bfd_sns_topic_arn" {

@@ -76,6 +76,40 @@ resource "aws_s3_bucket_versioning" "lambda_zip_file" {
   }
 }
 
+# Bucket policy to allow promotion by deploy roles in upper environments
+data "aws_iam_policy_document" "allow_access_from_promotion_roles" {
+  count = length(var.promotion_roles) > 0 ? 1 : 0
+
+  statement {
+    sid = "DelegateS3Access"
+
+    principals {
+      type        = "AWS"
+      identifiers = var.promotion_roles
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectTagging",
+      "s3:GetObjectVersion",
+      "s3:GetObjectVersionTagging",
+      "s3:ListBucket",
+    ]
+
+    resources = [
+      aws_s3_bucket.lambda_zip_file.arn,
+      "${aws_s3_bucket.lambda_zip_file.arn}/*",
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "allow_access_from_promotion_roles" {
+  count = length(var.promotion_roles) > 0 ? 1 : 0
+
+  bucket = aws_s3_bucket.lambda_zip_file.id
+  policy = data.aws_iam_policy_document.allow_access_from_promotion_roles[0].json
+}
+
 resource "aws_s3_object" "empty_function_zip" {
   count = var.create_function_zip ? 1 : 0
 
