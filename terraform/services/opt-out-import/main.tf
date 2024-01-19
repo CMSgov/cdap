@@ -17,10 +17,14 @@ module "subnets" {
   layer    = "data"
 }
 
+data "aws_ssm_parameter" "bfd_bucket_role_arn" {
+  name = "/opt-out-import/${var.app_team}/${var.app_env}/bfd-bucket-role-arn"
+}
+
 data "aws_iam_policy_document" "assume_bucket_role" {
   statement {
     actions   = ["sts:AssumeRole"]
-    resources = [var.bfd_bucket_role_arn]
+    resources = [data.aws_ssm_parameter.bfd_bucket_role_arn.value]
   }
 }
 
@@ -30,8 +34,8 @@ module "opt_out_import_lambda" {
   function_name        = local.full_name
   function_description = "Ingests the most recent beneficiary opt-out list from BFD"
 
-  handler = var.lambda_handler
-  runtime = var.lambda_runtime
+  handler = var.app_team == "ab2d" ? "gov.cms.ab2d.optout.OptOutHandler" : "bootstrap"
+  runtime = var.app_team == "ab2d" ? "java11" : "provided.al2"
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.subnets.subnet_ids
@@ -46,11 +50,15 @@ module "opt_out_import_lambda" {
   }
 }
 
+data "aws_ssm_parameter" "bfd_sns_topic_arn" {
+  name = "/opt-out-import/${var.app_team}/${var.app_env}/bfd-sns-topic-arn"
+}
+
 module "opt_out_import_queue" {
   source = "../../modules/queue"
 
   name = local.full_name
 
   function_name = module.opt_out_import_lambda.function_name
-  sns_topic_arn = var.bfd_sns_topic_arn
+  sns_topic_arn = data.aws_ssm_parameter.bfd_sns_topic_arn.value
 }
