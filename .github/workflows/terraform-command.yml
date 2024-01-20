@@ -39,7 +39,7 @@ on:
         type: string
 
 jobs:
-  tf:
+  terraform-command:
     permissions:
       contents: read
       id-token: write
