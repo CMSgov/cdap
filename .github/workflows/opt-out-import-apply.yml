@@ -19,7 +19,7 @@ jobs:
       matrix:
         app: [ab2d, bcda, dpc]
         env: [dev, test, sbx, prod]
-    uses: ./.github/workflows/tf-cmd.yml@main
+    uses: ./.github/workflows/tf-cmd.yml
     with:
       app: ${{ matrix.app }}
       env: ${{ matrix.env }}
