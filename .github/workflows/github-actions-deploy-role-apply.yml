@@ -14,10 +14,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./terraform/services/github-actions-deploy-role
     strategy:
       fail-fast: false
       matrix:
@@ -26,17 +22,9 @@ jobs:
         include:
           - app: bcda
             env: mgmt
-    environment: ${{ matrix.app }}-${{ matrix.env }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./actions/setup-tfenv-terraform
-      - uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: ${{ vars[format('{0}_{1}_DEPLOY_ROLE', matrix.app, matrix.env)] }}
-          aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -backend-config=../../backends/${{ matrix.app}}-${{ matrix.env }}.s3.tfbackend
-      - run: terraform apply -auto-approve
-        env:
-          TF_VAR_app_team: ${{ matrix.app }}
-          TF_VAR_app_env: ${{ matrix.env }}
-          TF_VAR_runner_arn: ${{ vars.RUNNER_ROLE }}
+    uses: ./.github/workflows/terraform-command.yml
+    with:
+      app: ${{ matrix.app }}
+      env: ${{ matrix.env }}
+      dir: ./terraform/services/github-actions-deploy-role
+      cmd: apply -auto-approve
