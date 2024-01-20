@@ -6,6 +6,10 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://${local.provider_domain}"
 }
 
+data "aws_ssm_parameter" "github_runner_role_arn" {
+  name = "/github-runner/role-arn"
+}
+
 data "aws_iam_policy_document" "github_actions_deploy_assume" {
   statement {
     actions = [
@@ -15,7 +19,7 @@ data "aws_iam_policy_document" "github_actions_deploy_assume" {
 
     principals {
       type        = "AWS"
-      identifiers = [var.runner_arn]
+      identifiers = [data.aws_ssm_parameter.github_runner_role_arn.value]
     }
   }
 
@@ -56,7 +60,7 @@ data "aws_iam_policy_document" "github_actions_deploy_inline" {
 }
 
 resource "aws_iam_role" "github_actions_deploy" {
-  name = "${var.app_team}-${var.app_env}-github-actions-deploy"
+  name = "${var.app}-${var.env}-github-actions-deploy"
   path = "/delegatedadmin/developer/"
 
   assume_role_policy = data.aws_iam_policy_document.github_actions_deploy_assume.json

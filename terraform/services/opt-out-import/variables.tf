@@ -1,17 +1,17 @@
-variable "app_team" {
-  description = "The application team (ab2d, bcda, dpc)"
+variable "app" {
+  description = "The application name (ab2d, bcda, dpc)"
   type        = string
   validation {
-    condition     = contains(["ab2d", "bcda", "dpc"], var.app_team)
-    error_message = "Valid value for app_team is ab2d, bcda, or dpc."
+    condition     = contains(["ab2d", "bcda", "dpc"], var.app)
+    error_message = "Valid value for app is ab2d, bcda, or dpc."
   }
 }
 
-variable "app_env" {
+variable "env" {
   description = "The application environment (dev, test, sbx, prod)"
   type        = string
   validation {
-    condition     = contains(["dev", "test", "sbx", "prod"], var.app_env)
-    error_message = "Valid value for app_env is dev, test, sbx, or prod."
+    condition     = contains(["dev", "test", "sbx", "prod"], var.env)
+    error_message = "Valid value for env is dev, test, sbx, or prod."
   }
 }

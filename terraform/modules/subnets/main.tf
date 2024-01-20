@@ -4,14 +4,14 @@ data "aws_subnets" "this" {
     values = [var.vpc_id]
   }
   dynamic "filter" {
-    for_each = var.app_team == "bcda" || var.app_team == "dpc" ? [1] : []
+    for_each = var.app == "bcda" || var.app == "dpc" ? [1] : []
     content {
       name   = "tag:Layer"
       values = [var.layer]
     }
   }
   dynamic "filter" {
-    for_each = var.app_team == "ab2d" ? [1] : []
+    for_each = var.app == "ab2d" ? [1] : []
     content {
       name   = "tag:use"
       values = [var.use]
