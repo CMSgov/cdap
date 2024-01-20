@@ -57,5 +57,5 @@ jobs:
       - run: terraform init -reconfigure -backend-config=../../backends/${{ inputs.app }}-${{ inputs.env }}.s3.tfbackend
       - run: terraform ${{ inputs.cmd }}
         env:
-          TF_VAR_app: ${{ matrix.app }}
-          TF_VAR_env: ${{ matrix.env }}
+          TF_VAR_app: ${{ inputs.app }}
+          TF_VAR_env: ${{ inputs.env }}
