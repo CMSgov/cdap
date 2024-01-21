@@ -76,38 +76,75 @@ resource "aws_s3_bucket_versioning" "lambda_zip_file" {
   }
 }
 
-# Bucket policy to allow promotion by deploy roles in upper environments
-data "aws_iam_policy_document" "allow_access_from_promotion_roles" {
-  count = length(var.promotion_roles) > 0 ? 1 : 0
+# Prod and sbx deploy roles are only needed in the test environment
+data "aws_ssm_parameter" "prod_deploy_role_arn" {
+  count = var.env == "test" ? 1 : 0
+  name  = "/${var.app}/prod/deploy-role-arn"
+}
 
+data "aws_ssm_parameter" "sbx_deploy_role_arn" {
+  count = var.env == "test" ? 1 : 0
+  name  = "/${var.app}/sbx/deploy-role-arn"
+}
+
+# Bucket policy to allow promotion by deploy roles in upper environments
+data "aws_iam_policy_document" "lambda_zip_file" {
   statement {
-    sid = "DelegateS3Access"
+    sid = "AllowSSLRequestsOnly"
+
+    effect = "Deny"
 
     principals {
       type        = "AWS"
-      identifiers = var.promotion_roles
+      identifiers = ["*"]
     }
 
-    actions = [
-      "s3:GetObject",
-      "s3:GetObjectTagging",
-      "s3:GetObjectVersion",
-      "s3:GetObjectVersionTagging",
-      "s3:ListBucket",
-    ]
+    actions = ["s3:*"]
 
     resources = [
       aws_s3_bucket.lambda_zip_file.arn,
       "${aws_s3_bucket.lambda_zip_file.arn}/*",
     ]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = var.env == "test" ? [1] : []
+    content {
+      sid = "DelegateS3Access"
+
+      principals {
+        type = "AWS"
+        identifiers = [
+          data.aws_ssm_parameter.prod_deploy_role_arn[0].value,
+          data.aws_ssm_parameter.sbx_deploy_role_arn[0].value,
+        ]
+      }
+
+      actions = [
+        "s3:GetObject",
+        "s3:GetObjectTagging",
+        "s3:GetObjectVersion",
+        "s3:GetObjectVersionTagging",
+        "s3:ListBucket",
+      ]
+
+      resources = [
+        aws_s3_bucket.lambda_zip_file.arn,
+        "${aws_s3_bucket.lambda_zip_file.arn}/*",
+      ]
+    }
   }
 }
 
-resource "aws_s3_bucket_policy" "allow_access_from_promotion_roles" {
-  count = length(var.promotion_roles) > 0 ? 1 : 0
-
+resource "aws_s3_bucket_policy" "lambda_zip_file" {
   bucket = aws_s3_bucket.lambda_zip_file.id
-  policy = data.aws_iam_policy_document.allow_access_from_promotion_roles[0].json
+  policy = data.aws_iam_policy_document.lambda_zip_file.json
 }
 
 resource "aws_s3_object" "empty_function_zip" {
@@ -123,12 +160,27 @@ resource "aws_s3_object" "empty_function_zip" {
   }
 }
 
+module "vpc" {
+  source = "../vpc"
+
+  app = var.app
+  env = var.env
+}
+
+module "subnets" {
+  source = "../subnets"
+
+  vpc_id = module.vpc.vpc_id
+  app    = var.app
+  layer  = "data"
+}
+
 resource "aws_security_group" "lambda" {
   count = length(var.security_group_ids) > 0 ? 0 : 1
 
   name        = "${var.function_name}-lambda"
   description = "For the ${var.function_name} lambda"
-  vpc_id      = var.vpc_id
+  vpc_id      = module.vpc.vpc_id
 
   egress {
     from_port        = 0
@@ -154,7 +206,7 @@ resource "aws_lambda_function" "this" {
   }
 
   vpc_config {
-    subnet_ids         = var.subnet_ids
+    subnet_ids         = module.subnets.subnet_ids
     security_group_ids = length(var.security_group_ids) > 0 ? var.security_group_ids : [aws_security_group.lambda[0].id]
   }
 

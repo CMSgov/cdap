@@ -1,3 +1,21 @@
+variable "app" {
+  description = "The application name (ab2d, bcda, dpc)"
+  type        = string
+  validation {
+    condition     = contains(["ab2d", "bcda", "dpc"], var.app)
+    error_message = "Valid value for app is ab2d, bcda, or dpc."
+  }
+}
+
+variable "env" {
+  description = "The application environment (dev, test, sbx, prod)"
+  type        = string
+  validation {
+    condition     = contains(["dev", "test", "sbx", "prod"], var.env)
+    error_message = "Valid value for env is dev, test, sbx, or prod."
+  }
+}
+
 variable "function_name" {
   description = "Name of the lambda function"
   type        = string
@@ -20,20 +38,10 @@ variable "runtime" {
   default     = "python3.11"
 }
 
-variable "vpc_id" {
-  description = "ID for the AWS VPC"
-  type        = string
-}
-
 variable "lambda_role_inline_policies" {
   description = "Inline policies (in JSON) for the lambda IAM role"
   type        = map(string)
   default     = {}
-}
-
-variable "subnet_ids" {
-  description = "List of subnet IDs for the Lambda function"
-  type        = list(string)
 }
 
 variable "security_group_ids" {
