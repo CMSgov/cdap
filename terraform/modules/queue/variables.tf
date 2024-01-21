@@ -11,4 +11,7 @@ variable "function_name" {
 variable "sns_topic_arn" {
   description = "ARN of the SNS topic to subscribe to"
   type        = string
+  # Setting default to "None" allows us to set the AWS Parameter Store value
+  # to "None" to disable creation of SNS Topic Subscription
+  default     = "None"
 }
