@@ -4,7 +4,7 @@ set -ex
 
 # Only bcda and dpc for now since each ab2d env is in its own account
 apps="bcda dpc"
-envs="dev test prod sbx"
+envs="test dev prod sbx"
 
 for app in $apps; do
   export TF_VAR_app=$app
