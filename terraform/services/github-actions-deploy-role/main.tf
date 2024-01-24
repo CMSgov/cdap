@@ -48,8 +48,8 @@ data "aws_iam_policy_document" "github_actions_deploy_assume" {
   }
 }
 
-data "aws_iam_policy" "developer_boundary_policy" {
-  name = "developer-boundary-policy"
+data "aws_iam_policy" "poweruser_boundary" {
+  name = "ct-ado-poweruser-permissions-boundary-policy"
 }
 
 data "aws_iam_policy_document" "github_actions_deploy_inline" {
@@ -65,7 +65,7 @@ resource "aws_iam_role" "github_actions_deploy" {
 
   assume_role_policy = data.aws_iam_policy_document.github_actions_deploy_assume.json
 
-  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
+  permissions_boundary = data.aws_iam_policy.poweruser_boundary.arn
 
   inline_policy {
     name   = "github-actions-deploy"
