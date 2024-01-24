@@ -2,18 +2,18 @@ data "aws_vpc" "this" {
   filter {
     name = "tag:stack"
     values = [
-      var.app_env == "sbx" && var.app_team == "ab2d" ? "sandbox" :
-      var.app_env == "sbx" && var.app_team == "bcda" ? "opensbx" :
-      var.app_env == "sbx" && var.app_team == "dpc" ? "prod-sbx" :
-      var.app_env == "test" && var.app_team == "ab2d" ? "impl" :
-      var.app_env
+      var.env == "sbx" && var.app == "ab2d" ? "sandbox" :
+      var.env == "sbx" && var.app == "bcda" ? "opensbx" :
+      var.env == "sbx" && var.app == "dpc" ? "prod-sbx" :
+      var.env == "test" && var.app == "ab2d" ? "impl" :
+      var.env
     ]
   }
   dynamic "filter" {
-    for_each = var.app_team == "bcda" || var.app_team == "dpc" ? [1] : []
+    for_each = var.app == "bcda" || var.app == "dpc" ? [1] : []
     content {
       name   = "tag:application"
-      values = [var.app_team]
+      values = [var.app]
     }
   }
 }

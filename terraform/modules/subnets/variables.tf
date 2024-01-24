@@ -3,12 +3,12 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "app_team" {
-  description = "The application team (ab2d, bcda, dpc)"
+variable "app" {
+  description = "The application name (ab2d, bcda, dpc)"
   type        = string
   validation {
-    condition     = contains(["ab2d", "bcda", "dpc"], var.app_team)
-    error_message = "Valid value for app_team is ab2d, bcda, or dpc."
+    condition     = contains(["ab2d", "bcda", "dpc"], var.app)
+    error_message = "Valid value for app is ab2d, bcda, or dpc."
   }
 }
 

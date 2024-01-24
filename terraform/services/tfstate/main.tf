@@ -10,9 +10,13 @@ resource "aws_kms_alias" "this" {
   target_key_id = aws_kms_key.this.key_id
 }
 
+resource "aws_s3_bucket" "this" {
+  bucket = var.name
+}
+
 data "aws_iam_policy_document" "tls_only" {
   statement {
-    sid = "enforce-tls-requests-only"
+    sid = "AllowSSLRequestsOnly"
 
     effect = "Deny"
 
@@ -24,8 +28,8 @@ data "aws_iam_policy_document" "tls_only" {
     actions = ["s3:*"]
 
     resources = [
-      "arn:${data.aws_partition.current.partition}:s3:::${var.name}",
-      "arn:${data.aws_partition.current.partition}:s3:::${var.name}/*"
+      aws_s3_bucket.this.arn,
+      "${aws_s3_bucket.this.arn}/*",
     ]
 
     condition {
@@ -34,10 +38,6 @@ data "aws_iam_policy_document" "tls_only" {
       values   = ["false"]
     }
   }
-}
-
-resource "aws_s3_bucket" "this" {
-  bucket = var.name
 }
 
 resource "aws_s3_bucket_policy" "this" {

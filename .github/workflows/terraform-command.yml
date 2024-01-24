@@ -1,0 +1,61 @@
+name: Run a terraform command in a directory
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: Application name (ab2d, bcda, dpc, etc.)
+        required: true
+        type: string
+      env:
+        description: Application environment (dev, test, prod, sbx)
+        required: true
+        type: string
+      dir:
+        description: Terraform execution directory
+        required: true
+        type: string
+      cmd:
+        description: Terraform subcommand
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Application name (ab2d, bcda, dpc, etc.)
+        required: true
+        type: string
+      env:
+        description: Application environment (dev, test, prod, sbx)
+        required: true
+        type: string
+      dir:
+        description: Terraform execution directory
+        required: true
+        type: string
+      cmd:
+        description: Terraform subcommand
+        required: true
+        type: string
+
+jobs:
+  terraform-command:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ vars[format('{0}_{1}_DEPLOY_ROLE', inputs.app, inputs.env)] }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: terraform init -reconfigure -backend-config=../../backends/${{ inputs.app }}-${{ inputs.env }}.s3.tfbackend
+      - run: terraform ${{ inputs.cmd }}
+        env:
+          TF_VAR_app: ${{ inputs.app }}
+          TF_VAR_env: ${{ inputs.env }}

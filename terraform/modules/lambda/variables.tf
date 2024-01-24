@@ -1,3 +1,21 @@
+variable "app" {
+  description = "The application name (ab2d, bcda, dpc)"
+  type        = string
+  validation {
+    condition     = contains(["ab2d", "bcda", "dpc"], var.app)
+    error_message = "Valid value for app is ab2d, bcda, or dpc."
+  }
+}
+
+variable "env" {
+  description = "The application environment (dev, test, sbx, prod)"
+  type        = string
+  validation {
+    condition     = contains(["dev", "test", "sbx", "prod"], var.env)
+    error_message = "Valid value for env is dev, test, sbx, or prod."
+  }
+}
+
 variable "function_name" {
   description = "Name of the lambda function"
   type        = string
@@ -20,20 +38,10 @@ variable "runtime" {
   default     = "python3.11"
 }
 
-variable "vpc_id" {
-  description = "ID for the AWS VPC"
-  type        = string
-}
-
-variable "lambda_role_managed_policy_arns" {
-  description = "Attach AWS or customer-managed IAM policies (by ARN) to the lambda IAM role"
-  type        = list(string)
-  default     = []
-}
-
-variable "subnet_ids" {
-  description = "List of subnet IDs for the Lambda function"
-  type        = list(string)
+variable "lambda_role_inline_policies" {
+  description = "Inline policies (in JSON) for the lambda IAM role"
+  type        = map(string)
+  default     = {}
 }
 
 variable "security_group_ids" {
@@ -46,6 +54,12 @@ variable "environment_variables" {
   description = "Map of environment variables for the Lambda function"
   type        = map(string)
   default     = {}
+}
+
+variable "promotion_roles" {
+  description = "List of ARNs to allow access for deploy roles to promote lambda zip files to upper environments"
+  type        = list(string)
+  default     = []
 }
 
 variable "create_function_zip" {
