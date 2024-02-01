@@ -28,7 +28,7 @@ build {
 
 
   provisioner "file" {
-    content = templatefile("../install-runner.sh", {
+    content = templatefile("./install-runner.sh", {
       ARM_PATCH                       = ""
       S3_LOCATION_RUNNER_DISTRIBUTION = "s3://github-actions-dist-moak942ksb57xwc2f8544gmi/actions-runner-linux.tar.gz"
       RUNNER_ARCHITECTURE             = "x64"
@@ -44,6 +44,18 @@ build {
       "sudo chmod +x /tmp/install-runner.sh",
       "echo ec2-user > /tmp/install-user.txt",
       "sudo RUNNER_ARCHITECTURE=x64 RUNNER_TARBALL_URL=$RUNNER_TARBALL_URL /tmp/install-runner.sh"
+    ]
+  }
+
+  provisioner "file" {
+    content = templatefile("./start-runner.sh", { metadata_tags = "enabled" })
+    destination = "/tmp/start-runner.sh"
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo mv /tmp/start-runner.sh /var/lib/cloud/scripts/per-boot/start-runner.sh",
+      "sudo chmod +x /var/lib/cloud/scripts/per-boot/start-runner.sh",
     ]
   }
 

@@ -1,12 +1,12 @@
-name: Terraform apply for opt-out-import
+name: Terraform apply for github-actions-oidc-provider
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/opt-out-import-apply.yml
-      - terraform/services/opt-out-import/**
+      - .github/workflows/github-actions-oidc-provider-apply.yml
+      - terraform/services/github-actions-oidc-provider/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -17,11 +17,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d, bcda, dpc]
+        app: [ab2d]
         env: [dev, test, sbx, prod]
+        include:
+          - app: bcda
+            env: mgmt
     uses: ./.github/workflows/terraform-command.yml
     with:
       app: ${{ matrix.app }}
       env: ${{ matrix.env }}
-      dir: ./terraform/services/opt-out-import
+      dir: ./terraform/services/github-actions-oidc-provider
       cmd: apply -auto-approve

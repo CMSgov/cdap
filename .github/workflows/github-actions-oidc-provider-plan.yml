@@ -1,10 +1,10 @@
-name: Terraform plan for opt-out-import
+name: Terraform plan for github-actions-oidc-provider
 
 on:
   pull_request:
     paths:
-      - .github/workflows/opt-out-import-plan.yml
-      - terraform/services/opt-out-import/**
+      - .github/workflows/github-actions-oidc-provider-plan.yml
+      - terraform/services/github-actions-oidc-provider/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
-      - run: terraform fmt -check -diff -recursive terraform/services/opt-out-import
+      - run: terraform fmt -check -diff -recursive terraform/services/github-actions-oidc-provider
 
   terraform-plan:
     needs: check-terraform-fmt
@@ -23,11 +23,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d, bcda, dpc]
+        app: [ab2d]
         env: [dev, test, sbx, prod]
+        include:
+          - app: bcda
+            env: mgmt
     uses: ./.github/workflows/terraform-command.yml
     with:
       app: ${{ matrix.app }}
       env: ${{ matrix.env }}
-      dir: ./terraform/services/opt-out-import
+      dir: ./terraform/services/github-actions-oidc-provider
       cmd: plan

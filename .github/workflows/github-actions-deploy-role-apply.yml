@@ -1,12 +1,12 @@
-name: Terraform apply for opt-out-import
+name: Terraform apply for github-actions-deploy-role
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/opt-out-import-apply.yml
-      - terraform/services/opt-out-import/**
+      - .github/workflows/github-actions-deploy-role-apply.yml
+      - terraform/services/github-actions-deploy-role/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -19,9 +19,12 @@ jobs:
       matrix:
         app: [ab2d, bcda, dpc]
         env: [dev, test, sbx, prod]
+        include:
+          - app: bcda
+            env: mgmt
     uses: ./.github/workflows/terraform-command.yml
     with:
       app: ${{ matrix.app }}
       env: ${{ matrix.env }}
-      dir: ./terraform/services/opt-out-import
+      dir: ./terraform/services/github-actions-deploy-role
       cmd: apply -auto-approve

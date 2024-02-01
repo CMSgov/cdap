@@ -4,11 +4,12 @@ on:
   pull_request:
     paths:
       - .github/workflows/build-runner-images.yml
+      - packer/github-actions-runner/**
   schedule:
     # 00:00 on Monday each week
     - cron: "0 0 * * 1"
   workflow_dispatch:
-    
+
 jobs:
   build-image:
     name: Build
@@ -19,9 +20,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-    env:
-      AMI_ACCOUNT: ${{ vars.RUNNER_AMI_ACCOUNT }}
-      AMI_FILTER: ${{ vars.RUNNER_AMI_FILTER }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -29,8 +27,14 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ vars.RUNNER_ACCOUNT_ROLE }}
-          aws-region: us-east-1
+          role-to-assume: ${{ vars.BCDA_MGMT_DEPLOY_ROLE }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        with:
+          params: |
+            AMI_ACCOUNT=/github-runner/gold-image-account
+            AMI_FILTER=/github-runner/gold-image-filter
 
       - name: Retrieve default VPC ID and subnet
         id: vpc
