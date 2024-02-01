@@ -33,8 +33,8 @@ jobs:
       - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         with:
           params: |
-            AMI_ACCOUNT=/github-runner/ami-account
-            AMI_FILTER="github-actions-runner-*"
+            AMI_ACCOUNT=/github-runner/gold-image-account
+            AMI_FILTER=/github-runner/gold-image-filter
 
       - name: Retrieve default VPC ID and subnet
         id: vpc
