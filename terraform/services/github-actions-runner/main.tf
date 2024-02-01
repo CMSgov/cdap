@@ -72,7 +72,7 @@ module "github-actions-runner" {
 
   ami_owners = [var.ami_account]
   ami_filter = {
-    name  = ["amzn2legacy-gi-*"],
+    name  = ["github-actions-runner-*"],
     state = ["available"]
   }
 
@@ -80,7 +80,7 @@ module "github-actions-runner" {
   role_permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
 
   enable_ssm_on_runners = true
-  enable_userdata       = true
+  enable_userdata       = false
 
   idle_config = [{
     cron             = "* * 9-17 * * 1-5"
