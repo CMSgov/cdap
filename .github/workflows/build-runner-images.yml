@@ -35,6 +35,7 @@ jobs:
           params: |
             AMI_ACCOUNT=/github-runner/gold-image-account
             AMI_FILTER=/github-runner/gold-image-filter
+            S3_TARBALL=/github-runner/s3-tarball
 
       - name: Retrieve default VPC ID and subnet
         id: vpc
@@ -68,6 +69,7 @@ jobs:
             -var ami_filter="$AMI_FILTER" \
             -var vpc_id="$VPC_ID" \
             -var subnet_id="$SUBNET_ID" \
+            -var s3_tarball="$S3_TARBALL" \
             -evaluate-datasources .
 
       - name: Packer Build
@@ -78,4 +80,5 @@ jobs:
             -var ami_filter="$AMI_FILTER" \
             -var vpc_id="$VPC_ID" \
             -var subnet_id="$SUBNET_ID" \
+            -var s3_tarball="$S3_TARBALL" \
             -color=false -on-error=cleanup .

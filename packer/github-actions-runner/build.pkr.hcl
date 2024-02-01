@@ -30,20 +30,17 @@ build {
   provisioner "file" {
     content = templatefile("./install-runner.sh", {
       ARM_PATCH                       = ""
-      S3_LOCATION_RUNNER_DISTRIBUTION = "s3://github-actions-dist-moak942ksb57xwc2f8544gmi/actions-runner-linux.tar.gz"
+      S3_LOCATION_RUNNER_DISTRIBUTION = var.s3_tarball
       RUNNER_ARCHITECTURE             = "x64"
     })
     destination = "/tmp/install-runner.sh"
   }
 
   provisioner "shell" {
-    // environment_vars = [
-    //   "RUNNER_TARBALL_URL=https://github.com/actions/runner/releases/download/v${local.runner_version}/actions-runner-linux-x64-${local.runner_version}.tar.gz"
-    // ]
     inline = [
       "sudo chmod +x /tmp/install-runner.sh",
       "echo ec2-user > /tmp/install-user.txt",
-      "sudo RUNNER_ARCHITECTURE=x64 RUNNER_TARBALL_URL=$RUNNER_TARBALL_URL /tmp/install-runner.sh"
+      "sudo /tmp/install-runner.sh"
     ]
   }
 

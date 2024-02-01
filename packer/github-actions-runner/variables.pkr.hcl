@@ -16,6 +16,12 @@ variable "ami_account" {
   default     = null
 }
 
+variable "s3_tarball" {
+  description = "The target S3 bucket for the Github Runner Agent"
+  type        = string
+  default     = null
+}
+
 variable "instance_type" {
   description = "The instance type Packer will use for the builder"
   type        = string
