@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       env:
-        description: Application environment (dev, test, prod, sbx)
+        description: Application environment (dev, test, prod, sbx, mgmt)
         required: true
         type: string
       dir:
