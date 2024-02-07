@@ -25,6 +25,15 @@ source "amazon-ebs" "github-actions-runner" {
   ssh_timeout = "1h"
   ssh_pty = true
 
+  # enforces IMDSv2 support on the running instance being provisioned by Packer
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens = "required"
+    http_put_response_hop_limit = 1
+  }
+  # enforces IMDSv2 support on the resulting AMI
+  imds_support = "v2.0"
+
   tags = {
     Name = "github-actions-runner-ami",
     Base_AMI_Name = "{{ .SourceAMIName }}"
