@@ -33,15 +33,15 @@ jobs:
       - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         with:
           params: |
-            AMI_ACCOUNT=/github-runner/gold-image-account
-            AMI_FILTER=/github-runner/gold-image-filter
-            S3_TARBALL=/github-runner/s3-tarball
+            PKR_VAR_ami_account=/github-runner/gold-image-account
+            PKR_VAR_ami_filter=/github-runner/gold-image-filter
+            PKR_VAR_s3_tarball=/github-runner/s3-tarball
 
       - name: Retrieve default VPC ID and subnet
         id: vpc
         run: |
           VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name, Values=bcda-managed-vpc" --query 'Vpcs[].VpcId' --output text)
-          echo "VPC_ID=$VPC_ID" >> "$GITHUB_ENV"
+          echo "PKR_VAR_vpc_id=$VPC_ID" >> "$GITHUB_ENV"
 
           SUBNET_ID=$(aws ec2 describe-subnets \
             --filters \
@@ -49,7 +49,7 @@ jobs:
               "Name=tag:Layer,Values=app" \
             --query 'Subnets[0].SubnetId' \
             --output text)
-          echo "SUBNET_ID=$SUBNET_ID" >> "$GITHUB_ENV"
+          echo "PKR_VAR_subnet_id=$SUBNET_ID" >> "$GITHUB_ENV"
 
       - name: Setup `packer`
         uses: hashicorp/setup-packer@main
@@ -57,28 +57,6 @@ jobs:
         with:
           version: "latest"
 
-      - name: Run `packer init`
-        id: init
-        run: packer init .
-
-      - name: Run `packer validate`
-        id: validate
-        run: |
-          packer validate \
-            -var ami_account="$AMI_ACCOUNT" \
-            -var ami_filter="$AMI_FILTER" \
-            -var vpc_id="$VPC_ID" \
-            -var subnet_id="$SUBNET_ID" \
-            -var s3_tarball="$S3_TARBALL" \
-            -evaluate-datasources .
-
-      - name: Packer Build
-        id: build
-        run: |
-          PACKER_LOG=1 packer build \
-            -var ami_account="$AMI_ACCOUNT" \
-            -var ami_filter="$AMI_FILTER" \
-            -var vpc_id="$VPC_ID" \
-            -var subnet_id="$SUBNET_ID" \
-            -var s3_tarball="$S3_TARBALL" \
-            -color=false -on-error=cleanup .
+      - run: packer init .
+      - run: packer validate -evaluate-datasources .
+      - run: ${RUNNER_DEBUG:+"PACKER_LOG=1"} packer build .
