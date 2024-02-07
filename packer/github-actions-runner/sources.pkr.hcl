@@ -2,11 +2,11 @@ source "amazon-ebs" "github-actions-runner" {
   ami_name                                  = "github-actions-runner-${formatdate("YYYYMMDDhhmm", timestamp())}"
   instance_type                             = var.instance_type
   region                                    = var.region
-  security_group_id                         = var.security_group_id
   vpc_id                                    = var.vpc_id
   subnet_id                                 = var.subnet_id
   associate_public_ip_address               = var.associate_public_ip_address
   temporary_security_group_source_public_ip = var.temporary_security_group_source_public_ip
+  iam_instance_profile                      = "bcda-mgmt-github-actions-deploy"
 
   source_ami_filter {
     filters = { name = "${var.ami_filter}" }
@@ -16,7 +16,7 @@ source "amazon-ebs" "github-actions-runner" {
 
   security_group_filter {
     filters = {
-      "tag:Name": "packer_sg"
+      "tag:Name": "bcda-managed-vpn-private"
     }
   }
 
@@ -24,6 +24,15 @@ source "amazon-ebs" "github-actions-runner" {
   ssh_username = "ec2-user"
   ssh_timeout = "1h"
   ssh_pty = true
+
+  # enforces IMDSv2 support on the running instance being provisioned by Packer
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens = "required"
+    http_put_response_hop_limit = 1
+  }
+  # enforces IMDSv2 support on the resulting AMI
+  imds_support = "v2.0"
 
   tags = {
     Name = "github-actions-runner-ami",

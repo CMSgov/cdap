@@ -1,7 +1,7 @@
 packer {
   required_plugins {
     amazon = {
-      version = ">= 0.0.2"
+      version = ">= 1.3.0"
       source  = "github.com/hashicorp/amazon"
     }
   }
@@ -29,21 +29,15 @@ build {
 
   provisioner "file" {
     content = templatefile("./install-runner.sh", {
-      ARM_PATCH                       = ""
-      S3_LOCATION_RUNNER_DISTRIBUTION = ""
-      RUNNER_ARCHITECTURE             = "x64"
+      S3_LOCATION_RUNNER_DISTRIBUTION = var.s3_tarball
     })
     destination = "/tmp/install-runner.sh"
   }
 
   provisioner "shell" {
-    environment_vars = [
-      "RUNNER_TARBALL_URL=https://github.com/actions/runner/releases/download/v${local.runner_version}/actions-runner-linux-x64-${local.runner_version}.tar.gz"
-    ]
     inline = [
-      "sudo chmod +x /tmp/install-runner.sh",
-      "echo ec2-user > /tmp/install-user.txt",
-      "sudo RUNNER_ARCHITECTURE=x64 RUNNER_TARBALL_URL=$RUNNER_TARBALL_URL /tmp/install-runner.sh"
+      "chmod +x /tmp/install-runner.sh",
+      "/tmp/install-runner.sh"
     ]
   }
 
