@@ -2,7 +2,6 @@ source "amazon-ebs" "github-actions-runner" {
   ami_name                                  = "github-actions-runner-${formatdate("YYYYMMDDhhmm", timestamp())}"
   instance_type                             = var.instance_type
   region                                    = var.region
-  security_group_id                         = var.security_group_id
   vpc_id                                    = var.vpc_id
   subnet_id                                 = var.subnet_id
   associate_public_ip_address               = var.associate_public_ip_address
@@ -17,7 +16,7 @@ source "amazon-ebs" "github-actions-runner" {
 
   security_group_filter {
     filters = {
-      "tag:Name": "packer_sg"
+      "tag:Name": "bcda-managed-vpn-private"
     }
   }
 
