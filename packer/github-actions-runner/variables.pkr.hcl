@@ -28,12 +28,6 @@ variable "instance_type" {
   default     = "t3.xlarge"
 }
 
-variable "security_group_id" {
-  description = "The ID of the security group Packer will associate with the builder to enable access"
-  type        = string
-  default     = null
-}
-
 variable "vpc_id" {
   description = "The name of the VPC where the instance will be launched"
   type        = string
