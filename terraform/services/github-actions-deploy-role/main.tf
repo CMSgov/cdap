@@ -11,6 +11,7 @@ data "aws_ssm_parameter" "github_runner_role_arn" {
 }
 
 data "aws_iam_policy_document" "github_actions_deploy_assume" {
+  # Allow access from the instance profile role for our runners
   statement {
     actions = [
       "sts:AssumeRole",
@@ -23,6 +24,7 @@ data "aws_iam_policy_document" "github_actions_deploy_assume" {
     }
   }
 
+  # Allow access from GitHub-hosted runners via OIDC
   statement {
     actions = [
       "sts:AssumeRoleWithWebIdentity",
@@ -44,6 +46,18 @@ data "aws_iam_policy_document" "github_actions_deploy_assume" {
       test     = "StringLike"
       variable = "${local.provider_domain}:sub"
       values   = ["repo:CMSgov/*"]
+    }
+  }
+
+  # Allow for use as an instance profile for packer, etc.
+  statement {
+    actions = [
+      "sts:AssumeRole",
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
     }
   }
 }
