@@ -29,18 +29,15 @@ build {
 
   provisioner "file" {
     content = templatefile("./install-runner.sh", {
-      ARM_PATCH                       = ""
       S3_LOCATION_RUNNER_DISTRIBUTION = var.s3_tarball
-      RUNNER_ARCHITECTURE             = "x64"
     })
     destination = "/tmp/install-runner.sh"
   }
 
   provisioner "shell" {
     inline = [
-      "sudo chmod +x /tmp/install-runner.sh",
-      "echo ec2-user > /tmp/install-user.txt",
-      "sudo /tmp/install-runner.sh"
+      "chmod +x /tmp/install-runner.sh",
+      "/tmp/install-runner.sh"
     ]
   }
 
