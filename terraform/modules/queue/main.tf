@@ -54,9 +54,28 @@ resource "aws_kms_alias" "queue" {
   target_key_id = aws_kms_key.queue.key_id
 }
 
-resource "aws_sqs_queue" "this" {
-  name              = "${var.name}"
+resource "aws_sqs_queue" "dead_letter" {
+  name              = "${var.name}-dead-letter"
   kms_master_key_id = aws_kms_alias.queue.name
+}
+
+resource "aws_sqs_queue" "this" {
+  name              = var.name
+  kms_master_key_id = aws_kms_alias.queue.name
+
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.dead_letter.arn
+    maxReceiveCount     = 4
+  })
+}
+
+resource "aws_sqs_queue_redrive_allow_policy" "terraform_queue_redrive_allow_policy" {
+  queue_url = aws_sqs_queue.dead_letter.id
+
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "byQueue"
+    sourceQueueArns   = [aws_sqs_queue.this.arn]
+  })
 }
 
 data "aws_iam_policy_document" "sns_send_message" {
