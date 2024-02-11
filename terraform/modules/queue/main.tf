@@ -69,7 +69,7 @@ resource "aws_sqs_queue" "this" {
   })
 }
 
-resource "aws_sqs_queue_redrive_allow_policy" "terraform_queue_redrive_allow_policy" {
+resource "aws_sqs_queue_redrive_allow_policy" "this" {
   queue_url = aws_sqs_queue.dead_letter.id
 
   redrive_allow_policy = jsonencode({
