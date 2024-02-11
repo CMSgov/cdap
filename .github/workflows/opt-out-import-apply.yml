@@ -6,6 +6,10 @@ on:
       - main
     paths:
       - .github/workflows/opt-out-import-apply.yml
+      - terraform/modules/lambda/**
+      - terraform/modules/queue/**
+      - terraform/modules/subnets/**
+      - terraform/modules/vpc/**
       - terraform/services/opt-out-import/**
   workflow_dispatch: # Allow manual trigger
 
