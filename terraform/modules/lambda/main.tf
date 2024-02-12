@@ -170,7 +170,7 @@ module "vpc" {
 module "subnets" {
   source = "../subnets"
 
-  vpc_id = module.vpc.vpc_id
+  vpc_id = module.vpc.id
   app    = var.app
   layer  = "data"
 }
@@ -180,7 +180,7 @@ resource "aws_security_group" "lambda" {
 
   name        = "${var.function_name}-lambda"
   description = "For the ${var.function_name} lambda"
-  vpc_id      = module.vpc.vpc_id
+  vpc_id      = module.vpc.id
 
   egress {
     from_port        = 0
@@ -206,7 +206,7 @@ resource "aws_lambda_function" "this" {
   }
 
   vpc_config {
-    subnet_ids         = module.subnets.subnet_ids
+    subnet_ids         = module.subnets.ids
     security_group_ids = length(var.security_group_ids) > 0 ? var.security_group_ids : [aws_security_group.lambda[0].id]
   }
 
