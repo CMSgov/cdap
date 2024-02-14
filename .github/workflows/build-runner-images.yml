@@ -52,7 +52,7 @@ jobs:
           echo "PKR_VAR_subnet_id=$SUBNET_ID" >> "$GITHUB_ENV"
 
       - name: Setup `packer`
-        uses: hashicorp/setup-packer@v2.0.1
+        uses: hashicorp/setup-packer@v2.0.0
         id: setup
         with:
           version: "latest"
