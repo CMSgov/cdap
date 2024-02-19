@@ -1,9 +1,9 @@
-data "aws_caller_identity" "current" {}
-
 resource "aws_kms_key" "queue" {
   description         = "For ${var.name} queue"
   enable_key_rotation = true
 }
+
+data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "kms_for_queue" {
   statement {

@@ -3,7 +3,7 @@ data "aws_region" "current" {}
 output "backend_config" {
   description = "Text for the tfbackend file"
   value       = <<EOT
-bucket         = "${aws_s3_bucket.this.id}"
-dynamodb_table = "${aws_dynamodb_table.this.id}"
+bucket         = "${module.tfstate_bucket.id}"
+dynamodb_table = "${module.tfstate_table.id}"
 EOT
 }
