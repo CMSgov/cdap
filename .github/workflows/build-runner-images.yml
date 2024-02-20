@@ -27,7 +27,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          role-to-assume: ${{ vars.BCDA_MGMT_DEPLOY_ROLE }}
+          role-to-assume: arn:aws:iam::${{ secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/bcda-mgmt-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
