@@ -14,6 +14,10 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform/services/github-actions-oidc-provider
     strategy:
       fail-fast: false
       matrix:
@@ -22,9 +26,15 @@ jobs:
         include:
           - app: bcda
             env: mgmt
-    uses: ./.github/workflows/terraform-command.yml
-    with:
-      app: ${{ matrix.app }}
-      env: ${{ matrix.env }}
-      dir: ./terraform/services/github-actions-oidc-provider
-      cmd: apply -auto-approve
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+      - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: terraform apply -auto-approve
+        env:
+          TF_VAR_app: ${{ matrix.app }}
+          TF_VAR_env: ${{ matrix.env }}

@@ -22,9 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
-      - uses: aws-actions/configure-aws-credentials@v3
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.BCDA_MGMT_DEPLOY_ROLE }}
+          role-to-assume: arn:aws:iam::${{ secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -backend-config=../../backends/bcda-mgmt.s3.tfbackend
       - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
