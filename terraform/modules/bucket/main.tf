@@ -1,7 +1,7 @@
 module "bucket_key" {
   source      = "../key"
   name        = "${var.name}-bucket"
-  description = "For ${var.name} S3 bucket and logs bucket"
+  description = "For ${var.name} S3 bucket and its access logs"
 }
 
 resource "aws_s3_bucket" "this" {
@@ -88,24 +88,24 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   }
 }
 
-resource "aws_s3_bucket" "logs" {
-  bucket = "${var.name}-logs"
+resource "aws_s3_bucket" "access_logs" {
+  bucket = "${var.name}-access"
 }
 
-resource "aws_s3_bucket_policy" "logs" {
+resource "aws_s3_bucket_policy" "access_logs" {
   bucket = aws_s3_bucket.this.id
   policy = data.aws_iam_policy_document.tls_only.json
 }
 
-resource "aws_s3_bucket_versioning" "logs" {
-  bucket = aws_s3_bucket.logs.id
+resource "aws_s3_bucket_versioning" "access_logs" {
+  bucket = aws_s3_bucket.access_logs.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "logs" {
-  bucket = aws_s3_bucket.logs.id
+resource "aws_s3_bucket_server_side_encryption_configuration" "access_logs" {
+  bucket = aws_s3_bucket.access_logs.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -118,6 +118,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "logs" {
 resource "aws_s3_bucket_logging" "this" {
   bucket = aws_s3_bucket.this.id
 
-  target_bucket = aws_s3_bucket.logs.id
-  target_prefix = "s3/"
+  target_bucket = aws_s3_bucket.access_logs.id
+  target_prefix = "log/"
 }
