@@ -1,5 +1,21 @@
 locals {
   provider_domain = "token.actions.githubusercontent.com"
+  repos = {
+    ab2d = [
+      "repo:CMSgov/ab2d-bcda-dpc-platform:*",
+      "repo:CMSgov/ab2d-events:*",
+      "repo:CMSgov/ab2d-lambdas:*",
+      "repo:CMSgov/ab2d:*",
+    ]
+    bcda = [
+      "repo:CMSgov/ab2d-bcda-dpc-platform:*",
+      "repo:CMSgov/bcda-app:*",
+    ]
+    dpc = [
+      "repo:CMSgov/ab2d-bcda-dpc-platform:*",
+      "repo:CMSgov/dpc-app:*",
+    ]
+  }
 }
 
 data "aws_iam_openid_connect_provider" "github" {
@@ -45,7 +61,7 @@ data "aws_iam_policy_document" "github_actions_role_assume" {
     condition {
       test     = "StringLike"
       variable = "${local.provider_domain}:sub"
-      values   = ["repo:CMSgov/*"]
+      values   = local.repos[var.app]
     }
   }
 
