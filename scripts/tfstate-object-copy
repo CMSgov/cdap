@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -x
+
+# Only bcda and dpc for now since each ab2d env is in its own account
+apps="bcda dpc"
+envs="dev test prod sbx"
+
+for app in $apps; do
+  for env in $envs; do
+    aws s3 cp s3://$app-$env-tfstate/github-actions-deploy-role/terraform.tfstate s3://$app-$env-tfstate/github-actions-role/terraform.tfstate
+  done
+done
