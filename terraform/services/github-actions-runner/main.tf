@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "runner" {
       "sts:AssumeRole",
       "sts:TagSession",
     ]
-    resources = ["arn:aws:iam::*:role/delegatedadmin/developer/*-github-actions-deploy"]
+    resources = ["arn:aws:iam::*:role/delegatedadmin/developer/*-github-actions"]
   }
   statement {
     actions   = ["ssm:GetParameters"]
