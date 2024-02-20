@@ -10,7 +10,7 @@ data "aws_ssm_parameter" "github_runner_role_arn" {
   name = "/github-runner/role-arn"
 }
 
-data "aws_iam_policy_document" "github_actions_deploy_assume" {
+data "aws_iam_policy_document" "github_actions_role_assume" {
   # Allow access from the instance profile role for our runners
   statement {
     actions = [
@@ -66,29 +66,29 @@ data "aws_iam_policy" "poweruser_boundary" {
   name = "ct-ado-poweruser-permissions-boundary-policy"
 }
 
-data "aws_iam_policy_document" "github_actions_deploy_inline" {
+data "aws_iam_policy_document" "github_actions_role_inline" {
   statement {
     actions   = ["*"]
     resources = ["*"]
   }
 }
 
-resource "aws_iam_role" "github_actions_deploy" {
-  name = "${var.app}-${var.env}-github-actions-deploy"
+resource "aws_iam_role" "github_actions" {
+  name = "${var.app}-${var.env}-github-actions"
   path = "/delegatedadmin/developer/"
 
-  assume_role_policy = data.aws_iam_policy_document.github_actions_deploy_assume.json
+  assume_role_policy = data.aws_iam_policy_document.github_actions_role_assume.json
 
   permissions_boundary = data.aws_iam_policy.poweruser_boundary.arn
 
   inline_policy {
-    name   = "github-actions-deploy"
-    policy = data.aws_iam_policy_document.github_actions_deploy_inline.json
+    name   = "github-actions"
+    policy = data.aws_iam_policy_document.github_actions_role_inline.json
   }
 }
 
-resource "aws_iam_instance_profile" "github_actions_deploy" {
-  name = "${var.app}-${var.env}-github-actions-deploy"
+resource "aws_iam_instance_profile" "github_actions_role" {
+  name = "${var.app}-${var.env}-github-actions"
   path = "/delegatedadmin/developer/"
-  role = aws_iam_role.github_actions_deploy.name
+  role = aws_iam_role.github_actions.name
 }
