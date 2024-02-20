@@ -41,7 +41,7 @@ data "aws_iam_policy_document" "this" {
         identifiers = ["sns.amazonaws.com"]
       }
 
-      resources = [aws_kms_key.queue.arn]
+      resources = [aws_kms_key.this.arn]
 
       condition {
         test     = "ArnEquals"

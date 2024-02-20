@@ -1,67 +1,18 @@
-resource "aws_kms_key" "queue" {
-  description         = "For ${var.name} queue"
-  enable_key_rotation = true
-}
-
-data "aws_caller_identity" "current" {}
-
-data "aws_iam_policy_document" "kms_for_queue" {
-  statement {
-    sid = "Enable IAM User Permissions"
-
-    actions = ["kms:*"]
-
-    resources = ["*"]
-
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
-    }
-  }
-  dynamic "statement" {
-    for_each = var.sns_topic_arn != "None" ? [1] : []
-    content {
-      sid = "Allow SNS topic to send message to encrypted SQS queue"
-
-      actions = [
-        "kms:GenerateDataKey",
-        "kms:Decrypt",
-      ]
-
-      principals {
-        type        = "Service"
-        identifiers = ["sns.amazonaws.com"]
-      }
-
-      resources = [aws_kms_key.queue.arn]
-
-      condition {
-        test     = "ArnEquals"
-        variable = "aws:SourceArn"
-        values   = [var.sns_topic_arn]
-      }
-    }
-  }
-}
-
-resource "aws_kms_key_policy" "queue" {
-  key_id = aws_kms_key.queue.id
-  policy = data.aws_iam_policy_document.kms_for_queue.json
-}
-
-resource "aws_kms_alias" "queue" {
-  name          = "alias/${var.name}-queue"
-  target_key_id = aws_kms_key.queue.key_id
+module "queue_key" {
+  source      = "../key"
+  name        = "${var.name}-queue"
+  description = "For ${var.name} SQS queue"
+  sns_topics  = [var.sns_topic_arn]
 }
 
 resource "aws_sqs_queue" "dead_letter" {
   name              = "${var.name}-dead-letter"
-  kms_master_key_id = aws_kms_alias.queue.name
+  kms_master_key_id = module.queue_key.id
 }
 
 resource "aws_sqs_queue" "this" {
   name              = var.name
-  kms_master_key_id = aws_kms_alias.queue.name
+  kms_master_key_id = module.queue_key.id
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.dead_letter.arn
