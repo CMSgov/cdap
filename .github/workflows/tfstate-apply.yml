@@ -34,6 +34,19 @@ jobs:
           role-to-assume: arn:aws:iam::${{ matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: |
+        terraform state mv aws_dynamodb_table.this module.tfstate_table.aws_dynamodb_table.this
+        terraform state mv aws_kms_alias.this module.tfstate_bucket.module.bucket_key.aws_kms_alias.this
+        terraform state mv aws_kms_key.this module.tfstate_bucket.module.bucket_key.aws_kms_key.this
+        terraform state mv aws_s3_bucket.logs module.tfstate_bucket.aws_s3_bucket.access_logs
+        terraform state mv aws_s3_bucket.this module.tfstate_bucket.aws_s3_bucket.this
+        terraform state mv aws_s3_bucket_logging.this module.tfstate_bucket.aws_s3_bucket_logging.this
+        terraform state mv aws_s3_bucket_policy.logs module.tfstate_bucket.aws_s3_bucket_policy.access_logs
+        terraform state mv aws_s3_bucket_policy.this module.tfstate_bucket.aws_s3_bucket_policy.this
+        terraform state mv aws_s3_bucket_server_side_encryption_configuration.logs module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.access_logs
+        terraform state mv aws_s3_bucket_server_side_encryption_configuration.this module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.this
+        terraform state mv aws_s3_bucket_versioning.logs module.tfstate_bucket.aws_s3_bucket_versioning.access_logs
+        terraform state mv aws_s3_bucket_versioning.this module.tfstate_bucket.aws_s3_bucket_versioning.this
       - run: terraform apply -auto-approve
         env:
           TF_VAR_app: ${{ matrix.app }}
