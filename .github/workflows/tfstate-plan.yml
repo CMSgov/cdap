@@ -42,32 +42,32 @@ jobs:
       - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
       # TODO remove these state mv commands following successful apply of changes in https://github.com/CMSgov/ab2d-bcda-dpc-platform/pull/51
       - run: |
-        terraform state mv aws_dynamodb_table.this module.tfstate_table.aws_dynamodb_table.this
-        terraform state mv aws_kms_alias.this module.tfstate_bucket.module.bucket_key.aws_kms_alias.this
-        terraform state mv aws_kms_key.this module.tfstate_bucket.module.bucket_key.aws_kms_key.this
-        terraform state mv aws_s3_bucket.logs module.tfstate_bucket.aws_s3_bucket.access_logs
-        terraform state mv aws_s3_bucket.this module.tfstate_bucket.aws_s3_bucket.this
-        terraform state mv aws_s3_bucket_logging.this module.tfstate_bucket.aws_s3_bucket_logging.this
-        terraform state mv aws_s3_bucket_policy.logs module.tfstate_bucket.aws_s3_bucket_policy.access_logs
-        terraform state mv aws_s3_bucket_policy.this module.tfstate_bucket.aws_s3_bucket_policy.this
-        terraform state mv aws_s3_bucket_server_side_encryption_configuration.logs module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.access_logs
-        terraform state mv aws_s3_bucket_server_side_encryption_configuration.this module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.this
-        terraform state mv aws_s3_bucket_versioning.logs module.tfstate_bucket.aws_s3_bucket_versioning.access_logs
-        terraform state mv aws_s3_bucket_versioning.this module.tfstate_bucket.aws_s3_bucket_versioning.this
+          terraform state mv aws_dynamodb_table.this module.tfstate_table.aws_dynamodb_table.this
+          terraform state mv aws_kms_alias.this module.tfstate_bucket.module.bucket_key.aws_kms_alias.this
+          terraform state mv aws_kms_key.this module.tfstate_bucket.module.bucket_key.aws_kms_key.this
+          terraform state mv aws_s3_bucket.logs module.tfstate_bucket.aws_s3_bucket.access_logs
+          terraform state mv aws_s3_bucket.this module.tfstate_bucket.aws_s3_bucket.this
+          terraform state mv aws_s3_bucket_logging.this module.tfstate_bucket.aws_s3_bucket_logging.this
+          terraform state mv aws_s3_bucket_policy.logs module.tfstate_bucket.aws_s3_bucket_policy.access_logs
+          terraform state mv aws_s3_bucket_policy.this module.tfstate_bucket.aws_s3_bucket_policy.this
+          terraform state mv aws_s3_bucket_server_side_encryption_configuration.logs module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.access_logs
+          terraform state mv aws_s3_bucket_server_side_encryption_configuration.this module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.this
+          terraform state mv aws_s3_bucket_versioning.logs module.tfstate_bucket.aws_s3_bucket_versioning.access_logs
+          terraform state mv aws_s3_bucket_versioning.this module.tfstate_bucket.aws_s3_bucket_versioning.this
       - run: terraform plan
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
       - run: |
-        terraform state mv module.tfstate_table.aws_dynamodb_table.this aws_dynamodb_table.this
-        terraform state mv module.tfstate_bucket.module.bucket_key.aws_kms_alias.this aws_kms_alias.this
-        terraform state mv module.tfstate_bucket.module.bucket_key.aws_kms_key.this aws_kms_key.this
-        terraform state mv module.tfstate_bucket.aws_s3_bucket.access_logs aws_s3_bucket.logs
-        terraform state mv module.tfstate_bucket.aws_s3_bucket.this aws_s3_bucket.this
-        terraform state mv module.tfstate_bucket.aws_s3_bucket_logging.this aws_s3_bucket_logging.this
-        terraform state mv module.tfstate_bucket.aws_s3_bucket_policy.access_logs aws_s3_bucket_policy.logs
-        terraform state mv module.tfstate_bucket.aws_s3_bucket_policy.this aws_s3_bucket_policy.this
-        terraform state mv module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.access_logs aws_s3_bucket_server_side_encryption_configuration.logs
-        terraform state mv module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.this aws_s3_bucket_server_side_encryption_configuration.this
-        terraform state mv module.tfstate_bucket.aws_s3_bucket_versioning.access_logs aws_s3_bucket_versioning.logs
-        terraform state mv module.tfstate_bucket.aws_s3_bucket_versioning.this aws_s3_bucket_versioning.this
+          terraform state mv module.tfstate_table.aws_dynamodb_table.this aws_dynamodb_table.this
+          terraform state mv module.tfstate_bucket.module.bucket_key.aws_kms_alias.this aws_kms_alias.this
+          terraform state mv module.tfstate_bucket.module.bucket_key.aws_kms_key.this aws_kms_key.this
+          terraform state mv module.tfstate_bucket.aws_s3_bucket.access_logs aws_s3_bucket.logs
+          terraform state mv module.tfstate_bucket.aws_s3_bucket.this aws_s3_bucket.this
+          terraform state mv module.tfstate_bucket.aws_s3_bucket_logging.this aws_s3_bucket_logging.this
+          terraform state mv module.tfstate_bucket.aws_s3_bucket_policy.access_logs aws_s3_bucket_policy.logs
+          terraform state mv module.tfstate_bucket.aws_s3_bucket_policy.this aws_s3_bucket_policy.this
+          terraform state mv module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.access_logs aws_s3_bucket_server_side_encryption_configuration.logs
+          terraform state mv module.tfstate_bucket.aws_s3_bucket_server_side_encryption_configuration.this aws_s3_bucket_server_side_encryption_configuration.this
+          terraform state mv module.tfstate_bucket.aws_s3_bucket_versioning.access_logs aws_s3_bucket_versioning.logs
+          terraform state mv module.tfstate_bucket.aws_s3_bucket_versioning.this aws_s3_bucket_versioning.this
