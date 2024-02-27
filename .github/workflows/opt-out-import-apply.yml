@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - .github/workflows/opt-out-import-apply.yml
+      - terraform/modules/key/**
       - terraform/modules/lambda/**
       - terraform/modules/queue/**
       - terraform/modules/subnets/**
