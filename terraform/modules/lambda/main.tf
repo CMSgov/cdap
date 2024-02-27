@@ -64,18 +64,6 @@ resource "aws_iam_role" "lambda" {
   }
 }
 
-resource "aws_s3_bucket" "lambda_zip_file" {
-  bucket_prefix = "${var.function_name}-lambda-"
-}
-
-resource "aws_s3_bucket_versioning" "lambda_zip_file" {
-  bucket = aws_s3_bucket.lambda_zip_file.id
-
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
 # Prod and sbx deploy roles are only needed in the test environment
 data "aws_ssm_parameter" "prod_deploy_role_arn" {
   count = var.env == "test" ? 1 : 0
@@ -87,70 +75,20 @@ data "aws_ssm_parameter" "sbx_deploy_role_arn" {
   name  = "/${var.app}/sbx/deploy-role-arn"
 }
 
-# Bucket policy to allow promotion by deploy roles in upper environments
-data "aws_iam_policy_document" "lambda_zip_file" {
-  statement {
-    sid = "AllowSSLRequestsOnly"
+module "zip_bucket" {
+  source = "../bucket"
 
-    effect = "Deny"
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    actions = ["s3:*"]
-
-    resources = [
-      aws_s3_bucket.lambda_zip_file.arn,
-      "${aws_s3_bucket.lambda_zip_file.arn}/*",
-    ]
-
-    condition {
-      test     = "Bool"
-      variable = "aws:SecureTransport"
-      values   = ["false"]
-    }
-  }
-
-  dynamic "statement" {
-    for_each = var.env == "test" ? [1] : []
-    content {
-      sid = "DelegateS3Access"
-
-      principals {
-        type = "AWS"
-        identifiers = [
-          data.aws_ssm_parameter.prod_deploy_role_arn[0].value,
-          data.aws_ssm_parameter.sbx_deploy_role_arn[0].value,
-        ]
-      }
-
-      actions = [
-        "s3:GetObject",
-        "s3:GetObjectTagging",
-        "s3:GetObjectVersion",
-        "s3:GetObjectVersionTagging",
-        "s3:ListBucket",
-      ]
-
-      resources = [
-        aws_s3_bucket.lambda_zip_file.arn,
-        "${aws_s3_bucket.lambda_zip_file.arn}/*",
-      ]
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "lambda_zip_file" {
-  bucket = aws_s3_bucket.lambda_zip_file.id
-  policy = data.aws_iam_policy_document.lambda_zip_file.json
+  name = "${var.function_name}-lambda"
+  cross_account_read_roles = var.env == "test" ? [
+    data.aws_ssm_parameter.prod_deploy_role_arn[0].value,
+    data.aws_ssm_parameter.sbx_deploy_role_arn[0].value,
+  ] : []
 }
 
 resource "aws_s3_object" "empty_function_zip" {
   count = var.create_function_zip ? 1 : 0
 
-  bucket = aws_s3_bucket.lambda_zip_file.id
+  bucket = module.zip_bucket.id
   key    = "function.zip"
   source = "${path.module}/dummy_function.zip"
 
@@ -195,7 +133,7 @@ resource "aws_lambda_function" "this" {
   description   = var.function_description
   function_name = var.function_name
   s3_key        = "function.zip"
-  s3_bucket     = aws_s3_bucket.lambda_zip_file.id
+  s3_bucket     = module.zip_bucket.id
   role          = aws_iam_role.lambda.arn
   handler       = var.handler
   runtime       = var.runtime

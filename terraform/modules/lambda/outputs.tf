@@ -1,8 +1,3 @@
-output "arn" {
-  description = "ARN for the lambda"
-  value = aws_lambda_function.this.arn
-}
-
 output "function_name" {
   description = "Name for the lambda function"
   value = aws_lambda_function.this.function_name
@@ -13,7 +8,7 @@ output "role_arn" {
   value       = aws_iam_role.lambda.arn
 }
 
-output "zip_file_bucket" {
+output "zip_bucket" {
   description = "Bucket name for the function.zip file"
-  value       = aws_s3_bucket.lambda_zip_file.id
+  value       = module.zip_bucket.id
 }

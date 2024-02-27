@@ -1,12 +1,15 @@
-name: Terraform apply for github-actions-oidc-provider
+name: opt-out-test apply terraform
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/github-actions-oidc-provider-apply.yml
-      - terraform/services/github-actions-oidc-provider/**
+      - .github/workflows/opt-out-test-apply.yml
+      - terraform/modules/bucket/**
+      - terraform/modules/key/**
+      - terraform/modules/topic/**
+      - terraform/services/opt-out-test/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -17,15 +20,15 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/github-actions-oidc-provider
+        working-directory: ./terraform/services/opt-out-test
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d]
+        app: [ab2d, bcda, dpc]
         env: [dev, test, sbx, prod]
-        include:
-          - app: bcda
-            env: mgmt
+    env:
+      TF_VAR_app: ${{ matrix.app }}
+      TF_VAR_env: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
@@ -33,8 +36,5 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: terraform init -reconfigure -backend-config=../../backends/$TF_VAR_app-$TF_VAR_env.s3.tfbackend
       - run: terraform apply -auto-approve
-        env:
-          TF_VAR_app: ${{ matrix.app }}
-          TF_VAR_env: ${{ matrix.env }}

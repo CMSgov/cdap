@@ -5,7 +5,7 @@ This terraform creates the S3 buckets and DynamoDB table for storing terraform s
 To create the resources with the first run of `terraform init`, comment out the backend block in terraform.tf. This will create a local terraform.tfstate file.
 
     terraform init
-    terraform apply -var 'name=bcda-mgmt-tfstate'
+    terraform apply -var app=bcda -var env=mgmt
 
 Once the resources have been created, uncomment the backend block in terraform.tf again and reference a backend config:
 
