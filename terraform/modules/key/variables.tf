@@ -14,3 +14,9 @@ variable "sns_topics" {
   type        = list
   default     = []
 }
+
+variable "buckets" {
+  description = "ARNs for S3 buckets that need to publish event notifications to an SNS topic encrypted by this key"
+  type        = list
+  default     = []
+}
