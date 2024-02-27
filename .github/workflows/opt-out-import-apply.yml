@@ -38,12 +38,4 @@ jobs:
           role-to-assume: arn:aws:iam::${{ matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -reconfigure -backend-config=../../backends/$TF_VAR_app-$TF_VAR_env.s3.tfbackend
-      # TODO remove these state mv commands following successful apply of changes in https://github.com/CMSgov/ab2d-bcda-dpc-platform/pull/51
-      - run: |
-          terraform state mv module.opt_out_import_lambda.aws_s3_bucket.lambda_zip_file module.opt_out_import_lambda.module.zip_bucket.aws_s3_bucket.this
-          terraform state mv module.opt_out_import_lambda.aws_s3_bucket_policy.lambda_zip_file module.opt_out_import_lambda.module.zip_bucket.aws_s3_bucket_policy.this
-          terraform state mv module.opt_out_import_lambda.aws_s3_bucket_versioning.lambda_zip_file module.opt_out_import_lambda.module.zip_bucket.aws_s3_bucket_versioning.this
-          terraform state mv module.opt_out_import_queue.aws_kms_key.queue module.opt_out_import_queue.module.queue_key.aws_kms_key.this
-          terraform state mv module.opt_out_import_queue.aws_kms_alias.queue module.opt_out_import_queue.module.queue_key.aws_kms_alias.this
-          terraform state mv module.opt_out_import_queue.aws_kms_key_policy.queue module.opt_out_import_queue.module.queue_key.aws_kms_key_policy.this
       - run: terraform apply -auto-approve
