@@ -64,15 +64,15 @@ resource "aws_iam_role" "lambda" {
   }
 }
 
-# Prod and sbx deploy roles are only needed in the test environment
-data "aws_ssm_parameter" "prod_deploy_role_arn" {
+# Prod and sbx github action roles are only needed in the test environment
+data "aws_ssm_parameter" "prod_account" {
   count = var.env == "test" ? 1 : 0
-  name  = "/${var.app}/prod/deploy-role-arn"
+  name  = "/${var.app}/prod/account-id"
 }
 
-data "aws_ssm_parameter" "sbx_deploy_role_arn" {
+data "aws_ssm_parameter" "sbx_account" {
   count = var.env == "test" ? 1 : 0
-  name  = "/${var.app}/sbx/deploy-role-arn"
+  name  = "/${var.app}/sbx/account-id"
 }
 
 module "zip_bucket" {
@@ -80,8 +80,8 @@ module "zip_bucket" {
 
   name = "${var.function_name}-lambda"
   cross_account_read_roles = var.env == "test" ? [
-    data.aws_ssm_parameter.prod_deploy_role_arn[0].value,
-    data.aws_ssm_parameter.sbx_deploy_role_arn[0].value,
+    "arn:aws:iam::${data.aws_ssm_parameter.prod_account[0].value}:role/delegatedadmin/developer/bcda-prod-github-actions",
+    "arn:aws:iam::${data.aws_ssm_parameter.sbx_account[0].value}:role/delegatedadmin/developer/bcda-sbx-github-actions",
   ] : []
 }
 
