@@ -80,8 +80,8 @@ module "zip_bucket" {
 
   name = "${var.function_name}-lambda"
   cross_account_read_roles = var.env == "test" ? [
-    "arn:aws:iam::${data.aws_ssm_parameter.prod_account[0].value}:role/delegatedadmin/developer/bcda-prod-github-actions",
-    "arn:aws:iam::${data.aws_ssm_parameter.sbx_account[0].value}:role/delegatedadmin/developer/bcda-sbx-github-actions",
+    "arn:aws:iam::${data.aws_ssm_parameter.prod_account[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
+    "arn:aws:iam::${data.aws_ssm_parameter.sbx_account[0].value}:role/delegatedadmin/developer/${var.app}-sbx-github-actions",
   ] : []
 }
 
