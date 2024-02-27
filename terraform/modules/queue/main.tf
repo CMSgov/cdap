@@ -2,7 +2,7 @@ module "queue_key" {
   source      = "../key"
   name        = "${var.name}-queue"
   description = "For ${var.name} SQS queue"
-  sns_topics  = [var.sns_topic_arn]
+  sns_topics  = var.sns_topic_arn != "None" ? [var.sns_topic_arn] : []
 }
 
 resource "aws_sqs_queue" "dead_letter" {
