@@ -21,7 +21,7 @@ module "opt_out_export_lambda" {
   env = var.env
 
   function_name        = local.full_name
-  function_description = "Outputs data attribution to BFD"
+  function_description = "Exports data files to a BFD bucket for opt-out"
 
   handler = var.app == "ab2d" ? "gov.cms.ab2d.optout.OptOutHandler" : "bootstrap"
   runtime = var.app == "ab2d" ? "java11" : "provided.al2"
