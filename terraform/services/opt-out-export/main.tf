@@ -1,6 +1,6 @@
 locals {
   full_name = "${var.app}-${var.env}-opt-out-export"
-  bfd_env = var.env == "prod" ? "prod" : "test"
+  bfd_env   = var.env == "prod" ? "prod" : "test"
 }
 
 data "aws_ssm_parameter" "bfd_account" {
