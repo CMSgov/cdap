@@ -1,11 +1,11 @@
-output "function_name" {
+output "name" {
   description = "Name for the lambda function"
   value = aws_lambda_function.this.function_name
 }
 
 output "role_arn" {
-  description = "ARN of the IAM role for the lambda"
-  value       = aws_iam_role.lambda.arn
+  description = "ARN of the IAM role for the function"
+  value       = aws_iam_role.function.arn
 }
 
 output "zip_bucket" {

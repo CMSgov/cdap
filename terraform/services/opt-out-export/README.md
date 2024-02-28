@@ -1,6 +1,6 @@
-# Terraform for opt-out-export lambda
+# Terraform for opt-out-export function
 
-This service sets up the infrastructure for the opt-out-export lambda in upper and lower environments for all teams.
+This service sets up the infrastructure for the opt-out-export lambda function in upper and lower environments for all teams.
 
 ## Manual deploy
 

@@ -14,19 +14,19 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
-module "opt_out_export_lambda" {
-  source = "../../modules/lambda"
+module "opt_out_export_function" {
+  source = "../../modules/function"
 
   app = var.app
   env = var.env
 
-  function_name        = local.full_name
-  function_description = "Exports data files to a BFD bucket for opt-out"
+  name        = local.full_name
+  description = "Exports data files to a BFD bucket for opt-out"
 
   handler = var.app == "ab2d" ? "gov.cms.ab2d.optout.OptOutHandler" : "bootstrap"
   runtime = var.app == "ab2d" ? "java11" : "provided.al2"
 
-  lambda_role_inline_policies = {
+  function_role_inline_policies = {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
   }
 

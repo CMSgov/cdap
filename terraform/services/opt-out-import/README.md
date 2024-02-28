@@ -1,6 +1,6 @@
-# Terraform for opt-out-import lambda and associated infra
+# Terraform for opt-out-import function and associated infra
 
-This service sets up the infrastructure for the opt-out-import lambda in upper and lower environments for all teams.
+This service sets up the infrastructure for the opt-out-import lambda function in upper and lower environments for all teams.
 
 ## Manual deploy
 

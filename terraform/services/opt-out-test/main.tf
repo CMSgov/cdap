@@ -18,3 +18,5 @@ resource "aws_s3_bucket_notification" "this" {
     filter_prefix = "oot01/"
   }
 }
+
+# TODO role to assume for access to test bucket
