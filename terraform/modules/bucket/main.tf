@@ -5,7 +5,8 @@ module "bucket_key" {
 }
 
 resource "aws_s3_bucket" "this" {
-  bucket = var.name
+  bucket        = var.name
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_versioning" "this" {
@@ -89,7 +90,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 }
 
 resource "aws_s3_bucket" "access_logs" {
-  bucket = "${var.name}-access"
+  bucket        = "${var.name}-access"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_policy" "access_logs" {
