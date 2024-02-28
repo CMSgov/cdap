@@ -30,6 +30,9 @@ module "opt_out_export_function" {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
   }
 
+  schedule_expression = "cron(0 3 ? * * *)"
+  schedule_payload    = "{\"bucket\":\"bfd-${local.bfd_env}-eft\"}"
+
   environment_variables = {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-opt-out-export"

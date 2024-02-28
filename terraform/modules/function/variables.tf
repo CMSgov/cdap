@@ -73,3 +73,15 @@ variable "create_function_zip" {
   type        = bool
   default     = true
 }
+
+variable "schedule_expression" {
+  description = "Cron or rate expression for a scheduled function"
+  type        = string
+  default     = ""
+}
+
+variable "schedule_payload" {
+  description = "Input payload for a scheduled function"
+  type        = string
+  default     = ""
+}
