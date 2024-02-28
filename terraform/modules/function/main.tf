@@ -1,4 +1,4 @@
-data "aws_iam_policy_document" "lambda_assume_role" {
+data "aws_iam_policy_document" "function_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
 
@@ -10,18 +10,18 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 resource "aws_kms_key" "env_vars" {
-  description         = "For ${var.function_name} lambda to decrypt and encrypt environment variables"
+  description         = "For ${var.name} function to decrypt and encrypt environment variables"
   enable_key_rotation = true
 }
 
 resource "aws_kms_alias" "env_vars" {
-  name          = "alias/${var.function_name}-env-vars"
+  name          = "alias/${var.name}-env-vars"
   target_key_id = aws_kms_key.env_vars.key_id
 }
 
 data "aws_caller_identity" "current" {}
 
-data "aws_iam_policy_document" "lambda_inline" {
+data "aws_iam_policy_document" "function_inline" {
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
@@ -42,21 +42,21 @@ data "aws_iam_policy_document" "lambda_inline" {
   }
 }
 
-resource "aws_iam_role" "lambda" {
-  name = "${var.function_name}-lambda"
+resource "aws_iam_role" "function" {
+  name = "${var.name}-function"
   path = "/delegatedadmin/developer/"
 
   permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.function_assume_role.json
 
   inline_policy {
-    name   = "default-lambda"
-    policy = data.aws_iam_policy_document.lambda_inline.json
+    name   = "default-function"
+    policy = data.aws_iam_policy_document.function_inline.json
   }
 
   dynamic "inline_policy" {
-    for_each = var.lambda_role_inline_policies
+    for_each = var.function_role_inline_policies
     content {
       name   = inline_policy.key
       policy = inline_policy.value
@@ -78,7 +78,7 @@ data "aws_ssm_parameter" "sbx_account" {
 module "zip_bucket" {
   source = "../bucket"
 
-  name = "${var.function_name}-lambda"
+  name = "${var.name}-function"
   cross_account_read_roles = var.env == "test" ? [
     "arn:aws:iam::${data.aws_ssm_parameter.prod_account[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
     "arn:aws:iam::${data.aws_ssm_parameter.sbx_account[0].value}:role/delegatedadmin/developer/${var.app}-sbx-github-actions",
@@ -113,11 +113,11 @@ module "subnets" {
   layer  = "data"
 }
 
-resource "aws_security_group" "lambda" {
+resource "aws_security_group" "function" {
   count = length(var.security_group_ids) > 0 ? 0 : 1
 
-  name        = "${var.function_name}-lambda"
-  description = "For the ${var.function_name} lambda"
+  name        = "${var.name}-function"
+  description = "For the ${var.name} function"
   vpc_id      = module.vpc.id
 
   egress {
@@ -130,14 +130,15 @@ resource "aws_security_group" "lambda" {
 }
 
 resource "aws_lambda_function" "this" {
-  description   = var.function_description
-  function_name = var.function_name
+  description   = var.description
+  function_name = var.name
   s3_key        = "function.zip"
   s3_bucket     = module.zip_bucket.id
-  role          = aws_iam_role.lambda.arn
+  kms_key_arn   = aws_kms_key.env_vars.arn
+  role          = aws_iam_role.function.arn
   handler       = var.handler
   runtime       = var.runtime
-  kms_key_arn   = aws_kms_key.env_vars.arn
+  timeout       = var.timeout
 
   tracing_config {
     mode = "Active"
@@ -145,10 +146,65 @@ resource "aws_lambda_function" "this" {
 
   vpc_config {
     subnet_ids         = module.subnets.ids
-    security_group_ids = length(var.security_group_ids) > 0 ? var.security_group_ids : [aws_security_group.lambda[0].id]
+    security_group_ids = length(var.security_group_ids) > 0 ? var.security_group_ids : [aws_security_group.function[0].id]
   }
 
   environment {
     variables = var.environment_variables
+  }
+}
+
+data "aws_iam_policy_document" "schedule_assume_role" {
+  count = var.schedule_expression != "" ? 1 : 0
+
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["scheduler.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "schedule_inline" {
+  count = var.schedule_expression != "" ? 1 : 0
+
+  statement {
+    actions = [
+      "lambda:InvokeFunction",
+    ]
+    resources = [aws_lambda_function.this.arn]
+  }
+}
+
+resource "aws_iam_role" "schedule" {
+  count = var.schedule_expression != "" ? 1 : 0
+
+  name = "${var.name}-schedule"
+  path = "/delegatedadmin/developer/"
+
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+
+  assume_role_policy = data.aws_iam_policy_document.schedule_assume_role[0].json
+
+  inline_policy {
+    name   = "default-schedule"
+    policy = data.aws_iam_policy_document.schedule_inline[0].json
+  }
+}
+
+resource "aws_scheduler_schedule" "this" {
+  count = var.schedule_expression != "" ? 1 : 0
+
+  name = "${var.name}-function"
+  flexible_time_window {
+    mode = "OFF"
+  }
+  schedule_expression = var.schedule_expression
+  target {
+    arn      = aws_lambda_function.this.arn
+    role_arn = aws_iam_role.schedule[0].arn
+    input = "{\"Payload\":${var.schedule_payload}}"
   }
 }

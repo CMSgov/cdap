@@ -1,5 +1,5 @@
-output "lambda_role_arn" {
-  value = module.opt_out_import_lambda.role_arn
+output "function_role_arn" {
+  value = module.opt_out_import_function.role_arn
 }
 
 output "sqs_queue_arn" {
@@ -7,5 +7,5 @@ output "sqs_queue_arn" {
 }
 
 output "zip_bucket" {
-  value = module.opt_out_import_lambda.zip_bucket
+  value = module.opt_out_import_function.zip_bucket
 }

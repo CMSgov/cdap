@@ -13,19 +13,19 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
-module "opt_out_import_lambda" {
-  source = "../../modules/lambda"
+module "opt_out_import_function" {
+  source = "../../modules/function"
 
   app = var.app
   env = var.env
 
-  function_name        = local.full_name
-  function_description = "Ingests the most recent beneficiary opt-out list from BFD"
+  name        = local.full_name
+  description = "Ingests the most recent beneficiary opt-out list from BFD"
 
   handler = var.app == "ab2d" ? "gov.cms.ab2d.optout.OptOutHandler" : "bootstrap"
   runtime = var.app == "ab2d" ? "java11" : "provided.al2"
 
-  lambda_role_inline_policies = {
+  function_role_inline_policies = {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
   }
 
@@ -44,6 +44,6 @@ module "opt_out_import_queue" {
 
   name = local.full_name
 
-  function_name = module.opt_out_import_lambda.function_name
+  function_name = module.opt_out_import_function.name
   sns_topic_arn = data.aws_ssm_parameter.bfd_sns_topic_arn.value
 }

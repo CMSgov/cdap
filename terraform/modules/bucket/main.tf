@@ -5,7 +5,8 @@ module "bucket_key" {
 }
 
 resource "aws_s3_bucket" "this" {
-  bucket = var.name
+  bucket        = var.name
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_versioning" "this" {
@@ -16,7 +17,7 @@ resource "aws_s3_bucket_versioning" "this" {
   }
 }
 
-data "aws_iam_policy_document" "tls_only" {
+data "aws_iam_policy_document" "this" {
   statement {
     sid = "AllowSSLRequestsOnly"
 
@@ -40,10 +41,6 @@ data "aws_iam_policy_document" "tls_only" {
       values   = ["false"]
     }
   }
-}
-
-data "aws_iam_policy_document" "this" {
-  source_policy_documents = [data.aws_iam_policy_document.tls_only.json]
 
   # Bucket policy to allow promotion of artifacts by deploy roles in upper environments
   dynamic "statement" {
@@ -89,12 +86,39 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 }
 
 resource "aws_s3_bucket" "access_logs" {
-  bucket = "${var.name}-access"
+  bucket        = "${var.name}-access"
+  force_destroy = true
+}
+
+data "aws_iam_policy_document" "access_logs" {
+  statement {
+    sid = "AllowSSLRequestsOnly"
+
+    effect = "Deny"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    actions = ["s3:*"]
+
+    resources = [
+      aws_s3_bucket.access_logs.arn,
+      "${aws_s3_bucket.access_logs.arn}/*",
+    ]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "access_logs" {
-  bucket = aws_s3_bucket.this.id
-  policy = data.aws_iam_policy_document.tls_only.json
+  bucket = aws_s3_bucket.access_logs.id
+  policy = data.aws_iam_policy_document.access_logs.json
 }
 
 resource "aws_s3_bucket_versioning" "access_logs" {
