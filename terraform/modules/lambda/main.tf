@@ -138,6 +138,7 @@ resource "aws_lambda_function" "this" {
   handler       = var.handler
   runtime       = var.runtime
   kms_key_arn   = aws_kms_key.env_vars.arn
+  timeout       = var.timeout
 
   tracing_config {
     mode = "Active"

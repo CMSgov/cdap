@@ -38,6 +38,12 @@ variable "runtime" {
   default     = "python3.11"
 }
 
+variable "timeout" {
+  description = "Lambda function timeout"
+  type        = number
+  default     = null
+}
+
 variable "lambda_role_inline_policies" {
   description = "Inline policies (in JSON) for the lambda IAM role"
   type        = map(string)
