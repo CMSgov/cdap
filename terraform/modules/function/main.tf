@@ -154,57 +154,27 @@ resource "aws_lambda_function" "this" {
   }
 }
 
-data "aws_iam_policy_document" "schedule_assume_role" {
+resource "aws_cloudwatch_event_rule" "this" {
   count = var.schedule_expression != "" ? 1 : 0
 
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["scheduler.amazonaws.com"]
-    }
-  }
-}
-
-data "aws_iam_policy_document" "schedule_inline" {
-  count = var.schedule_expression != "" ? 1 : 0
-
-  statement {
-    actions = [
-      "lambda:InvokeFunction",
-    ]
-    resources = [aws_lambda_function.this.arn]
-  }
-}
-
-resource "aws_iam_role" "schedule" {
-  count = var.schedule_expression != "" ? 1 : 0
-
-  name = "${var.name}-schedule"
-  path = "/delegatedadmin/developer/"
-
-  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
-
-  assume_role_policy = data.aws_iam_policy_document.schedule_assume_role[0].json
-
-  inline_policy {
-    name   = "default-schedule"
-    policy = data.aws_iam_policy_document.schedule_inline[0].json
-  }
-}
-
-resource "aws_scheduler_schedule" "this" {
-  count = var.schedule_expression != "" ? 1 : 0
-
-  name = "${var.name}-function"
-  flexible_time_window {
-    mode = "OFF"
-  }
+  name                = "${var.name}-function"
+  description         = "Trigger ${var.name} function"
   schedule_expression = var.schedule_expression
-  target {
-    arn      = aws_lambda_function.this.arn
-    role_arn = aws_iam_role.schedule[0].arn
-    input = "{\"Payload\":${var.schedule_payload}}"
-  }
+}
+
+resource "aws_cloudwatch_event_target" "this" {
+  count = var.schedule_expression != "" ? 1 : 0
+
+  arn  = aws_lambda_function.this.arn
+  rule = aws_cloudwatch_event_rule.this.name
+}
+
+resource "aws_lambda_permission" "cloudwatch_events" {
+  count = var.schedule_expression != "" ? 1 : 0
+
+  statement_id  = "AllowExecutionFromCloudWatchEvents"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.this.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.this.arn
 }
