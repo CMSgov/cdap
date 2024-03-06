@@ -64,7 +64,7 @@ resource "aws_iam_role" "function" {
   }
 }
 
-# Prod and sbx github action roles are only needed in the test environment
+# Get prod and sbx account IDs in the test environment for cross-account roles
 data "aws_ssm_parameter" "prod_account" {
   count = var.env == "test" ? 1 : 0
   name  = "/${var.app}/prod/account-id"

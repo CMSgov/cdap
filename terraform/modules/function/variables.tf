@@ -62,12 +62,6 @@ variable "environment_variables" {
   default     = {}
 }
 
-variable "promotion_roles" {
-  description = "List of ARNs to allow access for deploy roles to promote function zip files to upper environments"
-  type        = list(string)
-  default     = []
-}
-
 variable "create_function_zip" {
   description = "Create the function zip file, necessary for initialization (defaults to true)"
   type        = bool
