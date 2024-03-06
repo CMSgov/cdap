@@ -6,8 +6,9 @@ on:
       - main
     paths:
       - .github/workflows/opt-out-export-apply.yml
+      - terraform/modules/bucket/**
       - terraform/modules/key/**
-      - terraform/modules/lambda/**
+      - terraform/modules/function/**
       - terraform/modules/subnets/**
       - terraform/modules/vpc/**
       - terraform/services/opt-out-export/**
