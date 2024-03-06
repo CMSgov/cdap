@@ -12,8 +12,14 @@ locals {
       "repo:CMSgov/dpc-app:*",
     ]
   }
+  ab2d_db_envs = {
+    dev  = "dev"
+    test = "east-impl"
+    sbx  = "sbx-sandbox"
+    prod = "east-prod"
+  }
   db_sg_name = {
-    ab2d = var.env == "test" ? "ab2d-east-impl-database-sg" : "ab2d-${var.env}-database-sg"
+    ab2d = "ab2d-${local.ab2d_db_envs[var.env]}-database-sg"
     bcda = var.env == "sbx" ? "bcda-opensbx-rds" : "bcda-${var.env}-rds"
     dpc  = var.env == "sbx" ? "dpc-prod-sbx-db" : "dpc-${var.env}-db"
   }
@@ -105,12 +111,12 @@ data "aws_security_group" "db" {
   name = local.db_sg_name[var.app]
 }
 
-resource "aws_security_group_rule" "allow_db_access" {
+resource "aws_security_group_rule" "function_access" {
   type        = "ingress"
   from_port   = 5432
   to_port     = 5432
   protocol    = "tcp"
-  description = "Allows access to the ${var.env} db from the opt-out-import function"
+  description = "opt-out-import function access"
 
   security_group_id        = data.aws_security_group.db.id
   source_security_group_id = module.opt_out_import_function.security_group_id
