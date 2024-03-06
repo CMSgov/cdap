@@ -114,8 +114,6 @@ module "subnets" {
 }
 
 resource "aws_security_group" "function" {
-  count = length(var.security_group_ids) > 0 ? 0 : 1
-
   name        = "${var.name}-function"
   description = "For the ${var.name} function"
   vpc_id      = module.vpc.id
@@ -146,7 +144,7 @@ resource "aws_lambda_function" "this" {
 
   vpc_config {
     subnet_ids         = module.subnets.ids
-    security_group_ids = length(var.security_group_ids) > 0 ? var.security_group_ids : [aws_security_group.function[0].id]
+    security_group_ids = [aws_security_group.function.id]
   }
 
   environment {
