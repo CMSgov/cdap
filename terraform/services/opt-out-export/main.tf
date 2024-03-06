@@ -6,8 +6,14 @@ locals {
     bcda = "cron(0 3 ? * * *)"
     dpc  = "cron(0 3 ? * * *)"
   }
+  ab2d_db_envs = {
+    dev  = "dev"
+    test = "east-impl"
+    sbx  = "sbx-sandbox"
+    prod = "east-prod"
+  }
   db_sg_name = {
-    ab2d = var.env == "test" ? "ab2d-east-impl-database-sg" : "ab2d-${var.env}-database-sg"
+    ab2d = "ab2d-${local.ab2d_db_envs[var.env]}-database-sg"
     bcda = var.env == "sbx" ? "bcda-opensbx-rds" : "bcda-${var.env}-rds"
     dpc  = var.env == "sbx" ? "dpc-prod-sbx-db" : "dpc-${var.env}-db"
   }
