@@ -50,10 +50,10 @@ module "opt_out_export_function" {
   schedule_payload    = "{\"bucket\":\"bfd-${local.bfd_env}-eft\"}"
 
   environment_variables = {
-    ENV      = var.env
-    APP_NAME = "${var.app}-${var.env}-opt-out-export"
+    ENV              = var.env
+    APP_NAME         = "${var.app}-${var.env}-opt-out-export"
     S3_UPLOAD_BUCKET = "bfd-${var.env == "prod" ? "prod" : "test"}-eft"
-    S3_UPLOAD_PATH = "bfdeft01/${var.app}/out"
+    S3_UPLOAD_PATH   = "bfdeft01/${var.app}/out"
   }
 }
 
