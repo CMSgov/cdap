@@ -18,7 +18,7 @@ data "aws_iam_openid_connect_provider" "github" {
 }
 
 data "aws_iam_role" "admin" {
-  name = "ct-ado-${var.app}-application-admin"
+  name = var.app == "dpc" ? "ct-ado-bcda-application-admin" : "ct-ado-${var.app}-application-admin"
 }
 
 data "aws_iam_policy_document" "function_assume_role" {
