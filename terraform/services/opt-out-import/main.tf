@@ -41,6 +41,8 @@ data "aws_iam_openid_connect_provider" "github" {
 }
 
 data "aws_iam_policy_document" "allow_oidc" {
+  count = var.env != "prod" ? 1 : 0
+
   # Allow access from GitHub-hosted runners via OIDC for integration tests
   statement {
     actions = [
@@ -81,7 +83,7 @@ module "opt_out_import_function" {
 
   function_role_inline_policies = {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
-    allow-oidc         = data.aws_iam_policy_document.allow_oidc.json
+    allow-oidc         = var.env != "prod" ? data.aws_iam_policy_document.allow_oidc[0].json : null
   }
 
   environment_variables = {
