@@ -12,3 +12,8 @@ output "zip_bucket" {
   description = "Bucket name for the function.zip file"
   value       = module.zip_bucket.id
 }
+
+output "security_group_id" {
+  description = "ID for the security group for the function"
+  value       = aws_security_group.function.id
+}

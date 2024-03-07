@@ -1,3 +1,26 @@
+locals {
+  provider_domain = "token.actions.githubusercontent.com"
+  repos = {
+    ab2d = [
+      "repo:CMSgov/ab2d-lambdas:*",
+    ]
+    bcda = [
+      "repo:CMSgov/bcda-app:*",
+    ]
+    dpc = [
+      "repo:CMSgov/dpc-app:*",
+    ]
+  }
+}
+
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://${local.provider_domain}"
+}
+
+data "aws_iam_role" "admin" {
+  name = var.app == "dpc" ? "ct-ado-bcda-application-admin" : "ct-ado-${var.app}-application-admin"
+}
+
 data "aws_iam_policy_document" "function_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -5,6 +28,50 @@ data "aws_iam_policy_document" "function_assume_role" {
     principals {
       type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+
+  # Allow access from GitHub-hosted runners via OIDC for integration tests
+  dynamic "statement" {
+    for_each = var.env != "prod" ? [1] : []
+    content {
+      actions = [
+        "sts:AssumeRoleWithWebIdentity",
+        "sts:TagSession",
+      ]
+
+      principals {
+        type        = "Federated"
+        identifiers = [data.aws_iam_openid_connect_provider.github.arn]
+      }
+
+      condition {
+        test     = "StringEquals"
+        variable = "${local.provider_domain}:aud"
+        values   = ["sts.amazonaws.com"]
+      }
+
+      condition {
+        test     = "StringLike"
+        variable = "${local.provider_domain}:sub"
+        values   = local.repos[var.app]
+      }
+    }
+  }
+
+  # Allow access from admin role for manual checks
+  dynamic "statement" {
+    for_each = var.env != "prod" ? [1] : []
+    content {
+      actions = [
+        "sts:AssumeRole",
+        "sts:TagSession",
+      ]
+
+      principals {
+        type        = "AWS"
+        identifiers = [data.aws_iam_role.admin.arn]
+      }
     }
   }
 }
@@ -64,7 +131,7 @@ resource "aws_iam_role" "function" {
   }
 }
 
-# Prod and sbx github action roles are only needed in the test environment
+# Get prod and sbx account IDs in the test environment for cross-account roles
 data "aws_ssm_parameter" "prod_account" {
   count = var.env == "test" ? 1 : 0
   name  = "/${var.app}/prod/account-id"
@@ -114,8 +181,6 @@ module "subnets" {
 }
 
 resource "aws_security_group" "function" {
-  count = length(var.security_group_ids) > 0 ? 0 : 1
-
   name        = "${var.name}-function"
   description = "For the ${var.name} function"
   vpc_id      = module.vpc.id
@@ -146,7 +211,7 @@ resource "aws_lambda_function" "this" {
 
   vpc_config {
     subnet_ids         = module.subnets.ids
-    security_group_ids = length(var.security_group_ids) > 0 ? var.security_group_ids : [aws_security_group.function[0].id]
+    security_group_ids = [aws_security_group.function.id]
   }
 
   environment {
@@ -154,57 +219,27 @@ resource "aws_lambda_function" "this" {
   }
 }
 
-data "aws_iam_policy_document" "schedule_assume_role" {
+resource "aws_cloudwatch_event_rule" "this" {
   count = var.schedule_expression != "" ? 1 : 0
 
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["scheduler.amazonaws.com"]
-    }
-  }
-}
-
-data "aws_iam_policy_document" "schedule_inline" {
-  count = var.schedule_expression != "" ? 1 : 0
-
-  statement {
-    actions = [
-      "lambda:InvokeFunction",
-    ]
-    resources = [aws_lambda_function.this.arn]
-  }
-}
-
-resource "aws_iam_role" "schedule" {
-  count = var.schedule_expression != "" ? 1 : 0
-
-  name = "${var.name}-schedule"
-  path = "/delegatedadmin/developer/"
-
-  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
-
-  assume_role_policy = data.aws_iam_policy_document.schedule_assume_role[0].json
-
-  inline_policy {
-    name   = "default-schedule"
-    policy = data.aws_iam_policy_document.schedule_inline[0].json
-  }
-}
-
-resource "aws_scheduler_schedule" "this" {
-  count = var.schedule_expression != "" ? 1 : 0
-
-  name = "${var.name}-function"
-  flexible_time_window {
-    mode = "OFF"
-  }
+  name                = "${var.name}-function"
+  description         = "Trigger ${var.name} function"
   schedule_expression = var.schedule_expression
-  target {
-    arn      = aws_lambda_function.this.arn
-    role_arn = aws_iam_role.schedule[0].arn
-    input = "{\"Payload\":${var.schedule_payload}}"
-  }
+}
+
+resource "aws_cloudwatch_event_target" "this" {
+  count = var.schedule_expression != "" ? 1 : 0
+
+  arn  = aws_lambda_function.this.arn
+  rule = aws_cloudwatch_event_rule.this[0].name
+}
+
+resource "aws_lambda_permission" "cloudwatch_events" {
+  count = var.schedule_expression != "" ? 1 : 0
+
+  statement_id  = "AllowExecutionFromCloudWatchEvents"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.this.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.this[0].arn
 }

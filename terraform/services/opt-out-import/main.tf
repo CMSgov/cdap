@@ -1,5 +1,16 @@
 locals {
   full_name = "${var.app}-${var.env}-opt-out-import"
+  ab2d_db_envs = {
+    dev  = "dev"
+    test = "east-impl"
+    sbx  = "sbx-sandbox"
+    prod = "east-prod"
+  }
+  db_sg_name = {
+    ab2d = "ab2d-${local.ab2d_db_envs[var.env]}-database-sg"
+    bcda = var.env == "sbx" ? "bcda-opensbx-rds" : "bcda-${var.env}-rds"
+    dpc  = var.env == "sbx" ? "dpc-prod-sbx-db" : "dpc-${var.env}-db"
+  }
 }
 
 data "aws_ssm_parameter" "bfd_bucket_role_arn" {
@@ -35,6 +46,8 @@ module "opt_out_import_function" {
   }
 }
 
+# Set up queue for receiving messages when a file is added to the bucket
+
 data "aws_ssm_parameter" "bfd_sns_topic_arn" {
   name = "/opt-out-import/${var.app}/${var.env}/bfd-sns-topic-arn"
 }
@@ -46,4 +59,21 @@ module "opt_out_import_queue" {
 
   function_name = module.opt_out_import_function.name
   sns_topic_arn = data.aws_ssm_parameter.bfd_sns_topic_arn.value
+}
+
+# Add a rule to the database security group to allow access from the function
+
+data "aws_security_group" "db" {
+  name = local.db_sg_name[var.app]
+}
+
+resource "aws_security_group_rule" "function_access" {
+  type        = "ingress"
+  from_port   = 5432
+  to_port     = 5432
+  protocol    = "tcp"
+  description = "opt-out-import function access"
+
+  security_group_id        = data.aws_security_group.db.id
+  source_security_group_id = module.opt_out_import_function.security_group_id
 }

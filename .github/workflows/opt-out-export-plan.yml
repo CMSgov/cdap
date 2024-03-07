@@ -4,8 +4,9 @@ on:
   pull_request:
     paths:
       - .github/workflows/opt-out-export-plan.yml
+      - terraform/modules/bucket/**
       - terraform/modules/key/**
-      - terraform/modules/lambda/**
+      - terraform/modules/function/**
       - terraform/modules/subnets/**
       - terraform/modules/vpc/**
       - terraform/services/opt-out-export/**

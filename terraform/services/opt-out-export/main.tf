@@ -1,6 +1,22 @@
 locals {
   full_name = "${var.app}-${var.env}-opt-out-export"
   bfd_env   = var.env == "prod" ? "prod" : "test"
+  cron = {
+    ab2d = "cron(0 3 ? * TUE *)"
+    bcda = "cron(0 3 ? * * *)"
+    dpc  = "cron(0 3 ? * * *)"
+  }
+  ab2d_db_envs = {
+    dev  = "dev"
+    test = "east-impl"
+    sbx  = "sbx-sandbox"
+    prod = "east-prod"
+  }
+  db_sg_name = {
+    ab2d = "ab2d-${local.ab2d_db_envs[var.env]}-database-sg"
+    bcda = var.env == "sbx" ? "bcda-opensbx-rds" : "bcda-${var.env}-rds"
+    dpc  = var.env == "sbx" ? "dpc-prod-sbx-db" : "dpc-${var.env}-db"
+  }
 }
 
 data "aws_ssm_parameter" "bfd_account" {
@@ -30,11 +46,28 @@ module "opt_out_export_function" {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
   }
 
-  schedule_expression = "cron(0 3 ? * * *)"
+  schedule_expression = local.cron[var.app]
   schedule_payload    = "{\"bucket\":\"bfd-${local.bfd_env}-eft\"}"
 
   environment_variables = {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-opt-out-export"
   }
+}
+
+# Add a rule to the database security group to allow access from the function
+
+data "aws_security_group" "db" {
+  name = local.db_sg_name[var.app]
+}
+
+resource "aws_security_group_rule" "function_access" {
+  type        = "ingress"
+  from_port   = 5432
+  to_port     = 5432
+  protocol    = "tcp"
+  description = "opt-out-export function access"
+
+  security_group_id        = data.aws_security_group.db.id
+  source_security_group_id = module.opt_out_export_function.security_group_id
 }

@@ -50,22 +50,10 @@ variable "function_role_inline_policies" {
   default     = {}
 }
 
-variable "security_group_ids" {
-  description = "List of security group IDs for the function"
-  type        = list(string)
-  default     = []
-}
-
 variable "environment_variables" {
   description = "Map of environment variables for the function"
   type        = map(string)
   default     = {}
-}
-
-variable "promotion_roles" {
-  description = "List of ARNs to allow access for deploy roles to promote function zip files to upper environments"
-  type        = list(string)
-  default     = []
 }
 
 variable "create_function_zip" {
