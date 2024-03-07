@@ -1,3 +1,26 @@
+locals {
+  provider_domain = "token.actions.githubusercontent.com"
+  repos = {
+    ab2d = [
+      "repo:CMSgov/ab2d-lambdas:*",
+    ]
+    bcda = [
+      "repo:CMSgov/bcda-app:*",
+    ]
+    dpc = [
+      "repo:CMSgov/dpc-app:*",
+    ]
+  }
+}
+
+data "aws_iam_openid_connect_provider" "github" {
+  url = "https://${local.provider_domain}"
+}
+
+data "aws_iam_role" "admin" {
+  name = "ct-ado-${var.app}-application-admin"
+}
+
 data "aws_iam_policy_document" "function_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -5,6 +28,50 @@ data "aws_iam_policy_document" "function_assume_role" {
     principals {
       type        = "Service"
       identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+
+  # Allow access from GitHub-hosted runners via OIDC for integration tests
+  dynamic "statement" {
+    for_each = var.env != "prod" ? [1] : []
+    content {
+      actions = [
+        "sts:AssumeRoleWithWebIdentity",
+        "sts:TagSession",
+      ]
+
+      principals {
+        type        = "Federated"
+        identifiers = [data.aws_iam_openid_connect_provider.github.arn]
+      }
+
+      condition {
+        test     = "StringEquals"
+        variable = "${local.provider_domain}:aud"
+        values   = ["sts.amazonaws.com"]
+      }
+
+      condition {
+        test     = "StringLike"
+        variable = "${local.provider_domain}:sub"
+        values   = local.repos[var.app]
+      }
+    }
+  }
+
+  # Allow access from admin role for manual checks
+  dynamic "statement" {
+    for_each = var.env != "prod" ? [1] : []
+    content {
+      actions = [
+        "sts:AssumeRole",
+        "sts:TagSession",
+      ]
+
+      principals {
+        type        = "AWS"
+        identifiers = [data.aws_iam_role.admin.arn]
+      }
     }
   }
 }

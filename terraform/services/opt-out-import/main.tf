@@ -1,17 +1,5 @@
 locals {
   full_name       = "${var.app}-${var.env}-opt-out-import"
-  provider_domain = "token.actions.githubusercontent.com"
-  repos = {
-    ab2d = [
-      "repo:CMSgov/ab2d-lambdas:*",
-    ]
-    bcda = [
-      "repo:CMSgov/bcda-app:*",
-    ]
-    dpc = [
-      "repo:CMSgov/dpc-app:*",
-    ]
-  }
   ab2d_db_envs = {
     dev  = "dev"
     test = "east-impl"
@@ -36,39 +24,6 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
-data "aws_iam_openid_connect_provider" "github" {
-  url = "https://${local.provider_domain}"
-}
-
-data "aws_iam_policy_document" "allow_oidc" {
-  count = var.env != "prod" ? 1 : 0
-
-  # Allow access from GitHub-hosted runners via OIDC for integration tests
-  statement {
-    actions = [
-      "sts:AssumeRoleWithWebIdentity",
-      "sts:TagSession",
-    ]
-
-    principals {
-      type        = "Federated"
-      identifiers = [data.aws_iam_openid_connect_provider.github.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "${local.provider_domain}:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "${local.provider_domain}:sub"
-      values   = local.repos[var.app]
-    }
-  }
-}
-
 module "opt_out_import_function" {
   source = "../../modules/function"
 
@@ -83,7 +38,6 @@ module "opt_out_import_function" {
 
   function_role_inline_policies = {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
-    allow-oidc         = var.env != "prod" ? data.aws_iam_policy_document.allow_oidc[0].json : null
   }
 
   environment_variables = {
