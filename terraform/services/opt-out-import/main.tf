@@ -1,5 +1,5 @@
 locals {
-  full_name       = "${var.app}-${var.env}-opt-out-import"
+  full_name = "${var.app}-${var.env}-opt-out-import"
   ab2d_db_envs = {
     dev  = "dev"
     test = "east-impl"
