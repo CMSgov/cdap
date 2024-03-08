@@ -67,9 +67,3 @@ variable "schedule_expression" {
   type        = string
   default     = ""
 }
-
-variable "schedule_payload" {
-  description = "Input payload for a scheduled function"
-  type        = string
-  default     = ""
-}
