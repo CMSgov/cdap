@@ -30,6 +30,10 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
+data "aws_ssm_parameter" "opt_out_db_host" {
+  name = "/${var.app}/${var.env}/opt-out/db-host"
+}
+
 module "opt_out_export_function" {
   source = "../../modules/function"
 
@@ -47,13 +51,13 @@ module "opt_out_export_function" {
   }
 
   schedule_expression = local.cron[var.app]
-  schedule_payload    = "{\"bucket\":\"bfd-${local.bfd_env}-eft\"}"
 
   environment_variables = {
     ENV              = var.env
     APP_NAME         = "${var.app}-${var.env}-opt-out-export"
     S3_UPLOAD_BUCKET = "bfd-${var.env == "prod" ? "prod" : "test"}-eft"
     S3_UPLOAD_PATH   = "bfdeft01/${var.app}/out"
+    DB_HOST          = data.aws_ssm_parameter.opt_out_db_host.value
   }
 }
 

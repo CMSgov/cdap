@@ -24,6 +24,10 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
+data "aws_ssm_parameter" "opt_out_db_host" {
+  name = "/${var.app}/${var.env}/opt-out/db-host"
+}
+
 module "opt_out_import_function" {
   source = "../../modules/function"
 
@@ -43,6 +47,7 @@ module "opt_out_import_function" {
   environment_variables = {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-opt-out-import"
+    DB_HOST  = data.aws_ssm_parameter.opt_out_db_host.value
   }
 }
 
