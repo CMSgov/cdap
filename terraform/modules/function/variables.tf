@@ -41,7 +41,7 @@ variable "runtime" {
 variable "timeout" {
   description = "Lambda function timeout"
   type        = number
-  default     = null
+  default     = 900
 }
 
 variable "function_role_inline_policies" {
