@@ -103,6 +103,7 @@ data "aws_iam_policy_document" "function_inline" {
       "sqs:DeleteMessage",
       "sqs:GetQueueAttributes",
       "sqs:ReceiveMessage",
+      "ssm:GetParameter",
       "ssm:GetParameters",
     ]
     resources = ["*"]
