@@ -11,6 +11,11 @@ locals {
     bcda = var.env == "sbx" ? "bcda-opensbx-rds" : "bcda-${var.env}-rds"
     dpc  = var.env == "sbx" ? "dpc-prod-sbx-db" : "dpc-${var.env}-db"
   }
+  memory_size = {
+    ab2d = 2048
+    bcda = null
+    dpc  = null
+  }
 }
 
 data "aws_ssm_parameter" "bfd_bucket_role_arn" {
@@ -39,6 +44,8 @@ module "opt_out_import_function" {
 
   handler = var.app == "ab2d" ? "gov.cms.ab2d.optout.OptOutHandler" : "bootstrap"
   runtime = var.app == "ab2d" ? "java11" : "provided.al2"
+
+  memory_size = locals.memory_size[var.app]
 
   function_role_inline_policies = {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json

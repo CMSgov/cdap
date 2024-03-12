@@ -205,6 +205,7 @@ resource "aws_lambda_function" "this" {
   handler       = var.handler
   runtime       = var.runtime
   timeout       = var.timeout
+  memory_size   = var.memory_size
 
   tracing_config {
     mode = "Active"

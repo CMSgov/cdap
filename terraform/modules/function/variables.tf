@@ -44,6 +44,12 @@ variable "timeout" {
   default     = 900
 }
 
+variable "memory_size" {
+  description = "Lambda function memory size"
+  type        = number
+  default     = null
+}
+
 variable "function_role_inline_policies" {
   description = "Inline policies (in JSON) for the function IAM role"
   type        = map(string)
