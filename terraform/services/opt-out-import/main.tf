@@ -45,7 +45,7 @@ module "opt_out_import_function" {
   handler = var.app == "ab2d" ? "gov.cms.ab2d.optout.OptOutHandler" : "bootstrap"
   runtime = var.app == "ab2d" ? "java11" : "provided.al2"
 
-  memory_size = locals.memory_size[var.app]
+  memory_size = local.memory_size[var.app]
 
   function_role_inline_policies = {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
