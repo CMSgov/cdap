@@ -48,7 +48,7 @@ module "opt_out_export_function" {
   name        = local.full_name
   description = "Exports data files to a BFD bucket for opt-out"
 
-  handler = var.app == "ab2d" ? "gov.cms.ab2d.optout.OptOutHandler" : "bootstrap"
+  handler = var.app == "ab2d" ? "gov.cms.ab2d.attributionDataShare.AttributionDataShareHandler" : "bootstrap"
   runtime = var.app == "ab2d" ? "java11" : "provided.al2"
 
   memory_size = local.memory_size[var.app]
