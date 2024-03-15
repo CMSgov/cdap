@@ -18,7 +18,7 @@ locals {
     dpc  = var.env == "sbx" ? "dpc-prod-sbx-db" : "dpc-${var.env}-db"
   }
   memory_size = {
-    ab2d = 1024
+    ab2d = 10240
     bcda = null
     dpc  = 1024
   }
