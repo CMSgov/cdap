@@ -2,7 +2,9 @@ locals {
   full_name = "${var.app}-${var.env}-opt-out-export"
   bfd_env   = var.env == "prod" ? "prod" : "test"
   cron = {
-    ab2d = "cron(0 3 ? * TUE *)"
+    # TODO Switch back to weekly for AB2D after testing period
+    #ab2d = "cron(0 3 ? * TUE *)"
+    ab2d = "cron(0 3 ? * * *)"
     bcda = "cron(0 3 ? * * *)"
     dpc  = "cron(0 3 ? * * *)"
   }
@@ -57,7 +59,7 @@ module "opt_out_export_function" {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
   }
 
-  schedule_expression = local.cron[var.app]
+  schedule_expression = var.env == "prod" ? local.cron[var.app] : "cron(0 15 ? * * *)"
 
   environment_variables = {
     ENV              = var.env
