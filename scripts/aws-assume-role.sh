@@ -23,7 +23,6 @@ cleanup() {
   rm "$tmpfile"
 }
 
-
 echo 2>&1 "Getting assume-role credentials for $1"
 if ! aws sts assume-role --role-session-name session1 --role-arn "$1" --output text | tail -n1 > "$tmpfile"; then
   echo 2>&1 "Error getting credentials"
