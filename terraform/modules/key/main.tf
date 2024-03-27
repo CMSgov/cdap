@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "this" {
       type = "AWS"
       identifiers = concat(
         ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"],
-        var.additional_access_roles
+        var.additional_access_roles,
       )
     }
   }
