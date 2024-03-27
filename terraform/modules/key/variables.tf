@@ -20,3 +20,9 @@ variable "buckets" {
   type        = list
   default     = []
 }
+
+variable "additional_access_roles" {
+  description = "ARNs for additional roles that need access to this key"
+  type        = list
+  default     = []
+}
