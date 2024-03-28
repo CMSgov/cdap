@@ -2,6 +2,8 @@ module "bucket_key" {
   source      = "../key"
   name        = "${var.name}-bucket"
   description = "For ${var.name} S3 bucket and its access logs"
+
+  additional_access_roles = var.cross_account_read_roles
 }
 
 resource "aws_s3_bucket" "this" {
