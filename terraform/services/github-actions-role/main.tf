@@ -1,6 +1,5 @@
 locals {
   provider_domain = "token.actions.githubusercontent.com"
-  admin_app = var.app == "dpc" ? "bcda" : var.app
   repos = {
     ab2d = [
       "repo:CMSgov/ab2d-bcda-dpc-platform:*",
@@ -17,6 +16,7 @@ locals {
       "repo:CMSgov/dpc-app:*",
     ]
   }
+  admin_app = var.app == "dpc" ? "bcda" : var.app
 }
 
 data "aws_iam_openid_connect_provider" "github" {
@@ -41,7 +41,7 @@ data "aws_iam_policy_document" "github_actions_role_assume" {
     ]
 
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [
         data.aws_ssm_parameter.github_runner_role_arn.value,
         data.aws_iam_role.admin.arn,
