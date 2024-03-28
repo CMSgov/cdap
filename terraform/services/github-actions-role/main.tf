@@ -16,6 +16,7 @@ locals {
       "repo:CMSgov/dpc-app:*",
     ]
   }
+  admin_app = var.app == "dpc" ? "bcda" : var.app
 }
 
 data "aws_iam_openid_connect_provider" "github" {
@@ -26,8 +27,13 @@ data "aws_ssm_parameter" "github_runner_role_arn" {
   name = "/github-runner/role-arn"
 }
 
+data "aws_iam_role" "admin" {
+  name = "ct-ado-${local.admin_app}-application-admin"
+}
+
 data "aws_iam_policy_document" "github_actions_role_assume" {
-  # Allow access from the instance profile role for our runners
+  # Allow access from the instance profile role for our runners and
+  # from the admin role
   statement {
     actions = [
       "sts:AssumeRole",
@@ -35,8 +41,11 @@ data "aws_iam_policy_document" "github_actions_role_assume" {
     ]
 
     principals {
-      type        = "AWS"
-      identifiers = [data.aws_ssm_parameter.github_runner_role_arn.value]
+      type = "AWS"
+      identifiers = [
+        data.aws_ssm_parameter.github_runner_role_arn.value,
+        data.aws_iam_role.admin.arn,
+      ]
     }
   }
 
