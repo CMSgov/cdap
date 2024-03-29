@@ -11,13 +11,12 @@ locals {
   ab2d_db_envs = {
     dev  = "dev"
     test = "east-impl"
-    sbx  = "sbx-sandbox"
     prod = "east-prod"
   }
   db_sg_name = {
     ab2d = "ab2d-${local.ab2d_db_envs[var.env]}-database-sg"
-    bcda = var.env == "sbx" ? "bcda-opensbx-rds" : "bcda-${var.env}-rds"
-    dpc  = var.env == "sbx" ? "dpc-prod-sbx-db" : "dpc-${var.env}-db"
+    bcda = "bcda-${var.env}-rds"
+    dpc  = "dpc-${var.env}-db"
   }
   memory_size = {
     ab2d = 10240
