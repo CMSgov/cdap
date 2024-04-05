@@ -1,6 +1,8 @@
 # shellcheck shell=sh
 # Start AWS session for MFA-enabled account
 
+set -o pipefail
+
 # https://stackoverflow.com/questions/61784326/zsh-bash-source-command-behavior-difference
 # shellcheck disable=SC2128,SC3028
 if { [ -n "$BASH_VERSION" ] && [ "$BASH_SOURCE" = "$0" ]; } ||
@@ -20,6 +22,7 @@ fi
 tmpfile=$(mktemp)
 
 cleanup() {
+  set +o pipefail
   rm "$tmpfile"
 }
 
