@@ -3,7 +3,7 @@ locals {
   bfd_env   = var.env == "prod" ? "prod" : "test"
   cron = {
     ab2d = {
-      prod = "cron(0 1 ? * TUE *)"
+      prod = "cron(0 1 ? * WED *)"
       test = "cron(0 13 ? * * *)"
       dev  = "cron(0 15 ? * * *)"
     }
