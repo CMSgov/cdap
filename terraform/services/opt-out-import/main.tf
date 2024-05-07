@@ -11,7 +11,7 @@ locals {
     dpc  = "dpc-${var.env}-db"
   }
   memory_size = {
-    ab2d = 2048
+    ab2d = 1024
     bcda = null
     dpc  = null
   }
