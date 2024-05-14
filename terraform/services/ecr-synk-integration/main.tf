@@ -74,7 +74,7 @@ data "aws_iam_policy_document" "snyk_role_policy" {
 
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::198361731867:user/ecr-integration-user"]
+      identifiers = ["arn:aws:iam:::user/ecr-integration-user"]
     }
 
     actions = ["sts:AssumeRole"]
