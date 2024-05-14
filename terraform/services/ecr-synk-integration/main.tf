@@ -70,17 +70,6 @@ data "aws_iam_policy_document" "snyk_role_policy" {
   }
 
   statement {
-    actions = [
-      "sts:AssumeRole",
-    ]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
-
-  statement {
     effect = "Allow"
 
     principals {
@@ -102,27 +91,9 @@ data "aws_iam_policy" "poweruser_boundary" {
   name = "ct-ado-poweruser-permissions-boundary-policy"
 }
 
-data "aws_iam_policy_document" "snyk_role_inline" {
-  statement {
-    actions   = ["*"]
-    resources = ["*"]
-  }
-}
-
 resource "aws_iam_role" "snyk" {
   name                 = "${var.app}-${var.env}-snyk"
   path                 = "/delegatedadmin/developer/"
   assume_role_policy   = data.aws_iam_policy_document.snyk_role_policy.json
   permissions_boundary = data.aws_iam_policy.poweruser_boundary.arn
-
-  inline_policy {
-    name   = "snyk"
-    policy = data.aws_iam_policy_document.snyk_role_inline.json
-  }
-}
-
-resource "aws_iam_instance_profile" "snyk" {
-  name = "${var.app}-${var.env}-snyk"
-  path = "/delegatedadmin/developer/"
-  role = aws_iam_role.snyk.name
 }
