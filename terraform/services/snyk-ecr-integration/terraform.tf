@@ -2,7 +2,7 @@ provider "aws" {
   default_tags {
     tags = {
       business  = "oeda"
-      code      = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/ecr-synk-integration"
+      code      = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/ecr-snyk-integration"
       component = "github-actions"
       terraform = true
     }
@@ -11,6 +11,6 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "ecr-synk-integration/terraform.tfstate"
+    key = "ecr-snyk-integration/terraform.tfstate"
   }
 }

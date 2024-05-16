@@ -15,19 +15,14 @@ locals {
       "repo:CMSgov/dpc-app:*",
     ]
   }
-  admin_app = var.app == "dpc" ? "bcda" : var.app
 }
 
-data "aws_iam_policy" "poweruser_boundary" {
-  name = "ct-ado-poweruser-permissions-boundary-policy"
+data "aws_iam_policy" "developer_boundary_policy" {
+  name = "developer-boundary-policy"
 }
 
 data "aws_ssm_parameter" "snyk_integration_role_arn" {
   name = "/snyk-integration/role-arn"
-}
-
-data "aws_iam_role" "admin" {
-  name = "ct-ado-${local.admin_app}-application-admin"
 }
 
 data "aws_ssm_parameter" "external_id" {
@@ -38,7 +33,7 @@ data "aws_ssm_parameter" "ecr_integration_user" {
   name = "/snyk-integration/ecr_integration_user"
 }
 
-data "aws_iam_policy_document" "snyk_trust_policy" {
+data "aws_iam_policy_document" "snyk_trust" {
   statement {
     actions = [
       "sts:AssumeRole",
@@ -48,8 +43,7 @@ data "aws_iam_policy_document" "snyk_trust_policy" {
     principals {
       type = "AWS"
       identifiers = [
-        data.aws_ssm_parameter.snyk_integration_role_arn.value,
-        data.aws_iam_role.admin.arn,
+        data.aws_ssm_parameter.snyk_integration_role_arn.value
       ]
     }
   }
@@ -69,7 +63,7 @@ data "aws_iam_policy_document" "snyk_trust_policy" {
   }
 }
 
-data "aws_iam_policy_document" "snyk_pull_policy" {
+data "aws_iam_policy_document" "snyk_pull" {
   statement {
     sid    = "SnykAllowPull"
     effect = "Allow"
@@ -90,21 +84,21 @@ data "aws_iam_policy_document" "snyk_pull_policy" {
   }
 }
 
-resource "aws_iam_policy" "snyk_pull_policy" {
-  name        = "${var.app}-${var.env}-snyk-pull-policy"
+resource "aws_iam_policy" "snyk_pull" {
+  name        = "${var.app}-${var.env}-snyk-pull"
   path        = "/delegatedadmin/developer/"
   description = "Policy for Snyk to pull images from ECR"
-  policy      = data.aws_iam_policy_document.snyk_pull_policy.json
+  policy      = data.aws_iam_policy_document.snyk_pull.json
 }
 
 resource "aws_iam_role" "snyk" {
   name                 = "${var.app}-${var.env}-snyk"
   path                 = "/delegatedadmin/developer/"
-  assume_role_policy   = data.aws_iam_policy_document.snyk_trust_policy.json
-  permissions_boundary = data.aws_iam_policy.poweruser_boundary.arn
+  assume_role_policy   = data.aws_iam_policy_document.snyk_trust.json
+  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "snyk_pull_policy_attachment" {
   role       = aws_iam_role.snyk.name
-  policy_arn = aws_iam_policy.snyk_pull_policy.arn
+  policy_arn = aws_iam_policy.snyk_pull.arn
 }
