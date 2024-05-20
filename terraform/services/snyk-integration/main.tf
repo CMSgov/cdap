@@ -1,28 +1,5 @@
-locals {
-  repos = {
-    ab2d = [
-      "repo:CMSgov/ab2d-bcda-dpc-platform:*",
-      "repo:CMSgov/ab2d-events:*",
-      "repo:CMSgov/ab2d-lambdas:*",
-      "repo:CMSgov/ab2d:*",
-    ]
-    bcda = [
-      "repo:CMSgov/ab2d-bcda-dpc-platform:*",
-      "repo:CMSgov/bcda-app:*",
-    ]
-    dpc = [
-      "repo:CMSgov/ab2d-bcda-dpc-platform:*",
-      "repo:CMSgov/dpc-app:*",
-    ]
-  }
-}
-
 data "aws_iam_policy" "developer_boundary_policy" {
   name = "developer-boundary-policy"
-}
-
-data "aws_ssm_parameter" "snyk_integration_role_arn" {
-  name = "/snyk-integration/role-arn"
 }
 
 data "aws_ssm_parameter" "external_id" {
@@ -34,20 +11,6 @@ data "aws_ssm_parameter" "ecr_integration_user" {
 }
 
 data "aws_iam_policy_document" "snyk_trust" {
-  statement {
-    actions = [
-      "sts:AssumeRole",
-      "sts:TagSession",
-    ]
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        data.aws_ssm_parameter.snyk_integration_role_arn.value
-      ]
-    }
-  }
-
   statement {
     effect = "Allow"
     principals {

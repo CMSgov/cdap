@@ -1,12 +1,12 @@
-name:  snyk-ecr-integration apply terraform
+name:  snyk-integration apply terraform
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/snyk-ecr-integration-apply.yml
-      - terraform/services/snyk-ecr-integration/**
+      - .github/workflows/snyk-integration-apply.yml
+      - terraform/services/snyk-integration/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/snyk-ecr-integration
+        working-directory: ./terraform/services/snyk-integration
     strategy:
       fail-fast: false
       matrix:
