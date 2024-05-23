@@ -16,7 +16,9 @@ https://jira.cms.gov/browse/***
 
 ## ✅ Checklist
 
-- [ ] This PR and branch are named for [automatic linking](https://support.atlassian.com/jira-cloud-administration/docs/use-the-github-for-jira-app/) to the most relevant JIRA issue (for example, `JRA-123 Adds foo` for PR title and `jra-123-adds-foo` for branch name)
+- [ ] This PR and branch are named for [automatic linking](https://support.atlassian.com/jira-cloud-administration/docs/use-the-github-for-jira-app/) to the most relevant JIRA issue (for example, `JRA-123 Adds foo` for PR title and `jra-123-adds-foo` for branch name).
+- [ ] Reviewers have been selected to include people from all teams impacted by these changes.
+- [ ] This PR has been assigned to the people who will respond to reviews and merge when ready (usually the person filing the review, but can change when a PR is handed off to someone else).
 - [ ] This PR is reasonably limited in scope to ensure:
   - It doesn't bunch together disparate features, fixes, refactorings, etc.
   - There isn't too much of a burden on reviewers.
