@@ -33,9 +33,6 @@ data "aws_iam_policy_document" "runner" {
   }
 }
 
-# Due to the developer-boundary-policy permissions boundary, this policy cannot be created by
-# the deploy role. The "terraform apply" to create it must be run by a login role with the
-# ct-ado-poweruser-permissions-boundary-policy permissions boundary.
 resource "aws_iam_policy" "runner" {
   name = "github-actions-runner"
   path = "/delegatedadmin/developer/"
