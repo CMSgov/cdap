@@ -3,11 +3,11 @@ data "aws_iam_policy" "developer_boundary_policy" {
 }
 
 data "aws_ssm_parameter" "external_id" {
-  name = "/snyk-integration/external_id"
+  name = "/snyk-integration/external-id"
 }
 
 data "aws_ssm_parameter" "ecr_integration_user" {
-  name = "/snyk-integration/ecr_integration_user"
+  name = "/snyk-integration/ecr-integration-user"
 }
 
 data "aws_iam_policy_document" "snyk_trust" {
@@ -48,14 +48,14 @@ data "aws_iam_policy_document" "snyk_pull" {
 }
 
 resource "aws_iam_policy" "snyk_pull" {
-  name        = "${var.app}-${var.env}-snyk-pull"
+  name        = "snyk-pull-ecr"
   path        = "/delegatedadmin/developer/"
   description = "Policy for Snyk to pull images from ECR"
   policy      = data.aws_iam_policy_document.snyk_pull.json
 }
 
 resource "aws_iam_role" "snyk" {
-  name                 = "${var.app}-${var.env}-snyk"
+  name                 = "snyk"
   path                 = "/delegatedadmin/developer/"
   assume_role_policy   = data.aws_iam_policy_document.snyk_trust.json
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn

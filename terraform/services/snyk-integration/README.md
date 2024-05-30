@@ -1,6 +1,6 @@
 # Terraform for Snyk role in target accounts
 
-This terraform code sets up the role for Snyk to assume in target accounts (prod and non-prod) to enable Snyk ECR container image vulnerability scanning integration.
+This terraform code sets up the role for Snyk to assume in target accounts (prod and non-prod) to enable Snyk scanning integration.
 
 ## Instructions
 
