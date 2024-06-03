@@ -6,14 +6,10 @@ locals {
     prod = "east-prod"
   }
   db_sg_name = {
-    ab2d = "ab2d-${local.bcda_db_envs[var.env]}-database-sg"
     bcda = "bcda-${var.env}-rds"
-    dpc  = "dpc-${var.env}-db"
   }
   memory_size = {
-    ab2d = 1024
     bcda = 1024
-    dpc  = null
   }
 }
 
@@ -41,8 +37,8 @@ module "cclf_import_function" {
   name        = local.full_name
   description = "Ingests the most recent CCLF from BFD"
 
-  handler = var.app == "bcda" ? "gov.cms.ab2d.optout.OptOutHandler" : "bootstrap" # TODO: check handlers
-  runtime = var.app == "bcda" ? "java11" : "provided.al2" # TODO: check runtime
+  handler = "cclf-import"
+  runtime = "provided.al2"
 
   memory_size = local.memory_size[var.app]
 
@@ -53,7 +49,7 @@ module "cclf_import_function" {
   environment_variables = {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-cclf-import"
-    DB_HOST  = data.aws_ssm_parameter.opt_out_db_host.value #TODO: What is this
+    DB_HOST  = data.aws_ssm_parameter.cclf_db_host.value #TODO: What is this
   }
 }
 
