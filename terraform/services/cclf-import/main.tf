@@ -49,7 +49,7 @@ module "cclf_import_function" {
   environment_variables = {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-cclf-import"
-    DB_HOST  = data.aws_ssm_parameter.cclf_db_host.value #TODO: What is this
+    DB_HOST  = data.aws_ssm_parameter.cclf_db_host.value 
   }
 }
 

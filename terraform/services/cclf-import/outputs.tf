@@ -1,4 +1,3 @@
-# TODO: Are these needed? Any extras?
 output "function_role_arn" {
   value = module.cclf_import_function.role_arn
 }
