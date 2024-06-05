@@ -24,10 +24,6 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
-data "aws_ssm_parameter" "cclf_db_host" {
-  name = "/${var.app}/${var.env}/cclf/db-host"
-}
-
 module "cclf_import_function" {
   source = "../../modules/function"
 
@@ -49,7 +45,6 @@ module "cclf_import_function" {
   environment_variables = {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-cclf-import"
-    DB_HOST  = data.aws_ssm_parameter.cclf_db_host.value
   }
 }
 
