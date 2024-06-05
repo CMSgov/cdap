@@ -38,7 +38,7 @@ module "opt_out_import_function" {
   app = var.app
   env = var.env
 
-  name        = var.app == "bcda" ? "opt-out-import" : local.full_name
+  name        = local.full_name
   description = "Ingests the most recent beneficiary opt-out list from BFD"
 
   handler = var.app == "ab2d" ? "gov.cms.ab2d.optout.OptOutHandler" : "bootstrap"
