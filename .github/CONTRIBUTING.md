@@ -1,6 +1,6 @@
 # Contribution expectations
 
-The following expectations apply to each PR our internal teams file:
+The following expectations apply to each PR in our internal teams file:
 
 1. The PR and branch are named for [automatic linking](https://support.atlassian.com/jira-cloud-administration/docs/use-the-github-for-jira-app/) to the most relevant JIRA issue (for example, `JRA-123 Adds foo` for PR title and `jra-123-adds-foo` for branch name).
 2. Reviewers are selected to include people from all teams impacted by the changes in the PR.
