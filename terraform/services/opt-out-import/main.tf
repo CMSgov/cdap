@@ -15,6 +15,11 @@ locals {
     bcda = null
     dpc  = null
   }
+  handler_name = {
+    ab2d = "gov.cms.ab2d.optout.OptOutHandler"
+    bcda = "opt-out-import"
+    dpc  = "bootstrap"
+  }
 }
 
 data "aws_ssm_parameter" "bfd_bucket_role_arn" {
@@ -41,7 +46,7 @@ module "opt_out_import_function" {
   name        = local.full_name
   description = "Ingests the most recent beneficiary opt-out list from BFD"
 
-  handler = var.app == "ab2d" ? "gov.cms.ab2d.optout.OptOutHandler" : var.app == "bcda" ? "opt-out-import" : "bootstrap"
+  handler = local.handler_name[var.app]
   runtime = var.app == "ab2d" ? "java11" : "provided.al2"
 
   memory_size = local.memory_size[var.app]
