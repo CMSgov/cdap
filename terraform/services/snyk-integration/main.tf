@@ -1,13 +1,17 @@
-data "aws_iam_policy" "developer_boundary_policy" {
-  name = "developer-boundary-policy"
-}
-
 data "aws_ssm_parameter" "external_id" {
-  name = "/snyk-integration/external-id"
+  name = local.external_id_param
 }
 
 data "aws_ssm_parameter" "ecr_integration_user" {
   name = "/snyk-integration/ecr-integration-user"
+}
+
+locals {
+  external_id_param = var.app == "ab2d" ? "/snyk-integration/ab2d-external-id" : "/snyk-integration/bcda-external-id"
+}
+
+data "aws_iam_policy" "developer_boundary_policy" {
+  name = "developer-boundary-policy"
 }
 
 data "aws_iam_policy_document" "snyk_trust" {
