@@ -13,7 +13,7 @@ The following expectations apply to each PR in our internal teams file:
 5. The PR includes any required documentation changes, including `README` updates and changelog or release notes entries.
 6. All new and modified code is appropriately commented to make the what and why of its design reasonably clear, even to those unfamiliar with the project.
 7. Any incomplete work introduced by the PR is detailed in `TODO` comments which include a JIRA ticket ID for any items that require urgent attention.
-8. If any of the following security implications apply, the PR must not be merged without Stephen Walter's approval. Note any security implications in the Context section of the PR description and add Stephen Walter (GitHub username: SJWalter11) as a reviewer.
+8. If any of the following security implications apply, the PR must not be merged without Stephen Walter's approval. Note any security implications in the Context section of the PR description and add @SJWalter11 as a reviewer.
    - Adds a new software dependency or dependencies.
    - Modifies or invalidates one or more of our security controls.
    - Stores or transmits data that was not stored or transmitted before.
