@@ -18,10 +18,10 @@ variable "env" {
 
 
 variable "private_cidrs" {
-  type        = string
+  type        = list(string)
   description = "private ip list"
 }
 variable "public_cidrs" {
-  type        = string
+  type        = list(string)
   description = "public ip list"
 }

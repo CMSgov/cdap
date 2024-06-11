@@ -13,7 +13,7 @@ resource "aws_security_group" "zscaler_public" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "zscaler_allow_public" {
-  for_each          = toset(split(",", var.public_cidrs))
+  for_each          = toset(var.public_cidrs)
   security_group_id = aws_security_group.zscaler_public.id
   cidr_ipv4         = each.key
   ip_protocol       = -1
@@ -26,7 +26,7 @@ resource "aws_security_group" "zscaler_private" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "zscaler_allow_private" {
-  for_each          = toset(split(",", var.private_cidrs))
+  for_each          = toset(var.private_cidrs)
   ip_protocol       = -1
   cidr_ipv4         = each.key
   security_group_id = aws_security_group.zscaler_private.id
