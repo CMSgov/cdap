@@ -30,6 +30,8 @@ jobs:
         app: [ab2d, bcda, dpc]
         env: [mgmt, dev, test, sbx, prod]
         include:
+          - app: ab2d
+            env: mgmt
           - app: bcda
             env: mgmt
     steps:
