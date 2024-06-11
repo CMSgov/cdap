@@ -1,6 +1,6 @@
 ## 🎫 Ticket
 
-https://jira.cms.gov/browse/***
+https://jira.cms.gov/browse/...
 
 ## 🛠 Changes
 
