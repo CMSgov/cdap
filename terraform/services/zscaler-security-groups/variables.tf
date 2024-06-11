@@ -17,11 +17,11 @@ variable "env" {
 }
 
 
-variable "private_cidrs" {
-  type        = list(string)
-  description = "private ip list"
-}
-variable "public_cidrs" {
-  type        = list(string)
-  description = "public ip list"
-}
+#variable "private_cidrs" {
+#  type        = list(string)
+#  description = "private ip list"
+#}
+#variable "public_cidrs" {
+#  type        = list(string)
+#  description = "public ip list"
+#}

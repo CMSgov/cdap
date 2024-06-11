@@ -11,7 +11,7 @@ variable "env" {
   description = "The application environment (dev, test, sbx, prod)"
   type        = string
   validation {
-    condition     = contains(["dev", "test", "sbx", "prod"], var.env)
+    condition     = contains(["dev", "test", "sbx", "prod", "mgmt"], var.env)
     error_message = "Valid value for env is dev, test, sbx, or prod."
   }
 }
