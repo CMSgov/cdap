@@ -4,6 +4,7 @@ data "aws_vpc" "this" {
     values = [
       var.env == "sbx" && var.app == "ab2d" ? "sandbox" :
       var.env == "sbx" && var.app == "bcda" ? "opensbx" :
+      var.env == "mgmt" && var.app == "bcda" ? "managed" :
       var.env == "sbx" && var.app == "dpc" ? "prod-sbx" :
       var.env == "test" && var.app == "ab2d" ? "impl" :
       var.env
