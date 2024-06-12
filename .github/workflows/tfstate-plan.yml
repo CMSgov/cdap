@@ -32,7 +32,6 @@ jobs:
         include:
           - app: ab2d
             env: mgmt
-        include:
           - app: bcda
             env: mgmt
     steps:
