@@ -14,6 +14,8 @@ resource "aws_sqs_queue" "this" {
   name              = var.name
   kms_master_key_id = module.queue_key.id
 
+  visibility_timeout_seconds = var.visibility_timeout_seconds
+
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.dead_letter.arn
     maxReceiveCount     = 4
