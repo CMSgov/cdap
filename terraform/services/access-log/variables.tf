@@ -1,8 +1,5 @@
-variable "app" {
-  description = "The application name ( bcda, dpc)"
+variable "bucket_name" {
   type        = string
-  validation {
-    condition     = contains(["bcda", "dpc"], var.app)
-    error_message = "Valid value for app is bcda, or dpc."
-  }
+  description = "Name of the S3 bucket for access logs"
+  default     = "access-logs"
 }
