@@ -86,11 +86,9 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
     }
   }
 }
-
 data "aws_s3_bucket" "access_logs" {
-  bucket = "${var.app}-access-logs"
+  bucket = var.access_log_bucket_name
 }
-
 resource "aws_s3_bucket_logging" "this" {
   bucket = aws_s3_bucket.this.id
 
