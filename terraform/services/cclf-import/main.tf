@@ -33,7 +33,7 @@ module "cclf_import_function" {
   name        = local.full_name
   description = "Ingests the most recent CCLF from BFD"
 
-  handler = "cclf-import"
+  handler = "bootstrap"
   runtime = "provided.al2"
 
   memory_size = local.memory_size[var.app]
