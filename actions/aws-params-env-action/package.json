@@ -15,7 +15,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gsf/aws-params-env-action.git"
+    "url": "cmsgov/ab2d-bcda-dpc-platform.git",
+    "directory": "actions/aws-params-env-action"
   },
   "keywords": [
     "actions",
