@@ -1,6 +1,6 @@
-# Terraform for access-log in target accounts
+# Terraform for bucket-access-log in target accounts
 
-This terraform code sets up access-log s3 buckets in target accounts (prod and non-prod) to enable access-log S3 buckets.
+This terraform code manages an s3 bucket in each target account (prod and non-prod) for logging access to other S3 buckets.
 
 ## Instructions
 
