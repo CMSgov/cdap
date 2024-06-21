@@ -1,5 +1,5 @@
 # shellcheck shell=sh
-# Start AWS session for MFA-enabled account
+# Assume a new AWS role in the current shell
 
 set -o pipefail
 
