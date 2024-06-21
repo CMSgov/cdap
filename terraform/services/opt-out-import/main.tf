@@ -17,7 +17,7 @@ locals {
   }
   handler_name = {
     ab2d = "gov.cms.ab2d.optout.OptOutHandler"
-    bcda = "opt-out-import"
+    bcda = "bootstrap"
     dpc  = "bootstrap"
   }
 }
