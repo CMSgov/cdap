@@ -21,11 +21,56 @@ data "aws_iam_policy_document" "this" {
     resources = ["*"]
 
     principals {
-      type = "AWS"
-      identifiers = concat(
-        ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"],
-        var.additional_access_roles,
-      )
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(var.user_roles) > 0 ? [1] : []
+    content {
+      sid = "Allow use of the key"
+
+      actions = [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey",
+      ]
+
+      resources = ["*"]
+
+      principals {
+        type        = "AWS"
+        identifiers = var.user_roles
+      }
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(var.user_roles) > 0 ? [1] : []
+    content {
+      sid = "Allow attachment of persistent resources"
+
+      actions = [
+        "kms:CreateGrant",
+        "kms:ListGrants",
+        "kms:RevokeGrant",
+      ]
+
+      resources = ["*"]
+
+      principals {
+        type        = "AWS"
+        identifiers = var.user_roles
+      }
+
+      condition {
+        test     = "Bool"
+        variable = "kms:GrantIsForAWSResource"
+        values   = ["true"]
+      }
     }
   }
 
