@@ -1,6 +1,3 @@
-data "aws_s3_bucket" "this" {
-  bucket = var.name
-}
 resource "aws_s3_bucket" "bucket_access_logs" {
   bucket        = "${var.app}-${var.env}-bucket-access-log"
   force_destroy = true
@@ -64,7 +61,7 @@ data "aws_iam_policy_document" "bucket_access_logs" {
     ]
 
     resources = [
-      "arn:aws:s3:::${aws_s3_bucket.bucket_access_logs.bucket}/${data.aws_s3_bucket.this.id}/"
+      "arn:aws:s3:::${aws_s3_bucket.bucket_access_logs.bucket}/${local.s3_logs_prefix}/*"
     ]
   }
 }
