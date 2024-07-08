@@ -16,13 +16,3 @@ variable "env" {
   }
 }
 
-variable "s3_logs_path" {
-  description = "Prefix for S3 access logs."
-  type        = string
-  default = "s3"
-
-  validation {
-    condition     = substr(var.s3_logs_path, 0, 1) != "/" && substr(var.s3_logs_path, -1, 1) != "/" && length(var.s3_logs_path) > 0
-    error_message = "Parameter `s3_logs_path` cannot start and end with \"/\", as well as cannot be empty."
-  }
-}
