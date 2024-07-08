@@ -41,4 +41,47 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -reconfigure -backend-config=../../backends/$TF_VAR_app-$TF_VAR_env.s3.tfbackend
       - run: terraform apply -auto-approve
-
+      - name: notify slack
+        id: slack
+        uses: slackapi/slack-github-action@v1.24.0
+        # https://api.slack.com/apps/<your-app-id>/incoming-webhooks
+        if: ${{ failure() }}
+        with:
+          channel-id: 'T07AYTHK0QJ' # slack channel #alerts-test
+          payload: |
+            {
+              "text": "GitHub Action failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production deployment check failed* :fire_engine:\n High error rate detected after deployment! Rolling back..."
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": ":github: Failed action"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": ":grafana: Grafana dashboard"
+                      },
+                      "url": "https://www.google.com/"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
