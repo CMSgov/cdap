@@ -1,5 +1,7 @@
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "bucket_access_logs" {
-  bucket        = "${var.app}-${var.env}-bucket-access-log"
+  bucket        = "${data.aws_caller_identity.current.account_id}-bucket-access-logs"
   force_destroy = true
 }
 

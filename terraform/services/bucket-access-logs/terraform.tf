@@ -3,8 +3,8 @@ provider "aws" {
     tags = {
       application = var.app
       business    = "oeda"
-      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/bucket-access-log"
-      component   = "bucket-access-log"
+      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/bucket-access-logs"
+      component   = "bucket-access-logs"
       environment = var.env
       terraform   = true
     }
@@ -13,6 +13,6 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "bucket-access-log/terraform.tfstate"
+    key = "bucket-access-logs/terraform.tfstate"
   }
 }
