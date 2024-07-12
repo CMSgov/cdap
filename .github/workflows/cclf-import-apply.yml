@@ -41,12 +41,12 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -reconfigure -backend-config=../../backends/$TF_VAR_app-$TF_VAR_env.s3.tfbackend
       - run: terraform apply -auto-approve
-      - name: notify slack
+      - name: notify slack # notify any terraform failiure via slack message in channel #ab2d-bcda-dpc-platform
         id: slack
-        uses: slackapi/slack-github-action@v1.24.0
+        uses: slackapi/slack-github-action@v1.26.0
         if: ${{ failure() }}
         with:
-          channel-id: 'T07AYTHK0QJ'
+          channel-id: 'T07AYTHK0QJ' # slack channel to report terraform apply fail
           payload: |
             {
               "text": "GitHub Action failed",
@@ -55,7 +55,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Terraform apply failure*"
+                    "text": "*Terraform apply failed*\nRun ID:${{ github.run_id }}"
                   }
                 },
                 {
@@ -68,7 +68,7 @@ jobs:
                         "text": "Link to failed job"
                       },
                       "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                    },
+                    }
                   ]
                 }
               ]
@@ -76,3 +76,4 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
