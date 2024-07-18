@@ -22,10 +22,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/bcda-mgmt-github-actions
           aws-region: ${{ vars.AWS_REGION }}
@@ -52,7 +52,7 @@ jobs:
           echo "PKR_VAR_subnet_id=$SUBNET_ID" >> "$GITHUB_ENV"
 
       - name: Setup `packer`
-        uses: hashicorp/setup-packer@v2.0.1
+        uses: hashicorp/setup-packer@v3.1.0
         id: setup
         with:
           version: "latest"
