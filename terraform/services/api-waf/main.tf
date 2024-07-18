@@ -1,13 +1,18 @@
 locals {
+  ab2d_env_lbs = {
+    dev  = "ab2d-dev"
+    test = "ab2d-east-impl"
+    prod = "api-ab2d-east-prod"
+  }
   load_balancers = {
     ab2d = {
-      name = var.env == "dev" ? "ab2d-dev" : "api-${var.app}-east-${var.env}"
+      name = "${local.ab2d_env_lbs[var.env]}"
     }
     bcda = {
-      name = var.env == "sbx" ? "${var.app}-api-opensbx-01" : "${var.app}-api-${var.env}-01"
+      name = "${var.app}-api-${var.env}-01"
     }
     dpc = {
-      name = var.env == "sbx" ? "${var.app}-prod-sbx-1" : "${var.app}-${var.env}-1"
+      name = "${var.app}-${var.env}-1"
     }
   }
 }
