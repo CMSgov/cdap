@@ -29,11 +29,6 @@ jobs:
       matrix:
         app: [ab2d, bcda, dpc]
         env: [dev, test, sbx, prod]
-        include:
-          - app: ab2d
-            env: mgmt
-          - app: bcda
-            env: mgmt
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
