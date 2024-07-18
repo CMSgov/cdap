@@ -21,7 +21,7 @@ module "aws_waf" {
 
   app             = var.app
   env             = var.env
-  aws_lb_arn      = aws_lb_arn.arn
+  aws_lb_arn      = data.aws_lb.api_lb.arn
   rate_based_rule = var.rate_based_rule
   ip_sets_rule    = var.ip_sets_rule
   region          = var.region
