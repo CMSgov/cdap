@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+if { [ -z "$1" ]; }; then
+  echo 2>&1 "Usage: ${BASH_SOURCE:-${(%):-%x}} <description> <CIDRs>..."
+  echo 2>&1 "  Where <CIDRs> are IP ranges to be added as ingress rules"
+  echo 2>&1 "  and <description> is applied to each rule."
+  exit 1
+fi
+
+set -x
+
+#apps="ab2d"
+apps="bcda dpc"
+#envs="mgmt"
+envs="dev test prod sbx mgmt"
+
+description="$1"
+shift
+
+ip_ranges="["
+for cidr in "$@"; do
+  ip_ranges+="{CidrIp=$cidr,Description=\"$description\"},"
+done
+ip_ranges+="]"
+
+for app in $apps; do
+  for env in $envs; do
+    sgid=$(aws ec2 describe-security-groups --filters Name=group-name,Values=$app-$env-allow-zscaler-public --query "SecurityGroups[0].GroupId" --output text)
+    aws ec2 authorize-security-group-ingress --group-id $sgid --ip-permissions IpProtocol=-1,IpRanges="$ip_ranges"
+
+    # Comment above and uncomment below to update descriptions instead of adding rules
+    #aws ec2 update-security-group-rule-descriptions-ingress --group-id $sgid --ip-permissions IpProtocol=-1,IpRanges="$ip_ranges"
+  done
+done
