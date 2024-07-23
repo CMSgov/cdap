@@ -145,7 +145,6 @@ module "zip_bucket" {
     "arn:aws:iam::${data.aws_ssm_parameter.prod_account[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
     "arn:aws:iam::${data.aws_ssm_parameter.sbx_account[0].value}:role/delegatedadmin/developer/${var.app}-sbx-github-actions",
   ] : []
-  
 }
 
 resource "aws_s3_object" "empty_function_zip" {
