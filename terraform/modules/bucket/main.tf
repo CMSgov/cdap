@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 module "bucket_key" {
   source      = "../key"
   name        = "${var.name}-bucket"
@@ -87,7 +89,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   }
 }
 data "aws_s3_bucket" "bucket_access_logs" {
-  bucket = "${var.app}-${var.env}-bucket-access-log"
+  bucket = "${data.aws_caller_identity.current.account_id}-bucket-access-logs"
 }
 resource "aws_s3_bucket_logging" "this" {
   bucket = aws_s3_bucket.this.id
