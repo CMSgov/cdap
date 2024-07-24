@@ -70,4 +70,6 @@ resource "aws_sns_topic_subscription" "this" {
 resource "aws_lambda_event_source_mapping" "this" {
   event_source_arn = aws_sqs_queue.this.arn
   function_name    = var.function_name
+  batch_size       = 1 
+  enabled          = true
 }
