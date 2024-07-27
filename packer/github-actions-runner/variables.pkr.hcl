@@ -7,7 +7,7 @@ variable "region" {
 variable "ami_filter" {
   description = "The filter for searching the AMI"
   type        = string
-  default     = null
+  default     = "al2023-legacy-gi-*"
 }
 
 variable "ami_account" {
