@@ -36,7 +36,6 @@ jobs:
         with:
           params: |
             PKR_VAR_ami_account=/github-runner/gold-image-account
-            PKR_VAR_ami_filter=/github-runner/gold-image-filter
             PKR_VAR_s3_tarball=/github-runner/s3-tarball
 
       - name: Retrieve default VPC ID and subnet

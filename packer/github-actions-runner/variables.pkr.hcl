@@ -4,12 +4,6 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "ami_filter" {
-  description = "The filter for searching the AMI"
-  type        = string
-  default     = "al2023-legacy-gi-*"
-}
-
 variable "ami_account" {
   description = "The target AMI account"
   type        = string
