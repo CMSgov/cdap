@@ -12,9 +12,9 @@ build {
   sources = [
     "source.amazon-ebs.github-actions-runner"
   ]
-    remote_folder = "/home/ec2-user/"
 
   provisioner "shell" {
+    remote_folder = "/home/ec2-user/"
     environment_vars = []
     inline = concat([
       "sudo yum -y update --security",
@@ -28,6 +28,7 @@ build {
   }
 
   provisioner "file" {
+    remote_folder = "/home/ec2-user/"
     content = templatefile("./install-runner.sh", {
       S3_LOCATION_RUNNER_DISTRIBUTION = var.s3_tarball
     })
@@ -35,6 +36,7 @@ build {
   }
 
   provisioner "shell" {
+    remote_folder = "/home/ec2-user/"
     inline = [
       "chmod +x /home/ec2-user/install-runner.sh",
       "/home/ec2-user/install-runner.sh"
@@ -42,14 +44,16 @@ build {
   }
 
   provisioner "file" {
+    remote_folder = "/home/ec2-user/"
     content = templatefile("./start-runner.sh", { metadata_tags = "enabled" })
     destination = "/home/ec2-user/start-runner.sh"
   }
 
   provisioner "shell" {
+    remote_folder = "/home/ec2-user/"
     inline = [
       "sudo mv /home/ec2-user/start-runner.sh /var/lib/cloud/scripts/per-boot/start-runner.sh",
-      "chmod +x /var/lib/cloud/scripts/per-boot/start-runner.sh",
+      "sudo chmod +x /var/lib/cloud/scripts/per-boot/start-runner.sh",
     ]
   }
 
@@ -58,3 +62,4 @@ build {
     strip_path = true
   }
 }
+
