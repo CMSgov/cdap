@@ -28,7 +28,6 @@ build {
   }
 
   provisioner "file" {
-    remote_folder = "/home/ec2-user/"
     content = templatefile("./install-runner.sh", {
       S3_LOCATION_RUNNER_DISTRIBUTION = var.s3_tarball
     })
@@ -44,7 +43,6 @@ build {
   }
 
   provisioner "file" {
-    remote_folder = "/home/ec2-user/"
     content = templatefile("./start-runner.sh", { metadata_tags = "enabled" })
     destination = "/home/ec2-user/start-runner.sh"
   }
