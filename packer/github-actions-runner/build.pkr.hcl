@@ -14,6 +14,7 @@ build {
   ]
 
   provisioner "shell" {
+    remote_folder = "/home/ec2-user/"
     environment_vars = []
     inline = concat([
       "sudo yum -y update --security",
@@ -26,30 +27,29 @@ build {
     ], var.custom_shell_commands)
   }
 
-
   provisioner "file" {
     content = templatefile("./install-runner.sh", {
       S3_LOCATION_RUNNER_DISTRIBUTION = var.s3_tarball
     })
-    destination = "/tmp/install-runner.sh"
+    destination = "/home/ec2-user/install-runner.sh"
   }
 
   provisioner "shell" {
     inline = [
-      "chmod +x /tmp/install-runner.sh",
-      "/tmp/install-runner.sh"
+      "chmod +x /home/ec2-user/install-runner.sh",
+      "/home/ec2-user/install-runner.sh"
     ]
   }
 
   provisioner "file" {
     content = templatefile("./start-runner.sh", { metadata_tags = "enabled" })
-    destination = "/tmp/start-runner.sh"
+    destination = "/home/ec2-user/start-runner.sh"
   }
 
   provisioner "shell" {
     inline = [
-      "sudo mv /tmp/start-runner.sh /var/lib/cloud/scripts/per-boot/start-runner.sh",
-      "sudo chmod +x /var/lib/cloud/scripts/per-boot/start-runner.sh",
+      "sudo mv /home/ec2-user/start-runner.sh /var/lib/cloud/scripts/per-boot/start-runner.sh",
+      "chmod +x /var/lib/cloud/scripts/per-boot/start-runner.sh",
     ]
   }
 
