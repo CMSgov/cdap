@@ -12,9 +12,9 @@ build {
   sources = [
     "source.amazon-ebs.github-actions-runner"
   ]
+    remote_folder = "/home/ec2-user/"
 
   provisioner "shell" {
-    remote_folder = "/home/ec2-user/"
     environment_vars = []
     inline = concat([
       "sudo yum -y update --security",
