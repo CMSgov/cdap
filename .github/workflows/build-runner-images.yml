@@ -20,12 +20,14 @@ jobs:
     permissions:
       id-token: write
       contents: read
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: arn:aws:iam::${{ secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/bcda-mgmt-github-actions
           aws-region: ${{ vars.AWS_REGION }}
@@ -34,7 +36,6 @@ jobs:
         with:
           params: |
             PKR_VAR_ami_account=/github-runner/gold-image-account
-            PKR_VAR_ami_filter=/github-runner/gold-image-filter
             PKR_VAR_s3_tarball=/github-runner/s3-tarball
 
       - name: Retrieve default VPC ID and subnet
@@ -52,7 +53,7 @@ jobs:
           echo "PKR_VAR_subnet_id=$SUBNET_ID" >> "$GITHUB_ENV"
 
       - name: Setup `packer`
-        uses: hashicorp/setup-packer@v3.1.0
+        uses: hashicorp/setup-packer@v2.0.1
         id: setup
         with:
           version: "latest"
