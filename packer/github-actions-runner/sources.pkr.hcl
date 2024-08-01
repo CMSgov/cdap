@@ -9,9 +9,9 @@ source "amazon-ebs" "github-actions-runner" {
   iam_instance_profile                      = "bcda-mgmt-github-actions"
 
   source_ami_filter {
-     filters = {
+    filters = {
       name = "al2023-legacy-gi-*"
-     }
+    }
     owners = ["${var.ami_account}"]
     most_recent = true
   }
@@ -35,6 +35,13 @@ source "amazon-ebs" "github-actions-runner" {
   }
   # enforces IMDSv2 support on the resulting AMI
   imds_support = "v2.0"
+
+  # match the volume size of the source AMI snapshot
+  launch_block_device_mappings {
+    device_name = "/dev/xvda"
+    volume_size = 31
+    delete_on_termination = true
+  }
 
   tags = {
     Name = "github-actions-runner-ami",
