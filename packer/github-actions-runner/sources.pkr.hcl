@@ -36,14 +36,6 @@ source "amazon-ebs" "github-actions-runner" {
   # enforces IMDSv2 support on the resulting AMI
   imds_support = "v2.0"
 
-  # match the volume size of the source AMI snapshot
-  launch_block_device_mappings {
-    device_name = "/dev/xvda"
-    volume_size = 31
-    delete_on_termination = true
-    encrypted = true
-  }
-
   tags = {
     Name = "github-actions-runner-ami",
     Base_AMI_Name = "{{ .SourceAMIName }}"
