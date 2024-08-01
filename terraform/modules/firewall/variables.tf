@@ -17,21 +17,21 @@ variable "env" {
 }
 
 variable "region" {
-    description = "AWS region"
-    default = "us-east-1"
+  description = "AWS region"
+  default     = "us-east-1"
 }
 
 variable "scope" {
-    description = "Firewall scope"
-    default = null
+  description = "Firewall scope"
+  default     = null
 }
 
 variable "name" {
-    description = "Web ACL name"
+  description = "Web ACL name"
 }
 
 variable "aws_lb_arn" {
-    description = "ARN of the LoadBalancer to attach the WAF to."
+  description = "ARN of the LoadBalancer to attach the WAF to."
 }
 
 variable "rate_based_rule" {

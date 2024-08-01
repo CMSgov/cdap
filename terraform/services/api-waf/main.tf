@@ -1,6 +1,6 @@
 locals {
   ab2d_env_lbs = {
-    dev = "ab2d-dev"
+    dev  = "ab2d-dev"
     test = "ab2d-east-impl"
     prod = "api-ab2d-east-prod"
   }
