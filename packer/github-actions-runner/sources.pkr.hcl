@@ -41,6 +41,7 @@ source "amazon-ebs" "github-actions-runner" {
     device_name = "/dev/xvda"
     volume_size = 31
     delete_on_termination = true
+    encrypted = true
   }
 
   tags = {
