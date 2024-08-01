@@ -31,5 +31,5 @@ module "aws_waf" {
   rate_based_rule = var.rate_based_rule
   ip_sets_rule    = var.ip_sets_rule
   region          = "us-east-1"
-  scope           = var.app == "dpc" ? "GLOBAL" : "REGIONAL"
+  scope           = var.app == "dpc" ? "CLOUDFRONT" : "REGIONAL"
 }
