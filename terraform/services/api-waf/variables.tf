@@ -16,11 +16,6 @@ variable "env" {
   }
 }
 
-variable "region" {
-  description = "AWS region"
-  default     = "us-east-1"
-}
-
 variable "rate_based_rule" {
   type = object({
     name          = string
