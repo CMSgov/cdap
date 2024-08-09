@@ -38,7 +38,7 @@ jobs:
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
-        uses: slackapi/slack-github-action@v1.26.0
+      - uses: slackapi/slack-github-action@v1.26.0
         if: ${{ failure() }}
         with:
           channel-id: 'C04UG13JF9B' 

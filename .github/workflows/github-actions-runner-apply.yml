@@ -38,7 +38,7 @@ jobs:
             TF_VAR_key_base64=/github-runner/app-key-base64
             TF_VAR_webhook_secret=/github-runner/webhook-secret
       - run: terraform apply -auto-approve
-        uses: slackapi/slack-github-action@v1.26.0
+      - uses: slackapi/slack-github-action@v1.26.0
         if: ${{ failure() }}
         with:
           channel-id: 'C04UG13JF9B'
