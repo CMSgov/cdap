@@ -38,13 +38,11 @@ jobs:
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
-      - name: notify slack 
-        id: slack
         uses: slackapi/slack-github-action@v1.26.0
         if: ${{ failure() }}
         with:
           channel-id: 'C04UG13JF9B' 
-          slack-message: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          slack-message: "Terraform apply failure: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
