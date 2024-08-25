@@ -12,7 +12,7 @@ locals {
   }
 }
 
-data "aws_lb" "api_lb" {
+data "aws_lb" "api" {
   name = local.load_balancers[var.app]
 }
 
@@ -21,10 +21,10 @@ module "aws_waf" {
 
   app  = var.app
   env  = var.env
-  name = "${var.app}-api-waf"
+  name = "${var.app}-${var.env}-api"
 
   scope        = "REGIONAL"
   content_type = "APPLICATION_JSON"
 
-  associated_resource_arn = data.aws_lb.api_lb.arn
+  associated_resource_arn = data.aws_lb.api.arn
 }
