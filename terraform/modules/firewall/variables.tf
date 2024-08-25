@@ -27,32 +27,11 @@ variable "scope" {
 
 variable "name" {
   description = "Web ACL name"
+  type        = string
 }
 
-variable "aws_lb_arn" {
-  description = "ARN of the LoadBalancer to attach the WAF to."
-}
-
-variable "rate_based_rule" {
-  type = object({
-    name          = string
-    priority      = number
-    limit         = number
-    action        = string
-    response_code = optional(number, 403)
-  })
-  description = "A rule for the number of requests to accept over the course of 5 minutes."
+variable "associated_resource_arn" {
+  description = "ARN of the resource to associate the WAF with."
+  type        = string
   default     = null
-}
-
-variable "ip_sets_rule" {
-  type = list(object({
-    name          = string
-    priority      = number
-    ip_set_arn    = string
-    action        = string
-    response_code = optional(number, 403)
-  }))
-  description = "A rule to detect web requests coming from particular IP addresses or address ranges."
-  default     = []
 }

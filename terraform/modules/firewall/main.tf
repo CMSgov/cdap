@@ -7,58 +7,8 @@ resource "aws_wafv2_web_acl" "this" {
   scope = var.scope
 
   default_action {
-    allow {
-
-    }
+    allow {}
   }
-
-  visibility_config {
-    cloudwatch_metrics_enabled = true
-    metric_name                = var.name
-    sampled_requests_enabled   = true
-  }
-
-  dynamic "rule" {
-    for_each = var.rate_based_rule != null ? [var.rate_based_rule] : []
-    content {
-      name     = rule.value.name
-      priority = rule.value.priority
-
-      action {
-        dynamic "count" {
-          for_each = rule.value.action == "count" ? [1] : []
-          content {}
-        }
-
-        dynamic "block" {
-          for_each = rule.value.action == "block" ? [1] : []
-          content {
-            dynamic "custom_response" {
-              for_each = rule.value.response_code != 403 ? [1] : []
-              content {
-                response_code = rule.value.response_code
-              }
-            }
-          }
-        }
-      }
-
-      statement {
-        rate_based_statement {
-          limit              = rule.value.limit
-          aggregate_key_type = "IP"
-        }
-      }
-
-      visibility_config {
-        cloudwatch_metrics_enabled = true
-        metric_name                = rule.value.name
-        sampled_requests_enabled   = true
-      }
-    }
-  }
-
-
 
   rule {
     name     = "CommonRuleset"
@@ -87,11 +37,18 @@ resource "aws_wafv2_web_acl" "this" {
       metric_name                = var.name
       sampled_requests_enabled   = true
     }
+  }
 
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = var.name
+    sampled_requests_enabled   = true
   }
 }
 
 resource "aws_wafv2_web_acl_association" "this" {
-  resource_arn = var.aws_lb_arn
+  count = var.associated_resource_arn ? 1 : 0
+
+  resource_arn = var.associated_resource_arn
   web_acl_arn  = aws_wafv2_web_acl.this.arn
 }
