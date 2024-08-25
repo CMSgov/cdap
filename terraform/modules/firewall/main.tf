@@ -47,7 +47,7 @@ resource "aws_wafv2_web_acl" "this" {
 }
 
 resource "aws_wafv2_web_acl_association" "this" {
-  count = var.associated_resource_arn ? 1 : 0
+  count = var.associated_resource_arn != "" ? 1 : 0
 
   resource_arn = var.associated_resource_arn
   web_acl_arn  = aws_wafv2_web_acl.this.arn

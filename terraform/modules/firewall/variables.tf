@@ -33,5 +33,5 @@ variable "name" {
 variable "associated_resource_arn" {
   description = "ARN of the resource to associate the WAF with."
   type        = string
-  default     = null
+  default     = ""
 }
