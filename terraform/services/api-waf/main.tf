@@ -19,10 +19,12 @@ data "aws_lb" "api_lb" {
 module "aws_waf" {
   source = "../../modules/firewall"
 
-  app   = var.app
-  env   = var.env
-  name  = "${var.app}-api-waf"
-  scope = "REGIONAL"
+  app  = var.app
+  env  = var.env
+  name = "${var.app}-api-waf"
+
+  scope        = "REGIONAL"
+  content_type = "APPLICATION_JSON"
 
   associated_resource_arn = data.aws_lb.api_lb.arn
 }
