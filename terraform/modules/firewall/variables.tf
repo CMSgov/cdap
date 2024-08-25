@@ -40,7 +40,7 @@ variable "content_type" {
   description = "Content type for firewall responses"
   type        = string
   validation {
-    condition     = contains(["APPLICATION_JSON", "TEXT_HTML", "TEXT_PLAIN"], var.scope)
+    condition     = contains(["APPLICATION_JSON", "TEXT_HTML", "TEXT_PLAIN"], var.content_type)
     error_message = "Valid value for content_type is APPLICATION_JSON, TEXT_HTML, or TEXT_PLAIN."
   }
 }
