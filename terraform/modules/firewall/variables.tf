@@ -18,7 +18,11 @@ variable "env" {
 
 variable "scope" {
   description = "Firewall scope"
-  default     = null
+  type        = string
+  validation {
+    condition     = contains(["CLOUDFRONT", "REGIONAL"], var.scope)
+    error_message = "Valid value for scope is CLOUDFRONT or REGIONAL."
+  }
 }
 
 variable "name" {

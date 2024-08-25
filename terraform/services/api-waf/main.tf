@@ -30,6 +30,5 @@ module "aws_waf" {
   aws_lb_arn      = data.aws_lb.api_lb.arn
   rate_based_rule = var.rate_based_rule
   ip_sets_rule    = var.ip_sets_rule
-  region          = "us-east-1"
-  scope           = var.app == "dpc" ? "CLOUDFRONT" : "REGIONAL"
+  scope           = "REGIONAL"
 }
