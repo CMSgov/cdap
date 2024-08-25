@@ -36,6 +36,12 @@ resource "aws_wafv2_web_acl" "this" {
     allow {}
   }
 
+  custom_response_body {
+    key          = "rate-limit-exceeded"
+    content      = local.rate_limit_content[var.content_type]
+    content_type = var.content_type
+  }
+
   rule {
     name     = "rate-limit"
     priority = 1
@@ -58,12 +64,6 @@ resource "aws_wafv2_web_acl" "this" {
         limit              = 300
         aggregate_key_type = "IP"
       }
-    }
-
-    custom_response_body {
-      key          = "rate-limit-exceeded"
-      content      = local.rate_limit_content[var.content_type]
-      content_type = var.content_type
     }
 
     visibility_config {
