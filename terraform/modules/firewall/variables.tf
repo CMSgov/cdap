@@ -44,3 +44,9 @@ variable "content_type" {
     error_message = "Valid value for content_type is APPLICATION_JSON, TEXT_HTML, or TEXT_PLAIN."
   }
 }
+
+variable "rate_limit" {
+  description = "IP rate limit for every 5 minutes"
+  type        = number
+  default     = 300
+}

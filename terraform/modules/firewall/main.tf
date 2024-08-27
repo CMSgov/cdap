@@ -1,8 +1,3 @@
-//TODO: 
-// - Add rate limiting rule to match BCDA's config
-// - SQL Injection ruleset
-// - Cloudfront distribution (?)
-
 locals {
   rate_limit_content = {
     APPLICATION_JSON = <<EOT
@@ -43,8 +38,85 @@ resource "aws_wafv2_web_acl" "this" {
   }
 
   rule {
-    name     = "rate-limit"
+    name     = "us-only"
     priority = 1
+
+    action {
+      block {}
+    }
+
+    statement {
+      not_statement {
+        geo_match_statement {
+          country_codes = ["PR", "US", "VI"]
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.name}-us-only"
+      sampled_requests_enabled   = false
+    }
+  }
+
+  rule {
+    name     = "aws-common"
+    priority = 2
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.name}-aws-common"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "aws-ip-reputation"
+    priority = 3
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAmazonIpReputationList"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.name}-aws-ip-reputation"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "aws-bad-inputs"
+    priority = 4
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.name}-aws-bad-inputs"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "rate-limit"
+    priority = 5
 
     action {
       block {
@@ -61,7 +133,7 @@ resource "aws_wafv2_web_acl" "this" {
 
     statement {
       rate_based_statement {
-        limit              = 300
+        limit              = var.rate_limit
         aggregate_key_type = "IP"
       }
     }
