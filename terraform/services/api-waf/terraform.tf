@@ -10,3 +10,9 @@ provider "aws" {
     }
   }
 }
+
+terraform {
+  backend "s3" {
+    key = "api-waf/terraform.tfstate"
+  }
+}
