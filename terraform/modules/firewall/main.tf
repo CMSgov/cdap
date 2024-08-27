@@ -47,8 +47,10 @@ resource "aws_wafv2_web_acl" "this" {
 
     statement {
       not_statement {
-        geo_match_statement {
-          country_codes = ["PR", "US", "VI"]
+        statement {
+          geo_match_statement {
+            country_codes = ["PR", "US", "VI"]
+          }
         }
       }
     }
