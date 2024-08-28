@@ -23,6 +23,11 @@ EOT
   }
 }
 
+data "aws_wafv2_ip_set" "external_services" {
+  name  = "external-services"
+  scope = var.scope
+}
+
 resource "aws_wafv2_web_acl" "this" {
   name  = var.name
   scope = var.scope
