@@ -4,7 +4,7 @@
 # other processes when managing addresses in these IP sets.
 
 resource "aws_wafv2_ip_set" "regional" {
-  name               = "external-services-regional"
+  name               = "external-services"
   description        = "IP ranges for Zscaler, New Relic, etc."
   scope              = "REGIONAL"
   ip_address_version = "IPV4"
@@ -18,7 +18,7 @@ resource "aws_wafv2_ip_set" "regional" {
 }
 
 resource "aws_wafv2_ip_set" "cloudfront" {
-  name               = "external-services-cloudfront"
+  name               = "external-services"
   description        = "IP ranges for Zscaler, New Relic, etc."
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
