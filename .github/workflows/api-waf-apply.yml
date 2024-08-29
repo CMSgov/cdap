@@ -1,9 +1,11 @@
-name: api-waf plan terraform
+name: api-waf apply terraform
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
-      - .github/workflows/api-waf-plan.yml
+      - .github/workflows/api-waf-apply.yml
       - terraform/services/api-waf/**
   workflow_dispatch: # Allow manual trigger
 
