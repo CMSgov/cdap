@@ -63,7 +63,7 @@ resource "aws_wafv2_web_acl" "this" {
   }
 
   dynamic "rule" {
-    for_each = { for k, v in var.ip_sets: k => v }
+    for_each = var.ip_sets
     iterator = ip_set
 
     content {
