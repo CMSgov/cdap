@@ -1,7 +1,3 @@
-provider "aws" {
-  region = "us-east-1"
-}
-
 resource "aws_db_instance" "rds" {
   identifier           = "${var.env}-${var.name}"
   allocated_storage    = 10
