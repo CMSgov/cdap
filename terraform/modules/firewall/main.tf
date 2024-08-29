@@ -62,39 +62,42 @@ resource "aws_wafv2_web_acl" "this" {
     }
   }
 
-  dynamic "rule" {
-    for_each = var.ip_sets
-    iterator = ip_set
+  rule {
+    name     = "ip-sets"
+    priority = 2
 
-    content {
-      name     = "ip-set-${ip_set.key}"
-      priority = ip_set.key + 2
+    action {
+      block {}
+    }
 
-      action {
-        block {}
-      }
-
-      statement {
-        not_statement {
-          statement {
-            ip_set_reference_statement {
-              arn = ip_set.value
+    statement {
+      not_statement {
+        statement {
+          or_statement {
+            dynamic "statement" {
+              for_each = var.ip_sets
+              iterator = ip_set
+              content {
+                ip_set_reference_statement {
+                  arn = ip_set.value
+                }
+              }
             }
           }
         }
       }
+    }
 
-      visibility_config {
-        cloudwatch_metrics_enabled = true
-        metric_name                = "${var.name}-ip-set-${ip_set.key}"
-        sampled_requests_enabled   = false
-      }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.name}-ip-sets"
+      sampled_requests_enabled   = false
     }
   }
 
   rule {
     name     = "aws-common"
-    priority = 12 # Allow for up to 10 IP sets
+    priority = 3
 
     override_action {
       none {}
@@ -116,7 +119,7 @@ resource "aws_wafv2_web_acl" "this" {
 
   rule {
     name     = "aws-ip-reputation"
-    priority = 13
+    priority = 4
 
     override_action {
       none {}
@@ -138,7 +141,7 @@ resource "aws_wafv2_web_acl" "this" {
 
   rule {
     name     = "aws-bad-inputs"
-    priority = 14
+    priority = 5
 
     override_action {
       none {}
@@ -160,7 +163,7 @@ resource "aws_wafv2_web_acl" "this" {
 
   rule {
     name     = "rate-limit"
-    priority = 15
+    priority = 6
 
     action {
       block {
