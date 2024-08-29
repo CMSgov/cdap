@@ -96,6 +96,10 @@ resource "aws_wafv2_web_acl" "this" {
     name     = "aws-common"
     priority = 12 # Allow for up to 10 IP sets
 
+    override_action {
+      none {}
+    }
+
     statement {
       managed_rule_group_statement {
         name        = "AWSManagedRulesCommonRuleSet"
@@ -114,6 +118,10 @@ resource "aws_wafv2_web_acl" "this" {
     name     = "aws-ip-reputation"
     priority = 13
 
+    override_action {
+      none {}
+    }
+
     statement {
       managed_rule_group_statement {
         name        = "AWSManagedRulesAmazonIpReputationList"
@@ -131,6 +139,10 @@ resource "aws_wafv2_web_acl" "this" {
   rule {
     name     = "aws-bad-inputs"
     priority = 14
+
+    override_action {
+      none {}
+    }
 
     statement {
       managed_rule_group_statement {
