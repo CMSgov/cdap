@@ -23,11 +23,6 @@ EOT
   }
 }
 
-data "aws_wafv2_ip_set" "external_services" {
-  name  = "external-services"
-  scope = var.scope
-}
-
 resource "aws_wafv2_web_acl" "this" {
   name  = var.name
   scope = var.scope
@@ -67,59 +62,39 @@ resource "aws_wafv2_web_acl" "this" {
     }
   }
 
-  rule {
-    name     = "services-ip-set"
-    priority = 2
+  dynamic "rule" {
+    for_each = { for k, v in var.ip_sets: k => v }
+    iterator = ip_set
 
-    action {
-      block {}
-    }
+    content {
+      name     = "ip-set-${ip_set.key}"
+      priority = ip_set.key + 2
 
-    statement {
-      not_statement {
-        statement {
-          ip_set_reference_statement {
-            arn = aws_wafv2_ip_set.services.arn
+      action {
+        block {}
+      }
+
+      statement {
+        not_statement {
+          statement {
+            ip_set_reference_statement {
+              arn = ip_set.value
+            }
           }
         }
       }
-    }
 
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.name}-services-ip-set"
-      sampled_requests_enabled   = false
-    }
-  }
-
-  rule {
-    name     = "clients-ip-set"
-    priority = 2
-
-    action {
-      block {}
-    }
-
-    statement {
-      not_statement {
-        statement {
-          ip_set_reference_statement {
-            arn = aws_wafv2_ip_set.services.arn
-          }
-        }
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "${var.name}-ip-set-${ip_set.key}"
+        sampled_requests_enabled   = false
       }
-    }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.name}-services-ip-set"
-      sampled_requests_enabled   = false
     }
   }
 
   rule {
     name     = "aws-common"
-    priority = 2
+    priority = 12 # Allow for up to 10 IP sets
 
     statement {
       managed_rule_group_statement {
@@ -137,7 +112,7 @@ resource "aws_wafv2_web_acl" "this" {
 
   rule {
     name     = "aws-ip-reputation"
-    priority = 3
+    priority = 13
 
     statement {
       managed_rule_group_statement {
@@ -155,7 +130,7 @@ resource "aws_wafv2_web_acl" "this" {
 
   rule {
     name     = "aws-bad-inputs"
-    priority = 4
+    priority = 14
 
     statement {
       managed_rule_group_statement {
@@ -173,7 +148,7 @@ resource "aws_wafv2_web_acl" "this" {
 
   rule {
     name     = "rate-limit"
-    priority = 5
+    priority = 15
 
     action {
       block {

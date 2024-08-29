@@ -50,3 +50,9 @@ variable "rate_limit" {
   type        = number
   default     = 300
 }
+
+variable "ip_sets" {
+  description = "IP sets to allow"
+  type        = list(string)
+  default     = []
+}
