@@ -117,3 +117,15 @@ resource "aws_iam_instance_profile" "github_actions_role" {
   path = "/delegatedadmin/developer/"
   role = aws_iam_role.github_actions.name
 }
+
+module "vpc" {
+  source = "../../modules/vpc"
+  app    = var.app
+  env    = var.env
+}
+
+resource "aws_security_group" "github_runners" {
+  name        = "${var.app}-${var.env}-allow-github-runners"
+  description = "Allow traffic from self-hosted GitHub Actions runners"
+  vpc_id      = module.vpc.id
+}
