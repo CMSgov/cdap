@@ -4,8 +4,8 @@ source "amazon-ebs" "github-actions-runner" {
   region                                    = var.region
   vpc_id                                    = var.vpc_id
   subnet_id                                 = var.subnet_id
-  associate_public_ip_address               = var.associate_public_ip_address
-  temporary_security_group_source_public_ip = var.temporary_security_group_source_public_ip
+  associate_public_ip_address               = false
+  temporary_security_group_source_public_ip = false
   iam_instance_profile                      = "bcda-mgmt-github-actions"
 
   source_ami_filter {
