@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/github-actions-access-plan.yml
       - terraform/services/github-actions-access/**
+      - terraform/modules/vpc/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
