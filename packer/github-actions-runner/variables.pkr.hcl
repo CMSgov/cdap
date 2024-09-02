@@ -30,6 +30,11 @@ variable "subnet_id" {
   type        = string
 }
 
+variable "security_group_id" {
+  description = "ID for the security group to attach to the builder"
+  type        = string
+}
+
 variable "custom_shell_commands" {
   description = "Additional commands to run on the EC2 instance, to customize the instance, like installing packages"
   type        = list(string)
