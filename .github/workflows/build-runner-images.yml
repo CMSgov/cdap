@@ -38,7 +38,7 @@ jobs:
             PKR_VAR_ami_account=/github-runner/gold-image-account
             PKR_VAR_s3_tarball=/github-runner/s3-tarball
 
-      - name: Retrieve default VPC ID and subnet
+      - name: Retrieve subnet and security group
         id: vpc
         run: |
           VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name, Values=bcda-managed-vpc" --query 'Vpcs[].VpcId' --output text)
@@ -52,9 +52,17 @@ jobs:
             --output text)
           echo "PKR_VAR_subnet_id=$SUBNET_ID" >> "$GITHUB_ENV"
 
-      - name: Setup `packer`
+          # TODO update to bcda-mgmt-allow-github-runners group once https://github.com/CMSgov/ab2d-bcda-dpc-platform/pull/119 is merged
+          SECURITY_GROUP_ID=$(aws ec2 describe-security-groups \
+            --filters \
+              "Name=vpc-id,Values=$VPC_ID" \
+              "Name=tag:Name,Values=bcda-managed-vpn-private" \
+            --query 'SecurityGroups[0].GroupId' \
+            --output text
+          echo "PKR_VAR_security_group_id=$SECURITY_GROUP_ID" >> "$GITHUB_ENV"
+
+      - name: Set up packer
         uses: hashicorp/setup-packer@v2.0.1
-        id: setup
         with:
           version: "latest"
 

@@ -7,6 +7,7 @@ source "amazon-ebs" "github-actions-runner" {
   associate_public_ip_address               = false
   temporary_security_group_source_public_ip = false
   iam_instance_profile                      = "bcda-mgmt-github-actions"
+  security_group_id                         = var.security_group_id
 
   source_ami_filter {
      filters = {
@@ -14,12 +15,6 @@ source "amazon-ebs" "github-actions-runner" {
      }
     owners = ["${var.ami_account}"]
     most_recent = true
-  }
-
-  security_group_filter {
-    filters = {
-      "tag:Name": "bcda-managed-vpn-private"
-    }
   }
 
   communicator = "ssh"
