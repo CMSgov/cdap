@@ -8,6 +8,6 @@ envs="dev test prod sbx"
 
 for app in $apps; do
   for env in $envs; do
-    aws s3 cp s3://$app-$env-tfstate/github-actions-deploy-role/terraform.tfstate s3://$app-$env-tfstate/github-actions-role/terraform.tfstate
+    aws s3 cp s3://$app-$env-tfstate/github-actions-role/terraform.tfstate s3://$app-$env-tfstate/github-actions-access/terraform.tfstate
   done
 done

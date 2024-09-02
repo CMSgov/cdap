@@ -126,6 +126,6 @@ module "vpc" {
 
 resource "aws_security_group" "github_runners" {
   name        = "${var.app}-${var.env}-allow-github-runners"
-  description = "Allow traffic from self-hosted GitHub Actions runners"
+  description = "Allow traffic from GitHub Actions runners"
   vpc_id      = module.vpc.id
 }
