@@ -7,6 +7,7 @@ data "aws_vpc" "this" {
       var.app == "ab2d" && var.env == "test" ? "impl" :
       var.app == "bcda" && var.env == "mgmt" ? "managed" :
       var.app == "bcda" && var.env == "sbx" ? "opensbx" :
+      var.app == "dpc" && var.env == "mgmt" ? "management" :
       var.app == "dpc" && var.env == "sbx" ? "prod-sbx" :
       var.env
     ]
