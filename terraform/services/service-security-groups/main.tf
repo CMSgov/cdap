@@ -6,19 +6,19 @@ module "vpc" {
 
 resource "aws_security_group" "zscaler_public" {
   name        = "${var.app}-${var.env}-allow-zscaler-public"
-  description = "Allow public zscaler traffic"
+  description = "Allow traffic from public zscaler"
   vpc_id      = module.vpc.id
 }
 
 resource "aws_security_group" "zscaler_private" {
   name        = "${var.app}-${var.env}-allow-zscaler-private"
-  description = "Allow private zscaler traffic"
+  description = "Allow traffic from private zscaler"
   vpc_id      = module.vpc.id
 }
 
 resource "aws_security_group" "internet" {
   name        = "${var.app}-${var.env}-internet"
-  description = "Access to the internet"
+  description = "Allow access to the internet"
   vpc_id      = module.vpc.id
 }
 
