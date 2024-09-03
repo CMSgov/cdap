@@ -23,7 +23,7 @@ resource "aws_security_group" "internet" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "internet_http" {
-  security_group_id = aws_security_group.packer.id
+  security_group_id = aws_security_group.internet.id
 
   description = "Allow http access to the internet"
   cidr_ipv4   = "0.0.0.0/0"
@@ -33,7 +33,7 @@ resource "aws_vpc_security_group_egress_rule" "internet_http" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "internet_https" {
-  security_group_id = aws_security_group.packer.id
+  security_group_id = aws_security_group.internet.id
 
   description = "Allow https access to the internet"
   cidr_ipv4   = "0.0.0.0/0"
