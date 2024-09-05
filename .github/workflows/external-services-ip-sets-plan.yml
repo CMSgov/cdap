@@ -1,23 +1,29 @@
-name:  snyk-integration apply terraform
+name: external-services-ip-sets plan terraform
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
     paths:
-      - .github/workflows/snyk-integration-apply.yml
-      - terraform/services/snyk-integration/**
+      - .github/workflows/external-services-ip-sets-plan.yml
+      - terraform/services/external-services-ip-sets/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  terraform-apply:
+  check-terraform-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - run: terraform fmt -check -diff -recursive terraform/services/external-services-ip-sets
+
+  terraform-plan:
+    needs: check-terraform-fmt
     permissions:
       contents: read
       id-token: write
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/snyk-integration
+        working-directory: ./terraform/services/external-services-ip-sets
     strategy:
       fail-fast: false
       matrix:
@@ -34,15 +40,4 @@ jobs:
           role-to-assume: arn:aws:iam::${{ matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
-      - run: terraform apply -auto-approve
-        env:
-          TF_VAR_app: ${{ matrix.app }}
-          TF_VAR_env: ${{ matrix.env }}
-      - uses: slackapi/slack-github-action@v1.26.0
-        if: ${{ failure() }}
-        with:
-          channel-id: 'C04UG13JF9B'
-          slack-message: "Terraform apply failure: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
+      - run: terraform plan
