@@ -115,6 +115,14 @@ resource "aws_wafv2_web_acl" "this" {
             count {}
           }
         }
+
+        # Override for size requirements of requests, this is set at 8kb which is too small for some acceptable requests
+        rule_action_override {
+          name = "SizeRestrictions_BODY"
+          action_to_use {
+            count {}
+          }
+        }
       }
     }
 
