@@ -3,5 +3,3 @@ repos:
     rev: v8.18.4
     hooks:
       - id: gitleaks
-        entry: bash -c 'gitleaks ... "$@" || true' --
-        verbose: true
