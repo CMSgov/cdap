@@ -1,0 +1,9 @@
+title = "MBI Scan"
+# Only using custom rules
+useDefault = false
+
+[[rules]]
+  id = "mbi-clt-002-168"
+  description = “This rule scans for Medicare Beneficiary Identifiers (MBIs) as defined in Data Guide CLT.002.168“
+  regex = ‘’’\b[1-9](?![sloibzSLOIBZ])[a-zA-Z](?![sloibzSLOIBZ)])[a-zA-Z\d]\d-?(?![sloibzSLOIBZ])[a-zA-Z](?![sloibzSLOIBZ])[a-zA-Z\d]\d-?(?![sloibzSLOIBZ])[a-zA-Z]\{2}\d\{2}\b''
+  tags = [“MBI”,”Precommit”,”PII”,”PHI”]
