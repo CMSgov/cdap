@@ -30,9 +30,9 @@ variable "subnet_id" {
   type        = string
 }
 
-variable "security_group_id" {
-  description = "ID for the security group to attach to the builder"
-  type        = string
+variable "temporary_security_group_source_cidrs" {
+  description = "A list of IPv4 CIDR blocks to be given access to the instance when packer creates the temporary security group."
+  type        = list(string)
 }
 
 variable "custom_shell_commands" {

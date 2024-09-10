@@ -6,8 +6,8 @@ source "amazon-ebs" "github-actions-runner" {
   subnet_id                                 = var.subnet_id
   associate_public_ip_address               = false
   temporary_security_group_source_public_ip = false
+  temporary_security_group_source_cidrs     = var.temporary_security_group_source_cidrs
   iam_instance_profile                      = "bcda-mgmt-github-actions"
-  security_group_id                         = var.security_group_id
 
   source_ami_filter {
     filters = {
