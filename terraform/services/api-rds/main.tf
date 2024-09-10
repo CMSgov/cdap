@@ -1,5 +1,28 @@
+locals {
+  db_name = {
+    ab2d = {
+      dev  = "ab2d-dev"
+      test = "ab2d-east-prod-test"
+      sbx  = "ab2d-sbx-sandbox"
+      prod = "ab2d-east-prod"
+    }
+    bcda = {
+      dev  = "${var.app}-${var.env}"
+      test = "${var.app}-${var.env}"
+      sbx  = "${var.app}-${var.env}"
+      prod = "${var.app}-${var.env}"
+    }
+    dpc = {
+      dev  = "${var.app}-${var.env}"
+      test = "${var.app}-${var.env}"
+      sbx  = "${var.app}-${var.env}"
+      prod = "${var.app}-${var.env}"
+    }
+  }
+}
+
 resource "aws_db_instance" "api" {
-  identifier            = var.name
+  identifier            = local.db_name[var.app][var.env]
   allocated_storage     = 500
   max_allocated_storage = 0
   storage_encrypted     = true
@@ -15,10 +38,10 @@ resource "aws_db_instance" "api" {
   engine_version                      = "15.5"
   instance_class                      = "db.m6i.2xlarge"
   tags = {
-    Name             = "${var.name}-rds"
+    Name             = "${local.db_name[var.app][var.env]}-rds"
     "cpm backup"     = "Monthly"
     contact          = "ab2d-ops@semanticbits.com"
-    environment      = "${var.name}"
+    environment      = "${local.db_name[var.app][var.env]}"
     role             = "db"
     terraform_module = "data"
   }
