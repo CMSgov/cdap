@@ -1,5 +1,5 @@
 resource "aws_db_instance" "api" {
-  identifier            = "${var.app}-${var.env}"
+  identifier            = var.name
   allocated_storage     = 500
   max_allocated_storage = 0
   storage_encrypted     = true
@@ -15,10 +15,10 @@ resource "aws_db_instance" "api" {
   engine_version                      = "15.5"
   instance_class                      = "db.m6i.2xlarge"
   tags = {
-    Name             = "${var.app}-${var.env}-rds"
+    Name             = "${var.name}-rds"
     "cpm backup"     = "Monthly"
     contact          = "ab2d-ops@semanticbits.com"
-    environment      = "${var.app}-${var.env}"
+    environment      = "${var.name}"
     role             = "db"
     terraform_module = "data"
   }

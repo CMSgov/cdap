@@ -15,3 +15,8 @@ variable "env" {
     error_message = "Valid value for env is dev, test, sbx, or prod."
   }
 }
+
+variable "name" {
+  description = "Name of the database"
+  type        = string
+}
