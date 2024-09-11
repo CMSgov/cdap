@@ -2,7 +2,7 @@ locals {
   db_name = {
     ab2d = {
       dev  = "ab2d-dev"
-      test = "ab2d-east-prod-test"
+      test = "ab2d-east-impl"
       sbx  = "ab2d-sbx-sandbox"
       prod = "ab2d-east-prod"
     }
@@ -41,8 +41,5 @@ resource "aws_db_instance" "api" {
     Name             = "${local.db_name[var.app][var.env]}-rds"
     "cpm backup"     = "Monthly"
     contact          = "ab2d-ops@semanticbits.com"
-    environment      = "${local.db_name[var.app][var.env]}"
-    role             = "db"
-    terraform_module = "data"
   }
 }
