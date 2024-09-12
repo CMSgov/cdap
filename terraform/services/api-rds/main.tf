@@ -38,9 +38,4 @@ resource "aws_db_instance" "api" {
   iam_database_authentication_enabled = false
   engine_version                      = "15.5"
   instance_class                      = "db.m6i.2xlarge"
-  tags = {
-    Name         = "${local.db_name[var.app][var.env]}-rds"
-    "cpm backup" = "Monthly"
-    contact      = "ab2d-ops@semanticbits.com"
-  }
 }
