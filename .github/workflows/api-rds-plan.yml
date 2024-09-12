@@ -7,6 +7,13 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 jobs:
+  check-terraform-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./actions/setup-tfenv-terraform
+      - run: terraform fmt -check -diff -recursive terraform/services/api-rds
+
   terraform-plan:
     needs: check-terraform-fmt
     permissions:
