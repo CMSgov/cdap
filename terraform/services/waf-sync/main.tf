@@ -22,7 +22,7 @@ module "waf_sync_function" {
   runtime = "provided.al2"
 
   function_role_inline_policies = {
-    waf-full-access = data.aws_iam_policy_document.aws_waf_access.json
+    waf-access = data.aws_iam_policy_document.aws_waf_access.json
   }
 
   environment_variables = {

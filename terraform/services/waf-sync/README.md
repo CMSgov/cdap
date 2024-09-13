@@ -14,4 +14,4 @@ terraform apply
 
 ## Automated deploy
 
-TBD
+This terraform is automatically applied on merge to main by the waf-sync-apply.yml workflow.
