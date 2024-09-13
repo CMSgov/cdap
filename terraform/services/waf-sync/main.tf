@@ -25,6 +25,8 @@ module "waf_sync_function" {
     waf-access = data.aws_iam_policy_document.aws_waf_access.json
   }
 
+  schedule_expression = "*/10 * * * *"
+
   environment_variables = {
     ENV             = var.env
     APP_NAME        = "dpc-${var.env}-waf-sync"
