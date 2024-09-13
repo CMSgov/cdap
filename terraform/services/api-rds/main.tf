@@ -1,11 +1,10 @@
 locals {
   db_name = {
     ab2d = {
-      dev       = "ab2d-dev"
-      test      = "ab2d-east-impl"
-      sbx       = "ab2d-sbx-sandbox"
-      prod      = "ab2d-east-prod"
-      prod-test = "ab2d-east-prod-test"
+      dev  = "ab2d-dev"
+      test = "ab2d-east-impl"
+      sbx  = "ab2d-sbx-sandbox"
+      prod = "ab2d-east-prod"
     }
     bcda = {
       dev  = "${var.app}-${var.env}"
