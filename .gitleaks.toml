@@ -1,5 +1,7 @@
 title = "MBI Scan"
 # Only using custom rules
+
+[extend]
 useDefault = true
 
 [[rules]]
