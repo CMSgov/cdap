@@ -3,8 +3,8 @@ provider "aws" {
     tags = {
       application = "dpc"
       business    = "oeda"
-      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/waf-sync"
-      component   = "waf-sync"
+      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/api-waf-sync"
+      component   = "api-waf-sync"
       environment = var.env
       terraform   = true
     }
@@ -13,6 +13,6 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "waf-sync/terraform.tfstate"
+    key = "api-waf-sync/terraform.tfstate"
   }
 }
