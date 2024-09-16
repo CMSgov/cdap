@@ -1,18 +1,18 @@
-name: waf-sync apply terraform
+name: api-waf-sync apply terraform
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/waf-sync-apply.yml
+      - .github/workflows/api-waf-sync-apply.yml
       - terraform/modules/bucket/**
       - terraform/modules/key/**
       - terraform/modules/function/**
       - terraform/modules/queue/**
       - terraform/modules/subnets/**
       - terraform/modules/vpc/**
-      - terraform/services/waf-sync/**
+      - terraform/services/api-waf-sync/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/waf-sync
+        working-directory: ./terraform/services/api-waf-sync
     strategy:
       fail-fast: false
       matrix:
