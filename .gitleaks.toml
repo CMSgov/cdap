@@ -1,5 +1,4 @@
-title = "MBI Scan"
-# Only using custom rules
+title = "DASG Standard"
 
 [extend]
   useDefault = true
