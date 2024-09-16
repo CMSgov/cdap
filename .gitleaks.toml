@@ -2,7 +2,7 @@ title = "MBI Scan"
 # Only using custom rules
 
 [extend]
-useDefault = true
+  useDefault = true
 
 [[rules]]
   id = "mbi-detection"
