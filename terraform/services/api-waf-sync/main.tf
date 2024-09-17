@@ -19,7 +19,7 @@ module "api_waf_sync_function" {
     waf-access = data.aws_iam_policy_document.aws_waf_access.json
   }
 
-  schedule_expression = "*/10 * * * *"
+  schedule_expression = "cron(0/10 * * * ? *)"
 
   environment_variables = {
     ENV             = var.env
