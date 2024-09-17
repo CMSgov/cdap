@@ -52,7 +52,7 @@ module "aws_waf" {
 
   associated_resource_arn = data.aws_lb.api.arn
   ip_sets = var.env == "sbx" ? [] : [
-    data.aws_wafv2_ip_set.external_services.arn,
-    aws_wafv2_ip_set.api_customers.arn,
+    one(data.aws_wafv2_ip_set.external_services.arn),
+    one(aws_wafv2_ip_set.api_customers.arn),
   ]
 }
