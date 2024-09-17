@@ -23,7 +23,7 @@ data "aws_wafv2_ip_set" "external_services" {
 }
 
 resource "aws_wafv2_ip_set" "api_customers" {
-  count = var.env == "sbx" ? 0 : 1
+  count              = var.env == "sbx" ? 0 : 1
   name               = "${var.app}-${var.env}-api-customers"
   description        = "IP ranges for customers of this API"
   scope              = "REGIONAL"
