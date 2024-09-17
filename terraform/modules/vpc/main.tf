@@ -2,7 +2,7 @@ data "aws_vpc" "this" {
   filter {
     name = "tag:stack"
     values = [
-      var.app == "ab2d" && var.env == "mgmt" ? "dev" :
+      var.app == "ab2d" && var.env == "mgmt" ? "dev" : # Yes, dev is the stack name for the ab2d mgmt vpc
       var.app == "ab2d" && var.env == "sbx" ? "sandbox" :
       var.app == "ab2d" && var.env == "test" ? "impl" :
       var.app == "bcda" && var.env == "mgmt" ? "managed" :
