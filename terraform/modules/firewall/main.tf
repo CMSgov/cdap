@@ -62,36 +62,40 @@ resource "aws_wafv2_web_acl" "this" {
     }
   }
 
-  rule {
-    name     = "ip-sets"
-    priority = 2
+  dynamic "rule" {
+    for_each = length(var.ip_sets) > 0 ? [1] : []
 
-    action {
-      block {}
-    }
+    content {
+      name     = "ip-sets"
+      priority = 2
 
-    statement {
-      not_statement {
-        statement {
-          or_statement {
-            dynamic "statement" {
-              for_each = var.ip_sets
-              iterator = ip_set
-              content {
-                ip_set_reference_statement {
-                  arn = ip_set.value
+      action {
+        block {}
+      }
+
+      statement {
+        not_statement {
+          statement {
+            or_statement {
+              dynamic "statement" {
+                for_each = var.ip_sets
+                iterator = ip_set
+                content {
+                  ip_set_reference_statement {
+                    arn = ip_set.value
+                  }
                 }
               }
             }
           }
         }
       }
-    }
 
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.name}-ip-sets"
-      sampled_requests_enabled   = false
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "${var.name}-ip-sets"
+        sampled_requests_enabled   = false
+      }
     }
   }
 

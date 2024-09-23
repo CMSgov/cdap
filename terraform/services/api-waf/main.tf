@@ -17,11 +17,13 @@ data "aws_lb" "api" {
 }
 
 data "aws_wafv2_ip_set" "external_services" {
+  count = var.env == "sbx" ? 0 : 1
   name  = "external-services"
   scope = "REGIONAL"
 }
 
 resource "aws_wafv2_ip_set" "api_customers" {
+  count              = var.env == "sbx" ? 0 : 1
   name               = "${var.app}-${var.env}-api-customers"
   description        = "IP ranges for customers of this API"
   scope              = "REGIONAL"
@@ -49,8 +51,8 @@ module "aws_waf" {
   content_type = "APPLICATION_JSON"
 
   associated_resource_arn = data.aws_lb.api.arn
-  ip_sets = [
-    data.aws_wafv2_ip_set.external_services.arn,
-    aws_wafv2_ip_set.api_customers.arn,
+  ip_sets = var.env == "sbx" ? [] : [
+    one(data.aws_wafv2_ip_set.external_services).arn,
+    one(aws_wafv2_ip_set.api_customers).arn,
   ]
 }

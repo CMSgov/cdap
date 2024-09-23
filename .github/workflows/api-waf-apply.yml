@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [dpc]
-        env: [dev]
+        env: [dev, test, sbx]
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
