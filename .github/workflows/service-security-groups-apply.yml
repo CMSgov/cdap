@@ -1,12 +1,12 @@
-name: zscaler-security-groups apply terraform
+name: service-security-groups apply terraform
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/zscaler-security-groups-apply.yml
-      - terraform/services/zscaler-security-groups/**
+      - .github/workflows/service-security-groups-apply.yml
+      - terraform/services/service-security-groups/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -17,15 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/zscaler-security-groups
+        working-directory: ./terraform/services/service-security-groups
     strategy:
       fail-fast: false
       matrix:
         app: [ab2d, bcda, dpc]
-        env: [dev, test, sbx, prod]
-        include:
-          - app: bcda
-            env: mgmt
+        env: [dev, test, sbx, prod, mgmt]
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
