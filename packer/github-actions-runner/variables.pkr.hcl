@@ -26,13 +26,14 @@ variable "vpc_id" {
 }
 
 variable "subnet_id" {
-  description = "If using VPC, the ID of the subnet, such as subnet-12345def, where Packer will launch the EC2 instance. This field is required if you are using an non-default VPC"
+  description = "The ID of the subnet where Packer will launch the EC2 instance"
   type        = string
 }
 
-variable "security_group_id" {
-  description = "ID for the security group to attach to the builder"
-  type        = string
+variable "security_group_ids" {
+  description = "IDs for security groups to attach to the builder. Set to IDs for bcda-mgmt-allow-zscaler-private and bcda-mgmt-internet to run locally."
+  type        = list(string)
+  default     = []
 }
 
 variable "custom_shell_commands" {
