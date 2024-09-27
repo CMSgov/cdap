@@ -28,7 +28,7 @@ jobs:
       - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         with:
           params: |
-            PKR_VAR_ami_account=/github-runner/gold-image-account
+            PKR_VAR_ami_account=/gold-image/account
             PKR_VAR_s3_tarball=/github-runner/s3-tarball
             PKR_VAR_vpc_id=/github-runner/vpc
             PKR_VAR_subnet_id=/github-runner/subnet
