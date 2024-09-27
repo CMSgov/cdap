@@ -25,7 +25,7 @@ source "amazon-ebs" "github-actions-runner" {
 
   communicator = "ssh"
   ssh_username = "ec2-user"
-  ssh_timeout  = "1h"
+  ssh_timeout  = "10m"
   ssh_pty      = true
 
   # Enforces IMDSv2 support on the running instance being provisioned by Packer
