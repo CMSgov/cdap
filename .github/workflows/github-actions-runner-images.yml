@@ -32,7 +32,9 @@ jobs:
             PKR_VAR_s3_tarball=/github-runner/s3-tarball
             PKR_VAR_vpc_id=/github-runner/vpc
             PKR_VAR_subnet_id=/github-runner/subnet
-      - run: |
+      - env:
+          PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           packer init .
           packer validate -evaluate-datasources .
           ${RUNNER_DEBUG:+"PACKER_LOG=1"} packer build .
