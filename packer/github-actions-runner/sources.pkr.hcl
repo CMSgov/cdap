@@ -1,17 +1,12 @@
 source "amazon-ebs" "github-actions-runner" {
-  ami_name           = "github-actions-runner-${formatdate("YYYYMMDDhhmm", timestamp())}"
-  instance_type      = var.instance_type
-  region             = var.region
-  vpc_id             = var.vpc_id
-  subnet_id          = var.subnet_id
-  security_group_ids = var.security_group_ids
+  ami_name      = "github-actions-runner-${formatdate("YYYYMMDDhhmm", timestamp())}"
+  instance_type = var.instance_type
+  region        = var.region
+  vpc_id        = var.vpc_id
+  subnet_id     = var.subnet_id
 
-  # Public IP address is needed for access from GitHub-hosted runners
-  associate_public_ip_address = true
-
-  # Allow access from the IP for the GitHub-hosted runner
-  # Note that this is ignored if security_group_ids is specified
-  temporary_security_group_source_public_ip = true
+  # This is used to add CIDRs for TrendMicro
+  temporary_security_group_source_cidrs = var.temporary_security_group_source_cidrs
 
   iam_instance_profile = "bcda-mgmt-github-actions"
 
@@ -23,10 +18,11 @@ source "amazon-ebs" "github-actions-runner" {
     most_recent = true
   }
 
-  communicator = "ssh"
-  ssh_username = "ec2-user"
-  ssh_timeout  = "10m"
-  ssh_pty      = true
+  communicator  = "ssh"
+  ssh_interface = "session_manager"
+  ssh_username  = "ec2-user"
+  ssh_timeout   = "10m"
+  ssh_pty       = true
 
   # Enforces IMDSv2 support on the running instance being provisioned by Packer
   metadata_options {
