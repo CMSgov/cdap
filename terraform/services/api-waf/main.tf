@@ -30,7 +30,7 @@ resource "aws_wafv2_ip_set" "api_customers" {
   ip_address_version = "IPV4"
 
   # Addresses will be managed outside of terraform. This is
-  # a placeholder address.
+  # a placeholder address for all apps/environments.
   addresses = ["203.0.113.0/32"]
 
   lifecycle {
