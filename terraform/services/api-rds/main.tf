@@ -39,7 +39,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
   from_port                    = "5432"
   to_port                      = "5432"
   ip_protocol                  = "tcp"
-  referenced_security_group_id = data.aws_security_groups.agent_security_group_id.id[0]
+  referenced_security_group_id = data.aws_security_groups.agent_security_group_id.id
   security_group_id            = aws_security_group.sg_database.id
 }
 
@@ -48,7 +48,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
   from_port                    = "5432"
   to_port                      = "5432"
   ip_protocol                  = "tcp"
-  referenced_security_group_id = data.aws_security_groups.controller_security_group_id.id[0]
+  referenced_security_group_id = data.aws_security_groups.controller_security_group_id.id
   security_group_id            = aws_security_group.sg_database.id
 }
 
