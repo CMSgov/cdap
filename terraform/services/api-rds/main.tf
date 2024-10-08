@@ -27,14 +27,14 @@ resource "aws_security_group" "sg_database" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "egress_all" {
-  security_group_id = aws_security_group.sg_database.ids
+  security_group_id = aws_security_group.sg_database.id
 
   description = "Allow all egress"
   cidr_ipv4   = ["0.0.0.0/0"]
   ip_protocol = -1
 }
 
-resource "aws_security_group_ingress_rule" "db_access_from_jenkins_agent" {
+resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
   description                  = "Jenkins Agent Access"
   from_port                    = "5432"
   to_port                      = "5432"
@@ -43,7 +43,7 @@ resource "aws_security_group_ingress_rule" "db_access_from_jenkins_agent" {
   security_group_id            = aws_security_group.sg_database.id
 }
 
-resource "aws_security_group_ingress_rule" "db_access_from_controller" {
+resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
   description                  = "Controller Access"
   from_port                    = "5432"
   to_port                      = "5432"
@@ -62,7 +62,7 @@ resource "aws_db_subnet_group" "subnet_group" {
 # Create database parameter group
 
 resource "aws_db_parameter_group" "parameter_group" {
-  name   = "${local.db}-rds-parameter-group-v15"
+  name   = "${local.db_name}-rds-parameter-group-v15"
   family = "postgres15"
 
   parameter {
