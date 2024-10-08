@@ -1,12 +1,10 @@
 source "amazon-ebs" "github-actions-runner" {
-  ami_name      = "github-actions-runner-${formatdate("YYYYMMDDhhmm", timestamp())}"
-  instance_type = var.instance_type
-  region        = var.region
-  vpc_id        = var.vpc_id
-  subnet_id     = var.subnet_id
-
-  # This is used to add CIDRs for TrendMicro
-  temporary_security_group_source_cidrs = var.temporary_security_group_source_cidrs
+  ami_name          = "github-actions-runner-${formatdate("YYYYMMDDhhmm", timestamp())}"
+  instance_type     = var.instance_type
+  region            = var.region
+  vpc_id            = var.vpc_id
+  subnet_id         = var.subnet_id
+  security_group_id = var.security_group_id
 
   iam_instance_profile = "bcda-mgmt-github-actions"
 

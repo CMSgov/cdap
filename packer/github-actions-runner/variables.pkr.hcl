@@ -30,8 +30,7 @@ variable "subnet_id" {
   type        = string
 }
 
-variable "temporary_security_group_source_cidrs" {
-  description = "Additional CIDRs for the temporary security group. Include cmscloud-security-tools CIDRs for TrendMicro."
-  type        = list(string)
-  default     = []
+variable "security_group_id" {
+  description = "ID for security group to attach. Should be cmscloud-security-tools to allow Trend Micro access."
+  type        = string
 }
