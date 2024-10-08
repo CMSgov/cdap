@@ -30,7 +30,7 @@ resource "aws_vpc_security_group_egress_rule" "egress_all" {
   security_group_id = aws_security_group.sg_database.id
 
   description = "Allow all egress"
-  cidr_ipv4   = ["0.0.0.0/0"]
+  cidr_ipv4   = "0.0.0.0/0"
   ip_protocol = -1
 }
 
@@ -38,7 +38,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
   description                  = "Jenkins Agent Access"
   from_port                    = "5432"
   to_port                      = "5432"
-  protocol                     = "tcp"
+  ip_protocol                  = "tcp"
   referenced_security_group_id = data.aws_security_groups.agent_security_group_id.ids[0]
   security_group_id            = aws_security_group.sg_database.id
 }
@@ -47,7 +47,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
   description                  = "Controller Access"
   from_port                    = "5432"
   to_port                      = "5432"
-  protocol                     = "tcp"
+  ip_protocol                  = "tcp"
   referenced_security_group_id = data.aws_security_groups.controller_security_group_id.ids[0]
   security_group_id            = aws_security_group.sg_database.id
 }
