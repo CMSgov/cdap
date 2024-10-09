@@ -30,7 +30,7 @@ variable "subnet_id" {
   type        = string
 }
 
-variable "security_group_id" {
-  description = "ID for security group to attach. Should be cmscloud-security-tools to allow Trend Micro access."
-  type        = string
+variable "security_group_ids" {
+  description = "IDs for security groups to attach to the builder. Should be set to IDs for cmscloud-security-tools and bcda-mgmt-internet."
+  type        = list(string)
 }

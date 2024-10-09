@@ -12,8 +12,8 @@ s3_tarball  = "s3://xxxxxxxxxxxxxxxxxxxxxx/actions-runner-linux.tar.gz"
 vpc_id      = "vpc-xxxxxxxxxxxxxxx"    # bcda-managed-vpc
 subnet_id   = "subnet-xxxxxxxxxxxxxxx" # bcda-managed-az2-app
 
-# CIDRs necessary for Trend Micro access
-temporary_security_group_source_cidrs = ["x.x.x.x/26", "x.x.x.x/23"]
+# Security groups necessary for Trend Micro and internet access
+security_group_ids = ["sg-xxxxxxxxxxxxxx", "sg-xxxxxxxxxxxxxxx"]
 ```
 
 Then get short-term access keys for AWS and run these packer commands in this directory:

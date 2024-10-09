@@ -32,11 +32,14 @@ jobs:
             PKR_VAR_s3_tarball=/github-runner/s3-tarball
             PKR_VAR_vpc_id=/github-runner/vpc
             PKR_VAR_subnet_id=/github-runner/subnet
-            PKR_VAR_security_group_id=/github-runner/security-group
+            SECURITY_GROUPS=/github-runner/security-groups
       - name: packer build
         env:
           PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Security groups must be set in a variables file since they're a list
+          echo "security_group_ids = $SECURITY_GROUPS" > variables.pkrvars.hcl
+
           packer init .
           packer validate -evaluate-datasources .
-          ${RUNNER_DEBUG:+"PACKER_LOG=1"} packer build .
+          ${RUNNER_DEBUG:+"PACKER_LOG=1"} packer build -var-file=variables.pkrvars.hcl .
