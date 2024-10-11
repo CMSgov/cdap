@@ -40,3 +40,4 @@ jobs:
       - run: terraform apply -auto-approve
         env:
           TF_VAR_app: ${{ matrix.app }}
+          TF_VAR_env: ${{ matrix.env }}
