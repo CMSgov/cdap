@@ -37,9 +37,7 @@ jobs:
         env:
           PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Security groups must be set in a variables file since they're a list
-          echo "security_group_ids = $SECURITY_GROUPS" > variables.pkrvars.hcl
-
           packer init .
-          packer validate -evaluate-datasources .
-          ${RUNNER_DEBUG:+"PACKER_LOG=1"} packer build -var-file=variables.pkrvars.hcl .
+          # Security groups must be set by flag since they're a list
+          packer validate -evaluate-datasources -var "security_group_ids=$SECURITY_GROUPS" .
+          ${RUNNER_DEBUG:+"PACKER_LOG=1"} packer build -var "security_group_ids=$SECURITY_GROUPS" .
