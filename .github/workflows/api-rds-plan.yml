@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [ab2d]
-        env: [dev, test, sbx, prod]
+        env: [test]
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
