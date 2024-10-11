@@ -43,15 +43,9 @@ data "aws_subnet" "private_subnet_b" {
   }
 }
 
-data "aws_security_groups" "controller_security_group_id" {
+data "aws_security_group" "controller_security_group_id" {
   tags = {
     Name = "${local.db_name}-deployment-controller-sg"
-  }
-}
-
-data "aws_security_groups" "agent_security_group_id" {
-  tags = {
-    Name = "${var.env}-jenkins-agent-sg"
   }
 }
 

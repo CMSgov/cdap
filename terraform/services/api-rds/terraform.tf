@@ -7,7 +7,6 @@ provider "aws" {
       component   = "api-rds"
       environment = var.env
       terraform   = true
-      contact     = "ab2d-ops@semanticbits.com"
     }
   }
 }
