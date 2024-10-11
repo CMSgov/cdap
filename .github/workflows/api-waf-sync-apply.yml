@@ -1,12 +1,18 @@
-name: zscaler-security-groups apply terraform
+name: api-waf-sync apply terraform
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/zscaler-security-groups-apply.yml
-      - terraform/services/zscaler-security-groups/**
+      - .github/workflows/api-waf-sync-apply.yml
+      - terraform/modules/bucket/**
+      - terraform/modules/key/**
+      - terraform/modules/function/**
+      - terraform/modules/queue/**
+      - terraform/modules/subnets/**
+      - terraform/modules/vpc/**
+      - terraform/services/api-waf-sync/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -17,27 +23,22 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/zscaler-security-groups
+        working-directory: ./terraform/services/api-waf-sync
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d, bcda, dpc]
-        env: [dev, test, sbx, prod]
-        include:
-          - app: bcda
-            env: mgmt
+        env: [dev]
+    env:
+      TF_VAR_env: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/dpc-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: terraform init -reconfigure -backend-config=../../backends/dpc-$TF_VAR_env.s3.tfbackend
       - run: terraform apply -auto-approve
-        env:
-          TF_VAR_app: ${{ matrix.app }}
-          TF_VAR_env: ${{ matrix.env }}
       - uses: slackapi/slack-github-action@v1.26.0
         if: ${{ failure() }}
         with:

@@ -79,7 +79,7 @@ resource "aws_db_parameter_group" "parameter_group" {
   }
   parameter {
     name         = "cron.database_name"
-    value        = local.db_name
+    value        = var.app == "ab2d" && var.env == "test" ? "impl" : var.env
     apply_method = "pending-reboot"
   }
   parameter {
