@@ -1,3 +1,5 @@
+# Restricting valid "app" values until service has been extended or BCDA and DPC
+
 variable "app" {
   description = "The application name (ab2d, bcda, dpc)"
   type        = string
@@ -14,4 +16,10 @@ variable "env" {
     condition     = contains(["dev", "test", "sbx", "prod"], var.env)
     error_message = "Valid value for env is dev, test, sbx, or prod."
   }
+}
+
+variable "jenkins_security_group_id" {
+  description = "Stores the security group managing Jenkins Agent for AB2D including account number for AB2D Management"
+  type        = string
+  nullable    = false
 }
