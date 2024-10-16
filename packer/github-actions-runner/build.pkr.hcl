@@ -15,14 +15,12 @@ build {
 
   provisioner "shell" {
     remote_folder = "/home/ec2-user/"
-    environment_vars = []
     inline = [
-      "sudo dnf upgrade-minimal -y",
-      "sudo dnf install -y amazon-cloudwatch-agent jq git docker libicu",
-      "sudo dnf install -y --allowerasing curl",
+      "sudo dnf install -y amazon-cloudwatch-agent jq git docker libicu curl",
+      "sudo dnf install -y https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm",
       "sudo systemctl enable docker.service",
       "sudo systemctl enable containerd.service",
-      "sudo service docker start",
+      "sudo systemctl start docker.service",
       "sudo usermod -a -G docker ec2-user",
     ]
   }
