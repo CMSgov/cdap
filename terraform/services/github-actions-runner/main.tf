@@ -110,7 +110,7 @@ module "github-actions-runner" {
   enable_ami_housekeeper = true
   ami_housekeeper_cleanup_config = {
     launchTemplateNames = ["github-actions-action-runner"]
-    minimumDaysOld = 90
+    minimumDaysOld      = 90
     amiFilters = [
       {
         Name   = "name"
