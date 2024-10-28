@@ -118,7 +118,6 @@ resource "aws_iam_policy" "full" {
 POLICY
 }
 
-
 resource "aws_iam_group_policy_attachment" "full_attach" {
   #  count      = length(var.full_groups)
   group      = aws_iam_group.main
