@@ -4,7 +4,7 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
   destination = "extended_s3"
 
   extended_s3_configuration {
-    bucket_arn          = data.aws_s3_bucket.dpc-insights-bucket.arn
+    bucket_arn          = aws_s3_bucket.dpc-insights-bucket.arn
     buffering_interval  = 300
     buffering_size      = 128
     error_output_prefix = "databases/${local.agg_profile}/filter_errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"

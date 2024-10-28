@@ -97,8 +97,8 @@ resource "aws_iam_policy" "full" {
                 "s3:GetObjectVersion"
             ],
             "Resource": [
-                "${data.aws_s3_bucket.dpc-insights-bucket.arn}/*",
-                "${data.aws_s3_bucket.dpc-insights-bucket.arn}"
+                "${aws_s3_bucket.dpc-insights-bucket.arn}/*",
+                "${aws_s3_bucket.dpc-insights-bucket.arn}"
             ]
         },
         {
