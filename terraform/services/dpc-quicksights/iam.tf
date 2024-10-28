@@ -100,23 +100,24 @@ resource "aws_iam_policy" "full" {
                 "${data.aws_s3_bucket.dpc-insights-bucket.arn}/*",
                 "${data.aws_s3_bucket.dpc-insights-bucket.arn}"
             ]
+        },
+        {
+            "Sid": "CMK",
+            "Effect": "Allow",
+            "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+            ],
+            "Resource": ""arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9""
         }
     ]
 }
 POLICY
 }
-# },
-# {
-#   "Sid": "CMK",
-#   "Effect": "Allow",
-#   "Action": [
-#       "kms:Encrypt",
-#       "kms:Decrypt",
-#       "kms:ReEncrypt*",
-#       "kms:GenerateDataKey*",
-#       "kms:DescribeKey"
-#   ],
-#   "Resource": "${aws_kms_key.main.arn}"
+
 
 resource "aws_iam_group_policy_attachment" "full_attach" {
   #  count      = length(var.full_groups)
