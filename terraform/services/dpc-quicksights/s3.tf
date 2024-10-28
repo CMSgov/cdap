@@ -4,8 +4,8 @@ resource "aws_s3_bucket" "dpc-insights-bucket" {
 }
 
 resource "aws_s3_bucket" "dpc-insights-logging" {
-    bucket = "${var.app}-${local.this_env}-logs-${local.account_id}"
-    bucket_prefix = "aggregator"
+  bucket        = "${var.app}-${local.this_env}-logs-${local.account_id}"
+  bucket_prefix = "aggregator"
 }
 
 # block public access to the bucket
