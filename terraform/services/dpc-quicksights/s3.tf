@@ -1,10 +1,10 @@
 resource "aws_s3_bucket" "dpc-insights-bucket" {
-  bucket        = "${local.stack_prefix}-${local.account_id}"
+  bucket = "${local.stack_prefix}-${local.account_id}"
   #bucket_prefix = "aggregator"
 }
 
 resource "aws_s3_bucket" "dpc-insights-logging" {
-  bucket        = "${var.app}-${local.this_env}-logs-${local.account_id}"
+  bucket = "${var.app}-${local.this_env}-logs-${local.account_id}"
   #bucket_prefix = "aggregator"
 }
 
