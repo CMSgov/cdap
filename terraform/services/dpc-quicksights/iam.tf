@@ -120,7 +120,7 @@ POLICY
 
 resource "aws_iam_group_policy_attachment" "full_attach" {
   #  count      = length(var.full_groups)
-  group      = aws_iam_group.main
+  group      = aws_iam_group.main.id
   policy_arn = aws_iam_policy.full.arn
 }
 
@@ -173,7 +173,7 @@ resource "aws_iam_policy" "athena_query" {
 
 resource "aws_iam_group_policy_attachment" "athena_attach" {
   # count      = length(var.athena_groups)
-  group      = aws_iam_group.main
+  group      = aws_iam_group.main.id
   policy_arn = aws_iam_policy.full.arn
 }
 
