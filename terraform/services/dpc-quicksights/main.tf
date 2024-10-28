@@ -20,5 +20,8 @@ locals {
 }
 
 data "aws_s3_bucket" "dpc-insights-bucket" {
-  bucket = "/${local.stack_prefix}-${local.account_id}"
+#  bucket = "/${local.stack_prefix}-${local.account_id}"
+  bucket = "/dpc-insights-dpc-755619740999"
 }
+
+data "aws_caller_identity" "current" {}

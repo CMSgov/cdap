@@ -8,7 +8,7 @@
 data "archive_file" "zip-archive-format-dpc-logs" {
   type        = "zip"
   source_file = "${path.module}/lambda_src/dpc-bfd-cwlog-basic-flatten-json.py"
-  output_path = "${path.module}/lambda_src/${local.environment}/dpc-bfd-cwlog-basic-flatten-json.zip"
+  output_path = "${path.module}/lambda_src/${local.this_env}/dpc-bfd-cwlog-basic-flatten-json.zip"
 }
 
 # Lambda Function to process logs from Firehose
