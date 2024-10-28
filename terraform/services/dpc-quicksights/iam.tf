@@ -149,8 +149,8 @@ resource "aws_iam_policy" "athena_query" {
             ],
             "Resource": [
                 "arn:aws:s3:::aws-athena-query-results-*",
-                "${data.aws_s3_bucket.dpc-insights-bucket.arn}",
-                "${data.aws_s3_bucket.dpc-insights-bucket.arn}/*"
+                "${aws_s3_bucket.dpc-insights-bucket.arn}",
+                "${aws_s3_bucket.dpc-insights-bucket.arn}/*"
             ]
         }
     ]
@@ -293,8 +293,8 @@ resource "aws_iam_policy" "iam-policy-firehose" {
           ]
           Effect = "Allow"
           Resource = [
-            data.aws_s3_bucket.dpc-insights-bucket.arn,
-            "${data.aws_s3_bucket.dpc-insights-bucket.arn}/*",
+            "${aws_s3_bucket.dpc-insights-bucket.arn}",
+            "${aws_s3_bucket.dpc-insights-bucket.arn}/*",
           ]
           Sid = "GetS3Bucket"
         },
