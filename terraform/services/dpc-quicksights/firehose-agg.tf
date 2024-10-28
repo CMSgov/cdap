@@ -10,10 +10,10 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
     error_output_prefix = "databases/${local.agg_profile}/filter_errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
     kms_key_arn         = data.aws_kms_key.kms_key.arn
     # prefix              = "databases/${local.agg_profile}/destination_table=!{partitionKeyFromLambda}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
-    prefix              = "databases/${local.agg_profile}/generic_table/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
-    role_arn            = aws_iam_role.iam-role-firehose.arn
-    s3_backup_mode      = "Disabled"
-    compression_format  = "UNCOMPRESSED" # Must be UNCOMPRESSED when format_conversion is turned on
+    prefix             = "databases/${local.agg_profile}/generic_table/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
+    role_arn           = aws_iam_role.iam-role-firehose.arn
+    s3_backup_mode     = "Disabled"
+    compression_format = "UNCOMPRESSED" # Must be UNCOMPRESSED when format_conversion is turned on
 
     cloudwatch_logging_options {
       enabled = false

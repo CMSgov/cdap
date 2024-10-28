@@ -11,11 +11,11 @@ locals {
     dpc  = "dpc-${var.env == "sbx" ? "prod-sbx" : var.env}-1"
   }
   stack_prefix = "${var.app}-${local.this_env}"
-  this_env     = "${var.env == "sbx" ? "prod-sbx" : var.env}"
+  this_env     = var.env == "sbx" ? "prod-sbx" : var.env
   account_id   = data.aws_caller_identity.current.account_id
   agg_profile  = "${local.stack_prefix}-aggregator"
   # agg_table    = "agg_metrics"
-  api_profile  = "${local.stack_prefix}-api"
+  api_profile = "${local.stack_prefix}-api"
   # api_table    = "api_metrics"
 }
 

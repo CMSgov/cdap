@@ -105,21 +105,21 @@ resource "aws_iam_policy" "full" {
 }
 POLICY
 }
-        # },
-        # {
-        #   "Sid": "CMK",
-        #   "Effect": "Allow",
-        #   "Action": [
-        #       "kms:Encrypt",
-        #       "kms:Decrypt",
-        #       "kms:ReEncrypt*",
-        #       "kms:GenerateDataKey*",
-        #       "kms:DescribeKey"
-        #   ],
-        #   "Resource": "${aws_kms_key.main.arn}"
+# },
+# {
+#   "Sid": "CMK",
+#   "Effect": "Allow",
+#   "Action": [
+#       "kms:Encrypt",
+#       "kms:Decrypt",
+#       "kms:ReEncrypt*",
+#       "kms:GenerateDataKey*",
+#       "kms:DescribeKey"
+#   ],
+#   "Resource": "${aws_kms_key.main.arn}"
 
 resource "aws_iam_group_policy_attachment" "full_attach" {
-#  count      = length(var.full_groups)
+  #  count      = length(var.full_groups)
   group      = aws_iam_group.main
   policy_arn = aws_iam_policy.full.arn
 }
@@ -157,18 +157,18 @@ resource "aws_iam_policy" "athena_query" {
   }
   POLICY
 }
-        # },
-        # {
-        #     "Sid": "CMK",
-        #     "Effect": "Allow",
-        #     "Action": [
-        #         "kms:Encrypt",
-        #         "kms:Decrypt",
-        #         "kms:ReEncrypt*",
-        #         "kms:GenerateDataKey*",
-        #         "kms:DescribeKey"
-        #     ],
-        #     "Resource": "${aws_kms_key.main.arn}"
+# },
+# {
+#     "Sid": "CMK",
+#     "Effect": "Allow",
+#     "Action": [
+#         "kms:Encrypt",
+#         "kms:Decrypt",
+#         "kms:ReEncrypt*",
+#         "kms:GenerateDataKey*",
+#         "kms:DescribeKey"
+#     ],
+#     "Resource": "${aws_kms_key.main.arn}"
 
 
 resource "aws_iam_group_policy_attachment" "athena_attach" {
