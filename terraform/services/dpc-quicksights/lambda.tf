@@ -17,16 +17,17 @@ resource "aws_lambda_function" "lambda-function-format-dpc-logs" {
     "x86_64",
   ]
   description                    = "Extracts and flattens JSON messages from CloudWatch log subscriptions"
-  function_name                  = "${local.full_name}-cw-to-flattened-json"
+  function_name                  = "${local.agg_profile}-cw-to-flattened-json"
   filename                       = data.archive_file.zip-archive-format-dpc-logs.output_path
   handler                        = "dpc-bfd-cwlog-basic-flatten-json.lambda_handler"
   layers                         = []
   memory_size                    = 256
   package_type                   = "Zip"
   reserved_concurrent_executions = -1
-  role                           = aws_iam_role.iam-role-firehose-lambda.arn
-  runtime                        = "python3.12"
-  source_code_hash               = data.archive_file.zip-archive-format-dpc-logs.output_base64sha256
+  #role                           = aws_iam_role.iam-role-firehose-lambda.arn
+  role             = aws_iam_group.main.arn
+  runtime          = "python3.12"
+  source_code_hash = data.archive_file.zip-archive-format-dpc-logs.output_base64sha256
 
   tags = { "lambda-console:blueprint" = "kinesis-firehose-cloudwatch-logs-processor-python" }
 
