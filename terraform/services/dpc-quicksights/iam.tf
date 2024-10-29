@@ -255,9 +255,9 @@ resource "aws_iam_policy" "cwlogs-firehose" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = ["firehose:*"]
+        Action   = "firehose:*"
         Effect   = "Allow"
-        Resource = ["arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester"]
+        Resource = ["arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"]
       }
     ]
   })
@@ -351,9 +351,7 @@ resource "aws_iam_role" "iam-role-firehose" {
   permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
   force_detach_policies = false
-  managed_policy_arns = [
-    aws_iam_policy.iam-policy-firehose.arn,
-  ]
+
   max_session_duration = 3600
   assume_role_policy = jsonencode(
     {
@@ -370,6 +368,12 @@ resource "aws_iam_role" "iam-role-firehose" {
       Version = "2012-10-17"
     }
   )
+}
+
+resource "aws_iam_role_policy_attachment" "iam-policy-firehose-role" {
+  # count      = length(var.athena_groups)
+  role       = aws_iam_role.iam-role-firehose.id
+  policy_arn = aws_iam_policy.iam-policy-firehose.arn
 }
 
 resource "aws_iam_policy" "iam-policy-lambda-firehose" {
