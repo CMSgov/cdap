@@ -1,4 +1,4 @@
-## Athena policies
+## quicksight-related policies and roles
 resource "aws_iam_group" "main" {
   name = local.stack_prefix
   path = "/delegatedadmin/developer/"
