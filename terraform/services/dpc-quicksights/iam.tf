@@ -227,7 +227,7 @@ resource "aws_iam_role" "iam-role-cloudwatch-logs" {
   description = "Allows access to the DPC Insights Firehose Delivery Stream and Export to S3"
   path        = "/delegatedadmin/developer/"
 
-  permissions_boundary = "arn:aws:iam:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
   assume_role_policy = jsonencode(
     {
@@ -236,7 +236,7 @@ resource "aws_iam_role" "iam-role-cloudwatch-logs" {
           Action = "sts:AssumeRole"
           Effect = "Allow"
           Principal = {
-            Service = "logs.us-east-1.amazonaws.com"
+            Service = "logs.${data.aws_region.current.name}.amazonaws.com"
           }
           Sid = ""
         },
@@ -347,7 +347,7 @@ resource "aws_iam_role" "iam-role-firehose" {
   description = "allows Firehose access to Lambda transformation"
   path        = "/delegatedadmin/developer/"
 
-  permissions_boundary = "arn:aws:iam:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
   force_detach_policies = false
 
@@ -414,7 +414,7 @@ resource "aws_iam_role" "iam-role-firehose-lambda" {
   description = "Allow Lambda to create and write to its log group"
   path        = "/delegatedadmin/developer/"
 
-  permissions_boundary = "arn:aws:iam:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
   max_session_duration  = 3600
   force_detach_policies = false
