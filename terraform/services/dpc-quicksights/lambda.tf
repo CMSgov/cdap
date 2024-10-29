@@ -24,8 +24,8 @@ resource "aws_lambda_function" "lambda-function-format-dpc-logs" {
   memory_size                    = 256
   package_type                   = "Zip"
   reserved_concurrent_executions = -1
-  #role                           = aws_iam_role.iam-role-firehose-lambda.arn
-  role             = aws_iam_group.main.arn
+  role                           = aws_iam_role.iam-role-firehose-lambda.arn
+
   runtime          = "python3.12"
   source_code_hash = data.archive_file.zip-archive-format-dpc-logs.output_base64sha256
 
