@@ -5,7 +5,7 @@ resource "aws_iam_group" "main" {
 
 resource "aws_iam_policy" "full" {
   name        = "dpc-insights-full-${var.env}"
-  path        = "/dpc-insights/"
+  path        = "/delegatedadmin/developer/"
   description = "Allow full access and use of the ${local.stack_prefix} bucket for this account"
   policy      = <<-POLICY
 {
@@ -127,7 +127,7 @@ resource "aws_iam_group_policy_attachment" "full_attach" {
 # Allows writes to outputs
 resource "aws_iam_policy" "athena_query" {
   name        = "dpc-insights-athena-query-${var.env}"
-  path        = "/dpc-insights/"
+  path        = "/delegatedadmin/developer/"
   description = "Rights needed for athena query access"
   policy      = <<-POLICY
   {
@@ -229,7 +229,7 @@ resource "aws_iam_group_policy_attachment" "athena_attach" {
 resource "aws_iam_role" "iam-role-cloudwatch-logs" {
   name        = "${local.agg_profile}-cloudwatch-logs-role"
   description = "Allows access to the DPC Insights Firehose Delivery Stream and Export to S3"
-  path        = "/delegatedadmin/developer"
+  path        = "/delegatedadmin/developer/"
   assume_role_policy = jsonencode(
     {
       Statement = [
@@ -332,7 +332,7 @@ resource "aws_iam_policy" "iam-policy-firehose" {
 resource "aws_iam_role" "iam-role-firehose" {
   name                  = "${local.agg_profile}-firehose-role"
   description           = "allows Firehose access to Lambda transformation"
-  path                  = "/delegatedadmin/developer"
+  path                  = "/delegatedadmin/developer/"
   force_detach_policies = false
   managed_policy_arns = [
     aws_iam_policy.iam-policy-firehose.arn,
@@ -378,7 +378,7 @@ resource "aws_iam_role" "iam-role-firehose" {
 resource "aws_iam_role" "iam-role-firehose-lambda" {
   name                  = "${local.agg_profile}-firehose-lambda-role"
   description           = "Allow Lambda to create and write to its log group"
-  path                  = "/delegatedadmin/developer"
+  path                  = "/delegatedadmin/developer/"
   max_session_duration  = 3600
   force_detach_policies = false
   assume_role_policy = jsonencode(
