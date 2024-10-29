@@ -264,7 +264,6 @@ resource "aws_iam_policy" "cwlogs-firehose" {
 }
 
 resource "aws_iam_role_policy_attachment" "cwlogs-firehose-attach" {
-  # count      = length(var.athena_groups)
   role       = aws_iam_role.iam-role-cloudwatch-logs.id
   policy_arn = aws_iam_policy.cwlogs-firehose.arn
 }
@@ -371,7 +370,6 @@ resource "aws_iam_role" "iam-role-firehose" {
 }
 
 resource "aws_iam_role_policy_attachment" "iam-policy-firehose-role" {
-  # count      = length(var.athena_groups)
   role       = aws_iam_role.iam-role-firehose.id
   policy_arn = aws_iam_policy.iam-policy-firehose.arn
 }
@@ -400,7 +398,6 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose" {
 }
 
 resource "aws_iam_role_policy_attachment" "iam-policy-invoke-lambda-firehose" {
-  # count      = length(var.athena_groups)
   role       = aws_iam_role.iam-role-firehose.id
   policy_arn = aws_iam_policy.iam-policy-lambda-firehose.arn
 }
@@ -430,9 +427,14 @@ resource "aws_iam_role" "iam-role-firehose-lambda" {
       Version = "2012-10-17"
     }
   )
-  inline_policy {
-    name = "${local.agg_profile}-lambda-policy"
-    policy = jsonencode({
+}
+
+resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
+  description = "Allow firehose lambda execution logging"
+  name        = "${local.agg_profile}-lambda-logging-policy"
+  path        = "/delegatedadmin/developer/"
+
+  policy = jsonencode({
       Version = "2012-10-17"
       Statement = [
         {
@@ -457,10 +459,14 @@ resource "aws_iam_role" "iam-role-firehose-lambda" {
             "firehose:PutRecord"
           ]
           Resource = [
-            "arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester"
+            "arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"
           ]
         }
       ]
     })
-  }
+}
+
+resource "aws_iam_role_policy_attachment" "iam-policy-invoke-lambda-firehose-logging" {
+  role       = aws_iam_role.iam-role-firehose-lambda.id
+  policy_arn = aws_iam_policy.iam-policy-lambda-firehose-logging.arn
 }
