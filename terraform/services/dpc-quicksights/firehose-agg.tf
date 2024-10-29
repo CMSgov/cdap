@@ -12,7 +12,7 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
     # prefix              = "databases/${local.agg_profile}/destination_table=!{partitionKeyFromLambda}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
     kms_key_arn        = "arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
     prefix             = "databases/${local.agg_profile}/generic_table/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
-    role_arn           = aws_iam_role.iam-role-firehose.arn
+    role_arn           = aws_iam_role.iam-role-firehose-lambda.arn
     s3_backup_mode     = "Disabled"
     compression_format = "UNCOMPRESSED" # Must be UNCOMPRESSED when format_conversion is turned on
 

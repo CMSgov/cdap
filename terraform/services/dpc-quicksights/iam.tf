@@ -423,7 +423,8 @@ resource "aws_iam_role" "iam-role-firehose-lambda" {
         {
           Effect = "Allow"
           Action = [
-            "firehose:PutRecordBatch"
+            "firehose:PutRecordBatch",
+            "firehose:PutRecord"
           ]
           Resource = [
             "arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester"
