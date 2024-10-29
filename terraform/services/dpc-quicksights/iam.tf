@@ -257,7 +257,7 @@ resource "aws_iam_policy" "cwlogs-firehose" {
       {
         Action   = "firehose:*"
         Effect   = "Allow"
-        Resource = ["arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"]
+        Resource = aws_kinesis_firehose_delivery_stream.firehose-ingester-agg.arn
       }
     ]
   })
