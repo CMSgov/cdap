@@ -29,7 +29,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "dpc-insights-buck
   bucket = aws_s3_bucket.dpc-insights-bucket.id
   rule {
     apply_server_side_encryption_by_default {
-      kms_master_key_id = "arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+      kms_master_key_id = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
       sse_algorithm     = "aws:kms"
     }
   }

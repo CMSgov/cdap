@@ -111,7 +111,7 @@ resource "aws_iam_policy" "full" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
-        Resource = "arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+        Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
       }
     ]
   })
@@ -160,7 +160,7 @@ resource "aws_iam_policy" "athena_query" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
-        Resource = "arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+        Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
       }
     ]
   })
@@ -227,7 +227,7 @@ resource "aws_iam_role" "iam-role-cloudwatch-logs" {
   description = "Allows access to the DPC Insights Firehose Delivery Stream and Export to S3"
   path        = "/delegatedadmin/developer/"
 
-  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+  permissions_boundary = "arn:aws:iam:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
   assume_role_policy = jsonencode(
     {
@@ -257,7 +257,7 @@ resource "aws_iam_policy" "cwlogs-firehose" {
       {
         Action   = "firehose:*"
         Effect   = "Allow"
-        Resource = ["arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"]
+        Resource = ["arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"]
       }
     ]
   })
@@ -285,9 +285,9 @@ resource "aws_iam_policy" "iam-policy-firehose" {
         #   ]
         #   Effect = "Allow"
         #   Resource = [
-        #     "arn:aws:glue:us-east-1:${data.aws_caller_identity.current.account_id}:table/${module.database.name}/${module.glue-table-api-requests.name}",
-        #     "arn:aws:glue:us-east-1:${data.aws_caller_identity.current.account_id}:database/${module.database.name}",
-        #     "arn:aws:glue:us-east-1:${data.aws_caller_identity.current.account_id}:catalog"
+        #     "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${module.database.name}/${module.glue-table-api-requests.name}",
+        #     "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/${module.database.name}",
+        #     "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog"
         #   ]
         #   Sid = "GetGlueTable"
         # },
@@ -316,7 +316,7 @@ resource "aws_iam_policy" "iam-policy-firehose" {
             "kms:DescribeKey",
           ]
           Effect   = "Allow"
-          Resource = "arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+          Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
           Sid      = "UseKMSKey"
         },
         {
@@ -325,7 +325,7 @@ resource "aws_iam_policy" "iam-policy-firehose" {
           ]
           Effect = "Allow"
           Resource = [
-            "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${local.agg_profile}-firehose:log-stream:*",
+            "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${local.agg_profile}-firehose:log-stream:*",
           ]
           Sid = "PutLogEvents"
         }
@@ -347,7 +347,7 @@ resource "aws_iam_role" "iam-role-firehose" {
   description = "allows Firehose access to Lambda transformation"
   path        = "/delegatedadmin/developer/"
 
-  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+  permissions_boundary = "arn:aws:iam:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
   force_detach_policies = false
 
@@ -361,7 +361,7 @@ resource "aws_iam_role" "iam-role-firehose" {
           Principal = {
             Service = "firehose.amazonaws.com"
           }
-          Sid = ""
+          Sid = "FirehoseAssume"
         },
       ]
       Version = "2012-10-17"
@@ -391,8 +391,8 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose" {
           Action = "lambda:InvokeFunction"
           Effect = "Allow"
           Resource = [
-            "arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:${local.agg_profile}-cw-to-flattened-json",
-            "arn:aws:lambda:us-east-1:${data.aws_caller_identity.current.account_id}:function:${local.agg_profile}-cw-to-flattened-json:$LATEST"
+            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.agg_profile}-cw-to-flattened-json",
+            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.agg_profile}-cw-to-flattened-json:$LATEST"
           ]
           Sid = "InvokeCW2Json"
         },
@@ -414,7 +414,7 @@ resource "aws_iam_role" "iam-role-firehose-lambda" {
   description = "Allow Lambda to create and write to its log group"
   path        = "/delegatedadmin/developer/"
 
-  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+  permissions_boundary = "arn:aws:iam:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
   max_session_duration  = 3600
   force_detach_policies = false
@@ -445,7 +445,7 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
       {
         Effect   = "Allow"
         Action   = "logs:CreateLogGroup"
-        Resource = "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:*"
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
       },
       {
         Effect = "Allow"
@@ -454,7 +454,7 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
           "logs:PutLogEvents"
         ]
         Resource = [
-          "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.agg_profile}-cw-to-flattened-json:*"
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.agg_profile}-cw-to-flattened-json:*"
         ]
       },
       {
@@ -464,7 +464,7 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
           "firehose:PutRecord"
         ]
         Resource = [
-          "arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"
+          "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"
         ]
       }
     ]
