@@ -226,6 +226,9 @@ resource "aws_iam_role" "iam-role-cloudwatch-logs" {
   name        = "${local.agg_profile}-cloudwatch-logs-role"
   description = "Allows access to the DPC Insights Firehose Delivery Stream and Export to S3"
   path        = "/delegatedadmin/developer/"
+
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+
   assume_role_policy = jsonencode(
     {
       Statement = [
@@ -326,9 +329,12 @@ resource "aws_iam_policy" "iam-policy-firehose" {
 
 # Firehose Role
 resource "aws_iam_role" "iam-role-firehose" {
-  name                  = "${local.agg_profile}-firehose-role"
-  description           = "allows Firehose access to Lambda transformation"
-  path                  = "/delegatedadmin/developer/"
+  name        = "${local.agg_profile}-firehose-role"
+  description = "allows Firehose access to Lambda transformation"
+  path        = "/delegatedadmin/developer/"
+
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+
   force_detach_policies = false
   managed_policy_arns = [
     aws_iam_policy.iam-policy-firehose.arn,
@@ -372,9 +378,12 @@ resource "aws_iam_role" "iam-role-firehose" {
 
 # Lambda Role
 resource "aws_iam_role" "iam-role-firehose-lambda" {
-  name                  = "${local.agg_profile}-firehose-lambda-role"
-  description           = "Allow Lambda to create and write to its log group"
-  path                  = "/delegatedadmin/developer/"
+  name        = "${local.agg_profile}-firehose-lambda-role"
+  description = "Allow Lambda to create and write to its log group"
+  path        = "/delegatedadmin/developer/"
+
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+
   max_session_duration  = 3600
   force_detach_policies = false
   assume_role_policy = jsonencode(
