@@ -435,35 +435,35 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
   path        = "/delegatedadmin/developer/"
 
   policy = jsonencode({
-      Version = "2012-10-17"
-      Statement = [
-        {
-          Effect   = "Allow"
-          Action   = "logs:CreateLogGroup"
-          Resource = "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:*"
-        },
-        {
-          Effect = "Allow"
-          Action = [
-            "logs:CreateLogStream",
-            "logs:PutLogEvents"
-          ]
-          Resource = [
-            "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.agg_profile}-cw-to-flattened-json:*"
-          ]
-        },
-        {
-          Effect = "Allow"
-          Action = [
-            "firehose:PutRecordBatch",
-            "firehose:PutRecord"
-          ]
-          Resource = [
-            "arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"
-          ]
-        }
-      ]
-    })
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "logs:CreateLogGroup"
+        Resource = "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = [
+          "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.agg_profile}-cw-to-flattened-json:*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "firehose:PutRecordBatch",
+          "firehose:PutRecord"
+        ]
+        Resource = [
+          "arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"
+        ]
+      }
+    ]
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "iam-policy-invoke-lambda-firehose-logging" {
