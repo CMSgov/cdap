@@ -374,7 +374,7 @@ resource "aws_iam_role_policy_attachment" "iam-policy-firehose-role" {
   policy_arn = aws_iam_policy.iam-policy-firehose.arn
 }
 
-resource "aws_iam_role_policy_attachment" "cwlogs-firehose-attach" {
+resource "aws_iam_role_policy_attachment" "role-firehose-attach" {
   role       = aws_iam_role.iam-role-firehose.id
   policy_arn = aws_iam_policy.cwlogs-firehose.arn
 }
