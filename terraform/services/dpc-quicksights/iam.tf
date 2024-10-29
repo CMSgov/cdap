@@ -261,6 +261,8 @@ resource "aws_iam_role" "iam-role-cloudwatch-logs" {
 resource "aws_iam_policy" "iam-policy-firehose" {
   description = "Allow firehose delivery to DPC insights S3 bucket"
   name        = "${local.agg_profile}-firehose-to-s3-policy"
+  path        = "/delegatedadmin/developer/"
+
   policy = jsonencode(
     {
       Statement = [
