@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - PLT-674
     paths:
       - .github/workflows/dpc-quicksights-plan.yml
       - terraform/services/dpc-quicksights/**
