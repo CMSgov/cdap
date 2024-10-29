@@ -20,9 +20,9 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
       enabled = false
     }
 
-    dynamic_partitioning_configuration {
-      enabled = "true"
-    }
+    # dynamic_partitioning_configuration {
+    #   enabled = "true"
+    # }
 
 
     processing_configuration {
