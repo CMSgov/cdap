@@ -7,14 +7,13 @@ resource "aws_iam_policy" "full" {
   name        = "dpc-insights-full-${var.env}"
   path        = "/delegatedadmin/developer/"
   description = "Allow full access and use of the ${local.stack_prefix} bucket for this account"
-  policy      = <<-POLICY
-{
-    "Version": "2012-10-17",
-    "Statement": [
+  policy      = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
         {
-            "Sid": "VisualEditor0",
-            "Effect": "Allow",
-            "Action": [
+            Sid = "S3Perms"
+            Effect = "Allow",
+            Action = [
                 "s3:PutAnalyticsConfiguration",
                 "s3:GetObjectVersionTagging",
                 "s3:CreateBucket",
@@ -95,27 +94,26 @@ resource "aws_iam_policy" "full" {
                 "s3:GetBucketLocation",
                 "s3:ReplicateDelete",
                 "s3:GetObjectVersion"
-            ],
-            "Resource": [
+            ]
+            Resource = [
                 "${aws_s3_bucket.dpc-insights-bucket.arn}/*",
                 "${aws_s3_bucket.dpc-insights-bucket.arn}"
             ]
         },
         {
-            "Sid": "CMK",
-            "Effect": "Allow",
-            "Action": [
+            Sid = "CMK"
+            Effect = "Allow"
+            Action = [
                 "kms:Encrypt",
                 "kms:Decrypt",
                 "kms:ReEncrypt*",
                 "kms:GenerateDataKey*",
                 "kms:DescribeKey"
-            ],
-            "Resource": ""arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9""
+            ]
+            Resource = "arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
         }
     ]
-}
-POLICY
+})
 }
 
 resource "aws_iam_group_policy_attachment" "full_attach" {
@@ -129,15 +127,13 @@ resource "aws_iam_policy" "athena_query" {
   name        = "dpc-insights-athena-query-${var.env}"
   path        = "/delegatedadmin/developer/"
   description = "Rights needed for athena query access"
-  policy      = <<-POLICY
-  {
-    "Version": "2012-10-17",
-    "Statement":
-    [
+  policy      = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
         {
-            "Sid": "s3QueryPolicy",
-            "Effect": "Allow",
-            "Action": [
+            Sid = "s3QueryPolicy"
+            Effect = "Allow"
+            Action = [
                 "s3:GetBucketLocation",
                 "s3:GetObject",
                 "s3:ListBucket",
@@ -146,29 +142,28 @@ resource "aws_iam_policy" "athena_query" {
                 "s3:AbortMultipartUpload",
                 "s3:CreateBucket",
                 "s3:PutObject"
-            ],
-            "Resource": [
+            ]
+            Resource = [
                 "arn:aws:s3:::aws-athena-query-results-*",
                 "${aws_s3_bucket.dpc-insights-bucket.arn}",
                 "${aws_s3_bucket.dpc-insights-bucket.arn}/*"
             ]
+        },
+        {
+            Sid = "CMK"
+            Effect = "Allow"
+            Action = [
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+            ]
+            Resource = "arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
         }
     ]
-  }
-  POLICY
+  })
 }
-# },
-# {
-#     "Sid": "CMK",
-#     "Effect": "Allow",
-#     "Action": [
-#         "kms:Encrypt",
-#         "kms:Decrypt",
-#         "kms:ReEncrypt*",
-#         "kms:GenerateDataKey*",
-#         "kms:DescribeKey"
-#     ],
-#     "Resource": "${aws_kms_key.main.arn}"
 
 
 resource "aws_iam_group_policy_attachment" "athena_attach" {
@@ -298,20 +293,18 @@ resource "aws_iam_policy" "iam-policy-firehose" {
           ]
           Sid = "GetS3Bucket"
         },
-        # {
-        #   Action = [
-        #     "kms:Encrypt",
-        #     "kms:Decrypt",
-        #     "kms:ReEncrypt*",
-        #     "kms:GenerateDataKey*",
-        #     "kms:DescribeKey",
-        #   ]
-        #   Effect = "Allow"
-        #   Resource = [
-        #     data.aws_kms_key.kms_key.arn
-        #   ],
-        #   Sid = "UseKMSKey"
-        # },
+        {
+          Action = [
+            "kms:Encrypt",
+            "kms:Decrypt",
+            "kms:ReEncrypt*",
+            "kms:GenerateDataKey*",
+            "kms:DescribeKey",
+          ]
+          Effect = "Allow"
+          Resource = "arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+          Sid = "UseKMSKey"
+        },
         {
           Action = [
             "logs:PutLogEvents",
@@ -321,7 +314,7 @@ resource "aws_iam_policy" "iam-policy-firehose" {
             "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${local.agg_profile}-firehose:log-stream:*",
           ]
           Sid = "PutLogEvents"
-        },
+        }
       ]
       Version = "2012-10-17"
     }
@@ -398,29 +391,29 @@ resource "aws_iam_role" "iam-role-firehose-lambda" {
   inline_policy {
     name = "${local.agg_profile}-lambda-policy"
     policy = jsonencode({
-      "Version" : "2012-10-17",
-      "Statement" : [
+      Version = "2012-10-17"
+      Statement = [
         {
-          "Effect" : "Allow",
-          "Action" : "logs:CreateLogGroup",
-          "Resource" : "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:*"
+          Effect = "Allow"
+          Action = "logs:CreateLogGroup"
+          Resource = "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:*"
         },
         {
-          "Effect" : "Allow",
-          "Action" : [
+          Effect = "Allow"
+          Action = [
             "logs:CreateLogStream",
             "logs:PutLogEvents"
-          ],
-          "Resource" : [
+          ]
+          Resource = [
             "arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.agg_profile}-cw-to-flattened-json:*"
           ]
         },
         {
-          "Effect" : "Allow",
-          "Action" : [
+          Effect = "Allow"
+          Action = [
             "firehose:PutRecordBatch"
-          ],
-          "Resource" : [
+          ]
+          Resource = [
             "arn:aws:firehose:us-east-1:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester"
           ]
         }
