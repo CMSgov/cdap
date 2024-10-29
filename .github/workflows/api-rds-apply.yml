@@ -1,22 +1,16 @@
-name: api-rds plan terraform
+name: api-rds apply terraform
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
-      - .github/workflows/api-rds-plan.yml
+      - .github/workflows/api-rds-apply.yml
       - terraform/services/api-rds/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  check-terraform-fmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./actions/setup-tfenv-terraform
-      - run: terraform fmt -check -diff -recursive terraform/services/api-rds
-
-  terraform-plan:
-    needs: check-terraform-fmt
+  terraform-apply:
     permissions:
       contents: read
       id-token: write
@@ -43,7 +37,7 @@ jobs:
         with:
           params: |
             TF_VAR_jenkins_security_group_id=/jenkins/security-group
-      - run: terraform plan
+      - run: terraform apply -auto-approve
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
