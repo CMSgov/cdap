@@ -374,6 +374,11 @@ resource "aws_iam_role_policy_attachment" "iam-policy-firehose-role" {
   policy_arn = aws_iam_policy.iam-policy-firehose.arn
 }
 
+resource "aws_iam_role_policy_attachment" "cwlogs-firehose-attach" {
+  role       = aws_iam_role.iam-role-firehose.id
+  policy_arn = aws_iam_policy.cwlogs-firehose.arn
+}
+
 resource "aws_iam_policy" "iam-policy-lambda-firehose" {
   description = "Allow firehose lambda execution"
   name        = "${local.agg_profile}-invoke-cw-to-flattened-json"
