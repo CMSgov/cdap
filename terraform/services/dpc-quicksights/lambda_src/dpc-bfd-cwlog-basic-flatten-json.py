@@ -176,23 +176,46 @@ def processRecords(
         if data["messageType"] == "CONTROL_MESSAGE":
             yield {"result": "Dropped", "recordId": recId}
         elif data["messageType"] == "DATA_MESSAGE":
-            valid_log_events = [
-                x
-                for x in (transformLogEvent(e) for e in data["logEvents"])
-                if x is not None
-            ]
-            if valid_log_events:
-                joinedData = "".join(valid_log_events)
-                dataBytes = joinedData.encode("utf-8")
-                encodedData = base64.b64encode(dataBytes).decode("utf-8")
+            # valid_log_events = [
+            #     x
+            #     for x in (transformLogEvent(e) for e in data["logEvents"])
+            #     if x is not None
+            # ]
+            # if valid_log_events:
+            #     joinedData = "".join(valid_log_events)
+            #     dataBytes = joinedData.encode("utf-8")
+            #     encodedData = base64.b64encode(dataBytes).decode("utf-8")
 
-                yield {"data": encodedData, "result": "Ok", "recordId": recId}
-            else:
-                print(
-                    f"Record ID {r['recordId']} was empty after attempting to transform its log"
-                    " events. Marking as Dropped"
-                )
-                yield {"result": "Dropped", "recordId": recId}
+            #     yield {"data": encodedData, "result": "Ok", "recordId": recId}
+            # else:
+            #     print(
+            #         f"Record ID {r['recordId']} was empty after attempting to transform its log"
+            #         " events. Marking as Dropped"
+            #     )
+            #     yield {"result": "Dropped", "recordId": recId}
+            for e in data["logEvents"]:
+                transformed_event = transformLogEvent(e)
+                if transformed_event:
+                    parsed_event = json.loads(transformed_event)
+                    metadata = parsed_event.get('metadata')
+                    event_data = parsed_event.get('data')
+
+                    if metadata and event_data:
+                        # Include metadata separately in the yield response
+                        yield {
+                            "data": base64.b64encode(event_data.encode("utf-8")).decode("utf-8"),
+                            "metadata": metadata,
+                            "result": "Ok",
+                            "recordId": recId
+                        }
+                    else:
+                        yield {"result": "Dropped", "recordId": recId}
+                else:
+                    print(
+                        f"Record ID {r['recordId']} was empty after attempting to transform its log"
+                        " events. Marking as Dropped"
+                    )
+                    yield {"result": "Dropped", "recordId": recId}
         else:
             yield {"result": "ProcessingFailed", "recordId": recId}
 
