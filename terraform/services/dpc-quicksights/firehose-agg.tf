@@ -74,7 +74,7 @@ resource "aws_glue_catalog_database" "agg" {
 }
 
 resource "aws_glue_security_configuration" "main" {
-  name = var.database
+  name = "${local.stack_prefix}-db-security"
 
   encryption_configuration {
     cloudwatch_encryption {
