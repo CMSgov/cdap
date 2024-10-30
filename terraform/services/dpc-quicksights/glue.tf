@@ -126,7 +126,7 @@ resource "aws_glue_catalog_table" "agg_metric_table" {
   storage_descriptor {
     location      = "s3://${aws_s3_bucket.dpc-insights-bucket.id}/databases/${local.agg_profile}/metric_table"
     input_format  = local.storage_options["json"].input_format
-    output_format = local.storage_options["json"].output_format
+    output_format = local.storage_options["parquet"].output_format
     compressed    = true
 
     dynamic "columns" {

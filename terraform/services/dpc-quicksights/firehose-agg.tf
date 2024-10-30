@@ -40,9 +40,12 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
     }
 
     data_format_conversion_configuration {
+      enabled = true
+      
       input_format_configuration {
         deserializer {
-          hive_json_ser_de {}
+          ##hive_json_ser_de {}
+          open_x_json_ser_de {}
         }
       }
 
