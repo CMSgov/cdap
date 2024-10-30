@@ -12,7 +12,7 @@ locals {
       "parquet.compression" = "SNAPPY"
     }
   }
-  
+
   table_partitions = [
     {
       name    = "year"
@@ -145,7 +145,7 @@ resource "aws_glue_catalog_table" "agg_metric_table" {
 }
 
 # resource "aws_glue_catalog_table" "api_metric_table" {
-  
+
 #   name          = local.api_profile
 #   database_name = "${local.stack_prefix}-db"
 #   description   = "CW Table for DPC API"
