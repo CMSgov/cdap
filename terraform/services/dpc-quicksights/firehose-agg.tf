@@ -40,27 +40,27 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
       }
     }
 
-    data_format_conversion_configuration {
-      input_format_configuration {
-        deserializer {
-          hive_json_ser_de {}
-        }
-      }
+    # data_format_conversion_configuration {
+    #   input_format_configuration {
+    #     deserializer {
+    #       hive_json_ser_de {}
+    #     }
+    #   }
 
-      output_format_configuration {
-        serializer {
-          parquet_ser_de {
-            compression = "SNAPPY"
-          }
-        }
-      }
+    #   output_format_configuration {
+    #     serializer {
+    #       parquet_ser_de {
+    #         compression = "SNAPPY"
+    #       }
+    #     }
+    #   }
 
-      schema_configuration {
-        database_name = "${local.stack_prefix}-db"
-        role_arn      = resource.aws_iam_role.iam-role-firehose.arn
-        table_name    = "!{partitionKeyFromLambda}"
-      }
-    }
+    #   schema_configuration {
+    #     database_name = "${local.stack_prefix}-db"
+    #     role_arn      = resource.aws_iam_role.iam-role-firehose.arn
+    #     table_name    = "!{partitionKeyFromLambda:destination_table}"
+    #   }
+    # }
   }
 
   # server_side_encryption {
