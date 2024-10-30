@@ -58,7 +58,7 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
     #   schema_configuration {
     #     database_name = "${local.stack_prefix}-db"
     #     role_arn      = resource.aws_iam_role.iam-role-firehose.arn
-    #     table_name    = "!{partitionKeyFromLambda:destination_table}"
+    #     table_name    = "!{metric_table}"
     #   }
     # }
   }

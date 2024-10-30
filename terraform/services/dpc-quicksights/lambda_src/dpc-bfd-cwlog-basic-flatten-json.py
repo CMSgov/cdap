@@ -151,6 +151,7 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
     # provide metadata for partitioning by input record type
     transformed_record = {
         'metric_table': destination_table,
+        'timestamp': flattened_log_event_json["cw_timestamp"],
         'data': flattened_log_event_json
     }
     
