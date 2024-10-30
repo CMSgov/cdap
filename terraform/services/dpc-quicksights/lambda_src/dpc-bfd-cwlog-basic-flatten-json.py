@@ -124,10 +124,13 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
         return None
 
     flattened_log_event_json = format_json(log_event_json)
-    flattened_log_event_json["cw_id"] = log_event["id"]
+    ####flattened_log_event_json["cw_id"] = log_event["id"]
     # Ignoring that utcfromtimestamp is deprecated. Should probably be replaced with fromtimestamp,
     # but without comprehensive tests I don't want to accept the possibility of unexpected changes
-    flattened_log_event_json["cw_timestamp"] = datetime.utcfromtimestamp(  # type: ignore
+    ####flattened_log_event_json["cw_timestamp"] = datetime.utcfromtimestamp(  # type: ignore
+    ####    log_event["timestamp"] / 1000
+    ####).isoformat()
+    eventtime = datetime.utcfromtimestamp(  # type: ignore
         log_event["timestamp"] / 1000
     ).isoformat()
 
@@ -148,10 +151,13 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
         # Process as generic metric event
         destination_table = "process_generic_metrics"
 
+    partition_keys = {
+        'metric_table': destination_table,
+        'timestamp': eventtime
+    }
     # provide metadata for partitioning by input record type
     transformed_record = {
-        'metric_table': destination_table,
-        'timestamp': flattened_log_event_json["cw_timestamp"],
+        'metadata': partition_keys,
         'data': flattened_log_event_json
     }
     
