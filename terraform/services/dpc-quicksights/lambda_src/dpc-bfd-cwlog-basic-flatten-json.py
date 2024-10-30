@@ -199,8 +199,8 @@ def processRecords(
                 transformed_event = transformLogEvent(e)
                 if transformed_event:
                     parsed_event = json.loads(transformed_event)
-                    metadata = parsed_event['metadata']
-                    event_data = parsed_event['data']
+                    metadata = json.dumps(parsed_event['metadata'])
+                    event_data = json.dumps(parsed_event['data'])
 
                     if metadata and event_data:
                         # Include metadata separately in the yield response
@@ -216,13 +216,16 @@ def processRecords(
                         f"Record ID {r['recordId']} was empty after attempting to transform its log"
                         " events. Marking as Dropped"
                     )
+
             if valid_log_events and valid_metadata:
+                
                 joinedData = "".join(valid_log_events)
                 joinedMetaData = "".join(valid_metadata)
                 dataBytes = joinedData.encode("utf-8")
                 metaBytes = joinedMetaData.encode("utf-8")
                 encodedData = base64.b64encode(dataBytes).decode("utf-8")
                 encodedMeta = base64.b64encode(metaBytes).decode("utf-8")
+                
 
                 yield {
                     "data": encodedData,
