@@ -104,7 +104,7 @@ locals {
 
 resource "aws_glue_catalog_table" "agg_metric_table" {
   name          = local.agg_profile
-  database_name = "${local.stack_prefix}-db"
+  database_name = aws_glue_catalog_database.agg.name
   description   = "CW Table for DPC Aggregation"
   table_type    = "EXTERNAL_TABLE"
   owner         = "dpc"

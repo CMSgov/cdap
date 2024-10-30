@@ -55,7 +55,7 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
       }
 
       schema_configuration {
-        database_name = "${local.stack_prefix}-db"
+        database_name = aws_glue_catalog_database.agg.name
         role_arn      = aws_iam_role.iam-role-firehose.arn
         table_name    = aws_glue_catalog_table.agg_metric_table.name
       }
