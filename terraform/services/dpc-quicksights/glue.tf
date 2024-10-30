@@ -56,7 +56,8 @@ locals {
     },
     parquet = {
       #library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
-      library = "org.openx.data.jsonserde.JsonSerDe"
+      #library = "org.openx.data.jsonserde.JsonSerDe"
+      library = "com.amazon.ionhiveserde.IonHiveSerDe"
       params = {
         "serialization.format" = 1
       }
