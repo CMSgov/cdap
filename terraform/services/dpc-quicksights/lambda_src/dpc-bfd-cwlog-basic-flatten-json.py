@@ -131,10 +131,11 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
         log_event["timestamp"] / 1000
     ).isoformat()
 
+    destination_table = "process_generic_metrics"
     # provide additional partitioning
     if 'contentLength' in flattened_log_event_json:
         # Process as access log type
-        flattened_log_event_json["destination_table"] = "healthcheck_metrics"
+        destination_table = "healthcheck_metrics"
     # elif 'completionResult' in flattened_log_event_json
     #     flattened_log_event_json["destination_table"] = "process_done_metrics"
     # elif 'dataRetrieved' in flattened_log_event_json
@@ -145,9 +146,15 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
     #     flattened_log_event_json["destination_table"] = "process_batchstatus_metrics"
     else:
         # Process as generic metric event
-        flattened_log_event_json["destination_table"] = "process_generic_metrics"
+        destination_table = "process_generic_metrics"
 
-    stringized_flattened_log_event_json = json.dumps(flattened_log_event_json)
+    # provide metadata for partitioning by input record type
+    transformed_record = {
+        'metric_table': destination_table,
+        'data': flattened_log_event_json
+    }
+    
+    stringized_flattened_log_event_json = json.dumps(transformed_record)
     return stringized_flattened_log_event_json + "\n"
 
 
