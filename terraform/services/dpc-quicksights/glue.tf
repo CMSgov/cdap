@@ -1,5 +1,7 @@
 locals {
 
+  serde_format = "parquet"
+  
   table_parameters = {
     json = {
       EXTERNAL = "TRUE"
@@ -136,9 +138,9 @@ resource "aws_glue_catalog_table" "agg_metric_table" {
     }
 
     ser_de_info {
-      name                  = var.table
-      serialization_library = local.serde_options[var.serde_format].library
-      parameters            = local.serde_options[var.serde_format].params
+      name                  = local.agg_profile
+      serialization_library = local.serde_options[local.serde_format].library
+      parameters            = local.serde_options[local.serde_format].params
     }
   }
 
