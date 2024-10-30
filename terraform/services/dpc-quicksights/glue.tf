@@ -1,7 +1,7 @@
 locals {
 
   serde_format = "parquet"
-  
+
   table_parameters = {
     json = {
       EXTERNAL = "TRUE"
