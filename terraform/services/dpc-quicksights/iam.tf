@@ -285,8 +285,8 @@ resource "aws_iam_policy" "iam-policy-firehose" {
           ]
           Effect = "Allow"
           Resource = [
-            "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${module.database.name}/${module.glue-table-api-requests.name}",
-            "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/${module.database.name}",
+            "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${aws_glue_catalog_database.agg.name}/${aws_glue_catalog_table.agg_metric_table.name}",
+            "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/${aws_glue_catalog_database.agg.name}",
             "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog"
           ]
           Sid = "GetGlueTable"
