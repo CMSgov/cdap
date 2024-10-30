@@ -74,7 +74,7 @@ resource "aws_glue_catalog_database" "agg" {
 }
 
 resource "aws_glue_security_configuration" "main" {
-  name        = var.database
+  name = var.database
 
   encryption_configuration {
     cloudwatch_encryption {
@@ -86,7 +86,7 @@ resource "aws_glue_security_configuration" "main" {
     }
 
     s3_encryption {
-      kms_key_arn        = kms_key_arn = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+      kms_key_arn        = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
       s3_encryption_mode = "SSE-KMS"
     }
   }
