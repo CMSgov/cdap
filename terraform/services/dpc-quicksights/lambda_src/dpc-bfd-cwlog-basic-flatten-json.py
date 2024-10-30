@@ -127,9 +127,7 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
     ####flattened_log_event_json["cw_id"] = log_event["id"]
     # Ignoring that utcfromtimestamp is deprecated. Should probably be replaced with fromtimestamp,
     # but without comprehensive tests I don't want to accept the possibility of unexpected changes
-    ####flattened_log_event_json["cw_timestamp"] = datetime.utcfromtimestamp(  # type: ignore
-    ####    log_event["timestamp"] / 1000
-    ####).isoformat()
+
     eventtime = datetime.utcfromtimestamp(  # type: ignore
         log_event["timestamp"] / 1000
     ).isoformat()
@@ -139,14 +137,14 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
     if 'contentlength' in flattened_log_event_json:
         # Process as access log type
         destination_table = "healthcheck_metrics"
-    # elif 'completionResult' in flattened_log_event_json
-    #     flattened_log_event_json["destination_table"] = "process_done_metrics"
-    # elif 'dataRetrieved' in flattened_log_event_json
-    #     flattened_log_event_json["destination_table"] = "process_partialbatch_metrics"
-    # elif 'queueCompleteTime' in flattened_log_event_json
-    #     flattened_log_event_json["destination_table"] = "process_startbatch_metrics"
-    # elif 'mdc' in flattened_log_event_json
-    #     flattened_log_event_json["destination_table"] = "process_batchstatus_metrics"
+    elif 'completionresult' in flattened_log_event_json:
+        destination_table = "process_done_metrics"
+    elif 'dataretrieved' in flattened_log_event_json:
+        destination_table = "process_partialbatch_metrics"
+    elif 'queuecompletetime' in flattened_log_event_json:
+        destination_table = "process_startbatch_metrics"
+    elif 'mdc' in flattened_log_event_json:
+        destination_table = "process_batchstatus_metrics"
     else:
         # Process as generic metric event
         destination_table = "process_generic_metrics"

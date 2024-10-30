@@ -1,10 +1,3 @@
-# Zip File containing Lambda script
-# data "archive_file" "zip-archive-format-dpc-logs" {
-#   type        = "zip"
-#   source_file = "${path.module}/lambda_src/dpc-cw-filter-flatten-json.py"
-#   output_path = "${path.module}/lambda_src/${local.environment}/dpc-cw-filter-flatten-json.zip"
-# }
-
 data "archive_file" "zip-archive-format-dpc-logs" {
   type        = "zip"
   source_file = "${path.module}/lambda_src/dpc-bfd-cwlog-basic-flatten-json.py"
