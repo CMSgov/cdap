@@ -176,69 +176,23 @@ def processRecords(
         if data["messageType"] == "CONTROL_MESSAGE":
             yield {"result": "Dropped", "recordId": recId}
         elif data["messageType"] == "DATA_MESSAGE":
-            # valid_log_events = [
-            #     x
-            #     for x in (transformLogEvent(e) for e in data["logEvents"])
-            #     if x is not None
-            # ]
-            # if valid_log_events:
-            #     joinedData = "".join(valid_log_events)
-            #     dataBytes = joinedData.encode("utf-8")
-            #     encodedData = base64.b64encode(dataBytes).decode("utf-8")
-
-            #     yield {"data": encodedData, "result": "Ok", "recordId": recId}
-            # else:
-            #     print(
-            #         f"Record ID {r['recordId']} was empty after attempting to transform its log"
-            #         " events. Marking as Dropped"
-            #     )
-            #     yield {"result": "Dropped", "recordId": recId}
-            valid_log_events = []
-            valid_metadata = []
-            for e in data["logEvents"]:
-                transformed_event = transformLogEvent(e)
-                if transformed_event:
-                    parsed_event = json.loads(transformed_event)
-                    metadata = parsed_event['metadata']
-                    event_data = json.dumps(parsed_event['data'])
-
-                    if metadata and event_data:
-                        # Include metadata separately in the yield response
-                        valid_log_events.append(event_data)
-                        valid_metadata.append(metadata)
-                    else:
-                        print(
-                            f"Record ID {r['recordId']} was empty after attempting to transform its log"
-                            " events. Marking as Dropped"
-                        )
-                else:
-                    print(
-                        f"Record ID {r['recordId']} was empty after attempting to transform its log"
-                        " events. Marking as Dropped"
-                    )
-
-            if valid_log_events and valid_metadata:
-                
+            valid_log_events = [
+                x
+                for x in (transformLogEvent(e) for e in data["logEvents"])
+                if x is not None
+            ]
+            if valid_log_events:
                 joinedData = "".join(valid_log_events)
-                #joinedMetaData = "".join(valid_metadata)
                 dataBytes = joinedData.encode("utf-8")
-                #metaBytes = joinedMetaData.encode("utf-8")
                 encodedData = base64.b64encode(dataBytes).decode("utf-8")
-                #encodedMeta = base64.b64encode(metaBytes).decode("utf-8")
 
-                yield {
-                    "data": encodedData,
-                    "metadata": valid_metadata,
-                    "result": "Ok",
-                    "recordId": recId
-                }
+                yield {"data": encodedData, "result": "Ok", "recordId": recId}
             else:
                 print(
                     f"Record ID {r['recordId']} was empty after attempting to transform its log"
                     " events. Marking as Dropped"
                 )
                 yield {"result": "Dropped", "recordId": recId}
-
         else:
             yield {"result": "ProcessingFailed", "recordId": recId}
 
