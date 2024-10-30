@@ -38,23 +38,23 @@ locals {
   serde_options = {
     json = {
       library = "org.apache.hive.hcatalog.data.JsonSerDe"
-      params  = {
+      params = {
         "ignore.malformed.json" = true,
-        "dots.in.keys" = true,
-        "timestamp.formats" = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS,yyyy-MM-dd'T'HH:mm:ss.SSS,yyyy-MM-dd'T'HH:mm:ss,yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z',yyyy-MM-dd'T'HH:mm:ss.SSS'Z',yyyy-MM-dd'T'HH:mm:ss'Z'"
+        "dots.in.keys"          = true,
+        "timestamp.formats"     = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS,yyyy-MM-dd'T'HH:mm:ss.SSS,yyyy-MM-dd'T'HH:mm:ss,yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z',yyyy-MM-dd'T'HH:mm:ss.SSS'Z',yyyy-MM-dd'T'HH:mm:ss'Z'"
       }
     },
     grok = {
       library = "com.amazonaws.glue.serde.GrokSerDe"
-      params  = {
+      params = {
         "ignore.malformed.json" = true,
-        "dots.in.keys" = true,
-        "timestamp.formats" = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS,yyyy-MM-dd'T'HH:mm:ss.SSS,yyyy-MM-dd'T'HH:mm:ss,yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z',yyyy-MM-dd'T'HH:mm:ss.SSS'Z',yyyy-MM-dd'T'HH:mm:ss'Z'"
+        "dots.in.keys"          = true,
+        "timestamp.formats"     = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS,yyyy-MM-dd'T'HH:mm:ss.SSS,yyyy-MM-dd'T'HH:mm:ss,yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z',yyyy-MM-dd'T'HH:mm:ss.SSS'Z',yyyy-MM-dd'T'HH:mm:ss'Z'"
       }
     },
     parquet = {
       library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
-      params  = {
+      params = {
         "serialization.format" = 1
       }
     }
