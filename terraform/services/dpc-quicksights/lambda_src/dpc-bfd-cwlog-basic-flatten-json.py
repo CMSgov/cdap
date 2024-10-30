@@ -136,7 +136,7 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
 
     destination_table = "process_generic_metrics"
     # provide additional partitioning
-    if 'contentLength' in flattened_log_event_json:
+    if 'contentlength' in flattened_log_event_json:
         # Process as access log type
         destination_table = "healthcheck_metrics"
     # elif 'completionResult' in flattened_log_event_json
