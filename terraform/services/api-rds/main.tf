@@ -104,7 +104,7 @@ resource "aws_db_parameter_group" "parameter_group" {
 resource "aws_db_instance" "api" {
   allocated_storage   = 500
   engine              = "postgres"
-  engine_version      = locals.postgres_ver
+  engine_version      = local.postgres_ver
   instance_class      = "db.m6i.2xlarge"
   identifier          = local.db_name
   storage_encrypted   = true
