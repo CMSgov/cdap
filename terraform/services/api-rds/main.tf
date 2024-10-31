@@ -9,6 +9,26 @@ locals {
     bcda = "${var.app}-${var.env}"
     dpc  = "${var.app}-${var.env}"
   }[var.app]
+  postgres_ver = {
+    ab2d = {
+      dev  = 15
+      test = 15
+      sbx  = 15
+      prod = 15
+    }[var.env]
+    bcda = {
+      dev  = 15
+      test = 15
+      sbx  = 15
+      prod = 15
+    }[var.env]
+    dpc = {
+      dev  = 14
+      test = 14
+      sbx  = 14
+      prod = 14
+    }[var.env]
+  }[var.app]
 }
 
 ## Begin module/main.tf
@@ -87,6 +107,15 @@ resource "aws_db_parameter_group" "parameter_group" {
     value        = "1200000"
     apply_method = "immediate"
   }
+  parameter {
+    name         = "rds.logical_replication"
+    value        = contains(["ab2d-dev", "ab2d-test"], local.db_name) ? "1" : "0"
+    apply_method = "pending-reboot"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Create database instance
@@ -94,7 +123,7 @@ resource "aws_db_parameter_group" "parameter_group" {
 resource "aws_db_instance" "api" {
   allocated_storage   = 500
   engine              = "postgres"
-  engine_version      = 15.5
+  engine_version      = local.postgres_ver
   instance_class      = "db.m6i.2xlarge"
   identifier          = local.db_name
   storage_encrypted   = true
@@ -111,7 +140,7 @@ resource "aws_db_instance" "api" {
   iops                    = local.db_name == "ab2d-east-prod" ? "20000" : "5000"
   apply_immediately       = true
   kms_key_id              = data.aws_kms_alias.main_kms.target_key_arn
-  multi_az                = local.db_name == "ab2d-east-prod" ? true : false
+  multi_az                = local.db_name == "ab2d-east-prod"
   vpc_security_group_ids  = [aws_security_group.sg_database.id]
   username                = data.aws_secretsmanager_secret_version.database_user.secret_string
   password                = data.aws_secretsmanager_secret_version.database_password.secret_string
@@ -124,10 +153,4 @@ resource "aws_db_instance" "api" {
       "cpm backup" = "Monthly"
     })
   )
-  lifecycle {
-    ignore_changes = [
-      engine_version,
-      parameter_group_name
-    ]
-  }
 }
