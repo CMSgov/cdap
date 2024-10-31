@@ -146,6 +146,50 @@ resource "aws_glue_catalog_table" "agg_metric_table" {
   }
 }
 
+# add crawler for metadata inspection
+# Crawler for the API Requests table
+resource "aws_glue_crawler" "glue_crawler_agg_metrics" {
+  classifiers   = []
+  database_name = aws_glue_catalog_database.agg.name
+  configuration = jsonencode(
+    {
+      CrawlerOutput = {
+        Partitions = {
+          AddOrUpdateBehavior = "InheritFromTable"
+        }
+      }
+      Grouping = {
+        TableGroupingPolicy = "CombineCompatibleSchemas"
+      }
+      Version = 1
+    }
+  )
+  name = local.agg_profile
+  role = aws_iam_role.iam-role-glue.arn
+
+  catalog_target {
+    database_name = aws_glue_catalog_database.agg.name
+    tables = [
+      aws_glue_catalog_table.agg_metric_table.name,
+    ]
+  }
+
+  lineage_configuration {
+    crawler_lineage_settings = "DISABLE"
+  }
+
+  recrawl_policy {
+    recrawl_behavior = "CRAWL_EVERYTHING"
+  }
+
+  schema_change_policy {
+    delete_behavior = "LOG"
+    update_behavior = "LOG"
+  }
+
+  depends_on = [aws_glue_catalog_table.agg_metric_table]
+}
+
 # resource "aws_glue_catalog_table" "api_metric_table" {
 
 #   name          = local.api_profile

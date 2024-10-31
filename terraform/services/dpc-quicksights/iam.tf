@@ -336,7 +336,6 @@ resource "aws_iam_policy" "iam-policy-firehose" {
 }
 
 resource "aws_iam_role_policy_attachment" "iam-policy-firehose" {
-  # count      = length(var.athena_groups)
   role       = aws_iam_role.iam-role-cloudwatch-logs.id
   policy_arn = aws_iam_policy.iam-policy-firehose.arn
 }
@@ -474,4 +473,105 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
 resource "aws_iam_role_policy_attachment" "iam-policy-invoke-lambda-firehose-logging" {
   role       = aws_iam_role.iam-role-firehose-lambda.id
   policy_arn = aws_iam_policy.iam-policy-lambda-firehose-logging.arn
+}
+
+# Glue role for Crawler
+resource "aws_iam_role" "iam-role-glue" {
+  name        = "${local.agg_profile}-firehose-role"
+  description = "allows Glue access to S3 database"
+  path        = "/delegatedadmin/developer/"
+
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+
+  force_detach_policies = false
+
+  max_session_duration = 3600
+  assume_role_policy = jsonencode(
+    {
+      Statement = [
+
+        {
+          Action = "sts:AssumeRole"
+          Effect = "Allow"
+          Principal = {
+            Service = "glue.amazonaws.com"
+          }
+          Sid = "GlueAssume"
+        },
+      ]
+      Version = "2012-10-17"
+    }
+  )
+}
+
+resource "aws_iam_policy" "iam-policy-glue-crawler" {
+  description = "Allow glue crawler execution"
+  name        = "${local.agg_profile}-glue-crawler-policy"
+  path        = "/delegatedadmin/developer/"
+
+  policy = jsonencode({
+
+    Statement = [
+        {
+            Action = [
+                "s3:ListBucket",
+                "s3:HeadBucket",
+                "s3:GetObject*",
+                "s3:GetBucketLocation"
+            ]
+            Effect = "Allow"
+            Resource = [
+                "arn:aws:s3:::awsglue-datasets/*",
+                "arn:aws:s3:::awsglue-datasets"
+            ]
+            Sid = "GlueList"
+        },
+        {
+            Action = [
+                "s3:ListBucketMultipartUploads",
+                "s3:ListBucket",
+                "s3:HeadBucket",
+                "s3:GetBucketLocation"
+            ]
+            Effect = "Allow"
+            Resource = [
+                "${aws_s3_bucket.dpc-insights-bucket.arn}"
+            ]
+            Sid = "s3Buckets"
+        },
+        {
+            Action = [
+                "s3:PutObject*",
+                "s3:ListMultipartUploadParts",
+                "s3:GetObject*",
+                "s3:DeleteObject*",
+                "s3:AbortMultipartUpload"
+            ]
+            Effect = "Allow"
+            Resource = [
+                "${aws_s3_bucket.dpc-insights-bucket.arn}/*"
+            ]
+            Sid = "s3Objects"
+        },
+        {
+            Action = [
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:Encrypt",
+                "kms:DescribeKey",
+                "kms:Decrypt"
+            ]
+            Effect = "Allow"
+            Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+            Sid = "CMK"
+        }
+    ]
+    Version = "2012-10-17"
+
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "iam-policy-glue-crawler" {
+  role       = aws_iam_role.iam-role-glue.id
+  policy_arn = aws_iam_policy.iam-policy-glue-crawler.arn
 }
