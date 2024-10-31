@@ -44,8 +44,8 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
 
       input_format_configuration {
         deserializer {
-          ##hive_json_ser_de {}
-          open_x_json_ser_de {}
+          hive_json_ser_de {}
+          ##open_x_json_ser_de {}
         }
       }
 

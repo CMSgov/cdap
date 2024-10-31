@@ -55,9 +55,9 @@ locals {
       }
     },
     parquet = {
-      #library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+      library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
       #library = "org.openx.data.jsonserde.JsonSerDe"
-      library = "com.amazon.ionhiveserde.IonHiveSerDe"
+      #library = "com.amazon.ionhiveserde.IonHiveSerDe"
       params = {
         "serialization.format" = 1
       }
@@ -101,7 +101,8 @@ resource "aws_glue_catalog_table" "agg_metric_table" {
   table_type    = "EXTERNAL_TABLE"
   owner         = "dpc"
 
-  parameters = local.table_parameters["json"]
+  # parameters = local.table_parameters["json"]
+  parameters = local.table_parameters["parquet"]
 
   dynamic "partition_keys" {
     for_each = local.table_partitions
@@ -115,7 +116,8 @@ resource "aws_glue_catalog_table" "agg_metric_table" {
 
   storage_descriptor {
     location      = "s3://${aws_s3_bucket.dpc-insights-bucket.id}/databases/${local.agg_profile}/metric_table"
-    input_format  = local.storage_options["json"].input_format
+    #input_format  = local.storage_options["json"].input_format
+    input_format  = local.storage_options["parquet"].input_format
     output_format = local.storage_options["parquet"].output_format
     compressed    = true
 
