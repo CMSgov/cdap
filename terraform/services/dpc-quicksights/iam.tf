@@ -575,3 +575,21 @@ resource "aws_iam_role_policy_attachment" "iam-policy-glue-crawler" {
   role       = aws_iam_role.iam-role-glue.id
   policy_arn = aws_iam_policy.iam-policy-glue-crawler.arn
 }
+
+data "aws_iam_policy" "aws_glue_service_role" {
+  arn = "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+}
+
+resource "aws_iam_role_policy_attachment" "iam-policy-glue-service" {
+  role       = data.aws_iam_role.aws_glue_service_role.id
+  policy_arn = aws_iam_policy.iam-policy-glue-crawler.arn
+}
+
+data "aws_iam_policy" "aws_athena_full_policy" {
+  arn = "arn:aws:iam::aws:policy/AmazonAthenaFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "iam-policy-athena-service" {
+  role       = data.aws_iam_role.aws_glue_service_role.id
+  policy_arn = aws_iam_policy.aws_athena_full_policy.arn
+}
