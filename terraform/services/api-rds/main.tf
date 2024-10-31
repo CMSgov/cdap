@@ -109,8 +109,43 @@ resource "aws_db_parameter_group" "parameter_group" {
   }
   parameter {
     name         = "rds.logical_replication"
-    value        = contains(["ab2d-dev", "ab2d-test"], local.db_name) ? "1" : "0"
+    value        = contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? "1" : "0"
+    apply_method = "immediate"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_db_parameter_group" "v16_parameter_group" {
+  name   = "${local.db_name}-rds-parameter-group-v16"
+  family = "postgres16"
+
+  parameter {
+    name         = "backslash_quote"
+    value        = "safe_encoding"
+    apply_method = "immediate"
+  }
+  parameter {
+    name         = "shared_preload_libraries"
+    value        = "pg_stat_statements,pg_cron"
     apply_method = "pending-reboot"
+  }
+  parameter {
+    name         = "cron.database_name"
+    value        = var.app == "ab2d" && var.env == "test" ? "impl" : var.env
+    apply_method = "pending-reboot"
+  }
+  parameter {
+    name         = "statement_timeout"
+    value        = "1200000"
+    apply_method = "immediate"
+  }
+  parameter {
+    name         = "rds.logical_replication"
+    value        = "1"
+    apply_method = "immediate"
   }
 
   lifecycle {
@@ -135,7 +170,7 @@ resource "aws_db_instance" "api" {
   skip_final_snapshot = true
 
   db_subnet_group_name    = aws_db_subnet_group.subnet_group.name
-  parameter_group_name    = aws_db_parameter_group.parameter_group.name
+  parameter_group_name    = aws_db_parameter_group.parameter_group.name # contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? aws_db_parameter_group.v16_parameter_group.name : aws_db_parameter_group.parameter_group.name
   backup_retention_period = 7
   iops                    = local.db_name == "ab2d-east-prod" ? "20000" : "5000"
   apply_immediately       = true
