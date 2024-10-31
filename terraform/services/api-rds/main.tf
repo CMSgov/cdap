@@ -22,7 +22,7 @@ locals {
       sbx  = 15
       prod = 15
     }[var.env]
-    dpc  = {
+    dpc = {
       dev  = 14
       test = 14
       sbx  = 14
@@ -109,7 +109,7 @@ resource "aws_db_parameter_group" "parameter_group" {
   }
   parameter {
     name         = "rds.logical_replication"
-    value        = contains([ "ab2d-dev", "ab2d-test"], local.db_name ) ? "1" : "0"
+    value        = contains(["ab2d-dev", "ab2d-test"], local.db_name) ? "1" : "0"
     apply_method = "pending-reboot"
   }
 
