@@ -1,5 +1,6 @@
 # Firehose Data Stream
 resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
+  depends_on  = [aws_glue_catalog_table.agg_metric_table]
   name        = "${local.stack_prefix}-firehose-ingester-agg"
   destination = "extended_s3"
 
@@ -44,8 +45,8 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
 
       input_format_configuration {
         deserializer {
-          ##hive_json_ser_de {}
-          open_x_json_ser_de {}
+          hive_json_ser_de {}
+          ##open_x_json_ser_de {}
         }
       }
 
