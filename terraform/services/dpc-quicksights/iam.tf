@@ -581,8 +581,8 @@ data "aws_iam_policy" "aws_glue_service_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "iam-policy-glue-service" {
-  role       = data.aws_iam_role.iam-role-glue.id
-  policy_arn = aws_iam_policy.aws_glue_service_role.arn
+  role       = aws_iam_role.iam-role-glue.id
+  policy_arn = data.aws_iam_policy.aws_glue_service_role.arn
 }
 
 data "aws_iam_policy" "aws_athena_full_policy" {
@@ -590,6 +590,6 @@ data "aws_iam_policy" "aws_athena_full_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "iam-policy-athena-service" {
-  role       = data.aws_iam_role.iam-role-glue.id
-  policy_arn = aws_iam_policy.aws_athena_full_policy.arn
+  role       = aws_iam_role.iam-role-glue.id
+  policy_arn = data.aws_iam_policy.aws_athena_full_policy.arn
 }
