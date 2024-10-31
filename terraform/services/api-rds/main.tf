@@ -11,13 +11,13 @@ locals {
   }[var.app]
   postgres_ver = {
     ab2d = {
-      dev = 15.7
+      dev  = 15.7
       test = 15.7
       prod = 15.7
-      sbx = 15.7
+      sbx  = 15.7
     }[var.env]
     bcda = 15.7
-    dpc = 14.12
+    dpc  = 14.12
   }[var.app]
 }
 
