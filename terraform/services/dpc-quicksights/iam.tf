@@ -477,7 +477,7 @@ resource "aws_iam_role_policy_attachment" "iam-policy-invoke-lambda-firehose-log
 
 # Glue role for Crawler
 resource "aws_iam_role" "iam-role-glue" {
-  name        = "${local.agg_profile}-firehose-role"
+  name        = "${local.agg_profile}-glue-role"
   description = "allows Glue access to S3 database"
   path        = "/delegatedadmin/developer/"
 
