@@ -67,14 +67,9 @@ locals {
   agg_columns = [
 
     {
-      "name"    = "timestamp",
+      "name"    = "metadata",
       "type"    = "string",
-      "comment" = ""
-    },
-    {
-      "name"    = "metric_table",
-      "type"    = "string",
-      "comment" = ""
+      "comment" = "JSON {metric_table, timestamp}"
     },
     {
       "name"    = "data",
@@ -86,14 +81,9 @@ locals {
   api_columns = [
 
     {
-      "name"    = "timestamp",
+      "name"    = "metadata",
       "type"    = "string",
-      "comment" = ""
-    },
-    {
-      "name"    = "metric_table",
-      "type"    = "string",
-      "comment" = ""
+      "comment" = "JSON {metric_table, timestamp}"
     },
     {
       "name"    = "data",
