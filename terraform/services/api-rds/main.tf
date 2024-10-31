@@ -9,6 +9,16 @@ locals {
     bcda = "${var.app}-${var.env}"
     dpc  = "${var.app}-${var.env}"
   }[var.app]
+  postgres_ver = {
+    ab2d = {
+      dev = 15.7
+      test = 15.7
+      prod = 15.7
+      sbx = 15.7
+    }[var.env]
+    bcda = 15.7
+    dpc = 14.12
+  }[var.app]
 }
 
 ## Begin module/main.tf
@@ -94,7 +104,7 @@ resource "aws_db_parameter_group" "parameter_group" {
 resource "aws_db_instance" "api" {
   allocated_storage   = 500
   engine              = "postgres"
-  engine_version      = 15.5
+  engine_version      = locals.postgres_ver
   instance_class      = "db.m6i.2xlarge"
   identifier          = local.db_name
   storage_encrypted   = true
