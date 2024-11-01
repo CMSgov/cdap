@@ -66,7 +66,7 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
     #     role_arn      = aws_iam_role.iam-role-firehose.arn
     #     table_name    = aws_glue_catalog_table.agg_metric_table.name
     #   }
-    }
+    # }
   }
 
   server_side_encryption {
