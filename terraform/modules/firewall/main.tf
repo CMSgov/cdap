@@ -127,6 +127,14 @@ resource "aws_wafv2_web_acl" "this" {
             count {}
           }
         }
+
+        # Override for requests lacking a User-Agent header, as most BCDA requests are automated and lack them
+        rule_action_override {
+          name = "NoUserAgent_HEADER"
+          action_to_use {
+            count {}
+          }
+        }
       }
     }
 
