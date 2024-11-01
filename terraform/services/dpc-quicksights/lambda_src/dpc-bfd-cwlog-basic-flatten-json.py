@@ -79,9 +79,6 @@ import boto3
 
 def format_json(y: dict[str, Any]) -> dict[str, Any]:
     """
-    Leveraging BFD Lambda 'bfd-cw-to-flattened-json.py' as example
-    ops/terraform/services/insights/api-requests/lambda_src/
-    
     BFD modification to add a function to flatten a JSON object (but not pivot out arrays),
     convert field names to lower case, and replace "." with "_" in field names.
     Code credits: https://towardsdatascience.com/flattening-json-objects-in-python-f5343c794b10
@@ -123,15 +120,15 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
         )
         return None
 
+    flattened_log_event_json = format_json(log_event_json)
+    flattened_log_event_json["cw_id"] = log_event["id"]
     # Ignoring that utcfromtimestamp is deprecated. Should probably be replaced with fromtimestamp,
     # but without comprehensive tests I don't want to accept the possibility of unexpected changes
-    eventtime = datetime.utcfromtimestamp(  # type: ignore
-        log_event_json["timestamp"] / 1000
+    flattened_log_event_json["cw_timestamp"] = datetime.utcfromtimestamp(  # type: ignore
+        log_event["timestamp"] / 1000
     ).isoformat()
 
-    flattened_log_event_json = format_json(log_event_json)
-    
-    destination_table = "process_generic_metrics"
+    ### DPC Customization
     # provide additional partitioning
     if 'contentlength' in flattened_log_event_json:
         # Process as access log type
@@ -148,11 +145,11 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
         # Process as generic metric event
         destination_table = "process_generic_metrics"
 
-    flattened_log_event_json["metric_table"] = destination_table
-    flattened_log_event_json["metric_timestamp"] = eventtime
+    flattened_log_event_json["cw_metric_type"] = destination_table
+    ### END DPC Customization
 
     stringized_flattened_log_event_json = json.dumps(flattened_log_event_json)
-    return (stringized_flattened_log_event_json + "\n")
+    return stringized_flattened_log_event_json + "\n"
 
 
 def processRecords(
