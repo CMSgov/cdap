@@ -41,28 +41,31 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
     }
 
     data_format_conversion_configuration {
-      enabled = true
+      enabled = false
+    }
+    # data_format_conversion_configuration {
+    #   enabled = true
 
-      input_format_configuration {
-        deserializer {
-          hive_json_ser_de {}
-          ##open_x_json_ser_de {}
-        }
-      }
+    #   input_format_configuration {
+    #     deserializer {
+    #       hive_json_ser_de {}
+    #       ##open_x_json_ser_de {}
+    #     }
+    #   }
 
-      output_format_configuration {
-        serializer {
-          parquet_ser_de {
-            compression = "SNAPPY"
-          }
-        }
-      }
+    #   output_format_configuration {
+    #     serializer {
+    #       parquet_ser_de {
+    #         compression = "SNAPPY"
+    #       }
+    #     }
+    #   }
 
-      schema_configuration {
-        database_name = aws_glue_catalog_database.agg.name
-        role_arn      = aws_iam_role.iam-role-firehose.arn
-        table_name    = aws_glue_catalog_table.agg_metric_table.name
-      }
+    #   schema_configuration {
+    #     database_name = aws_glue_catalog_database.agg.name
+    #     role_arn      = aws_iam_role.iam-role-firehose.arn
+    #     table_name    = aws_glue_catalog_table.agg_metric_table.name
+    #   }
     }
   }
 

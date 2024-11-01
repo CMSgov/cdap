@@ -55,9 +55,9 @@ locals {
       }
     },
     parquet = {
-      library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+      #library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
       #library = "org.openx.data.jsonserde.JsonSerDe"
-      #library = "com.amazon.ionhiveserde.IonHiveSerDe"
+      library = "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
       params = {
         "serialization.format" = 1
       }
@@ -82,19 +82,19 @@ locals {
     # }
   ]
 
-  api_columns = [
+  # api_columns = [
 
-    {
-      "name"    = "metadata",
-      "type"    = "string",
-      "comment" = "JSON {metric_table, timestamp}"
-    },
-    {
-      "name"    = "data",
-      "type"    = "string",
-      "comment" = "flattened JSON log item"
-    }
-  ]
+  #   {
+  #     "name"    = "metadata",
+  #     "type"    = "string",
+  #     "comment" = "JSON {metric_table, timestamp}"
+  #   },
+  #   {
+  #     "name"    = "data",
+  #     "type"    = "string",
+  #     "comment" = "flattened JSON log item"
+  #   }
+  # ]
 
 }
 
@@ -120,8 +120,8 @@ resource "aws_glue_catalog_table" "agg_metric_table" {
 
   storage_descriptor {
     location = "s3://${aws_s3_bucket.dpc-insights-bucket.id}/databases/${local.agg_profile}/metric_table"
-    #input_format  = local.storage_options["json"].input_format
-    input_format  = local.storage_options["parquet"].input_format
+    input_format  = local.storage_options["json"].input_format
+    #input_format  = local.storage_options["parquet"].input_format
     output_format = local.storage_options["parquet"].output_format
     compressed    = true
 
