@@ -146,12 +146,12 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
         # Process as generic metric event
         destination_table = "process_generic_metrics"
 
-    log_event_json['metric_table'] = destination_table
-    log_event_json['metric_timestamp'] = eventtime
+    flattened_log_event_json = format_json(log_event_json)
 
-    # flattened_log_event_json = format_json(log_event_json)
-    # stringized_flattened_log_event_json = json.dumps(flattened_log_event_json)
-    stringized_flattened_log_event_json = json.dumps(format_json(log_event_json))
+    flattened_log_event_json["metric_table"] = destination_table
+    flattened_log_event_json["metric_timestamp"] = eventtime
+
+    stringized_flattened_log_event_json = json.dumps(flattened_log_event_json)
     return (stringized_flattened_log_event_json + "\n")
 
 
