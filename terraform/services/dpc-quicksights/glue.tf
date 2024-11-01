@@ -89,16 +89,16 @@ locals {
       "comment" = "flattened JSON log item"
     }
 
-  #   {
-  #     "name"    = "metadata",
-  #     "type"    = "string",
-  #     "comment" = "JSON {metric_table, timestamp}"
-  #   },
-  #   {
-  #     "name"    = "data",
-  #     "type"    = "string",
-  #     "comment" = "flattened JSON log item"
-  #   }
+    #   {
+    #     "name"    = "metadata",
+    #     "type"    = "string",
+    #     "comment" = "JSON {metric_table, timestamp}"
+    #   },
+    #   {
+    #     "name"    = "data",
+    #     "type"    = "string",
+    #     "comment" = "flattened JSON log item"
+    #   }
   ]
 
 }

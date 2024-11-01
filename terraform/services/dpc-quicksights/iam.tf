@@ -255,9 +255,9 @@ resource "aws_iam_policy" "cwlogs-firehose" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action   = "firehose:*"
-        Effect   = "Allow"
-        Resource = [ 
+        Action = "firehose:*"
+        Effect = "Allow"
+        Resource = [
           aws_kinesis_firehose_delivery_stream.firehose-ingester-agg.arn,
           aws_kinesis_firehose_delivery_stream.firehose-ingester-api.arn
         ]
@@ -461,7 +461,7 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
           "logs:PutLogEvents"
         ]
         Resource = [
-          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.agg_profile}-cw-to-flattened-json:*"
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.agg_profile}-cw-to-flattened-json:*",
           "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.api_profile}-cw-to-flattened-json:*"
         ]
       },
@@ -472,7 +472,7 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
           "firehose:PutRecord"
         ]
         Resource = [
-          "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"
+          "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg",
           "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.api_profile}-firehose-ingester-pi"
         ]
       }

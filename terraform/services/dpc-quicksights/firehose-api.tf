@@ -22,7 +22,7 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-api" {
     # dynamic_partitioning_configuration {
     #   enabled = "true"
     # }
-    
+
     processing_configuration {
       enabled = true
 
