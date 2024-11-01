@@ -65,17 +65,21 @@ locals {
   }
 
   agg_columns = [
-
     {
-      "name"    = "metadata",
-      "type"    = "string",
-      "comment" = "JSON {metric_table, timestamp}"
-    },
-    {
-      "name"    = "data",
+      "name"    = "cwlog_json",
       "type"    = "string",
       "comment" = "flattened JSON log item"
     }
+    # {
+    #   "name"    = "metadata",
+    #   "type"    = "string",
+    #   "comment" = "JSON {metric_table, timestamp}"
+    # },
+    # {
+    #   "name"    = "data",
+    #   "type"    = "string",
+    #   "comment" = "flattened JSON log item"
+    # }
   ]
 
   api_columns = [

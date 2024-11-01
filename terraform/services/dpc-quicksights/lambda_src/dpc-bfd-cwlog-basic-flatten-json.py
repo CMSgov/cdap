@@ -149,17 +149,20 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
         # Process as generic metric event
         destination_table = "process_generic_metrics"
 
-    partition_keys = {
-        'metric_table': destination_table,
-        'timestamp': eventtime
-    }
-    # provide metadata for partitioning by input record type
-    transformed_record = {
-        'metadata': partition_keys,
-        'data': flattened_log_event_json
-    }
+    flattened_log_event_json['metric_table'] = destination_table
+    flattened_log_event_json['metric_timestamp'] = eventtime
+    # partition_keys = {
+    #     'metric_table': destination_table,
+    #     'timestamp': eventtime
+    # }
+    # # provide metadata for partitioning by input record type
+    # transformed_record = {
+    #     'metadata': partition_keys,
+    #     'data': flattened_log_event_json
+    # }
     
-    stringized_flattened_log_event_json = json.dumps(transformed_record)
+    # stringized_flattened_log_event_json = json.dumps(transformed_record)
+    stringized_flattened_log_event_json = json.dumps(flattened_log_event_json)
     return stringized_flattened_log_event_json + "\n"
 
 
