@@ -66,7 +66,7 @@ locals {
 
   agg_columns = [
     {
-      "name"    = "cwlog_json",
+      "name"    = "message",
       "type"    = "string",
       "comment" = "flattened JSON log item"
     }

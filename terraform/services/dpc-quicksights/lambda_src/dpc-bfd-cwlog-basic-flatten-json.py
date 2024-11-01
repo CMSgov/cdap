@@ -131,27 +131,28 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
 
     destination_table = "process_generic_metrics"
     # provide additional partitioning
-    if 'contentlength' in flattened_log_event_json:
+    if 'contentlength' in log_event_json:
         # Process as access log type
         destination_table = "healthcheck_metrics"
-    elif 'completionresult' in flattened_log_event_json:
+    elif 'completionresult' in log_event_json:
         destination_table = "process_done_metrics"
-    elif 'dataretrieved' in flattened_log_event_json:
+    elif 'dataretrieved' in log_event_json:
         destination_table = "process_partialbatch_metrics"
-    elif 'queuecompletetime' in flattened_log_event_json:
+    elif 'queuecompletetime' in log_event_json:
         destination_table = "process_startbatch_metrics"
-    elif 'mdc' in flattened_log_event_json:
+    elif 'mdc' in log_event_json:
         destination_table = "process_batchstatus_metrics"
     else:
         # Process as generic metric event
         destination_table = "process_generic_metrics"
 
-    log_event_json["metric_table"] = destination_table
-    log_event_json["metric_timestamp"] = eventtime
+    log_event_json['metric_table'] = destination_table
+    log_event_json['metric_timestamp'] = eventtime
 
-    flattened_log_event_json = format_json(log_event_json)
-    stringized_flattened_log_event_json = json.dumps(flattened_log_event_json)
-    return stringized_flattened_log_event_json + "\n"
+    # flattened_log_event_json = format_json(log_event_json)
+    # stringized_flattened_log_event_json = json.dumps(flattened_log_event_json)
+    stringized_flattened_log_event_json = json.dumps(format_json(log_event_json))
+    return (stringized_flattened_log_event_json + "\n")
 
 
 def processRecords(
