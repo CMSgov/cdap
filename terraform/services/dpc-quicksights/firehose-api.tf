@@ -5,11 +5,11 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-api" {
   destination = "extended_s3"
 
   extended_s3_configuration {
-    bucket_arn          = data.aws_s3_bucket.dpc-insights-bucket.arn
+    bucket_arn          = aws_s3_bucket.dpc-insights-bucket.arn
     buffering_interval  = 300
     buffering_size      = 128
     error_output_prefix = "databases/${local.api_profile}/filter_errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
-    kms_key_arn         = data.aws_kms_key.kms_key.arn
+    kms_key_arn         = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
     prefix              = "databases/${local.api_profile}/metric_table/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
     role_arn            = aws_iam_role.iam-role-firehose.arn
     s3_backup_mode      = "Disabled"
