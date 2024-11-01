@@ -40,9 +40,6 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-agg" {
       }
     }
 
-    data_format_conversion_configuration {
-      enabled = false
-    }
     # data_format_conversion_configuration {
     #   enabled = true
 
