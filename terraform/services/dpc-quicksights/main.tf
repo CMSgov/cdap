@@ -14,9 +14,7 @@ locals {
   this_env     = var.env == "sbx" ? "prod-sbx" : var.env
   account_id   = data.aws_caller_identity.current.account_id
   agg_profile  = "${local.stack_prefix}-aggregator"
-  # agg_table    = "agg_metrics"
-  api_profile = "${local.stack_prefix}-api"
-  # api_table    = "api_metrics"
+  api_profile  = "${local.stack_prefix}-api"
 }
 
 data "aws_caller_identity" "current" {}

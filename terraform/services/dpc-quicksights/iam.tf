@@ -223,7 +223,7 @@ resource "aws_iam_group_policy_attachment" "athena_attach" {
 
 # CloudWatch Role
 resource "aws_iam_role" "iam-role-cloudwatch-logs" {
-  name        = "${local.agg_profile}-cloudwatch-logs-role"
+  name        = "${local.stack_prefix}-cloudwatch-logs-role"
   description = "Allows access to the DPC Insights Firehose Delivery Stream and Export to S3"
   path        = "/delegatedadmin/developer/"
 
@@ -247,7 +247,7 @@ resource "aws_iam_role" "iam-role-cloudwatch-logs" {
 }
 
 resource "aws_iam_policy" "cwlogs-firehose" {
-  name        = "${local.agg_profile}-cloudwatch-logs-policy"
+  name        = "${local.stack_prefix}-cloudwatch-logs-policy"
   path        = "/delegatedadmin/developer/"
   description = "Rights needed for CW and Firehose"
 
@@ -257,7 +257,10 @@ resource "aws_iam_policy" "cwlogs-firehose" {
       {
         Action   = "firehose:*"
         Effect   = "Allow"
-        Resource = aws_kinesis_firehose_delivery_stream.firehose-ingester-agg.arn
+        Resource = [ 
+          aws_kinesis_firehose_delivery_stream.firehose-ingester-agg.arn,
+          aws_kinesis_firehose_delivery_stream.firehose-ingester-api.arn
+        ]
       }
     ]
   })
@@ -271,7 +274,7 @@ resource "aws_iam_role_policy_attachment" "cwlogs-firehose-attach" {
 # Firehose Policy
 resource "aws_iam_policy" "iam-policy-firehose" {
   description = "Allow firehose delivery to DPC insights S3 bucket"
-  name        = "${local.agg_profile}-firehose-to-s3-policy"
+  name        = "${local.stack_prefix}-firehose-to-s3-policy"
   path        = "/delegatedadmin/developer/"
 
   policy = jsonencode(
@@ -287,6 +290,8 @@ resource "aws_iam_policy" "iam-policy-firehose" {
           Resource = [
             "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${aws_glue_catalog_database.agg.name}/${aws_glue_catalog_table.agg_metric_table.name}",
             "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/${aws_glue_catalog_database.agg.name}",
+            "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:table/${aws_glue_catalog_database.api.name}/${aws_glue_catalog_table.api_metric_table.name}",
+            "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:database/${aws_glue_catalog_database.api.name}",
             "arn:aws:glue:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:catalog"
           ]
           Sid = "GetGlueTable"
@@ -326,6 +331,7 @@ resource "aws_iam_policy" "iam-policy-firehose" {
           Effect = "Allow"
           Resource = [
             "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${local.agg_profile}-firehose:log-stream:*",
+            "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/kinesisfirehose/${local.api_profile}-firehose:log-stream:*",
           ]
           Sid = "PutLogEvents"
         }
@@ -342,7 +348,7 @@ resource "aws_iam_role_policy_attachment" "iam-policy-firehose" {
 
 # Firehose Role
 resource "aws_iam_role" "iam-role-firehose" {
-  name        = "${local.agg_profile}-firehose-role"
+  name        = "${local.stack_prefix}-firehose-role"
   description = "allows Firehose access to Lambda transformation"
   path        = "/delegatedadmin/developer/"
 
@@ -380,7 +386,7 @@ resource "aws_iam_role_policy_attachment" "role-firehose-attach" {
 
 resource "aws_iam_policy" "iam-policy-lambda-firehose" {
   description = "Allow firehose lambda execution"
-  name        = "${local.agg_profile}-invoke-cw-to-flattened-json"
+  name        = "${local.stack_prefix}-invoke-cw-to-flattened-json"
   path        = "/delegatedadmin/developer/"
 
   policy = jsonencode(
@@ -391,7 +397,9 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose" {
           Effect = "Allow"
           Resource = [
             "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.agg_profile}-cw-to-flattened-json",
-            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.agg_profile}-cw-to-flattened-json:$LATEST"
+            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.agg_profile}-cw-to-flattened-json:$LATEST",
+            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.api_profile}-cw-to-flattened-json",
+            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.api_profile}-cw-to-flattened-json:$LATEST"
           ]
           Sid = "InvokeCW2Json"
         },
@@ -409,7 +417,7 @@ resource "aws_iam_role_policy_attachment" "iam-policy-invoke-lambda-firehose" {
 
 # Lambda Role
 resource "aws_iam_role" "iam-role-firehose-lambda" {
-  name        = "${local.agg_profile}-firehose-lambda-role"
+  name        = "${local.stack_prefix}-firehose-lambda-role"
   description = "Allow Lambda to create and write to its log group"
   path        = "/delegatedadmin/developer/"
 
@@ -435,7 +443,7 @@ resource "aws_iam_role" "iam-role-firehose-lambda" {
 
 resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
   description = "Allow firehose lambda execution logging"
-  name        = "${local.agg_profile}-lambda-logging-policy"
+  name        = "${local.stack_prefix}-lambda-logging-policy"
   path        = "/delegatedadmin/developer/"
 
   policy = jsonencode({
@@ -454,6 +462,7 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
         ]
         Resource = [
           "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.agg_profile}-cw-to-flattened-json:*"
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${local.api_profile}-cw-to-flattened-json:*"
         ]
       },
       {
@@ -464,6 +473,7 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
         ]
         Resource = [
           "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg"
+          "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.api_profile}-firehose-ingester-pi"
         ]
       }
     ]
@@ -477,7 +487,7 @@ resource "aws_iam_role_policy_attachment" "iam-policy-invoke-lambda-firehose-log
 
 # Glue role for Crawler
 resource "aws_iam_role" "iam-role-glue" {
-  name        = "${local.agg_profile}-glue-role"
+  name        = "${local.stack_prefix}-glue-role"
   description = "allows Glue access to S3 database"
   path        = "/delegatedadmin/developer/"
 
@@ -506,7 +516,7 @@ resource "aws_iam_role" "iam-role-glue" {
 
 resource "aws_iam_policy" "iam-policy-glue-crawler" {
   description = "Allow glue crawler execution"
-  name        = "${local.agg_profile}-glue-crawler-policy"
+  name        = "${local.stack_prefix}-glue-crawler-policy"
   path        = "/delegatedadmin/developer/"
 
   policy = jsonencode({

@@ -10,7 +10,7 @@ resource "aws_lambda_function" "lambda-function-format-dpc-logs" {
     "x86_64",
   ]
   description                    = "Extracts and flattens JSON messages from CloudWatch log subscriptions"
-  function_name                  = "${local.agg_profile}-cw-to-flattened-json"
+  function_name                  = "${local.stack_prefix}-cw-to-flattened-json"
   filename                       = data.archive_file.zip-archive-format-dpc-logs.output_path
   handler                        = "dpc-bfd-cwlog-basic-flatten-json.lambda_handler"
   layers                         = []
