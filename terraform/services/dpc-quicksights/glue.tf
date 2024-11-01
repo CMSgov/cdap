@@ -221,7 +221,7 @@ resource "aws_glue_catalog_table" "api_metric_table" {
   }
 
   storage_descriptor {
-    location      = "s3://${data.aws_s3_bucket.dpc-insights-bucket.id}/databases/"
+    location      = "s3://${aws_s3_bucket.dpc-insights-bucket.id}/databases/${local.api_profile}/metric_table"
     input_format  = local.storage_options["json"].input_format
     output_format = local.storage_options["parquet"].output_format
     compressed    = true
