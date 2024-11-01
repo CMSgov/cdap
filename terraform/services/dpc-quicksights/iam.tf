@@ -386,7 +386,7 @@ resource "aws_iam_role_policy_attachment" "role-firehose-attach" {
 
 resource "aws_iam_policy" "iam-policy-lambda-firehose" {
   description = "Allow firehose lambda execution"
-  name        = "${local.stack_prefix}-invoke-cw-to-flattened-json"
+  name        = "invoke-${aws_lambda_function.lambda-function-format-dpc-logs.function_name}"
   path        = "/delegatedadmin/developer/"
 
   policy = jsonencode(
@@ -396,10 +396,8 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose" {
           Action = "lambda:InvokeFunction"
           Effect = "Allow"
           Resource = [
-            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.agg_profile}-cw-to-flattened-json",
-            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.agg_profile}-cw-to-flattened-json:$LATEST",
-            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.api_profile}-cw-to-flattened-json",
-            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${local.api_profile}-cw-to-flattened-json:$LATEST"
+            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${aws_lambda_function.lambda-function-format-dpc-logs.function_name}",
+            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${aws_lambda_function.lambda-function-format-dpc-logs.function_name}:$LATEST",
           ]
           Sid = "InvokeCW2Json"
         },
