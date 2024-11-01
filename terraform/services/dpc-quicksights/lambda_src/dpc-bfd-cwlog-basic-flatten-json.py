@@ -130,22 +130,22 @@ def transformLogEvent(log_event: dict[str, Any]) -> str | None:
 
     ### DPC Customization
     # provide additional partitioning
-    if 'contentlength' in flattened_log_event_json:
-        # Process as access log type
-        destination_table = "healthcheck_metrics"
-    elif 'completionresult' in flattened_log_event_json:
-        destination_table = "process_done_metrics"
-    elif 'dataretrieved' in flattened_log_event_json:
-        destination_table = "process_partialbatch_metrics"
-    elif 'queuecompletetime' in flattened_log_event_json:
-        destination_table = "process_startbatch_metrics"
-    elif 'mdc' in flattened_log_event_json:
-        destination_table = "process_batchstatus_metrics"
-    else:
-        # Process as generic metric event
-        destination_table = "process_generic_metrics"
+    # if 'contentlength' in flattened_log_event_json:
+    #     # Process as access log type
+    #     destination_table = "healthcheck_metrics"
+    # elif 'completionresult' in flattened_log_event_json:
+    #     destination_table = "process_done_metrics"
+    # elif 'dataretrieved' in flattened_log_event_json:
+    #     destination_table = "process_partialbatch_metrics"
+    # elif 'queuecompletetime' in flattened_log_event_json:
+    #     destination_table = "process_startbatch_metrics"
+    # elif 'mdc' in flattened_log_event_json:
+    #     destination_table = "process_batchstatus_metrics"
+    # else:
+    #     # Process as generic metric event
+    #     destination_table = "process_generic_metrics"
 
-    flattened_log_event_json["cw_metric_type"] = destination_table
+    # flattened_log_event_json["cw_metric_type"] = destination_table
     ### END DPC Customization
 
     stringized_flattened_log_event_json = json.dumps(flattened_log_event_json)
