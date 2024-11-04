@@ -109,8 +109,8 @@ resource "aws_db_parameter_group" "parameter_group" {
   }
   parameter {
     name         = "rds.logical_replication"
-    value        = contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? "1" : "0"
-    apply_method = "immediate"
+    value        = 0 # contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? "1" : "0" # To support blue-green deployment for PostGres16 upgrade
+    apply_method = "pending-reboot"
   }
 
   lifecycle {
@@ -144,8 +144,8 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
   }
   parameter {
     name         = "rds.logical_replication"
-    value        = "1"
-    apply_method = "immediate"
+    value        = 0 # contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? "1" : "0" # To support blue-green deployment for PostGres16 upgrade
+    apply_method = "pending-reboot"
   }
 
   lifecycle {
