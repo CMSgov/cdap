@@ -112,19 +112,33 @@ resource "aws_wafv2_web_acl" "this" {
         name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
 
-        # Override for XSS block on request body, DPC team sends HTML blocks in requests to certain endpoints
-        rule_action_override {
-          name = "CrossSiteScripting_BODY"
-          action_to_use {
-            count {}
-          }
-        }
-
         # Override for size requirements of requests, this is set at 8kb which is too small for some acceptable requests
         rule_action_override {
           name = "SizeRestrictions_BODY"
           action_to_use {
             count {}
+          }
+        }
+
+        # Override for XSS block on request body, DPC team sends HTML blocks in requests to certain endpoints
+        dynamic "rule_action_override" {
+          for_each = var.app == "dpc" ? ["apply"] : []
+          content {
+            name = "CrossSiteScripting_BODY"
+            action_to_use {
+              count {}
+            }
+          }
+        }
+
+        # Override for requests lacking a User-Agent header, as most BCDA requests are automated and lack them
+        dynamic "rule_action_override" {
+          for_each = var.app == "bcda" ? ["apply"] : []
+          content {
+            name = "NoUserAgent_HEADER"
+            action_to_use {
+              count {}
+            }
           }
         }
       }
