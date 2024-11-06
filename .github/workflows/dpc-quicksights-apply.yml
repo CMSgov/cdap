@@ -21,7 +21,7 @@ jobs:
       - uses: ./actions/setup-tfenv-terraform
       - run: terraform fmt -check -diff -recursive terraform/services/dpc-quicksights
 
-  terraform-plan:
+  terraform-apply:
     needs: check-terraform-fmt
     permissions:
       contents: read
