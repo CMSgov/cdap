@@ -23,7 +23,7 @@ resource "aws_athena_named_query" "total_benes_req" {
   database    = aws_athena_database.quicksight.id
   query = templatefile("${path.module}/sql_templates/total_benes_requested.sql.tfpl",
     {
-      env          = "\"${local.this_env}\"",
+      env          = "'${local.this_env}'",
       agg_profile  = "\"${aws_glue_catalog_database.agg.name}\".\"${aws_glue_catalog_table.agg_metric_table.name}\"",
       days_history = 7
     }
@@ -37,8 +37,8 @@ resource "aws_athena_named_query" "unique_benes_served" {
   database    = aws_athena_database.quicksight.id
   query = templatefile("${path.module}/sql_templates/uniq_benes_served.sql.tfpl",
     {
-      env          = "${local.this_env}",
-      agg_profile  = "${aws_glue_catalog_database.agg.name}.${aws_glue_catalog_table.agg_metric_table.name}",
+      env          = "'${local.this_env}'",
+      agg_profile  = "\"${aws_glue_catalog_database.agg.name}\".\"${aws_glue_catalog_table.agg_metric_table.name}\"",
       days_history = 7
     }
   )
@@ -51,8 +51,8 @@ resource "aws_athena_named_query" "group_requests" {
   database    = aws_athena_database.quicksight.id
   query = templatefile("${path.module}/sql_templates/group_requests.sql.tfpl",
     {
-      env          = "${local.this_env}",
-      api_profile  = "${aws_glue_catalog_database.api.name}.${aws_glue_catalog_table.api_metric_table.name}",
+      env          = "'${local.this_env}'",
+      api_profile  = "\"${aws_glue_catalog_database.api.name}\".\"${aws_glue_catalog_table.api_metric_table.name}\"",
       days_history = 7
     }
   )
@@ -65,9 +65,9 @@ resource "aws_athena_named_query" "bulk_calls_made" {
   database    = aws_athena_database.quicksight.id
   query = templatefile("${path.module}/sql_templates/bulk_requests.sql.tfpl",
     {
-      env          = "${local.this_env}",
-      app          = "dpc-api",
-      api_profile  = "${aws_glue_catalog_database.api.name}.${aws_glue_catalog_table.api_metric_table.name}",
+      app          = "'dpc-api'",
+      env          = "'${local.this_env}'",
+      api_profile  = "\"${aws_glue_catalog_database.api.name}\".\"${aws_glue_catalog_table.api_metric_table.name}\"",
       days_history = 7
     }
   )
@@ -80,9 +80,9 @@ resource "aws_athena_named_query" "everything_calls_made" {
   database    = aws_athena_database.quicksight.id
   query = templatefile("${path.module}/sql_templates/everything_requests.sql.tfpl",
     {
-      env          = "${local.this_env}",
-      app          = "dpc-api",
-      api_profile  = "${aws_glue_catalog_database.api.name}.${aws_glue_catalog_table.api_metric_table.name}",
+      app          = "'dpc-api'",
+      env          = "'${local.this_env}'",
+      api_profile  = "\"${aws_glue_catalog_database.api.name}\".\"${aws_glue_catalog_table.api_metric_table.name}\"",
       days_history = 7
     }
   )
@@ -95,9 +95,9 @@ resource "aws_athena_named_query" "since_calls_made" {
   database    = aws_athena_database.quicksight.id
   query = templatefile("${path.module}/sql_templates/since_requests.sql.tfpl",
     {
-      env          = "${local.this_env}",
-      app          = "dpc-api",
-      api_profile  = "${aws_glue_catalog_database.api.name}.${aws_glue_catalog_table.api_metric_table.name}",
+      app          = "'dpc-api'",
+      env          = "'${local.this_env}'",
+      api_profile  = "\"${aws_glue_catalog_database.api.name}\".\"${aws_glue_catalog_table.api_metric_table.name}\"",
       days_history = 7
     }
   )
