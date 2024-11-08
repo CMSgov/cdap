@@ -1,11 +1,9 @@
 resource "aws_s3_bucket" "dpc-insights-bucket" {
   bucket = "${local.stack_prefix}-${local.account_id}"
-  #bucket_prefix = "aggregator"
 }
 
 resource "aws_s3_bucket" "dpc-insights-logging" {
   bucket = "${var.app}-${local.this_env}-logs-${local.account_id}"
-  #bucket_prefix = "aggregator"
 }
 
 # block public access to the bucket
@@ -29,7 +27,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "dpc-insights-buck
   bucket = aws_s3_bucket.dpc-insights-bucket.id
   rule {
     apply_server_side_encryption_by_default {
-      kms_master_key_id = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+      kms_master_key_id = local.this_env_key
       sse_algorithm     = "aws:kms"
     }
   }
@@ -79,3 +77,26 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "dpc-insights-logg
 # }
 # POLICY
 # }
+
+resource "aws_s3_bucket" "dpc-insights-athena" {
+  bucket = "${local.athena_profile}"
+}
+
+# block public access to the bucket
+resource "aws_s3_bucket_public_access_block" "dpc-insights-athena" {
+  bucket                  = aws_s3_bucket.dpc-insights-athena.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "dpc-insights-athena" {
+  bucket = aws_s3_bucket.dpc-insights-athena.id
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = local.this_env_key
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}

@@ -111,7 +111,7 @@ resource "aws_iam_policy" "full" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
-        Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+        Resource = local.this_env_key
       }
     ]
   })
@@ -147,7 +147,9 @@ resource "aws_iam_policy" "athena_query" {
         Resource = [
           "arn:aws:s3:::aws-athena-query-results-*",
           "${aws_s3_bucket.dpc-insights-bucket.arn}",
-          "${aws_s3_bucket.dpc-insights-bucket.arn}/*"
+          "${aws_s3_bucket.dpc-insights-bucket.arn}/*",
+          "${aws_s3_bucket.dpc-insights-athena.arn}",
+          "${aws_s3_bucket.dpc-insights-athena.arn}/*"
         ]
       },
       {
@@ -160,7 +162,7 @@ resource "aws_iam_policy" "athena_query" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
-        Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+        Resource = local.this_env_key
       }
     ]
   })
@@ -168,7 +170,6 @@ resource "aws_iam_policy" "athena_query" {
 
 
 resource "aws_iam_group_policy_attachment" "athena_attach" {
-  # count      = length(var.athena_groups)
   group      = aws_iam_group.main.id
   policy_arn = aws_iam_policy.full.arn
 }
@@ -321,7 +322,7 @@ resource "aws_iam_policy" "iam-policy-firehose" {
             "kms:DescribeKey",
           ]
           Effect   = "Allow"
-          Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+          Resource = local.this_env_key
           Sid      = "UseKMSKey"
         },
         {
@@ -570,7 +571,7 @@ resource "aws_iam_policy" "iam-policy-glue-crawler" {
           "kms:Decrypt"
         ]
         Effect   = "Allow"
-        Resource = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+        Resource = local.this_env_key
         Sid      = "CMK"
       }
     ]

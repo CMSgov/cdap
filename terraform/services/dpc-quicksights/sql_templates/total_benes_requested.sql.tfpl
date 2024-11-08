@@ -1,0 +1,29 @@
+--
+-- This view is the basis for the DPC Quicksight dashboard Component '' and
+-- returns one row for each day that DPC requested a unique beneficiary.
+-- The content of the returned rows is ...
+--
+-- NOTE: TBD
+--
+create or replace view total_benes_by_day as
+select sum(summarydata.ct_by_day) as daily_sum, summarydata.msgdate
+from (
+    select count(distinctdata.ptid) as ct_by_day, distinctdata.ptid, msgdate
+    from (
+ 
+            select distinct rawdata.ptid, date_format(rawdata.msgday,'%Y-%m-%d') as msgdate
+            from (
+                SELECT json_extract_scalar(message,'$.mdc_patientid') as ptid,
+                       from_iso8601_timestamp(json_extract_scalar(message,'$.timestamp')) as msgday
+                FROM ${agg_profile}
+                where json_query(message, 'lax $.dpcmetric' null on error ) is not null
+                  and json_extract_scalar (message, '$.dpcmetric') = 'DataExportResult'
+                  and json_extract_scalar (message, '$.environment') = ${env}
+            ) rawdata
+            where date_diff('day',current_date, rawdata.msgday) < ${days_history}
+        ) distinctdata
+    group by distinctdata.ptid, distinctdata.msgdate
+    order by distinctdata.ptid, distinctdata.msgdate
+) summarydata
+group by summarydata.msgdate
+order by summarydata.msgdate

@@ -15,6 +15,9 @@ locals {
   account_id   = data.aws_caller_identity.current.account_id
   agg_profile  = "${local.stack_prefix}-aggregator"
   api_profile  = "${local.stack_prefix}-api"
+  this_env_key = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+
+  athena_profile = "${local.stack_prefix}-insights-${local.account_id}"
 }
 
 data "aws_caller_identity" "current" {}

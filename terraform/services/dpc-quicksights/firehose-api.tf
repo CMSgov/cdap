@@ -9,7 +9,7 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-api" {
     buffering_interval  = 300
     buffering_size      = 128
     error_output_prefix = "databases/${local.api_profile}/filter_errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
-    kms_key_arn         = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+    kms_key_arn         = local.this_env_key
     prefix              = "databases/${local.api_profile}/metric_table/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
     role_arn            = aws_iam_role.iam-role-firehose.arn
     s3_backup_mode      = "Disabled"
@@ -83,7 +83,7 @@ resource "aws_glue_catalog_database" "api" {
 #     }
 
 #     s3_encryption {
-#       kms_key_arn        = "arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:key/dcafa12b-bece-45f6-9f4a-d74631656fc9"
+#       kms_key_arn        = local.this_env_key
 #       s3_encryption_mode = "SSE-KMS"
 #     }
 #   }
