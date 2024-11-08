@@ -79,7 +79,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "dpc-insights-logg
 # }
 
 resource "aws_s3_bucket" "dpc-insights-athena" {
-  bucket = "${local.athena_profile}"
+  bucket = local.athena_profile
 }
 
 # block public access to the bucket
