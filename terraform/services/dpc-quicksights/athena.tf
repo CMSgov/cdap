@@ -23,8 +23,8 @@ resource "aws_athena_named_query" "total_benes_req" {
   database    = aws_athena_database.quicksight.id
   query = templatefile("${path.module}/sql_templates/total_benes_requested.sql.tfpl",
     {
-      env          = "${local.this_env}",
-      agg_profile  = "${aws_glue_catalog_database.agg.name}.${aws_glue_catalog_table.agg_metric_table.name}",
+      env          = "\"${local.this_env}\"",
+      agg_profile  = "\"${aws_glue_catalog_database.agg.name}\".\"${aws_glue_catalog_table.agg_metric_table.name}\"",
       days_history = 7
     }
   )
