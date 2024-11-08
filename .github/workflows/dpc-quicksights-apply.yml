@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - .github/workflows/dpc-quicksights-plan.yml
+      - .github/workflows/dpc-quicksights-apply.yml
       - terraform/services/dpc-quicksights/**
 #      - terraform/modules/athena/**
 #      - terraform/modules/glue/**
