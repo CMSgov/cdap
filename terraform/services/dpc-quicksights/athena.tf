@@ -1,5 +1,5 @@
 resource "aws_athena_workgroup" "quicksight" {
-  name = local.agg_profile
+  name = local.athena_profile
 
   configuration {
     result_configuration {
