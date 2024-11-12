@@ -34,7 +34,7 @@ jobs:
 #        app: [ab2d, bcda, dpc]
 #        env: [dev, test, sbx, prod]
         app: [dpc]
-        env: [dev]
+        env: [dev, test]
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
