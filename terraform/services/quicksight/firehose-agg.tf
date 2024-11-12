@@ -97,7 +97,7 @@ resource "aws_glue_security_configuration" "main" {
 }
 
 # CloudWatch Log Subscription
-resource "aws_cloudwatch_log_subscription_filter" "cloudwatch-agg-log-subscription" {
+resource "aws_cloudwatch_log_subscription_filter" "quicksight-cloudwatch-agg-log-subscription" {
   name = "${local.stack_prefix}-agg-subscription"
   # Set the log group name so that if we use an environment ending in "-dev", it will get logs from
   # the "real" log group for that environment. So we could make an environment "prod-sbx-dev" that

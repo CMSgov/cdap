@@ -90,7 +90,7 @@ resource "aws_glue_catalog_database" "api" {
 # }
 
 # CloudWatch Log Subscription
-resource "aws_cloudwatch_log_subscription_filter" "cloudwatch-api-log-subscription" {
+resource "aws_cloudwatch_log_subscription_filter" "quicksight-cloudwatch-api-log-subscription" {
   name = "${local.stack_prefix}-api-subscription"
   # Set the log group name so that if we use an environment ending in "-dev", it will get logs from
   # the "real" log group for that environment. So we could make an environment "prod-sbx-dev" that
