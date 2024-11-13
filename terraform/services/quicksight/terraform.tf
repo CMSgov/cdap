@@ -13,6 +13,6 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "dpc-quicksights/terraform.tfstate"
+    key = "quicksight/terraform.tfstate"
   }
 }
