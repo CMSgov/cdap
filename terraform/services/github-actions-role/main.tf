@@ -5,6 +5,7 @@ locals {
       "repo:CMSgov/ab2d-bcda-dpc-platform:*",
       "repo:CMSgov/ab2d-events:*",
       "repo:CMSgov/ab2d-lambdas:*",
+      "repo:CMSgov/ab2d-website:*",
       "repo:CMSgov/ab2d:*",
     ]
     bcda = [
