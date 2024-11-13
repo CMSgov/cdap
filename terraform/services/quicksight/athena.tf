@@ -5,7 +5,7 @@ resource "aws_athena_workgroup" "quicksight" {
     result_configuration {
       encryption_configuration {
         encryption_option = "SSE_KMS"
-        kms_key_arn       = local.this_env_key
+        kms_key_arn       = local.dpc_athena_bucket_key_arn
       }
     }
   }

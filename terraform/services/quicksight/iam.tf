@@ -111,7 +111,7 @@ resource "aws_iam_policy" "full" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
-        Resource = local.this_env_key
+        Resource = local.dpc_glue_bucket_key_alias
       }
     ]
   })
@@ -123,11 +123,11 @@ resource "aws_iam_group_policy_attachment" "full_attach" {
   policy_arn = aws_iam_policy.full.arn
 }
 
-# Allows writes to outputs
-resource "aws_iam_policy" "athena_query" {
-  name        = "dpc-insights-athena-query-${var.env}"
+# Allows reads of inputs
+resource "aws_iam_policy" "athena_query_source" {
+  name        = "dpc-insights-athena-query-src-${var.env}"
   path        = "/delegatedadmin/developer/"
-  description = "Rights needed for athena query access"
+  description = "Rights needed for source athena query access"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -147,7 +147,47 @@ resource "aws_iam_policy" "athena_query" {
         Resource = [
           "arn:aws:s3:::aws-athena-query-results-*",
           "${local.dpc_glue_bucket_arn}",
-          "${local.dpc_glue_bucket_arn}/*",
+          "${local.dpc_glue_bucket_arn}/*"
+        ]
+      },
+      {
+        Sid    = "CMK"
+        Effect = "Allow"
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = local.dpc_glue_bucket_key_alias
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "athena_query_results" {
+  name        = "dpc-insights-athena-query-results-${var.env}"
+  path        = "/delegatedadmin/developer/"
+  description = "Rights needed for results athena query access"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "s3QueryResultPolicy"
+        Effect = "Allow"
+        Action = [
+          "s3:GetBucketLocation",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:ListBucketMultipartUploads",
+          "s3:ListMultipartUploadParts",
+          "s3:AbortMultipartUpload",
+          "s3:CreateBucket",
+          "s3:PutObject"
+        ]
+        Resource = [
+          "arn:aws:s3:::aws-athena-query-results-*",
           "${local.dpc_athena_bucket_arn}",
           "${local.dpc_athena_bucket_arn}/*"
         ]
@@ -162,14 +202,23 @@ resource "aws_iam_policy" "athena_query" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
-        Resource = local.this_env_key
+        Resource = local.dpc_athena_bucket_key_alias
       }
     ]
   })
 }
 
+resource "aws_iam_group_policy_attachment" "athena_query_attach" {
+  group      = aws_iam_group.main.id
+  policy_arn = aws_iam_policy.athena_query_source.arn
+}
 
-resource "aws_iam_group_policy_attachment" "athena_attach" {
+resource "aws_iam_group_policy_attachment" "athena_results_attach" {
+  group      = aws_iam_group.main.id
+  policy_arn = aws_iam_policy.athena_query_results.arn
+}
+
+resource "aws_iam_group_policy_attachment" "athena_full_attach" {
   group      = aws_iam_group.main.id
   policy_arn = aws_iam_policy.full.arn
 }
@@ -322,7 +371,7 @@ resource "aws_iam_policy" "iam-policy-firehose" {
             "kms:DescribeKey",
           ]
           Effect   = "Allow"
-          Resource = local.this_env_key
+          Resource = local.dpc_glue_bucket_key_alias
           Sid      = "UseKMSKey"
         },
         {
@@ -571,7 +620,7 @@ resource "aws_iam_policy" "iam-policy-glue-crawler" {
           "kms:Decrypt"
         ]
         Effect   = "Allow"
-        Resource = local.this_env_key
+        Resource = local.dpc_glue_bucket_key_alias
         Sid      = "CMK"
       }
     ]

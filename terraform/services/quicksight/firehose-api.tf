@@ -9,7 +9,7 @@ resource "aws_kinesis_firehose_delivery_stream" "ingester_api" {
     buffering_interval  = 300
     buffering_size      = 128
     error_output_prefix = "databases/${local.api_profile}/filter_errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
-    kms_key_arn         = local.this_env_key
+    kms_key_arn         = local.dpc_glue_bucket_key_arn
     prefix              = "databases/${local.api_profile}/metric_table/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
     role_arn            = aws_iam_role.iam-role-firehose.arn
     s3_backup_mode      = "Disabled"
@@ -69,25 +69,6 @@ resource "aws_glue_catalog_database" "api" {
   name        = "${local.stack_prefix}-db-api"
   description = "DPC API Insights database"
 }
-
-# resource "aws_glue_security_configuration" "main-api" {
-#   name = "${local.stack_prefix}-db-security"
-
-#   encryption_configuration {
-#     cloudwatch_encryption {
-#       cloudwatch_encryption_mode = "DISABLED"
-#     }
-
-#     job_bookmarks_encryption {
-#       job_bookmarks_encryption_mode = "DISABLED"
-#     }
-
-#     s3_encryption {
-#       kms_key_arn        = local.this_env_key
-#       s3_encryption_mode = "SSE-KMS"
-#     }
-#   }
-# }
 
 # CloudWatch Log Subscription
 resource "aws_cloudwatch_log_subscription_filter" "quicksight-cloudwatch-api-log-subscription" {

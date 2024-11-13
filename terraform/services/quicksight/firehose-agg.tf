@@ -12,7 +12,7 @@ resource "aws_kinesis_firehose_delivery_stream" "ingester_agg" {
     # kms_key_arn         = data.aws_kms_key.kms_key.arn
 
     prefix      = "databases/${local.agg_profile}/metric_table/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
-    kms_key_arn = local.this_env_key
+    kms_key_arn = local.dpc_glue_bucket_key_arn
 
     role_arn           = aws_iam_role.iam-role-firehose.arn
     s3_backup_mode     = "Disabled"
@@ -90,7 +90,7 @@ resource "aws_glue_security_configuration" "main" {
     }
 
     s3_encryption {
-      kms_key_arn        = local.this_env_key
+      kms_key_arn        = local.dpc_glue_bucket_key_arn
       s3_encryption_mode = "SSE-KMS"
     }
   }
