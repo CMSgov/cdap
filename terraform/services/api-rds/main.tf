@@ -11,8 +11,8 @@ locals {
   }[var.app]
   postgres_ver = {
     ab2d = {
-      dev  = 15
-      test = 15
+      dev  = 16
+      test = 16
       sbx  = 15
       prod = 15
     }[var.env]
@@ -112,6 +112,17 @@ resource "aws_db_parameter_group" "parameter_group" {
     value        = 0 # contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? "1" : "0" # To support blue-green deployment for PostGres16 upgrade
     apply_method = "pending-reboot"
   }
+  parameter {
+    name         = "max_logical_replication_workers"
+    values       = "22"
+    apply_method = "pending-reboot"
+  }
+  parameter {
+    name         = "max_worker_processes"
+    values       = "25"
+    apply_method = "pending-reboot"
+  }
+
 
   lifecycle {
     create_before_destroy = true
@@ -147,6 +158,21 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
     value        = 0 # contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? "1" : "0" # To support blue-green deployment for PostGres16 upgrade
     apply_method = "pending-reboot"
   }
+  parameter {
+    name         = "max_logical_replication_workers"
+    values       = "22"
+    apply_method = "pending-reboot"
+  }
+  parameter {
+    name         = "max_worker_processes"
+    values       = "25"
+    apply_method = "pending-reboot"
+  }
+  parameter {
+    name         = "max_wal_senders"
+    values       = "20"
+    apply_method = "pending-reboot"
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -170,7 +196,7 @@ resource "aws_db_instance" "api" {
   skip_final_snapshot = true
 
   db_subnet_group_name    = aws_db_subnet_group.subnet_group.name
-  parameter_group_name    = aws_db_parameter_group.parameter_group.name # contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? aws_db_parameter_group.v16_parameter_group.name : aws_db_parameter_group.parameter_group.name
+  parameter_group_name    = contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? aws_db_parameter_group.v16_parameter_group.name : aws_db_parameter_group.parameter_group.name
   backup_retention_period = 7
   iops                    = local.db_name == "ab2d-east-prod" ? "20000" : "5000"
   apply_immediately       = true
