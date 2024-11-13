@@ -114,12 +114,12 @@ resource "aws_db_parameter_group" "parameter_group" {
   }
   parameter {
     name         = "max_logical_replication_workers"
-    values       = "22"
+    value        = "22"
     apply_method = "pending-reboot"
   }
   parameter {
     name         = "max_worker_processes"
-    values       = "25"
+    value        = "25"
     apply_method = "pending-reboot"
   }
 
