@@ -13,7 +13,7 @@ resource "aws_athena_workgroup" "quicksight" {
 
 resource "aws_athena_database" "quicksight" {
   name   = local.athena_profile
-  bucket = aws_s3_bucket.dpc-insights-athena.id
+  bucket = aws_s3_bucket.local.dpc_athena_bucket_arn
 }
 
 resource "aws_athena_named_query" "total_benes_req" {
