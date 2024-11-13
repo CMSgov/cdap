@@ -35,7 +35,7 @@ resource "aws_kinesis_firehose_delivery_stream" "ingester_agg" {
 
         parameters {
           parameter_name  = "LambdaArn"
-          parameter_value = "${resource.aws_lambda_function.fomat_dpc_logs.arn}:$LATEST"
+          parameter_value = "${resource.aws_lambda_function.format_dpc_logs.arn}:$LATEST"
         }
       }
     }

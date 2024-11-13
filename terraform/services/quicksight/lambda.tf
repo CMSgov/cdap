@@ -5,7 +5,7 @@ data "archive_file" "zip-archive-format-dpc-logs" {
 }
 
 # Lambda Function to process logs from Firehose
-resource "aws_lambda_function" "fomat_dpc_logs" {
+resource "aws_lambda_function" "format_dpc_logs" {
   architectures = [
     "x86_64",
   ]
