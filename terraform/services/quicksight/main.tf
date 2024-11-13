@@ -21,11 +21,11 @@ locals {
 
   dpc_glue_s3_name    = "${local.stack_prefix}-${local.account_id}"
   dpc_logging_s3_name = "${local.stack_prefix}-logs-${local.account_id}"
-  dpc_athena_s3_name  = "${local.athena_profile}"
+  dpc_athena_s3_name  = local.athena_profile
 
-  dpc_glue_bucket_arn    = module.dpc_insights_data.arn
+  dpc_glue_bucket_arn = module.dpc_insights_data.arn
   # dpc_logging_bucket_arn = module.dpc_insights_logging.arn
-  dpc_athena_bucket_arn  = module.dpc_insights_athena.arn
+  dpc_athena_bucket_arn = module.dpc_insights_athena.arn
 }
 
 data "aws_caller_identity" "current" {}
@@ -34,7 +34,7 @@ data "aws_region" "current" {}
 
 module "dpc_insights_data" {
   source = "../../modules/bucket"
-  name   = "${local.dpc_glue_s3_name}"
+  name   = local.dpc_glue_s3_name
 }
 
 # module "dpc_insights_logging" {
@@ -44,5 +44,5 @@ module "dpc_insights_data" {
 
 module "dpc_insights_athena" {
   source = "../../modules/bucket"
-  name   = "${local.dpc_athena_s3_name}"
+  name   = local.dpc_athena_s3_name
 }
