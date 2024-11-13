@@ -1,11 +1,11 @@
 # Firehose Data Stream
-resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-api" {
+resource "aws_kinesis_firehose_delivery_stream" "ingester_api" {
   depends_on  = [aws_glue_catalog_table.api_metric_table]
-  name        = "${local.stack_prefix}-firehose-ingester-api"
+  name        = "${local.stack_prefix}-ingester_api"
   destination = "extended_s3"
 
   extended_s3_configuration {
-    bucket_arn          = aws_s3_bucket.dpc-insights-bucket.arn
+    bucket_arn          = local.dpc_glue_bucket_arn
     buffering_interval  = 300
     buffering_size      = 128
     error_output_prefix = "databases/${local.api_profile}/filter_errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
@@ -31,7 +31,7 @@ resource "aws_kinesis_firehose_delivery_stream" "firehose-ingester-api" {
 
         parameters {
           parameter_name  = "LambdaArn"
-          parameter_value = "${resource.aws_lambda_function.lambda-function-format-dpc-logs.arn}:$LATEST"
+          parameter_value = "${resource.aws_lambda_function.fomat_dpc_logs.arn}:$LATEST"
         }
       }
     }
@@ -97,6 +97,6 @@ resource "aws_cloudwatch_log_subscription_filter" "quicksight-cloudwatch-api-log
   # we can use for development, and it will read from the "prod-sbx" environment.
   log_group_name  = "/aws/ecs/fargate/dpc-${local.this_env}-api"
   filter_pattern  = ""
-  destination_arn = aws_kinesis_firehose_delivery_stream.firehose-ingester-api.arn
+  destination_arn = aws_kinesis_firehose_delivery_stream.ingester_api.arn
   role_arn        = aws_iam_role.iam-role-cloudwatch-logs.arn
 }

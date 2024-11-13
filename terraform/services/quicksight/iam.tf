@@ -97,8 +97,8 @@ resource "aws_iam_policy" "full" {
           "s3:GetObjectVersion"
         ]
         Resource = [
-          "${aws_s3_bucket.dpc-insights-bucket.arn}/*",
-          "${aws_s3_bucket.dpc-insights-bucket.arn}"
+          "${local.dpc_glue_bucket_arn}/*",
+          "${local.dpc_glue_bucket_arn}"
         ]
       },
       {
@@ -146,10 +146,10 @@ resource "aws_iam_policy" "athena_query" {
         ]
         Resource = [
           "arn:aws:s3:::aws-athena-query-results-*",
-          "${aws_s3_bucket.dpc-insights-bucket.arn}",
-          "${aws_s3_bucket.dpc-insights-bucket.arn}/*",
-          "${aws_s3_bucket.dpc-insights-athena.arn}",
-          "${aws_s3_bucket.dpc-insights-athena.arn}/*"
+          "${local.dpc_glue_bucket_arn}",
+          "${local.dpc_glue_bucket_arn}/*",
+          "${local.dpc_athena_bucket_arn}",
+          "${local.dpc_athena_bucket_arn}/*"
         ]
       },
       {
@@ -259,8 +259,8 @@ resource "aws_iam_policy" "cwlogs-firehose" {
         Action = "firehose:*"
         Effect = "Allow"
         Resource = [
-          aws_kinesis_firehose_delivery_stream.firehose-ingester-agg.arn,
-          aws_kinesis_firehose_delivery_stream.firehose-ingester-api.arn
+          aws_kinesis_firehose_delivery_stream.ingester_agg.arn,
+          aws_kinesis_firehose_delivery_stream.ingester_api.arn
         ]
       }
     ]
@@ -308,8 +308,8 @@ resource "aws_iam_policy" "iam-policy-firehose" {
           ]
           Effect = "Allow"
           Resource = [
-            "${aws_s3_bucket.dpc-insights-bucket.arn}",
-            "${aws_s3_bucket.dpc-insights-bucket.arn}/*",
+            "${local.dpc_glue_bucket_arn}",
+            "${local.dpc_glue_bucket_arn}/*",
           ]
           Sid = "GetS3Bucket"
         },
@@ -387,7 +387,7 @@ resource "aws_iam_role_policy_attachment" "role-firehose-attach" {
 
 resource "aws_iam_policy" "iam-policy-lambda-firehose" {
   description = "Allow firehose lambda execution"
-  name        = "invoke-${aws_lambda_function.lambda-function-format-dpc-logs.function_name}"
+  name        = "invoke-${aws_lambda_function.fomat_dpc_logs.function_name}"
   path        = "/delegatedadmin/developer/"
 
   policy = jsonencode(
@@ -397,8 +397,8 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose" {
           Action = "lambda:InvokeFunction"
           Effect = "Allow"
           Resource = [
-            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${aws_lambda_function.lambda-function-format-dpc-logs.function_name}",
-            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${aws_lambda_function.lambda-function-format-dpc-logs.function_name}:$LATEST",
+            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${aws_lambda_function.fomat_dpc_logs.function_name}",
+            "arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${aws_lambda_function.fomat_dpc_logs.function_name}:$LATEST",
           ]
           Sid = "InvokeCW2Json"
         },
@@ -471,7 +471,7 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
           "firehose:PutRecord"
         ]
         Resource = [
-          "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-firehose-ingester-agg",
+          "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-ingester_agg",
           "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.api_profile}-firehose-ingester-pi"
         ]
       }
@@ -544,7 +544,7 @@ resource "aws_iam_policy" "iam-policy-glue-crawler" {
         ]
         Effect = "Allow"
         Resource = [
-          "${aws_s3_bucket.dpc-insights-bucket.arn}"
+          "${local.dpc_glue_bucket_arn}"
         ]
         Sid = "s3Buckets"
       },
@@ -558,7 +558,7 @@ resource "aws_iam_policy" "iam-policy-glue-crawler" {
         ]
         Effect = "Allow"
         Resource = [
-          "${aws_s3_bucket.dpc-insights-bucket.arn}/*"
+          "${local.dpc_glue_bucket_arn}/*"
         ]
         Sid = "s3Objects"
       },
