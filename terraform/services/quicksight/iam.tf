@@ -472,7 +472,7 @@ resource "aws_iam_policy" "iam-policy-lambda-firehose-logging" {
         ]
         Resource = [
           "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.agg_profile}-ingester_agg",
-          "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.api_profile}-firehose-ingester-pi"
+          "arn:aws:firehose:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deliverystream/${local.api_profile}-ingester_api"
         ]
       }
     ]
