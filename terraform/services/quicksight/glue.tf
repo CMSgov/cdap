@@ -135,7 +135,7 @@ resource "aws_glue_catalog_table" "agg_metric_table" {
 }
 
 # add crawler for metadata inspection
-resource "aws_glue_crawler" "glue_crawler_agg_metrics" {
+resource "aws_glue_crawler" "agg_metrics" {
   classifiers   = []
   database_name = aws_glue_catalog_database.agg.name
   configuration = jsonencode(
@@ -231,7 +231,7 @@ resource "aws_glue_catalog_table" "api_metric_table" {
 }
 
 # add crawler for metadata inspection
-resource "aws_glue_crawler" "glue_crawler_api_metrics" {
+resource "aws_glue_crawler" "api_metrics" {
   classifiers   = []
   database_name = aws_glue_catalog_database.api.name
   configuration = jsonencode(

@@ -3,8 +3,8 @@ provider "aws" {
     tags = {
       application = var.app
       business    = "oeda"
-      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/dpc-quicksights"
-      component   = "dpc-quicksights"
+      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/quicksight"
+      component   = "quicksight"
       environment = var.env
       terraform   = true
     }
@@ -13,6 +13,6 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "dpc-quicksights/terraform.tfstate"
+    key = "quicksight/terraform.tfstate"
   }
 }
