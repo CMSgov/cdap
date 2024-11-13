@@ -102,7 +102,7 @@ resource "aws_glue_catalog_table" "agg_metric_table" {
   }
 
   storage_descriptor {
-    location      = "s3://${aws_s3_bucket.dpc-insights-bucket.id}/databases/${local.agg_profile}/metric_table"
+    location      = "s3://${local.dpc_glue_s3_name}/databases/${local.agg_profile}/metric_table"
     input_format  = local.storage_options["json"].input_format
     output_format = local.storage_options["parquet"].output_format
     compressed    = true
@@ -198,7 +198,7 @@ resource "aws_glue_catalog_table" "api_metric_table" {
   }
 
   storage_descriptor {
-    location      = "s3://${aws_s3_bucket.dpc-insights-bucket.id}/databases/${local.api_profile}/metric_table"
+    location      = "s3://${local.dpc_glue_s3_name}/databases/${local.api_profile}/metric_table"
     input_format  = local.storage_options["json"].input_format
     output_format = local.storage_options["parquet"].output_format
     compressed    = true
