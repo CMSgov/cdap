@@ -19,10 +19,6 @@ resource "aws_kinesis_firehose_delivery_stream" "ingester_api" {
       enabled = false
     }
 
-    # dynamic_partitioning_configuration {
-    #   enabled = "true"
-    # }
-
     processing_configuration {
       enabled = true
 
@@ -35,28 +31,6 @@ resource "aws_kinesis_firehose_delivery_stream" "ingester_api" {
         }
       }
     }
-
-    # data_format_conversion_configuration {
-    #   input_format_configuration {
-    #     deserializer {
-    #       hive_json_ser_de {}
-    #     }
-    #   }
-
-    #   output_format_configuration {
-    #     serializer {
-    #       parquet_ser_de {
-    #         compression = "SNAPPY"
-    #       }
-    #     }
-    #   }
-
-    #   schema_configuration {
-    #     database_name = aws_glue_catalog_database.api.name
-    #     role_arn      = resource.aws_iam_role.iam-role-firehose.arn
-    #     table_name    = aws_glue_catalog_table.api_metric_table.name
-    #   }
-    # }
   }
 
   server_side_encryption {

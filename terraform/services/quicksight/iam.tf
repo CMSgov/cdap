@@ -118,7 +118,6 @@ resource "aws_iam_policy" "full" {
 }
 
 resource "aws_iam_group_policy_attachment" "full_attach" {
-  #  count      = length(var.full_groups)
   group      = aws_iam_group.main.id
   policy_arn = aws_iam_policy.full.arn
 }
@@ -222,54 +221,6 @@ resource "aws_iam_group_policy_attachment" "athena_full_attach" {
   group      = aws_iam_group.main.id
   policy_arn = aws_iam_policy.full.arn
 }
-
-# resource "aws_s3_bucket_policy" "cross_account" {
-#   count  = length(var.cross_accounts) > 0 ? 1 : 0
-#   bucket = aws_s3_bucket.main.id
-#   policy = <<-POLICY
-#     {
-#       "Version": "2012-10-17",
-#       "Id": "AccessToDB",
-#       "Statement": [
-#           {
-#               "Sid": "StmtID",
-#               "Effect": "Allow",
-#               "Principal": {
-#                 "AWS": [
-#                   ${join(",", formatlist("\"%s\"", var.cross_accounts))}
-#                 ]
-#               },
-#               "Action": [
-#                   "s3:AbortMultipartUpload",
-#                   "s3:GetBucketLocation",
-#                   "s3:ListBucket",
-#                   "s3:ListBucketMultipartUploads",
-#                   "s3:*Object"
-#               ],
-#               "Resource": [
-#                   "${aws_s3_bucket.main.arn}/*",
-#                   "${aws_s3_bucket.main.arn}"
-#               ]
-#           },
-#         {
-#             "Sid": "AllowSSLRequestsOnly",
-#             "Effect": "Deny",
-#             "Principal": "*",
-#             "Action": "s3:*",
-#             "Resource": [
-#                   "${aws_s3_bucket.main.arn}",
-#                   "${aws_s3_bucket.main.arn}/*"
-#             ],
-#             "Condition": {
-#                 "Bool": {
-#                     "aws:SecureTransport": "false"
-#                 }
-#             }
-#         }
-#       ]
-#     }
-#     POLICY
-# }
 
 # CloudWatch Role
 resource "aws_iam_role" "iam-role-cloudwatch-logs" {

@@ -9,7 +9,6 @@ resource "aws_kinesis_firehose_delivery_stream" "ingester_agg" {
     buffering_interval  = 300
     buffering_size      = 128
     error_output_prefix = "databases/${local.agg_profile}/filter_errors/!{firehose:error-output-type}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
-    # kms_key_arn         = data.aws_kms_key.kms_key.arn
 
     prefix      = "databases/${local.agg_profile}/metric_table/year=!{timestamp:yyyy}/month=!{timestamp:MM}/"
     kms_key_arn = local.dpc_glue_bucket_key_arn
@@ -21,11 +20,6 @@ resource "aws_kinesis_firehose_delivery_stream" "ingester_agg" {
     cloudwatch_logging_options {
       enabled = false
     }
-
-    # dynamic_partitioning_configuration {
-    #   enabled = "true"
-    # }
-
 
     processing_configuration {
       enabled = true
@@ -39,31 +33,6 @@ resource "aws_kinesis_firehose_delivery_stream" "ingester_agg" {
         }
       }
     }
-
-    # data_format_conversion_configuration {
-    #   enabled = true
-
-    #   input_format_configuration {
-    #     deserializer {
-    #       hive_json_ser_de {}
-    #       ##open_x_json_ser_de {}
-    #     }
-    #   }
-
-    #   output_format_configuration {
-    #     serializer {
-    #       parquet_ser_de {
-    #         compression = "SNAPPY"
-    #       }
-    #     }
-    #   }
-
-    #   schema_configuration {
-    #     database_name = aws_glue_catalog_database.agg.name
-    #     role_arn      = aws_iam_role.iam-role-firehose.arn
-    #     table_name    = aws_glue_catalog_table.agg_metric_table.name
-    #   }
-    # }
   }
 
   server_side_encryption {
