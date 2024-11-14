@@ -32,7 +32,8 @@ locals {
   dpc_athena_bucket_key_arn   = module.dpc_insights_athena.key_arn
   dpc_athena_bucket_id        = module.dpc_insights_data.id
 
-  dpc_athena_results_folder_key = "workgroups/${aws_athena_workgroup.quicksight.name}/"
+  athena_workgroup_name         = local.athena_prefix
+  dpc_athena_results_folder_key = "workgroups/${local.athena_workgroup_name}/"
 }
 
 data "aws_caller_identity" "current" {}
