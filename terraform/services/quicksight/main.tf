@@ -17,10 +17,11 @@ locals {
   api_profile  = "${local.stack_prefix}-api"
 
   athena_profile = "${var.app}_${local.this_env}_insights_${local.account_id}"
+  athena_prefix  = "${var.app}-${local.this_env}-insights"
 
   dpc_glue_s3_name    = "${local.stack_prefix}-${local.account_id}"
   dpc_logging_s3_name = "${local.stack_prefix}-logs-${local.account_id}"
-  dpc_athena_s3_name  = local.athena_profile
+  dpc_athena_s3_name  = local.athena_prefix
 
   dpc_glue_bucket_arn         = module.dpc_insights_data.arn
   dpc_glue_bucket_key_alias   = module.dpc_insights_data.key_alias
