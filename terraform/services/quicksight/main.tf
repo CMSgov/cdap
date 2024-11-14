@@ -31,6 +31,7 @@ locals {
   dpc_athena_bucket_key_alias = module.dpc_insights_athena.key_alias
   dpc_athena_bucket_key_arn   = module.dpc_insights_athena.key_arn
   dpc_athena_bucket_id        = module.dpc_insights_data.id
+  dpc_athena_results_id       = aws_s3_bucket_object.folder.id
 }
 
 data "aws_caller_identity" "current" {}
@@ -45,4 +46,10 @@ module "dpc_insights_data" {
 module "dpc_insights_athena" {
   source = "../../modules/bucket"
   name   = local.dpc_athena_s3_name
+}
+
+resource "aws_s3_bucket_object" "folder" {
+  bucket        = module.dpc_insights_athena.id
+  content_type  = "application/x-directory"
+  key           = "workgroups/${aws_athena_workgroup.quicksight.name}/"
 }
