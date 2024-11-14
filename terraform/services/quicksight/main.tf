@@ -49,7 +49,7 @@ module "dpc_insights_athena" {
 }
 
 resource "aws_s3_bucket_object" "folder" {
-  bucket        = module.dpc_insights_athena.id
-  content_type  = "application/x-directory"
-  key           = "workgroups/${aws_athena_workgroup.quicksight.name}/"
+  bucket       = module.dpc_insights_athena.id
+  content_type = "application/x-directory"
+  key          = "workgroups/${aws_athena_workgroup.quicksight.name}/"
 }
