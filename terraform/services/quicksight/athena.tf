@@ -1,7 +1,7 @@
 resource "aws_athena_workgroup" "quicksight" {
   name = local.athena_workgroup_name
 
-  depends_on = [aws_s3_bucket_object.folder]
+  depends_on = [aws_s3_object.folder]
 
   configuration {
     enforce_workgroup_configuration    = true

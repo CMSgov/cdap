@@ -50,7 +50,7 @@ module "dpc_insights_athena" {
   name   = local.dpc_athena_s3_name
 }
 
-resource "aws_s3_bucket_object" "folder" {
+resource "aws_s3_object" "folder" {
   bucket       = module.dpc_insights_athena.id
   content_type = "application/x-directory"
   key          = local.dpc_athena_results_folder_key
