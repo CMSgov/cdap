@@ -111,7 +111,7 @@ resource "aws_iam_policy" "full" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
-        Resource = local.dpc_glue_bucket_key_alias
+        Resource = local.dpc_glue_bucket_key_arn
       }
     ]
   })
@@ -159,7 +159,7 @@ resource "aws_iam_policy" "athena_query_source" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
-        Resource = local.dpc_glue_bucket_key_alias
+        Resource = local.dpc_glue_bucket_key_arn
       }
     ]
   })
@@ -201,7 +201,7 @@ resource "aws_iam_policy" "athena_query_results" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
-        Resource = local.dpc_athena_bucket_key_alias
+        Resource = local.dpc_athena_bucket_key_arn
       }
     ]
   })
@@ -322,7 +322,7 @@ resource "aws_iam_policy" "iam-policy-firehose" {
             "kms:DescribeKey",
           ]
           Effect   = "Allow"
-          Resource = local.dpc_glue_bucket_key_alias
+          Resource = local.dpc_glue_bucket_key_arn
           Sid      = "UseKMSKey"
         },
         {
@@ -571,7 +571,7 @@ resource "aws_iam_policy" "iam-policy-glue-crawler" {
           "kms:Decrypt"
         ]
         Effect   = "Allow"
-        Resource = local.dpc_glue_bucket_key_alias
+        Resource = local.dpc_glue_bucket_key_arn
         Sid      = "CMK"
       }
     ]
