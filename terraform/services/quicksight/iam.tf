@@ -173,12 +173,12 @@ resource "aws_iam_policy" "athena_glue_access" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid     = "DatabasePermissions"
-        Effect  = "Allow"
-        Action  = [
-            "glue:GetDatabase", 
-            "glue:GetDatabases",
-            "glue:CreateDatabase"
+        Sid    = "DatabasePermissions"
+        Effect = "Allow"
+        Action = [
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:CreateDatabase"
         ]
         Resource = [
           "arn:aws:glue:us-east-1:${local.account_id}:catalog",
@@ -187,9 +187,9 @@ resource "aws_iam_policy" "athena_glue_access" {
         ]
       },
       {
-        Sid      = "TablePermissions"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "TablePermissions"
+        Effect = "Allow"
+        Action = [
           "glue:GetDatabase",
           "glue:GetTables"
         ]
