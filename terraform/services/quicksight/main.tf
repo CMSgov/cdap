@@ -31,7 +31,7 @@ locals {
   dpc_athena_bucket_key_alias = module.dpc_insights_athena.key_alias
   dpc_athena_bucket_key_arn   = module.dpc_insights_athena.key_arn
   dpc_athena_bucket_id        = module.dpc_insights_data.id
-  
+
   dpc_athena_results_folder_key = "workgroups/${aws_athena_workgroup.quicksight.name}/"
 }
 
