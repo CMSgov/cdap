@@ -13,7 +13,7 @@ resource "aws_athena_workgroup" "quicksight" {
 
 resource "aws_athena_database" "quicksight" {
   name   = local.athena_profile
-  bucket = local.dpc_athena_bucket_arn
+  bucket = local.dpc_athena_bucket_id
 }
 
 resource "aws_athena_named_query" "total_benes_req" {
