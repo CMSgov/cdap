@@ -165,6 +165,46 @@ resource "aws_iam_policy" "athena_query_source" {
   })
 }
 
+resource "aws_iam_policy" "athena_glue_access" {
+  name        = "dpc-insights-athena-glue-access-${var.env}"
+  path        = "/delegatedadmin/developer/"
+  description = "Permissions needed for Athena to access Glue databases"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid     = "DatabasePermissions"
+        Effect  = "Allow"
+        Action  = [
+            "glue:GetDatabase", 
+            "glue:GetDatabases",
+            "glue:CreateDatabase"
+        ]
+        Resource = [
+          "arn:aws:glue:us-east-1:${local.account_id}:catalog",
+          "${aws_glue_catalog_database.agg.arn}",
+          "${aws_glue_catalog_database.api.arn}"
+        ]
+      },
+      {
+        Sid      = "TablePermissions"
+        Effect   = "Allow"
+        Action   = [
+          "glue:GetDatabase",
+          "glue:GetTables"
+        ]
+        Resource = [
+          "${aws_glue_catalog_database.agg.arn}",
+          "${aws_glue_catalog_database.api.arn}",
+          "arn:aws:glue::${local.account_id}:table/${aws_glue_catalog_database.agg.name}/*",
+          "arn:aws:glue::${local.account_id}:table/${aws_glue_catalog_database.api.name}/*"
+        ]
+      }
+    ]
+  })
+}
+
+
 resource "aws_iam_policy" "athena_query_results" {
   name        = "dpc-insights-athena-query-results-${var.env}"
   path        = "/delegatedadmin/developer/"
@@ -210,6 +250,11 @@ resource "aws_iam_policy" "athena_query_results" {
 resource "aws_iam_group_policy_attachment" "athena_query_attach" {
   group      = aws_iam_group.main.id
   policy_arn = aws_iam_policy.athena_query_source.arn
+}
+
+resource "aws_iam_group_policy_attachment" "athena_catalog_attach" {
+  group      = aws_iam_group.main.id
+  policy_arn = aws_iam_policy.athena_glue_access.arn
 }
 
 resource "aws_iam_group_policy_attachment" "athena_results_attach" {
