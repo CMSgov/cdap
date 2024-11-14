@@ -26,9 +26,11 @@ locals {
   dpc_glue_bucket_arn         = module.dpc_insights_data.arn
   dpc_glue_bucket_key_alias   = module.dpc_insights_data.key_alias
   dpc_glue_bucket_key_arn     = module.dpc_insights_data.key_arn
+  dpc_glue_bucket_key_id      = mmodule.dpc_insights_data.id
   dpc_athena_bucket_arn       = module.dpc_insights_athena.arn
   dpc_athena_bucket_key_alias = module.dpc_insights_athena.key_alias
   dpc_athena_bucket_key_arn   = module.dpc_insights_athena.key_arn
+  dpc_athena_bucket_key_id    = module.dpc_insights_data.id
 }
 
 data "aws_caller_identity" "current" {}
