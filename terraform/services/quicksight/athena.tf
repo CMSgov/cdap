@@ -8,7 +8,7 @@ resource "aws_athena_workgroup" "quicksight" {
     publish_cloudwatch_metrics_enabled = true
 
     result_configuration {
-      output_location = "${local.dpc_athena_results_id}/"
+      output_location = "s3://${local.dpc_athena_bucket_id}/${local.dpc_athena_results_id}"
 
       encryption_configuration {
         encryption_option = "SSE_KMS"
