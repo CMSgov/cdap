@@ -5,7 +5,7 @@
 --
 -- NOTE: TBD
 --
-create or replace view total_benes_by_day as
+--create or replace view total_benes_by_day as
 select sum(summarydata.ct_by_day) as daily_sum, summarydata.msgdate
 from (
     select count(distinctdata.ptid) as ct_by_day, distinctdata.ptid, msgdate
