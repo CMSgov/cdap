@@ -13,7 +13,7 @@ from (
         select message,
                cast(json_extract_scalar (message, '$.contentlength') as VARCHAR) as contentlength,
                cast(json_extract_scalar (message, '$.message') as VARCHAR) as payloadmessage,
-               from_iso8601_timestamp(cast(json_extract_scalar(message,'$.timestamp')) as VARCHAR) as messagets
+               from_iso8601_timestamp(cast(json_extract_scalar(message,'$.timestamp') as VARCHAR)) as messagets
         FROM ${api_profile}
     ) rowset
     WHERE contentlength is null
