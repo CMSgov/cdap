@@ -8,9 +8,11 @@
 create or replace view group_requests_made_by_day as
 select request_ct, date_format(msgday, '%Y-%m-%d') as msgdate
 from (
-    SELECT count(message) as request_ct, date_trunc('day', from_iso8601_timestamp(json_extract_scalar(message,'$.timestamp')) ) as msgday
+    SELECT count(message) as request_ct, date_trunc('day', messagets ) as msgday
     FROM ( 
-        select message, cast(json_extract_scalar (message, '$.contentlength') as VARCHAR) as contentlength
+        select message, 
+               cast(json_extract_scalar (message, '$.contentlength') as VARCHAR) as contentlength,
+               cast(from_iso8601_timestamp(json_extract_scalar(message,'$.timestamp') as VARCHAR)) as messagets
         FROM ${api_profile}
     ) rowset
     WHERE contentlength is not null
@@ -18,7 +20,7 @@ from (
         and cast(json_extract_scalar(message,'$.useragent') as VARCHAR) != 'ELB-HealthChecker/2.0'
         and cast(json_extract_scalar(message,'$.uri') as VARCHAR) = '/api/v1/Group'
         and cast(json_extract_scalar(message,'$.environment') as VARCHAR) = ${env}
-        and date_diff('day', current_date, from_iso8601_timestamp(cast(json_extract_scalar(message,'$.timestamp') as VARCHAR))) <  ${days_history}
-    group by date_trunc('day', from_iso8601_timestamp(cast(json_extract_scalar(message,'$.timestamp') as VARCHAR)) )
+        and date_diff('day', current_date, messagets) <  ${days_history}
+    group by date_trunc('day', messagets )
 ) summarydata
 order by summarydata.msgday
