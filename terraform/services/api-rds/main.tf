@@ -9,26 +9,6 @@ locals {
     bcda = "${var.app}-${var.env}"
     dpc  = "${var.app}-${var.env}"
   }[var.app]
-  postgres_ver = {
-    ab2d = {
-      dev  = 15
-      test = 15
-      sbx  = 15
-      prod = 15
-    }[var.env]
-    bcda = {
-      dev  = 15
-      test = 15
-      sbx  = 15
-      prod = 15
-    }[var.env]
-    dpc = {
-      dev  = 14
-      test = 14
-      sbx  = 14
-      prod = 14
-    }[var.env]
-  }[var.app]
 }
 
 ## Begin module/main.tf
@@ -83,41 +63,6 @@ resource "aws_db_subnet_group" "subnet_group" {
 
 # Create database parameter group
 
-resource "aws_db_parameter_group" "parameter_group" {
-  name   = "${local.db_name}-rds-parameter-group-v15"
-  family = "postgres15"
-
-  parameter {
-    name         = "backslash_quote"
-    value        = "safe_encoding"
-    apply_method = "immediate"
-  }
-  parameter {
-    name         = "shared_preload_libraries"
-    value        = "pg_stat_statements,pg_cron"
-    apply_method = "pending-reboot"
-  }
-  parameter {
-    name         = "cron.database_name"
-    value        = var.app == "ab2d" && var.env == "test" ? "impl" : var.env
-    apply_method = "pending-reboot"
-  }
-  parameter {
-    name         = "statement_timeout"
-    value        = "1200000"
-    apply_method = "immediate"
-  }
-  parameter {
-    name         = "rds.logical_replication"
-    value        = 0 # contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? "1" : "0" # To support blue-green deployment for PostGres16 upgrade
-    apply_method = "pending-reboot"
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
 resource "aws_db_parameter_group" "v16_parameter_group" {
   name   = "${local.db_name}-rds-parameter-group-v16"
   family = "postgres16"
@@ -144,7 +89,7 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
   }
   parameter {
     name         = "rds.logical_replication"
-    value        = 0 # contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? "1" : "0" # To support blue-green deployment for PostGres16 upgrade
+    value        = 0
     apply_method = "pending-reboot"
   }
 
@@ -158,7 +103,7 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 resource "aws_db_instance" "api" {
   allocated_storage   = 500
   engine              = "postgres"
-  engine_version      = local.postgres_ver
+  engine_version      = 16
   instance_class      = "db.m6i.2xlarge"
   identifier          = local.db_name
   storage_encrypted   = true
@@ -170,7 +115,7 @@ resource "aws_db_instance" "api" {
   skip_final_snapshot = true
 
   db_subnet_group_name    = aws_db_subnet_group.subnet_group.name
-  parameter_group_name    = aws_db_parameter_group.parameter_group.name # contains(["ab2d-dev", "ab2d-east-impl"], local.db_name) ? aws_db_parameter_group.v16_parameter_group.name : aws_db_parameter_group.parameter_group.name
+  parameter_group_name    = aws_db_parameter_group.v16_parameter_group.name
   backup_retention_period = 7
   iops                    = local.db_name == "ab2d-east-prod" ? "20000" : "5000"
   apply_immediately       = true
