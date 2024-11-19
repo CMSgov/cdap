@@ -1,9 +1,8 @@
 --
--- This view is the basis for the DPC Quicksight dashboard Component '' and
--- returns one row for each day that DPC requested a unique beneficiary.
--- The content of the returned rows is ...
---
--- NOTE: TBD
+-- This view is the basis for the DPC Quicksight dashboard Component 
+-- Beneficiaries Requested by Customers
+-- View returns one row for each day that DPC processed request for beneficiaries.
+-- The content of the returned rows is count of calls and corresponding date
 --
 create or replace view total_benes_by_day as
 select sum(summarydata.ct_by_day) as daily_sum, summarydata.msgdate

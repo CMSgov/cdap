@@ -1,9 +1,8 @@
 --
--- This view is the basis for the DPC Quicksight dashboard Component '' and
--- returns one row for each day that DPC requested a unique beneficiary.
--- The content of the returned rows is ...
---
--- NOTE: TBD
+-- This view is the basis for the DPC Quicksight dashboard Component 
+-- Unique Beneficiaries Served
+-- View returns one row for each day that DPC processed a unique beneficiary request.
+-- The content of the returned rows is count of calls and correponding date.
 --
 create or replace view uniq_benes_served_by_day as
 select sum(summarydata.ct_by_day) as daily_sum, summarydata.msgdate
@@ -22,7 +21,7 @@ from (
                   and cast(json_extract_scalar (message, '$.environment') as VARCHAR) = ${env}
                   and cast(json_extract_scalar (message, '$.dataretrieved') as VARCHAR) = 'true'
             ) rawdata
-            where date_diff('day',current_date, rawdata.msgday) < 7
+            where date_diff('day',current_date, rawdata.msgday) < ${days_history}
         ) distinctdata
     group by distinctdata.ptid, distinctdata.msgdate
     order by distinctdata.ptid, distinctdata.msgdate

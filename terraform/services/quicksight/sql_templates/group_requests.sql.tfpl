@@ -1,9 +1,8 @@
 --
--- This view is the basis for the DPC Quicksight dashboard Component '' and
--- returns one row for each day that DPC requested a unique beneficiary.
--- The content of the returned rows is ...
---
--- NOTE: TBD
+-- This view is the basis for the DPC Quicksight dashboard Component
+-- /Group Requests By Day
+-- View returns one row for each day that DPC processed /Group endpoint requests.
+-- The content of the returned rows is the count of calls and corresponding date
 --
 create or replace view group_requests_made_by_day as
 select request_ct, date_format(msgday, '%Y-%m-%d') as msgdate
