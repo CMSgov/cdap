@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - .github/workflows/api-waf-*
+      - .github/workflows/api-waf-apply.yml
       - terraform/services/api-waf/**
       - terraform/modules/firewall/**
   workflow_dispatch: # Allow manual trigger
