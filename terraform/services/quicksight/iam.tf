@@ -655,18 +655,26 @@ resource "aws_iam_role_policy_attachment" "iam-policy-athena-service" {
   policy_arn = data.aws_iam_policy.aws_athena_full_policy.arn
 }
 
+data "aws_kms_alias" "glue_s3_key" {
+  name = local.dpc_glue_bucket_key_alias
+}
+
 # Grant to QuickSight access to the Glue bucket key
 resource "aws_kms_grant" "glue" {
   name              = "${local.dpc_glue_s3_name}-grant"
-  key_id            = local.dpc_glue_bucket_id
+  key_id            = data.aws_kms_alias.glue_s3_key.target_key_id
   grantee_principal = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/aws-quicksight-service-role-v0"
   operations        = ["Encrypt", "Decrypt", "GenerateDataKey", "DescribeKey", "ReEncryptTo", "ReEncryptFrom"]
+}
+
+data "aws_kms_alias" "athena_s3_key" {
+  name = local.dpc_athena_bucket_key_alias
 }
 
 # Grant to QuickSight access to the Athena bucket key
 resource "aws_kms_grant" "athena" {
   name              = "${local.dpc_athena_s3_name}-grant"
-  key_id            = local.dpc_athena_bucket_id
+  key_id            = data.aws_kms_alias.athena_s3_key.target_key_id
   grantee_principal = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/aws-quicksight-service-role-v0"
   operations        = ["Encrypt", "Decrypt", "GenerateDataKey", "DescribeKey", "ReEncryptTo", "ReEncryptFrom"]
 }
