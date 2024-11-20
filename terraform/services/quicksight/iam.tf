@@ -141,7 +141,11 @@ resource "aws_iam_policy" "athena_query_source" {
           "s3:ListMultipartUploadParts",
           "s3:AbortMultipartUpload",
           "s3:CreateBucket",
-          "s3:PutObject"
+          "s3:PutObject",
+          "s3:ListAllMyBuckets",
+          "athena:ListDataCatalogs",
+          "athena:GetDataCatalog",
+          "quicksight:*"
         ]
         Resource = [
           "arn:aws:s3:::aws-athena-query-results-*",
@@ -204,7 +208,6 @@ resource "aws_iam_policy" "athena_glue_access" {
   })
 }
 
-
 resource "aws_iam_policy" "athena_query_results" {
   name        = "dpc-insights-athena-query-results-${var.env}"
   path        = "/delegatedadmin/developer/"
@@ -223,7 +226,11 @@ resource "aws_iam_policy" "athena_query_results" {
           "s3:ListMultipartUploadParts",
           "s3:AbortMultipartUpload",
           "s3:CreateBucket",
-          "s3:PutObject"
+          "s3:PutObject",
+          "s3:ListAllMyBuckets",
+          "athena:ListDataCatalogs",
+          "athena:GetDataCatalog",
+          "quicksight:*"
         ]
         Resource = [
           "arn:aws:s3:::aws-athena-query-results-*",
@@ -646,4 +653,20 @@ data "aws_iam_policy" "aws_athena_full_policy" {
 resource "aws_iam_role_policy_attachment" "iam-policy-athena-service" {
   role       = aws_iam_role.iam-role-glue.id
   policy_arn = data.aws_iam_policy.aws_athena_full_policy.arn
+}
+
+# Grant to QuickSight access to the Glue bucket key
+resource "aws_kms_grant" "glue" {
+  name              = "${local.dpc_glue_s3_name}-grant"
+  key_id            = local.dpc_glue_bucket_id
+  grantee_principal = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/aws-quicksight-service-role-v0"
+  operations        = ["Encrypt", "Decrypt", "GenerateDataKey", "DescribeKey", "ReEncryptTo", "ReEncryptFrom"]
+}
+
+# Grant to QuickSight access to the Athena bucket key
+resource "aws_kms_grant" "athena" {
+  name              = "${local.dpc_athena_s3_name}-grant"
+  key_id            = local.dpc_athena_bucket_id
+  grantee_principal = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/aws-quicksight-service-role-v0"
+  operations        = ["Encrypt", "Decrypt", "GenerateDataKey", "DescribeKey", "ReEncryptTo", "ReEncryptFrom"]
 }
