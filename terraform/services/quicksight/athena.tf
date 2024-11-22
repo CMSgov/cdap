@@ -1,8 +1,15 @@
 resource "aws_athena_workgroup" "quicksight" {
-  name = local.athena_profile
+  name = local.athena_workgroup_name
+
+  depends_on = [aws_s3_object.folder]
 
   configuration {
+    enforce_workgroup_configuration    = true
+    publish_cloudwatch_metrics_enabled = true
+
     result_configuration {
+      output_location = "s3://${local.dpc_athena_bucket_id}/${local.dpc_athena_results_folder_key}"
+
       encryption_configuration {
         encryption_option = "SSE_KMS"
         kms_key_arn       = local.dpc_athena_bucket_key_arn
