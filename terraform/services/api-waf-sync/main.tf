@@ -25,6 +25,7 @@ module "api_waf_sync_function" {
     ENV             = var.env
     APP_NAME        = "dpc-${var.env}-api-waf-sync"
     WAF_IP_SET_NAME = "DPC_${upper(var.env)}_Implementer_IP_Set"
+    DB_HOST         = data.aws_ssm_parameter.dpc_db_host.value
   }
 }
 
@@ -52,9 +53,14 @@ data "aws_iam_policy_document" "aws_waf_access" {
     resources = ["*"]
 
     actions = [
+      "wafv2:ListIpSets",
       "wafv2:GetIpSet",
       "wafv2:UpdateIpSet",
     ]
   }
 }
 
+# db host
+data "aws_ssm_parameter" "dpc_db_host" {
+  name = "/dpc/${var.env}/db/url"
+}
