@@ -22,10 +22,10 @@ module "api_waf_sync_function" {
   schedule_expression = "cron(0/10 * * * ? *)"
 
   environment_variables = {
-    ENV             = var.env
-    APP_NAME        = "${var.app}-${var.env}-api-waf-sync"
-    DB_HOST         = "data.aws_ssm_parameter.dpc_db_host.value"
-    DB_URL          = "data.aws_ssm_parameter.bcda_db_url.value"
+    ENV      = var.env
+    APP_NAME = "${var.app}-${var.env}-api-waf-sync"
+    DB_HOST  = "data.aws_ssm_parameter.dpc_db_host.value"
+    DB_URL   = "data.aws_ssm_parameter.bcda_db_url.value"
   }
 }
 
