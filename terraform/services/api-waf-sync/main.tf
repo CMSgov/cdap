@@ -1,16 +1,16 @@
 locals {
-  full_name  = "dpc-${var.env}-api-waf-sync"
-  db_sg_name = "dpc-${var.env}-db"
+  full_name  = "${var.app}-${var.env}-api-waf-sync"
+  db_sg_name = "${var.app}-${var.env}-db"
 }
 
 module "api_waf_sync_function" {
   source = "../../modules/function"
 
-  app = "dpc"
+  app = var.app
   env = var.env
 
   name        = local.full_name
-  description = "Synchronizes the IP whitelist in DPC with the WAF IP Set"
+  description = "Synchronizes the IP whitelist in ${var.app} with the WAF IP Set"
 
   handler = "bootstrap"
   runtime = "provided.al2"
@@ -23,9 +23,9 @@ module "api_waf_sync_function" {
 
   environment_variables = {
     ENV             = var.env
-    APP_NAME        = "dpc-${var.env}-api-waf-sync"
-    WAF_IP_SET_NAME = "DPC_${upper(var.env)}_Implementer_IP_Set"
-    DB_HOST         = data.aws_ssm_parameter.dpc_db_host.value
+    APP_NAME        = "${var.app}-${var.env}-api-waf-sync"
+    DB_HOST         = "data.aws_ssm_parameter.dpc_db_host.value"
+    DB_URL          = "data.aws_ssm_parameter.bcda_db_url.value"
   }
 }
 
@@ -63,4 +63,8 @@ data "aws_iam_policy_document" "aws_waf_access" {
 # db host
 data "aws_ssm_parameter" "dpc_db_host" {
   name = "/dpc/${var.env}/db/url"
+}
+
+data "aws_ssm_parameter" "bcda_db_url" {
+  name = "/bcda/${var.env}/api/DATABASE_URL"
 }
