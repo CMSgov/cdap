@@ -1,7 +1,9 @@
 locals {
-  full_name    = "${var.app}-${var.env}-api-waf-sync"
-  bcda_sg_name = "bcda-${var.env}-rds"
-  dpc_sg_name  = "dpc-${var.env}-db"
+  full_name = "${var.app}-${var.env}-api-waf-sync"
+  db_sg_names = {
+    bcda = "bcda-${var.env}-rds"
+    dpc  = "dpc-${var.env}-db"
+  }
 }
 
 module "api_waf_sync_function" {
@@ -31,9 +33,8 @@ module "api_waf_sync_function" {
 }
 
 # Add a rule to the database security group to allow access from the function
-
 data "aws_security_group" "db" {
-  name = "local.${var.app}_sg_name"
+  name = local.db_sg_names[var.app]
 }
 
 resource "aws_security_group_rule" "function_access" {
