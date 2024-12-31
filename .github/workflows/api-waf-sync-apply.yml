@@ -40,6 +40,12 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-$TF_VAR_env.s3.tfbackend
+      - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            TF_VAR_bcda_database_url=/bcda/${{ matrix.env }}/api/DATABASE_URL
       - run: terraform apply -auto-approve
       - uses: slackapi/slack-github-action@v1.26.0
         if: ${{ failure() }}
