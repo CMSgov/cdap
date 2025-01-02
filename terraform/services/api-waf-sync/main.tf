@@ -28,7 +28,6 @@ module "api_waf_sync_function" {
     ENV          = var.env
     APP_NAME     = "${var.app}-${var.env}-api-waf-sync"
     DB_HOST      = "data.aws_ssm_parameter.dpc_db_host.value"
-    DATABASE_URL = var.bcda_database_url
   }
 }
 

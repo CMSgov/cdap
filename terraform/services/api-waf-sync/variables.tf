@@ -15,8 +15,3 @@ variable "env" {
     error_message = "Valid value for env is dev, test, or prod."
   }
 }
-
-variable "bcda_database_url" {
-  description = "Stores the BCDA DATABASE_URL out of paramter store"
-  type        = string
-}
