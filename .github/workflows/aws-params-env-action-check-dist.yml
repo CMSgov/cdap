@@ -10,6 +10,7 @@ on:
     paths:
       - 'actions/aws-params-env-action/**'
       - '!actions/aws-params-env-action/**.md'
+      - .github/workflows/aws-params-env-action-check-dist.yml
   workflow_dispatch:
 
 defaults:
