@@ -34,14 +34,16 @@ jobs:
       fail-fast: false
       matrix:
         env: [dev]
+        app: [bcda, dpc]
     env:
       TF_VAR_env: ${{ matrix.env }}
+      TF_VAR_app: ${{ matrix.app }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/dpc-${{ matrix.env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -reconfigure -backend-config=../../backends/dpc-$TF_VAR_env.s3.tfbackend
+      - run: terraform init -reconfigure -backend-config=../../backends/${{ matrix.app }}-$TF_VAR_env.s3.tfbackend
       - run: terraform plan

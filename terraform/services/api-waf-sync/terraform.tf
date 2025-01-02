@@ -1,7 +1,7 @@
 provider "aws" {
   default_tags {
     tags = {
-      application = "dpc"
+      application = var.app
       business    = "oeda"
       code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/api-waf-sync"
       component   = "api-waf-sync"
