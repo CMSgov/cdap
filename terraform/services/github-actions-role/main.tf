@@ -11,10 +11,13 @@ locals {
     bcda = [
       "repo:CMSgov/ab2d-bcda-dpc-platform:*",
       "repo:CMSgov/bcda-app:*",
+      "repo:CMSgov/bcda-ssas-app:*",
+      "repo:CMSgov/bcda-static-site:*",
     ]
     dpc = [
       "repo:CMSgov/ab2d-bcda-dpc-platform:*",
       "repo:CMSgov/dpc-app:*",
+      "repo:CMSgov/dpc-static-site:*",
     ]
   }
   admin_app = var.app == "dpc" ? "bcda" : var.app
