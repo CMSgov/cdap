@@ -43,7 +43,7 @@ tar xzf ./$file_name
 echo "Delete tar file"
 rm -rf $file_name
 
-# Workaround to modify /etc/pki/tls/openssl.cnf
+# Workaround for openssl until the IDM team upgrades TLS
 echo "Applying workaround to /etc/pki/tls/openssl.cnf"
 sudo sed -i 's/^openssl_conf = openssl_init/openssl_conf = default_conf/' /etc/pki/tls/openssl.cnf
 
