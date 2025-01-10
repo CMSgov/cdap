@@ -54,6 +54,15 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
   security_group_id            = aws_security_group.sg_database.id
 }
 
+resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
+  description       = "Management VPC Access"
+  from_port         = "5432"
+  to_port           = "5432"
+  ip_protocol       = "tcp"
+  cidr_ipv4         = var.mgmt_vpc_cidr
+  security_group_id = aws_security_group.sg_database.id
+}
+
 # Create database subnet group
 
 resource "aws_db_subnet_group" "subnet_group" {

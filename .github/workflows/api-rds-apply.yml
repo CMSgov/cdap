@@ -37,6 +37,7 @@ jobs:
         with:
           params: |
             TF_VAR_jenkins_security_group_id=/jenkins/security-group
+            TF_VAR_mgmt_vpc_cidr=/mgmt/vpc-cidr
       - run: terraform apply -auto-approve
         env:
           TF_VAR_app: ${{ matrix.app }}

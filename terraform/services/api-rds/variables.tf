@@ -23,3 +23,8 @@ variable "jenkins_security_group_id" {
   type        = string
   nullable    = false
 }
+
+variable "mgmt_vpc_cidr" {
+  description = "CIDR for the Management VPC"
+  type        = string
+}
