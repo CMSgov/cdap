@@ -29,6 +29,11 @@ jobs:
       matrix:
         env: [dev]
         app: [bcda, dpc]
+        include:
+          - app: bcda
+            env: prod
+          - app: bcda
+            env: test
     env:
       TF_VAR_env: ${{ matrix.env }}
       TF_VAR_app: ${{ matrix.app }}

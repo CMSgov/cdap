@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [dev]
+        env: [dev, test, prod]
     env:
       TF_VAR_env: ${{ matrix.env }}
       TF_VAR_app: bcda
