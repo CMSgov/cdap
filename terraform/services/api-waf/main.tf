@@ -1,6 +1,5 @@
 locals {
-  is_sandbox      = var.env == "sbx"
-  is_bcda_non_sbx = var.app == "bcda"
+  is_sandbox = var.env == "sbx"
   ab2d_env_lbs = {
     dev  = "ab2d-dev"
     test = "ab2d-east-impl"
@@ -74,9 +73,10 @@ module "aws_waf" {
 
   associated_resource_arn = data.aws_lb.api.arn
   rate_limit              = var.app == "bcda" ? 300 : 3000
-  ip_sets = local.is_sandbox ? [] : [
+  ip_sets = local.is_sandbox ? [] : concat([
     one(data.aws_wafv2_ip_set.external_services).arn,
     one(aws_wafv2_ip_set.api_customers).arn,
+    ], var.app == "bcda" ? [
     one(aws_wafv2_ip_set.ipv6_api_customers).arn,
-  ]
+  ] : [])
 }
