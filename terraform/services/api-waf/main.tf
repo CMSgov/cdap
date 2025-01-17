@@ -43,7 +43,7 @@ resource "aws_wafv2_ip_set" "api_customers" {
 }
 
 resource "aws_wafv2_ip_set" "ipv6_api_customers" {
-  count              = !local.is_sandbox || var.app == "bcda" ? 1 : 0
+  count              = !local.is_sandbox && var.app == "bcda" ? 1 : 0
   name               = "${var.app}-${var.env}-ipv6-api-customers"
   description        = "IP ranges for customers of this API"
   scope              = "REGIONAL"
