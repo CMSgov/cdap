@@ -1,5 +1,5 @@
 locals {
-  is_sandbox = var.env == "sbx"
+  is_sandbox      = var.env == "sbx"
   is_bcda_non_sbx = var.app == "bcda"
   ab2d_env_lbs = {
     dev  = "ab2d-dev"
