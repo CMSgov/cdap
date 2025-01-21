@@ -30,10 +30,8 @@ resource "aws_wafv2_ip_set" "api_customers" {
   scope              = "REGIONAL"
   ip_address_version = "IPV4"
 
-  # Addresses will be managed outside of terraform. This is
-  # a placeholder address for all apps/environments.
-  # See: https://confluence.cms.gov/x/UDs2Q
-  addresses = ["203.0.113.0/32"]
+  # Addresses will be managed outside of terraform.
+  addresses = []
 
   lifecycle {
     ignore_changes = [
@@ -43,15 +41,12 @@ resource "aws_wafv2_ip_set" "api_customers" {
 }
 
 resource "aws_wafv2_ip_set" "ipv6_api_customers" {
-  count              = var.app == "bcda" ? 1 : 0
   name               = "${var.app}-${var.env}-ipv6-api-customers"
   description        = "IP ranges for customers of this API"
   scope              = "REGIONAL"
   ip_address_version = "IPV6"
 
-  # Addresses will be managed outside of terraform. This is
-  # a placeholder address for all apps/environments.
-  # See: https://confluence.cms.gov/x/UDs2Q
+  # Addresses will be managed outside of terraform.
   addresses = []
 
   lifecycle {
