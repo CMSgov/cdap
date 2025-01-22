@@ -52,7 +52,7 @@ data "aws_subnet" "private_subnet_b" {
   }
 }
 
-data "aws_subnet_ids" "bcda_subnets" {
+/*ata "aws_subnet_ids" "bcda_subnets" {
   count = var.app == "bcda" ? 1 : 0
 
   vpc_id = data.aws_vpc.target_vpc.id
@@ -60,7 +60,7 @@ data "aws_subnet_ids" "bcda_subnets" {
   tags = {
     Layer = "data"
   }
-}
+}*/
 
 data "aws_security_group" "controller_security_group_id" {
   tags = {
