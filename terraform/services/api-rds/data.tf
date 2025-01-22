@@ -11,9 +11,16 @@ data "aws_secretsmanager_secret_version" "database_password" {
   secret_id = data.aws_secretsmanager_secret.secret_database_password.id
 }
 
-data "aws_secretsmanager_secret" "secret_database_user" {
+/*data "aws_secretsmanager_secret" "secret_database_user" {
   name = "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}"
 }
+data "aws_secretsmanager_secret_version" "database_user" {
+  secret_id = data.aws_secretsmanager_secret.secret_database_user.id
+}*/
+data "aws_secretsmanager_secret" "secret_database_user" {
+  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : "bcda/${local.db_name}/rds-main-credentials"
+}
+
 data "aws_secretsmanager_secret_version" "database_user" {
   secret_id = data.aws_secretsmanager_secret.secret_database_user.id
 }

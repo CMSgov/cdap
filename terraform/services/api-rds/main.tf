@@ -9,6 +9,14 @@ locals {
     bcda = "${var.app}-${var.env}"
     dpc  = "${var.app}-${var.env}"
   }[var.app]
+  instance_class = {
+    ab2d = "db.m6i.2xlarge"
+    bcda = "db.m6i.large"
+  }[var.app]
+  allocated_storage = {
+    ab2d = 500
+    bcda = 100
+  }[var.app]
 }
 
 ## Begin module/main.tf
@@ -110,10 +118,10 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 # Create database instance
 
 resource "aws_db_instance" "api" {
-  allocated_storage   = 500
+  allocated_storage   = local.allocated_storage
   engine              = "postgres"
   engine_version      = 16.4
-  instance_class      = "db.m6i.2xlarge"
+  instance_class      = local.instance_class
   identifier          = local.db_name
   storage_encrypted   = true
   deletion_protection = true
@@ -126,13 +134,15 @@ resource "aws_db_instance" "api" {
   db_subnet_group_name    = aws_db_subnet_group.subnet_group.name
   parameter_group_name    = aws_db_parameter_group.v16_parameter_group.name
   backup_retention_period = 7
-  iops                    = local.db_name == "ab2d-east-prod" ? "20000" : "5000"
-  apply_immediately       = true
-  kms_key_id              = data.aws_kms_alias.main_kms.target_key_arn
-  multi_az                = local.db_name == "ab2d-east-prod"
-  vpc_security_group_ids  = [aws_security_group.sg_database.id]
-  username                = data.aws_secretsmanager_secret_version.database_user.secret_string
-  password                = data.aws_secretsmanager_secret_version.database_password.secret_string
+  #iops                    = local.db_name == "ab2d-east-prod" ? "20000" : "5000"
+  iops              = var.app == "bcda" ? "1000" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
+  apply_immediately = true
+  kms_key_id        = data.aws_kms_alias.main_kms.target_key_arn
+  #multi_az                = local.db_name == "ab2d-east-prod"
+  multi_az               = var.app == "bcda" ? true : local.db_name == "ab2d-east-prod"
+  vpc_security_group_ids = [aws_security_group.sg_database.id]
+  username               = data.aws_secretsmanager_secret_version.database_user.secret_string
+  password               = data.aws_secretsmanager_secret_version.database_password.secret_string
   # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 
 
   tags = merge(
