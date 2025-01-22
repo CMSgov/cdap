@@ -22,12 +22,21 @@ data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
-data "aws_vpc" "target_vpc" {
+/*data "aws_vpc" "target_vpc" {
   filter {
     name   = "tag:Name"
     values = ["${local.db_name}"]
   }
+}*/
+data "aws_vpc" "target_vpc" {
+  filter {
+    name   = "tag:Name"
+    values = [
+      var.app == "ab2d" ? local.db_name : "${var.app}-${var.env}-vpc"
+    ]
+  }
 }
+
 
 data "aws_subnet" "private_subnet_a" {
   filter {
@@ -40,6 +49,16 @@ data "aws_subnet" "private_subnet_b" {
   filter {
     name   = "tag:Name"
     values = ["${local.db_name}-private-b"]
+  }
+}
+
+data "aws_subnet_ids" "bcda_subnets" {
+  count = var.app == "bcda" ? 1 : 0
+
+  vpc_id = data.aws_vpc.target_vpc.id
+
+  tags = {
+    Layer = "data"
   }
 }
 
