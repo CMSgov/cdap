@@ -30,7 +30,7 @@ data "aws_region" "current" {}
 }*/
 data "aws_vpc" "target_vpc" {
   filter {
-    name   = "tag:Name"
+    name = "tag:Name"
     values = [
       var.app == "ab2d" ? local.db_name : "${var.app}-${var.env}-vpc"
     ]
