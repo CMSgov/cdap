@@ -54,7 +54,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
-  count                       = var.app == "ab2d" ? 1 : 0 
+  count = var.app == "ab2d" ? 1 : 0
 
   description                  = "Controller Access"
   from_port                    = "5432"
@@ -81,18 +81,18 @@ resource "aws_db_subnet_group" "subnet_group" {
   subnet_ids = flatten([
     # For ab2d, use private-a and private-b (if needed)
     var.app == "ab2d" ? [
-      data.aws_subnets.private_subnet_a.id,   # `${local.db_name}-private-a`
-      data.aws_subnet.private_subnet_b[0].id    # `${local.db_name}-private-b`
+      data.aws_subnets.private_subnet_a.id,  # `${local.db_name}-private-a`
+      data.aws_subnet.private_subnet_b[0].id # `${local.db_name}-private-b`
     ] : [],
 
     # For bcda-opensbx, use only az1-data and az2-data
     var.app == "bcda" && var.env == "opensbx" ? [
-      data.aws_subnets.private_subnet_a.id,   # az1-data and az2-data from private_subnet_a
+      data.aws_subnets.private_subnet_a.id, # az1-data and az2-data from private_subnet_a
     ] : [],
 
     # For other bcda environments, use az1-data, az2-data, az3-data
     var.app == "bcda" && var.env != "opensbx" ? [
-      data.aws_subnets.private_subnet_a.id,   # az1-data, az2-data, az3-data from private_subnet_a
+      data.aws_subnets.private_subnet_a.id, # az1-data, az2-data, az3-data from private_subnet_a
     ] : []
   ])
 }
@@ -153,13 +153,13 @@ resource "aws_db_instance" "api" {
   db_subnet_group_name    = aws_db_subnet_group.subnet_group.name
   parameter_group_name    = aws_db_parameter_group.v16_parameter_group.name
   backup_retention_period = 7
-  iops              = var.app == "bcda" ? "1000" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
-  apply_immediately = true
-  kms_key_id = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
-  multi_az               = var.app == "bcda" ? true : local.db_name == "ab2d-east-prod"
-  vpc_security_group_ids = [aws_security_group.sg_database.id]
-  username               = data.aws_secretsmanager_secret_version.database_user.secret_string
-  password = length(data.aws_secretsmanager_secret_version.database_password) > 0 ? data.aws_secretsmanager_secret_version.database_password[0].secret_string : null
+  iops                    = var.app == "bcda" ? "1000" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
+  apply_immediately       = true
+  kms_key_id              = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
+  multi_az                = var.app == "bcda" ? true : local.db_name == "ab2d-east-prod"
+  vpc_security_group_ids  = [aws_security_group.sg_database.id]
+  username                = data.aws_secretsmanager_secret_version.database_user.secret_string
+  password                = length(data.aws_secretsmanager_secret_version.database_password) > 0 ? data.aws_secretsmanager_secret_version.database_password[0].secret_string : null
   # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 
 
   tags = merge(
