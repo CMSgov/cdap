@@ -99,6 +99,9 @@ module "github-actions-runner" {
   # Defaults to 5 minutes
   runner_boot_time_in_minutes = 10
 
+  # Run as root to avoid https://github.com/actions/checkout/issues/956
+  runner_as_root = true
+
   runner_iam_role_managed_policy_arns  = [aws_iam_policy.runner.arn]
   runner_additional_security_group_ids = [data.aws_security_group.vpn.id]
 
