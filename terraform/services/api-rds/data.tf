@@ -93,7 +93,7 @@ data "aws_security_group" "worker_sg" {
 }
 
 data "aws_security_group" "gedit" {
-  for_each = toset(local.gedit_security_group_names)
+  for_each = var.app == "bcda" ? toset(local.gedit_security_group_names) : toset([])
 
   # Use description to filter security groups instead of name
   filter {
