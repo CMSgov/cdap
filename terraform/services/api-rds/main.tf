@@ -25,7 +25,7 @@ locals {
     bcda = 11
   }[var.app]
 
-  additional_ingress_sgs   = var.app == "bcda" ? flatten([data.aws_security_group.app_sg.id, data.aws_security_group.worker_sg.id]) : []
+  additional_ingress_sgs   = var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : []
   gedit_security_group_ids = var.app == "bcda" ? flatten([for sg in data.aws_security_group.gedit : sg.id]) : []
 }
 
@@ -55,7 +55,7 @@ resource "aws_vpc_security_group_egress_rule" "egress_all" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
-  for_each = var.app == "bcda" ? toset([data.aws_security_group.app_sg.id, data.aws_security_group.worker_sg.id, var.jenkins_security_group_id]) : toset([var.jenkins_security_group_id])
+  for_each = var.app == "bcda" ? toset([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id, var.jenkins_security_group_id]) : toset([var.jenkins_security_group_id])
 
   description                  = "Jenkins Agent Access"
   from_port                    = "5432"

@@ -76,28 +76,24 @@ data "aws_kms_alias" "main_kms" {
   name  = "alias/${local.db_name}-main-kms"
 }
 
-# This will look for the bcda api app security group named based on the environment
 data "aws_security_group" "app_sg" {
   count = var.app == "bcda" ? 1 : 0
-
   filter {
     name   = "tag:Name"
-    values = ["bcda-api-${var.env}"]
+    values = ["bcda-api-${var.env}"] # This will look for the bcda api app security group named based on the environment
   }
 }
 
-# This looks for the bcda worker security group named based on the environment
 data "aws_security_group" "worker_sg" {
   count = var.app == "bcda" ? 1 : 0
-
   filter {
     name   = "tag:Name"
-    values = ["bcda-worker-${var.env}"]
+    values = ["bcda-worker-${var.env}"] # This looks for the bcda worker security group named based on the environment
   }
 }
 
 data "aws_security_group" "gedit" {
-  for_each = var.app == "bcda" ? toset(local.gedit_security_group_names) : {}
+  for_each = toset(local.gedit_security_group_names)
 
   # Use description to filter security groups instead of name
   filter {
@@ -105,4 +101,3 @@ data "aws_security_group" "gedit" {
     values = [each.value]
   }
 }
-
