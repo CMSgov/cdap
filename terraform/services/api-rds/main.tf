@@ -9,14 +9,24 @@ locals {
     bcda = "${var.app}-${var.env}"
     dpc  = "${var.app}-${var.env}"
   }[var.app]
+
   instance_class = {
     ab2d = "db.m6i.2xlarge"
     bcda = "db.m6i.large"
   }[var.app]
+
   allocated_storage = {
     ab2d = 500
     bcda = 100
   }[var.app]
+
+  engine_version = {
+    ab2d = 16.4
+    bcda = 11
+  }[var.app]
+
+  additional_ingress_sgs   = var.app == "bcda" ? flatten([data.aws_security_group.app_sg.id, data.aws_security_group.worker_sg.id]) : []
+  gedit_security_group_ids = var.app == "bcda" ? flatten([for sg in data.aws_security_group.gedit : sg.id]) : []
 }
 
 ## Begin module/main.tf
@@ -45,11 +55,13 @@ resource "aws_vpc_security_group_egress_rule" "egress_all" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
+  for_each = var.app == "bcda" ? toset([data.aws_security_group.app_sg.id, data.aws_security_group.worker_sg.id, var.jenkins_security_group_id]) : toset([var.jenkins_security_group_id])
+
   description                  = "Jenkins Agent Access"
   from_port                    = "5432"
   to_port                      = "5432"
   ip_protocol                  = "tcp"
-  referenced_security_group_id = var.jenkins_security_group_id
+  referenced_security_group_id = each.value
   security_group_id            = aws_security_group.sg_database.id
 }
 
@@ -139,7 +151,7 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 resource "aws_db_instance" "api" {
   allocated_storage   = local.allocated_storage
   engine              = "postgres"
-  engine_version      = 16.4
+  engine_version      = local.engine_version
   instance_class      = local.instance_class
   identifier          = local.db_name
   storage_encrypted   = true
@@ -157,7 +169,7 @@ resource "aws_db_instance" "api" {
   apply_immediately       = true
   kms_key_id              = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
   multi_az                = var.app == "bcda" ? true : local.db_name == "ab2d-east-prod"
-  vpc_security_group_ids  = [aws_security_group.sg_database.id]
+  vpc_security_group_ids  = var.app == "bcda" ? concat([aws_security_group.sg_database.id], local.gedit_security_group_ids) : [aws_security_group.sg_database.id]
   username                = data.aws_secretsmanager_secret_version.database_user.secret_string
   password                = length(data.aws_secretsmanager_secret_version.database_password) > 0 ? data.aws_secretsmanager_secret_version.database_password[0].secret_string : null
   # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 
@@ -169,4 +181,23 @@ resource "aws_db_instance" "api" {
       "cpm backup" = "Monthly"
     })
   )
+}
+
+/* DB - Route53 */
+resource "aws_route53_record" "rds" {
+  count   = var.app == "bcda" ? 1 : 0
+  zone_id = aws_route53_zone.local_zone[0].zone_id
+  name    = "rds"
+  type    = "CNAME"
+  ttl     = "300"
+  records = [aws_db_instance.api.address]
+}
+
+resource "aws_route53_zone" "local_zone" {
+  count = var.app == "bcda" ? 1 : 0
+  name  = "bcda-${var.env}.local"
+
+  vpc {
+    vpc_id = data.aws_vpc.target_vpc.id
+  }
 }

@@ -1,5 +1,11 @@
 locals {
   secret_date = "2020-01-02-09-15-01"
+  gedit_security_group_names = [
+    "bcda-${var.env}-vpn-private",
+    "bcda-${var.env}-vpn-public",
+    "bcda-${var.env}-remote-management",
+    "bcda-${var.env}-enterprise-tools"
+  ]
 }
 
 data "aws_default_tags" "data_tags" {}
@@ -68,4 +74,28 @@ data "aws_security_group" "controller_security_group_id" {
 data "aws_kms_alias" "main_kms" {
   count = var.app == "ab2d" ? 1 : 0 # Only query the KMS alias for ab2d
   name  = "alias/${local.db_name}-main-kms"
+}
+
+data "aws_security_group" "app_sg" {
+  filter {
+    name   = "tag:Name"
+    values = ["bcda-api-${var.env}"] # This will look for the bcda api app security group named based on the environment
+  }
+}
+
+data "aws_security_group" "worker_sg" {
+  filter {
+    name   = "tag:Name"
+    values = ["bcda-worker-${var.env}"] # This looks for the bcda worker security group named based on the environment
+  }
+}
+
+data "aws_security_group" "gedit" {
+  for_each = toset(local.gedit_security_group_names)
+
+  # Use description to filter security groups instead of name
+  filter {
+    name   = "description"
+    values = [each.value]
+  }
 }
