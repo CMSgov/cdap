@@ -63,11 +63,10 @@ module "github-actions-runner" {
     webhook_secret = var.webhook_secret
   }
 
-  # match the volume size of the source AMI snapshot
   block_device_mappings = [{
     device_name           = "/dev/xvda"
     delete_on_termination = true
-    volume_size           = 31
+    volume_size           = 63
     encrypted             = true
   }]
 
