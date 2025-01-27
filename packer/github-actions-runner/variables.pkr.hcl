@@ -7,7 +7,7 @@ variable "region" {
 variable "instance_type" {
   description = "The instance type Packer will use for the builder"
   type        = string
-  default     = "t3.large"
+  default     = "t3.xlarge"
 }
 
 variable "ami_account" {

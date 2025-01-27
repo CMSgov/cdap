@@ -106,7 +106,7 @@ module "github-actions-runner" {
 
   instance_target_capacity_type = "on-demand"
   instance_types = [
-    "t3.large",
+    "t3.xlarge",
   ]
 
   enable_ami_housekeeper = true
