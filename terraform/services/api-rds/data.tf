@@ -10,25 +10,38 @@ locals {
 
 data "aws_default_tags" "data_tags" {}
 
+# Secrets for "ab2d" app
 data "aws_secretsmanager_secret" "secret_database_password" {
-  count = var.app == "ab2d" ? 1 : 0 # Only for "ab2d"
-
-  name = "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}"
+  count = var.app == "ab2d" ? 1 : 0
+  name  = "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}"
 }
 
 data "aws_secretsmanager_secret_version" "database_password" {
-  count = var.app == "ab2d" ? 1 : 0 # Only for "ab2d"
-
-  secret_id = length(data.aws_secretsmanager_secret.secret_database_password) > 0 ? data.aws_secretsmanager_secret.secret_database_password[0].id : null
+  count     = var.app == "ab2d" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.secret_database_password[0].id
 }
 
 data "aws_secretsmanager_secret" "secret_database_user" {
-  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : "${var.app}/${var.env}/rds-main-credentials"
+  count = var.app == "ab2d" ? 1 : 0
+  name  = "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}"
 }
 
 data "aws_secretsmanager_secret_version" "database_user" {
-  secret_id = data.aws_secretsmanager_secret.secret_database_user.id
+  count     = var.app == "ab2d" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.secret_database_user[0].id
 }
+
+# Secrets for "bcda" app
+data "aws_secretsmanager_secret" "database_secret" {
+  count = var.app == "bcda" ? 1 : 0
+  name  = "${var.app}/${var.env}/rds-main-credentials"
+}
+
+data "aws_secretsmanager_secret_version" "database_secret_version" {
+  count     = var.app == "bcda" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.database_secret[0].id
+}
+
 
 data "aws_caller_identity" "current" {}
 
