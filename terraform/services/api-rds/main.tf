@@ -72,7 +72,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
   from_port                    = 5432
   to_port                      = 5432
   ip_protocol                  = "tcp"
-  referenced_security_group_id = var.app == "ab2d" ? data.aws_security_group.controller_security_group_id.id : null
+  referenced_security_group_id = var.app == "ab2d" && length(data.aws_security_group.controller_security_group_id) > 0 ? data.aws_security_group.controller_security_group_id[count.index].id : null
   security_group_id            = aws_security_group.sg_database.id
 }
 
