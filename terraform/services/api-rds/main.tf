@@ -92,18 +92,18 @@ resource "aws_db_subnet_group" "subnet_group" {
   subnet_ids = flatten([
     # For ab2d, use private-a and private-b (if needed)
     var.app == "ab2d" ? [
-      data.aws_subnets.private_subnet_a.id,  # `${local.db_name}-private-a`
-      data.aws_subnet.private_subnet_b[0].id # `${local.db_name}-private-b`
+      data.aws_subnet.private_subnet_a[0].id, # `${local.db_name}-private-a`
+      data.aws_subnet.private_subnet_b[0].id  # `${local.db_name}-private-b`
     ] : [],
 
     # For bcda-opensbx, use only az1-data and az2-data
     var.app == "bcda" && var.env == "opensbx" ? [
-      data.aws_subnets.private_subnet_a.id, # az1-data and az2-data from private_subnet_a
+      data.aws_subnets.bcda_subnets[0].id, # az1-data and az2-data from private_subnet_a
     ] : [],
 
     # For other bcda environments, use az1-data, az2-data, az3-data
     var.app == "bcda" && var.env != "opensbx" ? [
-      data.aws_subnets.private_subnet_a.id, # az1-data, az2-data, az3-data from private_subnet_a
+      data.aws_subnets.bcda_subnets[0].id, # az1-data, az2-data, az3-data from private_subnet_a
     ] : []
   ])
 

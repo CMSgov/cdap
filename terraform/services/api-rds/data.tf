@@ -56,14 +56,11 @@ data "aws_vpc" "target_vpc" {
   }
 }
 
-data "aws_subnets" "private_subnet_a" {
+data "aws_subnet" "private_subnet_a" {
+  count = var.app == "ab2d" ? 1 : 0
   filter {
-    name = "tag:Name"
-    values = flatten([
-      var.app == "ab2d" ? ["${local.db_name}-private-a"] : [],
-      var.app == "bcda" && var.env == "opensbx" ? ["${var.app}-${var.env}-az1-data", "${var.app}-${var.env}-az2-data"] : [],
-      var.app == "bcda" && var.env != "opensbx" ? ["${var.app}-${var.env}-az1-data", "${var.app}-${var.env}-az2-data", "${var.app}-${var.env}-az3-data"] : []
-    ])
+    name   = "tag:Name"
+    values = ["${local.db_name}-private-a"]
   }
 }
 
@@ -72,6 +69,17 @@ data "aws_subnet" "private_subnet_b" {
   filter {
     name   = "tag:Name"
     values = ["${local.db_name}-private-b"]
+  }
+}
+
+data "aws_subnets" "bcda_subnets" {
+  count = var.app == "bcda" ? 1 : 0 # Only create this data source if app is 'bcda'
+  filter {
+    name = "tag:Name"
+    values = flatten([
+      var.app == "bcda" && var.env == "opensbx" ? ["${var.app}-${var.env}-az1-data", "${var.app}-${var.env}-az2-data"] : [],
+      var.app == "bcda" && var.env != "opensbx" ? ["${var.app}-${var.env}-az1-data", "${var.app}-${var.env}-az2-data", "${var.app}-${var.env}-az3-data"] : []
+    ])
   }
 }
 
