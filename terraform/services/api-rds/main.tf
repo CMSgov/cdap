@@ -65,15 +65,13 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
   security_group_id            = aws_security_group.sg_database.id
 }
 
-
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
-  count = var.app == "ab2d" && length(data.aws_security_group.controller_security_group_id) > 0 ? 1 : 0
-
+  count                        = var.app == "ab2d" ? 1 : 0
   description                  = "Controller Access"
-  from_port                    = 5432
-  to_port                      = 5432
+  from_port                    = "5432"
+  to_port                      = "5432"
   ip_protocol                  = "tcp"
-  referenced_security_group_id = var.app == "ab2d" && length(data.aws_security_group.controller_security_group_id) > 0 ? data.aws_security_group.controller_security_group_id[count.index].id : null
+  referenced_security_group_id = data.aws_security_group.controller_security_group_id[count.index].id
   security_group_id            = aws_security_group.sg_database.id
 }
 
@@ -108,7 +106,12 @@ resource "aws_db_subnet_group" "subnet_group" {
       data.aws_subnets.private_subnet_a.id, # az1-data, az2-data, az3-data from private_subnet_a
     ] : []
   ])
+
+  tags = {
+    Name = var.app == "bcda" ? "${var.app}-${var.env}-rds-subnet-group" : "${local.db_name}-rds-subnet-group"
+  }
 }
+
 
 # Create database parameter group
 
