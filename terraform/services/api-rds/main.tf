@@ -66,13 +66,13 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
-  for_each = var.app == "ab2d" ? toset(["ab2d"]) : toset([])
+  count = var.app == "ab2d" && length(data.aws_security_group.controller_security_group_id) > 0 ? 1 : 0
 
   description                  = "Controller Access"
-  from_port                    = "5432"
-  to_port                      = "5432"
+  from_port                    = 5432
+  to_port                      = 5432
   ip_protocol                  = "tcp"
-  referenced_security_group_id = length(data.aws_security_group.controller_security_group_id) > 0 ? data.aws_security_group.controller_security_group_id[0].id : null
+  referenced_security_group_id = var.app == "ab2d" ? data.aws_security_group.controller_security_group_id.id : null
   security_group_id            = aws_security_group.sg_database.id
 }
 
