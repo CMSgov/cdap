@@ -55,7 +55,7 @@ resource "aws_vpc_security_group_egress_rule" "egress_all" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
-  for_each = var.app == "bcda" ? toset([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id, var.jenkins_security_group_id]) : toset([var.jenkins_security_group_id])
+  for_each = var.app == "bcda" ? toset([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id, var.jenkins_security_group_id]) : var.app == "ab2d" ? toset([var.jenkins_security_group_id]) : tomap({})
 
   description                  = "Jenkins Agent Access"
   from_port                    = "5432"
@@ -66,7 +66,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
-  count = var.app == "ab2d" ? 1 : 0
+  for_each = var.app == "ab2d" ? toset(["ab2d"]) : toset([])
 
   description                  = "Controller Access"
   from_port                    = "5432"
