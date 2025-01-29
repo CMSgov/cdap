@@ -74,6 +74,8 @@ module "github-actions-runner" {
   runner_binaries_syncer_lambda_zip = "lambdas-download/runner-binaries-syncer.zip"
   runners_lambda_zip                = "lambdas-download/runners.zip"
   ami_housekeeper_lambda_zip        = "lambdas-download/ami-housekeeper.zip"
+  # Increases concurrent runners from 3 (default)
+  runners_maximum_count             = 12
 
   ami_owners = [var.ami_account]
   ami_filter = {
