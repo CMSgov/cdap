@@ -27,10 +27,8 @@ jobs:
         include:
           - app: dpc
             env: prod
-          - app: ab2d
-            env: dev
-          - app: ab2d
-            env: test
+          - app: bcda
+            env: prod
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
