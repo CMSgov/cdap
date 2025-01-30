@@ -34,7 +34,7 @@ source "amazon-ebs" "github-actions-runner" {
 
   # Ensures the launched runner instances use the full volumes
   launch_block_device_mappings {
-    device_name           = "/dev/xvda"
+    device_name           = "/dev/nvme0n1p3"
     volume_size           = 63
     delete_on_termination = true
     encrypted             = true
