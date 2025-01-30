@@ -63,11 +63,10 @@ module "github-actions-runner" {
     webhook_secret = var.webhook_secret
   }
 
-  # match the volume size of the source AMI snapshot
   block_device_mappings = [{
     device_name           = "/dev/xvda"
     delete_on_termination = true
-    volume_size           = 31
+    volume_size           = 63
     encrypted             = true
   }]
 
@@ -75,6 +74,8 @@ module "github-actions-runner" {
   runner_binaries_syncer_lambda_zip = "lambdas-download/runner-binaries-syncer.zip"
   runners_lambda_zip                = "lambdas-download/runners.zip"
   ami_housekeeper_lambda_zip        = "lambdas-download/ami-housekeeper.zip"
+  # Increases concurrent runners from 3 (default)
+  runners_maximum_count = 12
 
   ami_owners = [var.ami_account]
   ami_filter = {
@@ -99,12 +100,15 @@ module "github-actions-runner" {
   # Defaults to 5 minutes
   runner_boot_time_in_minutes = 10
 
+  # Run as root to avoid https://github.com/actions/checkout/issues/956
+  runner_as_root = true
+
   runner_iam_role_managed_policy_arns  = [aws_iam_policy.runner.arn]
   runner_additional_security_group_ids = [data.aws_security_group.vpn.id]
 
   instance_target_capacity_type = "on-demand"
   instance_types = [
-    "t3.large",
+    "t3.xlarge",
   ]
 
   enable_ami_housekeeper = true

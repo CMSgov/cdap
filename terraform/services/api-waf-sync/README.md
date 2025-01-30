@@ -1,6 +1,6 @@
 # Terraform for api-waf-sync function and associated infra
 
-This service sets up the infrastructure for the api-waf-sync lambda function in dev for dpc.
+This service sets up the infrastructure for the api-waf-sync lambda function in dev for BCDA/DPC.
 
 ## Manual deploy
 

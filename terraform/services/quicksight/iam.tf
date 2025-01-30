@@ -141,7 +141,11 @@ resource "aws_iam_policy" "athena_query_source" {
           "s3:ListMultipartUploadParts",
           "s3:AbortMultipartUpload",
           "s3:CreateBucket",
-          "s3:PutObject"
+          "s3:PutObject",
+          "s3:ListAllMyBuckets",
+          "athena:ListDataCatalogs",
+          "athena:GetDataCatalog",
+          "quicksight:*"
         ]
         Resource = [
           "arn:aws:s3:::aws-athena-query-results-*",
@@ -165,6 +169,45 @@ resource "aws_iam_policy" "athena_query_source" {
   })
 }
 
+resource "aws_iam_policy" "athena_glue_access" {
+  name        = "dpc-insights-athena-glue-access-${var.env}"
+  path        = "/delegatedadmin/developer/"
+  description = "Permissions needed for Athena to access Glue databases"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "DatabasePermissions"
+        Effect = "Allow"
+        Action = [
+          "glue:GetDatabase",
+          "glue:GetDatabases",
+          "glue:CreateDatabase"
+        ]
+        Resource = [
+          "arn:aws:glue:us-east-1:${local.account_id}:catalog",
+          "${aws_glue_catalog_database.agg.arn}",
+          "${aws_glue_catalog_database.api.arn}"
+        ]
+      },
+      {
+        Sid    = "TablePermissions"
+        Effect = "Allow"
+        Action = [
+          "glue:GetDatabase",
+          "glue:GetTables"
+        ]
+        Resource = [
+          "${aws_glue_catalog_database.agg.arn}",
+          "${aws_glue_catalog_database.api.arn}",
+          "arn:aws:glue::${local.account_id}:table/${aws_glue_catalog_database.agg.name}/*",
+          "arn:aws:glue::${local.account_id}:table/${aws_glue_catalog_database.api.name}/*"
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_policy" "athena_query_results" {
   name        = "dpc-insights-athena-query-results-${var.env}"
   path        = "/delegatedadmin/developer/"
@@ -183,7 +226,11 @@ resource "aws_iam_policy" "athena_query_results" {
           "s3:ListMultipartUploadParts",
           "s3:AbortMultipartUpload",
           "s3:CreateBucket",
-          "s3:PutObject"
+          "s3:PutObject",
+          "s3:ListAllMyBuckets",
+          "athena:ListDataCatalogs",
+          "athena:GetDataCatalog",
+          "quicksight:*"
         ]
         Resource = [
           "arn:aws:s3:::aws-athena-query-results-*",
@@ -210,6 +257,11 @@ resource "aws_iam_policy" "athena_query_results" {
 resource "aws_iam_group_policy_attachment" "athena_query_attach" {
   group      = aws_iam_group.main.id
   policy_arn = aws_iam_policy.athena_query_source.arn
+}
+
+resource "aws_iam_group_policy_attachment" "athena_catalog_attach" {
+  group      = aws_iam_group.main.id
+  policy_arn = aws_iam_policy.athena_glue_access.arn
 }
 
 resource "aws_iam_group_policy_attachment" "athena_results_attach" {
@@ -601,4 +653,28 @@ data "aws_iam_policy" "aws_athena_full_policy" {
 resource "aws_iam_role_policy_attachment" "iam-policy-athena-service" {
   role       = aws_iam_role.iam-role-glue.id
   policy_arn = data.aws_iam_policy.aws_athena_full_policy.arn
+}
+
+data "aws_kms_alias" "glue_s3_key" {
+  name = local.dpc_glue_bucket_key_alias
+}
+
+# Grant to QuickSight access to the Glue bucket key
+resource "aws_kms_grant" "glue" {
+  name              = "${local.dpc_glue_s3_name}-grant"
+  key_id            = data.aws_kms_alias.glue_s3_key.target_key_id
+  grantee_principal = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/aws-quicksight-service-role-v0"
+  operations        = ["Encrypt", "Decrypt", "GenerateDataKey", "DescribeKey", "ReEncryptTo", "ReEncryptFrom"]
+}
+
+data "aws_kms_alias" "athena_s3_key" {
+  name = local.dpc_athena_bucket_key_alias
+}
+
+# Grant to QuickSight access to the Athena bucket key
+resource "aws_kms_grant" "athena" {
+  name              = "${local.dpc_athena_s3_name}-grant"
+  key_id            = data.aws_kms_alias.athena_s3_key.target_key_id
+  grantee_principal = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/aws-quicksight-service-role-v0"
+  operations        = ["Encrypt", "Decrypt", "GenerateDataKey", "DescribeKey", "ReEncryptTo", "ReEncryptFrom"]
 }

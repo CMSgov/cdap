@@ -48,7 +48,7 @@ variable "content_type" {
 variable "rate_limit" {
   description = "IP rate limit for every 5 minutes"
   type        = number
-  default     = 300
+  default     = 3000
 }
 
 variable "ip_sets" {

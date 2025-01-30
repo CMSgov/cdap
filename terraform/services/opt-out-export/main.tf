@@ -31,7 +31,7 @@ locals {
   memory_size = {
     ab2d = 10240
     bcda = null
-    dpc  = 1024
+    dpc  = 2048
   }
 }
 

@@ -1,21 +1,26 @@
 --
--- This view is the basis for the DPC Quicksight dashboard Component '' and
--- returns one row for each day that DPC requested a unique beneficiary.
--- The content of the returned rows is ...
---
--- NOTE: TBD
+-- This view is the basis for the DPC Quicksight dashboard Component 
+-- "Since" Parameter Calls by Day
+-- View returns one row for each day that DPC processed calls that leveraged '%_since'.
+-- The content of the returned rows is the count of calls and corresponding date
 --
 create or replace view since_requests_by_day as
 select since_call_ct, date_format(msgday, '%Y-%m-%d') as msgdate
 from (
-    SELECT count(message) as since_call_ct, date_trunc('day', from_iso8601_timestamp(json_extract_scalar(message,'$.timestamp')) ) as msgday
-    FROM ${api_profile}
-    where json_query(message, 'lax $.contentlength' null on error ) is null
-    and json_query(message, 'lax $.message' null on error) is not null
-    and json_extract_scalar(message,'$.application') = ${app}
-    and json_extract_scalar(message, '$.environment') = ${env}
-    and json_extract_scalar(message,'$.message') like 'Exporting data for provider%_since%'
-    and date_diff('day', current_date, from_iso8601_timestamp(json_extract_scalar(message,'$.timestamp'))) < ${days_history}
-    group by date_trunc('day', from_iso8601_timestamp(json_extract_scalar(message,'$.timestamp')) )
+    SELECT count(message) as since_call_ct, date_trunc('day', messagets ) as msgday
+    FROM (
+        select message,
+               cast(json_extract_scalar (message, '$.contentlength') as VARCHAR) as contentlength,
+               cast(json_extract_scalar (message, '$.message') as VARCHAR) as payloadmessage,
+               from_iso8601_timestamp(cast(json_extract_scalar(message,'$.timestamp') as VARCHAR)) as messagets
+        FROM ${api_profile}
+    ) rowset
+    where contentlength is null
+      and payloadmessage is not null
+      and cast(json_extract_scalar(message,'$.application') as VARCHAR) = ${app}
+      and cast(json_extract_scalar(message, '$.environment') as VARCHAR) = ${env}
+      and payloadmessage like 'Exporting data for provider%_since%'
+      and date_diff('day', current_date, messagets) < ${days_history}
+      group by date_trunc('day', messagets )
 ) summarydata
 order by summarydata.msgday
