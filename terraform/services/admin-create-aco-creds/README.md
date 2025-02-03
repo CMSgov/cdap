@@ -1,4 +1,4 @@
-# Terraform for Admin ACO Deny function and associated infra
+# Terraform for Admin Create ACO Credentials function and associated infra
 
 This service sets up the infrastructure for the Admin Create ACO Credentials lambda function in upper and lower environments for BCDA.
 
