@@ -1,18 +1,17 @@
-provider "aws" {
-  default_tags {
-    tags = {
-      application = var.app
-      business    = "oeda"
-      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/admin-create-group"
-      component   = "admin-create-group"
-      environment = var.env
-      terraform   = true
-    }
+variable "app" {
+  description = "The application name (bcda)"
+  type        = string
+  validation {
+    condition     = contains(["bcda"], var.app)
+    error_message = "Valid value for app is bcda."
   }
 }
 
-terraform {
-  backend "s3" {
-    key = "admin-create-group/terraform.tfstate"
+variable "env" {
+  description = "The application environment (dev, test, sbx, prod)"
+  type        = string
+  validation {
+    condition     = contains(["dev", "test", "sbx", "prod"], var.env)
+    error_message = "Valid value for env is dev, test, sbx, or prod."
   }
 }
