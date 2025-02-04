@@ -1,7 +1,7 @@
 locals {
   full_name   = "${var.app}-${var.env}-admin-aco-deny"
   db_sg_name  = "bcda-${var.env}-rds"
-  memory_size = 2048
+  memory_size = 256
 }
 
 module "admin_aco_deny_function" {
