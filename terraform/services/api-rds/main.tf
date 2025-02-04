@@ -174,7 +174,7 @@ resource "aws_db_instance" "api" {
 resource "aws_route53_record" "rds" {
   count   = var.app == "bcda" ? 1 : 0
   zone_id = aws_route53_zone.local_zone[0].zone_id
-  name    = "rds"
+  name    = "rds.${aws_route53_zone.local_zone[0].name}"
   type    = "CNAME"
   ttl     = "300"
   records = [aws_db_instance.api.address]
