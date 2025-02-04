@@ -1,7 +1,18 @@
 locals {
   full_name   = "${var.app}-${var.env}-admin-create-aco-creds"
   db_sg_name  = "bcda-${var.env}-rds"
-  memory_size = 2048
+  memory_size = 256
+}
+
+data "aws_ssm_parameter" "aco_creds_bucket_role_arn" {
+  name = "arn:aws:s3:::bcda-aco-credentials/${var.env}"
+}
+
+data "aws_iam_policy_document" "assume_bucket_role" {
+  statement {
+    actions   = ["s3:PutObject"]
+    resources = [data.aws_ssm_parameter.aco_creds_bucket_role_arn.value]
+  }
 }
 
 module "admin_create_aco_creds_function" {
@@ -17,6 +28,10 @@ module "admin_create_aco_creds_function" {
   runtime = "provided.al2"
 
   memory_size = local.memory_size
+
+  function_role_inline_policies = {
+    assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
+  }
 
   environment_variables = {
     ENV      = var.env
