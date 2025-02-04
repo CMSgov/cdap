@@ -26,7 +26,7 @@ locals {
   }[var.app]
 
   additional_ingress_sgs   = var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : []
-  gedit_security_group_ids = var.app == "bcda" ? flatten([for sg in data.aws_security_group.gedit : sg.id]) : []
+  gdit_security_group_ids = var.app == "bcda" ? flatten([for sg in data.aws_security_group.gdit : sg.id]) : []
 }
 
 ## Begin module/main.tf
@@ -87,12 +87,12 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
 # Create database subnet group
 
 resource "aws_db_subnet_group" "subnet_group" {
-  name = var.app == "bcda" ? "${var.app}-${var.env}-rds-subnet-group" : "${local.db_name}-rds-subnet-group"
+  name = var.app == "bcda" ? "${var.app}-${var.env}-rds-subnets" : "${local.db_name}-rds-subnet-group"
 
   subnet_ids = data.aws_subnets.db.ids
 
   tags = {
-    Name = var.app == "bcda" ? "${var.app}-${var.env}-rds-subnet-group" : "${local.db_name}-rds-subnet-group"
+    Name = var.app == "bcda" ? "${var.app}-${var.env}-rds-subnets" : "${local.db_name}-rds-subnet-group"
   }
 }
 
@@ -156,7 +156,7 @@ resource "aws_db_instance" "api" {
   apply_immediately       = true
   kms_key_id              = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
   multi_az                = var.env == "prod" ? true : false
-  vpc_security_group_ids  = var.app == "bcda" ? concat([aws_security_group.sg_database.id], local.gedit_security_group_ids) : [aws_security_group.sg_database.id]
+  vpc_security_group_ids  = var.app == "bcda" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
   username                = data.aws_secretsmanager_secret_version.database_user.secret_string
   password                = data.aws_secretsmanager_secret_version.database_password.secret_string
   # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 

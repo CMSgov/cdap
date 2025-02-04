@@ -1,6 +1,6 @@
 locals {
   secret_date = "2020-01-02-09-15-01"
-  gedit_security_group_names = [
+  gdit_security_group_names = [
     "bcda-${var.env}-vpn-private",
     "bcda-${var.env}-vpn-public",
     "bcda-${var.env}-remote-management",
@@ -84,8 +84,8 @@ data "aws_security_group" "worker_sg" {
   }
 }
 
-data "aws_security_group" "gedit" {
-  for_each = var.app == "bcda" ? toset(local.gedit_security_group_names) : toset([])
+data "aws_security_group" "gdit" {
+  for_each = var.app == "bcda" ? toset(local.gdit_security_group_names) : toset([])
 
   # Use description to filter security groups instead of name
   filter {
