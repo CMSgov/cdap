@@ -4,14 +4,10 @@ locals {
   memory_size = 256
 }
 
-data "aws_ssm_parameter" "aco_creds_bucket_role_arn" {
-  name = "arn:aws:s3:::bcda-aco-credentials/*"
-}
-
-data "aws_iam_policy_document" "assume_bucket_role" {
+data "aws_iam_policy_document" "creds_bucket" {
   statement {
     actions   = ["s3:PutObject"]
-    resources = [data.aws_ssm_parameter.aco_creds_bucket_role_arn.value]
+    resources = ["arn:aws:s3:::bcda-aco-credentials/${var.env == "sbx" ? "opensbx" : var.env}/*"]
   }
 }
 
@@ -30,7 +26,7 @@ module "admin_create_aco_creds_function" {
   memory_size = local.memory_size
 
   function_role_inline_policies = {
-    assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
+    assume-bucket-role = data.aws_iam_policy_document.creds_bucket.json
   }
 
   environment_variables = {
