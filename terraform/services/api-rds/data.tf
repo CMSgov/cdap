@@ -10,30 +10,9 @@ locals {
 
 data "aws_default_tags" "data_tags" {}
 
-# Secrets for "ab2d" app
-/*data "aws_secretsmanager_secret" "secret_database_password" {
-  count = var.app == "ab2d" ? 1 : 0
-  name  = "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}"
-}
-
-data "aws_secretsmanager_secret_version" "database_password" {
-  count     = var.app == "ab2d" ? 1 : 0
-  secret_id = data.aws_secretsmanager_secret.secret_database_password[0].id
-}
-
-data "aws_secretsmanager_secret" "secret_database_user" {
-  count = var.app == "ab2d" ? 1 : 0
-  name  = "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}"
-}
-
-data "aws_secretsmanager_secret_version" "database_user" {
-  count     = var.app == "ab2d" ? 1 : 0
-  secret_id = data.aws_secretsmanager_secret.secret_database_user[0].id
-}*/
-
 # Fetching the secret for database username
 data "aws_secretsmanager_secret" "secret_database_user" {
-  name = var.app == "ab2d" ? "${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/db/username" : null
+  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/db/username" : null
 }
 
 data "aws_secretsmanager_secret_version" "database_user" {
@@ -42,7 +21,7 @@ data "aws_secretsmanager_secret_version" "database_user" {
 
 # Fetching the secret for database password
 data "aws_secretsmanager_secret" "secret_database_password" {
-  name = var.app == "ab2d" ? "${local.db_name}/module/db/database_password/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/db/password" : null
+  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/db/password" : null
 }
 
 data "aws_secretsmanager_secret_version" "database_password" {
