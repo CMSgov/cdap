@@ -20,9 +20,9 @@ locals {
     bcda = 100
   }[var.app]
 
-  engine_version = {
-    ab2d = 16.4
-    bcda = 11
+  backup_retention_period = {
+    ab2d = 7
+    bcda = 35
   }[var.app]
 
   additional_ingress_sgs  = var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : []
@@ -92,7 +92,7 @@ resource "aws_db_subnet_group" "subnet_group" {
   subnet_ids = data.aws_subnets.db.ids
 
   tags = {
-    Name = var.app == "bcda" ? "${var.app}-${var.env}-rds-subnets" : "${local.db_name}-rds-subnet-group"
+    Name = var.app == "bcda" ? "RDS subnet group" : "${local.db_name}-rds-subnet-group"
   }
 }
 
@@ -138,9 +138,9 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 resource "aws_db_instance" "api" {
   allocated_storage   = local.allocated_storage
   engine              = "postgres"
-  engine_version      = local.engine_version
+  engine_version      = 16.4
   instance_class      = local.instance_class
-  identifier          = local.db_name
+  identifier          = var.app == "bcda" ? "${var.app}-${var.env}-rds" : local.db_name
   storage_encrypted   = true
   deletion_protection = true
   enabled_cloudwatch_logs_exports = [
@@ -151,7 +151,7 @@ resource "aws_db_instance" "api" {
 
   db_subnet_group_name    = aws_db_subnet_group.subnet_group.name
   parameter_group_name    = aws_db_parameter_group.v16_parameter_group.name
-  backup_retention_period = 7
+  backup_retention_period = local.backup_retention_period
   iops                    = var.app == "bcda" ? "1000" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
   apply_immediately       = true
   kms_key_id              = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
