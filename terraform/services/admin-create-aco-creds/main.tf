@@ -5,7 +5,7 @@ locals {
 }
 
 data "aws_ssm_parameter" "aco_creds_bucket_role_arn" {
-  name = "arn:aws:s3:::bcda-aco-credentials/${var.env}"
+  name = "arn:aws:s3:::bcda-aco-credentials/*"
 }
 
 data "aws_iam_policy_document" "assume_bucket_role" {
