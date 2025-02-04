@@ -25,7 +25,7 @@ locals {
     bcda = 11
   }[var.app]
 
-  additional_ingress_sgs   = var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : []
+  additional_ingress_sgs  = var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : []
   gdit_security_group_ids = var.app == "bcda" ? flatten([for sg in data.aws_security_group.gdit : sg.id]) : []
 }
 
