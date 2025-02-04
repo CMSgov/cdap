@@ -11,7 +11,7 @@ locals {
 data "aws_default_tags" "data_tags" {}
 
 # Secrets for "ab2d" app
-data "aws_secretsmanager_secret" "secret_database_password" {
+/*data "aws_secretsmanager_secret" "secret_database_password" {
   count = var.app == "ab2d" ? 1 : 0
   name  = "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}"
 }
@@ -29,19 +29,25 @@ data "aws_secretsmanager_secret" "secret_database_user" {
 data "aws_secretsmanager_secret_version" "database_user" {
   count     = var.app == "ab2d" ? 1 : 0
   secret_id = data.aws_secretsmanager_secret.secret_database_user[0].id
+}*/
+
+# Fetching the secret for database username
+data "aws_secretsmanager_secret" "secret_database_user" {
+  name = var.app == "ab2d" ? "${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/db/username" : null
 }
 
-# Secrets for "bcda" app
-data "aws_secretsmanager_secret" "database_secret" {
-  count = var.app == "bcda" ? 1 : 0
-  name  = "${var.app}/${var.env}/rds-main-credentials"
+data "aws_secretsmanager_secret_version" "database_user" {
+  secret_id = data.aws_secretsmanager_secret.secret_database_user.id
 }
 
-data "aws_secretsmanager_secret_version" "database_secret_version" {
-  count     = var.app == "bcda" ? 1 : 0
-  secret_id = data.aws_secretsmanager_secret.database_secret[0].id
+# Fetching the secret for database password
+data "aws_secretsmanager_secret" "secret_database_password" {
+  name = var.app == "ab2d" ? "${local.db_name}/module/db/database_password/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/db/password" : null
 }
 
+data "aws_secretsmanager_secret_version" "database_password" {
+  secret_id = data.aws_secretsmanager_secret.secret_database_password.id
+}
 
 data "aws_caller_identity" "current" {}
 
@@ -56,30 +62,16 @@ data "aws_vpc" "target_vpc" {
   }
 }
 
-data "aws_subnet" "private_subnet_a" {
-  count = var.app == "ab2d" ? 1 : 0
-  filter {
-    name   = "tag:Name"
-    values = ["${local.db_name}-private-a"]
-  }
-}
-
-data "aws_subnet" "private_subnet_b" {
-  count = var.app == "ab2d" ? 1 : 0
-  filter {
-    name   = "tag:Name"
-    values = ["${local.db_name}-private-b"]
-  }
-}
-
-data "aws_subnets" "bcda_subnets" {
-  count = var.app == "bcda" ? 1 : 0 # Only create this data source if app is 'bcda'
+data "aws_subnets" "db" {
   filter {
     name = "tag:Name"
-    values = flatten([
-      var.app == "bcda" && var.env == "opensbx" ? ["${var.app}-${var.env}-az1-data", "${var.app}-${var.env}-az2-data"] : [],
-      var.app == "bcda" && var.env != "opensbx" ? ["${var.app}-${var.env}-az1-data", "${var.app}-${var.env}-az2-data", "${var.app}-${var.env}-az3-data"] : []
-    ])
+    values = var.app == "ab2d" ? [
+      "${local.db_name}-private-a",
+      "${local.db_name}-private-b"
+      ] : var.app == "bcda" ? [
+      "${var.app}-${var.env}-az1-data",
+      "${var.app}-${var.env}-az2-data"
+    ] : []
   }
 }
 
