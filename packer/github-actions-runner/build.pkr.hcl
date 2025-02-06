@@ -25,6 +25,18 @@ build {
     ]
   }
 
+  provisioner "shell" {
+    remote_folder = "/home/ec2-user/"
+    inline = [
+      "sudo growpart /dev/nvme0n1 3",
+      "sudo pvresize /dev/nvme0n1p3",
+      "sudo lvextend -L 27G /dev/mapper/VolGroup00-varVol",
+      "sudo lvextend -L 20G /dev/mapper/VolGroup00-rootVol",
+      "sudo xfs_growfs /var",
+      "sudo xfs_growfs /",
+    ]
+  }
+
   provisioner "file" {
     content = templatefile("./install-runner.sh", {
       S3_LOCATION_RUNNER_DISTRIBUTION = var.s3_tarball
