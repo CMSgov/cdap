@@ -1,7 +1,7 @@
 locals {
   full_name   = "${var.app}-${var.env}-admin-create-aco"
-  db_sg_name  = "bcda-${var.env}-rds"
-  memory_size = 2048
+  db_sg_name  = "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds"
+  memory_size = 256
 }
 
 module "admin_create_aco_function" {
