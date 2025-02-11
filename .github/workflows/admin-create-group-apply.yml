@@ -1,18 +1,18 @@
-name: Admin ACO Deny apply terraform
+name: Admin Create Group apply terraform
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/admin-aco-deny-apply.yml
+      - .github/workflows/admin-create-group-apply.yml
       - terraform/modules/bucket/**
       - terraform/modules/key/**
       - terraform/modules/function/**
       - terraform/modules/queue/**
       - terraform/modules/subnets/**
       - terraform/modules/vpc/**
-      - terraform/services/admin-aco-deny/**
+      - terraform/services/admin-create-group/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -23,11 +23,11 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/admin-aco-deny
+        working-directory: ./terraform/services/admin-create-group
     strategy:
       fail-fast: false
       matrix:
-        env: [dev, test, sbx, prod]
+        env: [dev, test, prod]
     env:
       TF_VAR_env: ${{ matrix.env }}
       TF_VAR_app: bcda

@@ -1,20 +1,19 @@
-name: Admin ACO Deny apply terraform
+name: Admin Create ACO apply terraform
 
 on:
   push:
     branches:
       - main
     paths:
-      - .github/workflows/admin-aco-deny-apply.yml
+      - .github/workflows/admin-create-aco-apply.yml
       - terraform/modules/bucket/**
       - terraform/modules/key/**
       - terraform/modules/function/**
       - terraform/modules/queue/**
       - terraform/modules/subnets/**
       - terraform/modules/vpc/**
-      - terraform/services/admin-aco-deny/**
+      - terraform/services/admin-create-aco/**
   workflow_dispatch: # Allow manual trigger
-
 jobs:
   terraform-apply:
     permissions:
@@ -23,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/admin-aco-deny
+        working-directory: ./terraform/services/admin-create-aco
     strategy:
       fail-fast: false
       matrix:
@@ -43,8 +42,7 @@ jobs:
       - uses: slackapi/slack-github-action@v1.26.0
         if: ${{ failure() }}
         with:
-          channel-id: 'C04UG13JF9B'
+          channel-id: "C04UG13JF9B"
           slack-message: "Terraform apply failure: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
