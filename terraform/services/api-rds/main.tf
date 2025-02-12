@@ -168,6 +168,12 @@ resource "aws_db_instance" "api" {
       "cpm backup" = "Monthly"
     })
   )
+
+  lifecycle {
+    ignore_changes = [
+      username
+    ]
+  }
 }
 
 /* DB - Route53 */
