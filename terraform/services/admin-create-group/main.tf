@@ -11,7 +11,7 @@ module "admin_create_group_function" {
   env = var.env
 
   name        = local.full_name
-  description = "Denies access to BCDA for supplied ACO IDs"
+  description = "Creates a group for the supplied CMS ID."
 
   handler = "bootstrap"
   runtime = "provided.al2"
