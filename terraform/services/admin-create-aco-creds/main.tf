@@ -13,9 +13,9 @@ data "aws_iam_policy_document" "creds_bucket" {
 
 data "aws_iam_policy_document" "kms_access" {
   statement {
-    actions   = ["kms:ListAliases"]
+    actions = ["kms:ListAliases"]
     // must be *, see: https://docs.aws.amazon.com/kms/latest/developerguide/alias-access.html#alias-access-view
-    resources = ["*"] 
+    resources = ["*"]
   }
 }
 
