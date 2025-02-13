@@ -11,6 +11,13 @@ data "aws_iam_policy_document" "creds_bucket" {
   }
 }
 
+data "aws_iam_policy_document" "kms_access" {
+  statement {
+    actions   = ["kms:ListAliases"]
+    resources = ["arn:aws:s3:::bcda-aco-credentials/${var.env == "sbx" ? "opensbx" : var.env}/*"]
+  }
+}
+
 module "admin_create_aco_creds_function" {
   source = "../../modules/function"
 
@@ -27,6 +34,7 @@ module "admin_create_aco_creds_function" {
 
   function_role_inline_policies = {
     assume-bucket-role = data.aws_iam_policy_document.creds_bucket.json
+    assume-kms-role    = data.aws_iam_policy_document.kms_access.json
   }
 
   environment_variables = {
