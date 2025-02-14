@@ -4,6 +4,10 @@ locals {
   memory_size = 256
 }
 
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
+
 data "aws_iam_policy_document" "creds_bucket" {
   statement {
     actions   = ["s3:PutObject"]
@@ -22,7 +26,7 @@ data "aws_iam_policy_document" "kms_access" {
 data "aws_iam_policy_document" "kms_generate" {
   statement {
     actions   = ["kms:GenerateDataKey"]
-    resources = ["arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:alias/bcda-aco-creds-kms"]
+    resources = ["arn:aws:kms:${data.aws_region.current.account_id}:${data.aws_caller_identity.current.account_id}:alias/bcda-aco-creds-kms"]
   }
 }
 
