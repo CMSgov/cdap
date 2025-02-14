@@ -19,6 +19,13 @@ data "aws_iam_policy_document" "kms_access" {
   }
 }
 
+data "aws_iam_policy_document" "kms_generate" {
+  statement {
+    actions   = ["kms:GenerateDataKey"]
+    resources = ["arn:aws:kms:us-east-1:${data.aws_caller_identity.current.account_id}:alias/bcda-aco-creds-kms"]
+  }
+}
+
 module "admin_create_aco_creds_function" {
   source = "../../modules/function"
 
@@ -34,8 +41,9 @@ module "admin_create_aco_creds_function" {
   memory_size = local.memory_size
 
   function_role_inline_policies = {
-    assume-bucket-role = data.aws_iam_policy_document.creds_bucket.json
-    assume-kms-role    = data.aws_iam_policy_document.kms_access.json
+    assume-bucket-role       = data.aws_iam_policy_document.creds_bucket.json
+    assume-kms-role          = data.aws_iam_policy_document.kms_access.json
+    assume-kms-generate-role = data.aws_iam_policy_document.kms_generate.json
   }
 
   environment_variables = {
