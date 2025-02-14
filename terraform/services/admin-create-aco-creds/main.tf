@@ -8,6 +8,10 @@ data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
+data "aws_kms_alias" "aco_creds_kms" {
+  name = "alias/bcda-aco-creds-kms"
+}
+
 data "aws_iam_policy_document" "creds_bucket" {
   statement {
     actions   = ["s3:PutObject"]
@@ -26,7 +30,7 @@ data "aws_iam_policy_document" "kms_access" {
 data "aws_iam_policy_document" "kms_generate" {
   statement {
     actions   = ["kms:GenerateDataKey"]
-    resources = ["arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:alias/bcda-aco-creds-kms"]
+    resources = [data.aws_kms_alias.aco_creds_kms.target_key_arn]
   }
 }
 
