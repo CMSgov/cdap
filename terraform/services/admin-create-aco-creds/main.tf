@@ -4,6 +4,10 @@ locals {
   memory_size = 256
 }
 
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
+
 data "aws_iam_policy_document" "creds_bucket" {
   statement {
     actions   = ["s3:PutObject"]
@@ -16,6 +20,13 @@ data "aws_iam_policy_document" "kms_access" {
     actions = ["kms:ListAliases"]
     // must be *, see: https://docs.aws.amazon.com/kms/latest/developerguide/alias-access.html#alias-access-view
     resources = ["*"]
+  }
+}
+
+data "aws_iam_policy_document" "kms_generate" {
+  statement {
+    actions   = ["kms:GenerateDataKey"]
+    resources = ["arn:aws:kms:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:alias/bcda-aco-creds-kms"]
   }
 }
 
@@ -34,8 +45,9 @@ module "admin_create_aco_creds_function" {
   memory_size = local.memory_size
 
   function_role_inline_policies = {
-    assume-bucket-role = data.aws_iam_policy_document.creds_bucket.json
-    assume-kms-role    = data.aws_iam_policy_document.kms_access.json
+    assume-bucket-role       = data.aws_iam_policy_document.creds_bucket.json
+    assume-kms-role          = data.aws_iam_policy_document.kms_access.json
+    assume-kms-generate-role = data.aws_iam_policy_document.kms_generate.json
   }
 
   environment_variables = {
