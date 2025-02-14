@@ -13,8 +13,9 @@ data "aws_iam_policy_document" "creds_bucket" {
 
 data "aws_iam_policy_document" "kms_access" {
   statement {
-    actions   = ["kms:ListAliases"]
-    resources = ["arn:aws:s3:::bcda-aco-credentials/${var.env == "sbx" ? "opensbx" : var.env}/*"]
+    actions = ["kms:ListAliases"]
+    // must be *, see: https://docs.aws.amazon.com/kms/latest/developerguide/alias-access.html#alias-access-view
+    resources = ["*"]
   }
 }
 
