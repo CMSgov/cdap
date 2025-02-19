@@ -87,12 +87,12 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
 # Create database subnet group
 
 resource "aws_db_subnet_group" "subnet_group" {
-  name = var.app == "bcda" ? "${var.app}-${var.env}-rds-subnets" : "${local.db_name}-rds-subnet-group"
+  name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "${var.app}-${var.env}-rds-subnets"
 
   subnet_ids = data.aws_subnets.db.ids
 
   tags = {
-    Name = var.app == "bcda" ? "RDS subnet group" : "${local.db_name}-rds-subnet-group"
+    Name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "RDS subnet group"
   }
 }
 
