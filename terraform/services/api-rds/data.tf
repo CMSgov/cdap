@@ -50,7 +50,7 @@ data "aws_subnets" "db" {
       ] : [
       "${var.app}-${var.env}-az1-data",
       "${var.app}-${var.env}-az2-data"
-    ] 
+    ]
   }
 }
 
