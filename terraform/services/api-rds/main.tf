@@ -6,8 +6,25 @@ locals {
       prod = "ab2d-east-prod"
       sbx  = "ab2d-sbx-sandbox"
     }[var.env]
-    bcda = "${var.app}-${var.env}"
-    dpc  = "${var.app}-${var.env}"
+    bcda = {
+      dev  = "bcda-dev-rds"
+      test = "bcda-test-rds"
+      prod = "bcda-prod-rds-20190201"
+      sbx  = "bcda-opensbx-rds-20190311"
+    }[var.env]
+
+    dpc = "${var.app}-${var.env}"
+  }[var.app]
+
+  sg_name = {
+    ab2d = "${local.db_name}-database-sg"
+    bcda = {
+      dev  = "bcda-dev-rds"
+      test = "bcda-test-rds"
+      prod = "bcda-prod-rds"
+      sbx  = "bcda-opensbx-rds"
+    }[var.env]
+    dpc = "${var.app}-${var.env}"
   }[var.app]
 
   instance_class = {
@@ -33,12 +50,12 @@ locals {
 
 # Create database security group
 resource "aws_security_group" "sg_database" {
-  name        = "${local.db_name}-database-sg"
-  description = "${local.db_name} database security group"
+  name        = local.sg_name
+  description = var.app == "ab2d" ? "${local.db_name} database security group" : "${local.db_name} security group"
   vpc_id      = data.aws_vpc.target_vpc.id
   tags = merge(
     data.aws_default_tags.data_tags.tags,
-    tomap({ "Name" = "${local.db_name}-database-sg" })
+    tomap({ "Name" = local.sg_name })
   )
 
   lifecycle {
@@ -140,7 +157,7 @@ resource "aws_db_instance" "api" {
   engine              = "postgres"
   engine_version      = 16.4
   instance_class      = local.instance_class
-  identifier          = var.app == "bcda" ? "${var.app}-${var.env}-rds" : local.db_name
+  identifier          = local.db_name
   storage_encrypted   = true
   deletion_protection = true
   enabled_cloudwatch_logs_exports = [
@@ -163,7 +180,7 @@ resource "aws_db_instance" "api" {
 
   tags = merge(
     data.aws_default_tags.data_tags.tags,
-    tomap({ "Name" = "${local.db_name}-rds",
+    tomap({ "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : local.db_name,
       "role"       = "db",
       "cpm backup" = "Monthly"
     })
