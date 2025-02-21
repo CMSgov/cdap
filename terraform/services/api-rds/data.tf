@@ -4,7 +4,9 @@ locals {
     "bcda-${var.env}-vpn-private",
     "bcda-${var.env}-vpn-public",
     "bcda-${var.env}-remote-management",
-    "bcda-${var.env}-enterprise-tools"
+    "bcda-${var.env}-enterprise-tools",
+    "bcda-${var.env}-allow-zscaler-private",
+    "bcda-${var.env}-rds"
   ]
 }
 
@@ -87,9 +89,12 @@ data "aws_security_group" "worker_sg" {
 data "aws_security_group" "gdit" {
   for_each = var.app == "bcda" ? toset(local.gdit_security_group_names) : toset([])
 
-  # Use description to filter security groups instead of name
   filter {
-    name   = "description"
+    name   = "tag:Name" # Searching by the "Name" tag
     values = [each.value]
   }
+}
+
+output "gdit_security_groups" {
+  value = data.aws_security_group.gdit
 }
