@@ -51,7 +51,7 @@ locals {
 # Create database security group
 resource "aws_security_group" "sg_database" {
   name        = local.sg_name
-  description = var.app == "ab2d" ? "${local.db_name} database security group" : "${local.db_name} security group"
+  description = var.app == "ab2d" ? "${local.db_name} database security group" : "App ELB security group"
   vpc_id      = data.aws_vpc.target_vpc.id
   tags = merge(
     data.aws_default_tags.data_tags.tags,

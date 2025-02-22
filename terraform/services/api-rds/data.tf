@@ -5,6 +5,7 @@ locals {
     "bcda-${var.env}-vpn-public",
     "bcda-${var.env}-remote-management",
     "bcda-${var.env}-enterprise-tools",
+    "Allow internet zscaler traffic private"
   ]
 }
 
@@ -90,5 +91,9 @@ data "aws_security_group" "gdit" {
   filter {
     name   = "description" # Filtering by security group description
     values = [each.value]
+  }
+  filter {
+    name   = "vpc-id"                     # Filter by VPC ID
+    values = [data.aws_vpc.target_vpc.id] # Dynamically get VPC ID
   }
 }
