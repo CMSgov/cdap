@@ -22,11 +22,13 @@ data "aws_secretsmanager_secret_version" "database_user" {
 
 # Fetching the secret for database password
 data "aws_secretsmanager_secret" "secret_database_password" {
-  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/db/password" : null
+  count = var.app == "ab2d" ? 1 : 0
+  name = "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}"
 }
 
 data "aws_secretsmanager_secret_version" "database_password" {
-  secret_id = data.aws_secretsmanager_secret.secret_database_password.id
+  count = var.app == "ab2d" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.secret_database_password[0].id
 }
 
 data "aws_caller_identity" "current" {}
