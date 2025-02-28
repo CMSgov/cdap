@@ -23,11 +23,11 @@ data "aws_secretsmanager_secret_version" "database_user" {
 # Fetching the secret for database password
 data "aws_secretsmanager_secret" "secret_database_password" {
   count = var.app == "ab2d" ? 1 : 0
-  name = "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}"
+  name  = "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}"
 }
 
 data "aws_secretsmanager_secret_version" "database_password" {
-  count = var.app == "ab2d" ? 1 : 0
+  count     = var.app == "ab2d" ? 1 : 0
   secret_id = data.aws_secretsmanager_secret.secret_database_password[0].id
 }
 
