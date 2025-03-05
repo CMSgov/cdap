@@ -5,7 +5,7 @@ locals {
     "bcda-${var.env}-vpn-public",
     "bcda-${var.env}-remote-management",
     "bcda-${var.env}-enterprise-tools",
-    "Allow internet zscaler traffic private"
+    "bcda-${var.env}-allow-zscaler-private"
   ]
 }
 
@@ -52,7 +52,8 @@ data "aws_subnets" "db" {
       "${local.db_name}-private-b"
       ] : [
       "${var.app}-${var.env}-az1-data",
-      "${var.app}-${var.env}-az2-data"
+      "${var.app}-${var.env}-az2-data",
+      "${var.app}-${var.env}-az3-data"
     ]
   }
 }
@@ -91,11 +92,22 @@ data "aws_security_group" "gdit" {
   for_each = var.app == "bcda" ? toset(local.gdit_security_group_names) : toset([])
 
   filter {
-    name   = "description" # Filtering by security group description
+    name   = "tag:Name" # Filter by 'Name' tag
     values = [each.value]
   }
   filter {
-    name   = "vpc-id"                     # Filter by VPC ID
-    values = [data.aws_vpc.target_vpc.id] # Dynamically get VPC ID
+    name   = "vpc-id" # Filter by VPC ID
+    values = [data.aws_vpc.target_vpc.id]
   }
+}
+
+data "aws_security_group" "github_runner" {
+  filter {
+    name   = "tag:Name"
+    values = ["github-actions-action-runner"]
+  }
+}
+
+data "aws_ssm_parameter" "quicksight_cidr_blocks" {
+  name = "/bcda/test/quicksight-rds/cidr-blocks"
 }
