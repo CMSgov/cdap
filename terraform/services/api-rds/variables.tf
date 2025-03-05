@@ -28,10 +28,3 @@ variable "mgmt_vpc_cidr" {
   description = "CIDR for the Management VPC"
   type        = string
 }
-
-# These CIDR blocks represent US based AWS QuickSight servers
-variable "quicksight_cidr_blocks" {
-  description = "CIDR blocks for AWS QuickSight IP ranges"
-  type        = list(string)
-  default     = []
-}
