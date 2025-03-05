@@ -111,5 +111,5 @@ data "aws_security_group" "github_runner" {
 
 data "aws_ssm_parameter" "quicksight_cidr_blocks" {
   count = var.app != "ab2d" ? 1 : 0
-  name  = "/bcda/test/quicksight-rds/cidr-blocks"
+  name  = "/${var.app}/${var.env}/quicksight-rds/cidr-blocks"
 }
