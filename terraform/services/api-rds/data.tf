@@ -102,6 +102,7 @@ data "aws_security_group" "gdit" {
 }
 
 data "aws_security_group" "github_runner" {
+  count = var.app != "ab2d" ? 1 : 0
   filter {
     name   = "tag:Name"
     values = ["github-actions-action-runner"]
@@ -109,5 +110,6 @@ data "aws_security_group" "github_runner" {
 }
 
 data "aws_ssm_parameter" "quicksight_cidr_blocks" {
-  name = "/bcda/test/quicksight-rds/cidr-blocks"
+  count = var.app != "ab2d" ? 1 : 0
+  name  = "/bcda/test/quicksight-rds/cidr-blocks"
 }

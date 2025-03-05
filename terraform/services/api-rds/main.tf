@@ -102,7 +102,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "additional_ingress" {
-  for_each                     = var.app == "bcda" ? toset(local.additional_ingress_sgs) : toset([])
+  for_each                     = var.app != "ab2d" ? toset(local.additional_ingress_sgs) : toset([])
   description                  = "Allow additional ingress to RDS on port 5432"
   from_port                    = 5432
   to_port                      = 5432
@@ -118,7 +118,7 @@ resource "aws_vpc_security_group_ingress_rule" "runner_access" {
   to_port                      = 5432
   ip_protocol                  = "tcp"
   security_group_id            = aws_security_group.sg_database.id
-  referenced_security_group_id = data.aws_security_group.github_runner.id
+  referenced_security_group_id = data.aws_security_group.github_runner[0].id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "quicksight" {
@@ -128,7 +128,7 @@ resource "aws_vpc_security_group_ingress_rule" "quicksight" {
   to_port           = 5432
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_database.id
-  cidr_ipv4         = var.app != "ab2d" ? local.quicksight_cidr_blocks[count.index] : null
+  cidr_ipv4         = var.app != "ab2d" ? jsondecode(data.aws_ssm_parameter.quicksight_cidr_blocks[0].value)[count.index] : null
 }
 
 # Create database subnet group
