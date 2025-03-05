@@ -112,6 +112,7 @@ resource "aws_vpc_security_group_ingress_rule" "additional_ingress" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "runner_access" {
+  count                        = var.app != "ab2d" ? 1 : 0
   description                  = "GitHub Actions runner access "
   from_port                    = 5432
   to_port                      = 5432
@@ -121,13 +122,13 @@ resource "aws_vpc_security_group_ingress_rule" "runner_access" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "quicksight" {
-  count             = var.app == "bcda" ? length(local.quicksight_cidr_blocks) : 0
+  count             = var.app != "ab2d" ? length(local.quicksight_cidr_blocks) : 0
   description       = "Allow inbound traffic from AWS QuickSight"
   from_port         = 5432
   to_port           = 5432
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.sg_database.id
-  cidr_ipv4         = var.app == "bcda" ? local.quicksight_cidr_blocks[count.index] : null
+  cidr_ipv4         = var.app != "ab2d" ? local.quicksight_cidr_blocks[count.index] : null
 }
 
 # Create database subnet group
