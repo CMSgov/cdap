@@ -13,7 +13,7 @@ runs:
           git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
           echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
         else
-          echo "Teraform already initialized, skipping install"
+          echo "Terraform already initialized, skipping install"
         fi
       shell: bash
 
