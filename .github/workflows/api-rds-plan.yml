@@ -29,6 +29,9 @@ jobs:
       matrix:
         app: [ab2d]
         env: [dev, test, sbx, prod]
+        include:
+          - app: bcda
+            env: test
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
