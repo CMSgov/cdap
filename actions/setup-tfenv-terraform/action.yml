@@ -9,11 +9,11 @@ runs:
   using: composite
   steps:
     - run: |
-        if ! tfenv --version; then
+        if tfenv --version; then
+          echo "tfenv already installed, skipping"
+        else
           git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
           echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
-        else
-          echo "Terraform already initialized, skipping install"
         fi
       shell: bash
 
