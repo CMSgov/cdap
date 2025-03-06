@@ -114,7 +114,7 @@ resource "aws_vpc_security_group_ingress_rule" "additional_ingress" {
 
 resource "aws_vpc_security_group_ingress_rule" "runner_access" {
   count                        = var.app != "ab2d" ? 1 : 0
-  description                  = "GitHub Actions runner access "
+  description                  = "GitHub Actions runner access"
   from_port                    = 5432
   to_port                      = 5432
   ip_protocol                  = "tcp"
