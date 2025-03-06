@@ -9,8 +9,12 @@ runs:
   using: composite
   steps:
     - run: |
-        git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
-        echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
+        if ! tfenv --version; then
+          git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
+          echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
+        else
+          echo "Teraform already initialized, skipping install"
+        fi
       shell: bash
 
     - working-directory: ${{ inputs.directory }}
