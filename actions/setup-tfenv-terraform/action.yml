@@ -12,7 +12,9 @@ runs:
         if tfenv --version; then
           echo "tfenv already installed, skipping"
         else
-          git clone --depth=1 https://github.com/tfutils/tfenv.git ~/.tfenv
+          git clone --depth=1 https://github.com/tfutils/tfenv.git temp
+          mv temp ~/.tfenv
+          rm -rf temp
           echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
         fi
       shell: bash
