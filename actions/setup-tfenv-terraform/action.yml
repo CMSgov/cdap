@@ -14,7 +14,6 @@ runs:
         else
           git clone --depth=1 https://github.com/tfutils/tfenv.git temp
           mv temp ~/.tfenv
-          rm -rf temp
           echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
         fi
       shell: bash
