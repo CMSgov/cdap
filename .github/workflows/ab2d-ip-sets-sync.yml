@@ -28,7 +28,7 @@ jobs:
           token: ${{ env.GITHUB_TOKEN }}
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/bcda-mgmt-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - run: bash waf-ip-set-sync.sh
         env:
