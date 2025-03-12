@@ -13,7 +13,7 @@ data "aws_default_tags" "data_tags" {}
 
 # Fetching the secret for database username
 data "aws_secretsmanager_secret" "secret_database_user" {
-name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/rds-main-credentials" : null
+  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/rds-main-credentials" : null
 }
 
 data "aws_secretsmanager_secret_version" "database_user" {

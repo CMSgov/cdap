@@ -208,7 +208,7 @@ resource "aws_db_instance" "api" {
   kms_key_id                  = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
   multi_az                    = var.env == "prod" || var.app == "bcda" ? true : false
   vpc_security_group_ids      = var.app == "bcda" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
-  username                    = var.app == "ab2d" ?data.aws_secretsmanager_secret_version.database_user.secret_string : var.app == "bcda" ? jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string)["username"] : null
+  username                    = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : var.app == "bcda" ? jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string)["username"] : null
   password                    = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password[0].secret_string : null
   manage_master_user_password = var.app == "ab2d" ? null : true
   # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 
