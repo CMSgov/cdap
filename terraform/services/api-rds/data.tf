@@ -13,7 +13,7 @@ data "aws_default_tags" "data_tags" {}
 
 # Fetching the secret for database username
 data "aws_secretsmanager_secret" "secret_database_user" {
-  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/db/username" : null
+name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/rds-main-credentials" : null
 }
 
 data "aws_secretsmanager_secret_version" "database_user" {
@@ -94,10 +94,6 @@ data "aws_security_group" "gdit" {
   filter {
     name   = "tag:Name" # Filter by 'Name' tag
     values = [each.value]
-  }
-  filter {
-    name   = "vpc-id" # Filter by VPC ID
-    values = [data.aws_vpc.target_vpc.id]
   }
 }
 
