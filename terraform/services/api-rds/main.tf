@@ -29,7 +29,7 @@ locals {
 
   instance_class = {
     ab2d = "db.m6i.2xlarge"
-    bcda = "db.m6i.large"
+    bcda = var.env == "sbx" ? "db.m6i.xlarge" : "db.m6i.large"
   }[var.app]
 
   allocated_storage = {
@@ -135,7 +135,8 @@ resource "aws_vpc_security_group_ingress_rule" "quicksight" {
 # Create database subnet group
 
 resource "aws_db_subnet_group" "subnet_group" {
-  name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "${var.app}-${var.env}-rds-subnets"
+  name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : (
+  var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds-subnets" : "${var.app}-${var.env}-rds-subnets")
 
   subnet_ids = data.aws_subnets.db.ids
 
@@ -191,7 +192,7 @@ resource "aws_db_instance" "api" {
   instance_class      = local.instance_class
   identifier          = local.db_name
   storage_encrypted   = true
-  deletion_protection = var.app == "ab2d" || var.app == "bcda" && (var.env == "prod" || var.env == "opensbx") ? true : false
+  deletion_protection = var.app == "ab2d" || var.app == "bcda" && (var.env == "prod" || var.env == "sbx") ? true : false
   enabled_cloudwatch_logs_exports = [
     "postgresql",
     "upgrade",
@@ -215,9 +216,12 @@ resource "aws_db_instance" "api" {
 
   tags = merge(
     data.aws_default_tags.data_tags.tags,
-    tomap({ "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : local.db_name,
-      "role"       = "db",
-      "cpm backup" = var.app == "ab2d" ? "Monthly" : "Daily Weekly Monthly" # Daily Weekly Monthly for bcda
+    tomap({ "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : (
+      var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds" : local.db_name),
+      "role" = "db",
+      "cpm backup" = var.app == "ab2d" ? "Monthly" : (
+        var.app == "bcda" && var.env == "sbx" ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
+      ) # Daily Weekly Monthly for bcda
     })
   )
 

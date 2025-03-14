@@ -60,6 +60,10 @@ data "aws_subnets" "db" {
     values = var.app == "ab2d" ? [
       "${local.db_name}-private-a",
       "${local.db_name}-private-b"
+      ] : var.app == "bcda" && var.env == "sbx" ? [
+      "${var.app}-open${var.env}-az1-data",
+      "${var.app}-open${var.env}-az2-data",
+      "${var.app}-open${var.env}-az3-data"
       ] : [
       "${var.app}-${var.env}-az1-data",
       "${var.app}-${var.env}-az2-data",
