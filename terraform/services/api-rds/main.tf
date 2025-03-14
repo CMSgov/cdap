@@ -210,7 +210,7 @@ resource "aws_db_instance" "api" {
   vpc_security_group_ids      = var.app == "bcda" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
   username                    = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : var.app == "bcda" ? jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string)["username"] : null
   password                    = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password[0].secret_string : null
-  manage_master_user_password = var.app == "ab2d" ? null : true
+  manage_master_user_password = var.app == "ab2d" ? null : false
   # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 
 
   tags = merge(
@@ -223,7 +223,8 @@ resource "aws_db_instance" "api" {
 
   lifecycle {
     ignore_changes = [
-      username
+      username,
+      manage_master_user_password
     ]
   }
 }
@@ -240,7 +241,7 @@ resource "aws_route53_record" "rds" {
 
 resource "aws_route53_zone" "local_zone" {
   count = var.app == "bcda" ? 1 : 0
-  name  = "bcda-${var.env}.local"
+  name  = var.app == "bcda" && var.env == "sbx" ? "bcda-open${var.env}.local" : "bcda-${var.env}.local"
 
   vpc {
     vpc_id = data.aws_vpc.target_vpc.id
