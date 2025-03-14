@@ -14,14 +14,7 @@ data "aws_default_tags" "data_tags" {}
 
 # Fetching the secret for database username
 data "aws_secretsmanager_secret" "secret_database_user" {
-  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : (
-    var.app == "bcda" ? (
-      var.env == "sbx" ?
-      "${var.app}/open${var.env}/rds-main-credentials" :
-      "${var.app}/${var.env}/rds-main-credentials"
-    )
-    : null
-  )
+  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${local.stdenv}/rds-main-credentials" : null
 }
 
 data "aws_secretsmanager_secret_version" "database_user" {
@@ -47,9 +40,7 @@ data "aws_vpc" "target_vpc" {
   filter {
     name = "tag:Name"
     values = [
-      var.app == "ab2d" ? local.db_name : (
-        var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-vpc" : "${var.app}-${var.env}-vpc"
-      )
+      var.app == "ab2d" ? local.db_name : "${var.app}-${local.stdenv}-vpc"
     ]
   }
 }
@@ -60,14 +51,10 @@ data "aws_subnets" "db" {
     values = var.app == "ab2d" ? [
       "${local.db_name}-private-a",
       "${local.db_name}-private-b"
-      ] : var.app == "bcda" && var.env == "sbx" ? [
-      "${var.app}-open${var.env}-az1-data",
-      "${var.app}-open${var.env}-az2-data",
-      "${var.app}-open${var.env}-az3-data"
       ] : [
-      "${var.app}-${var.env}-az1-data",
-      "${var.app}-${var.env}-az2-data",
-      "${var.app}-${var.env}-az3-data"
+      "${var.app}-${local.stdenv}-az1-data",
+      "${var.app}-${local.stdenv}-az2-data",
+      "${var.app}-${local.stdenv}-az3-data"
     ]
   }
 }
@@ -90,7 +77,7 @@ data "aws_security_group" "app_sg" {
   count = var.app == "bcda" ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = var.env == "sbx" ? ["${var.app}-api-open${var.env}"] : ["${var.app}-api-${var.env}"] # This will look for the bcda api app security group named based on the environment
+    values = ["${var.app}-api-${local.stdenv}"] # This will look for the bcda api app security group named based on the environment
   }
 }
 
@@ -98,7 +85,7 @@ data "aws_security_group" "worker_sg" {
   count = var.app == "bcda" ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = var.env == "sbx" ? ["${var.app}-worker-open${var.env}"] : ["${var.app}-worker-${var.env}"] #This looks for the bcda worker security group named based on the environment
+    values = ["${var.app}-worker-${local.stdenv}"] #This looks for the bcda worker security group named based on the environment
   }
 }
 

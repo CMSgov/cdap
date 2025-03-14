@@ -199,19 +199,18 @@ resource "aws_db_instance" "api" {
   ]
   skip_final_snapshot = true
 
-  db_subnet_group_name        = aws_db_subnet_group.subnet_group.name
-  parameter_group_name        = var.app == "ab2d" ? aws_db_parameter_group.v16_parameter_group[0].name : null
-  backup_retention_period     = local.backup_retention_period
-  iops                        = var.app == "bcda" ? "1000" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
-  apply_immediately           = true
-  max_allocated_storage       = var.app == "bcda" ? "1000" : null
-  copy_tags_to_snapshot       = var.app == "bcda" ? true : false
-  kms_key_id                  = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
-  multi_az                    = var.env == "prod" || var.app == "bcda" ? true : false
-  vpc_security_group_ids      = var.app == "bcda" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
-  username                    = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : var.app == "bcda" ? jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string)["username"] : null
-  password                    = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password[0].secret_string : null
-  manage_master_user_password = var.app == "ab2d" ? null : false
+  db_subnet_group_name    = aws_db_subnet_group.subnet_group.name
+  parameter_group_name    = var.app == "ab2d" ? aws_db_parameter_group.v16_parameter_group[0].name : null
+  backup_retention_period = local.backup_retention_period
+  iops                    = var.app == "bcda" ? "1000" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
+  apply_immediately       = true
+  max_allocated_storage   = var.app == "bcda" ? "1000" : null
+  copy_tags_to_snapshot   = var.app == "bcda" ? true : false
+  kms_key_id              = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
+  multi_az                = var.env == "prod" || var.app == "bcda" ? true : false
+  vpc_security_group_ids  = var.app == "bcda" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
+  username                = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : var.app == "bcda" ? jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string)["username"] : null
+  password                = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password[0].secret_string : null
   # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 
 
   tags = merge(
@@ -228,7 +227,7 @@ resource "aws_db_instance" "api" {
   lifecycle {
     ignore_changes = [
       username,
-      manage_master_user_password
+      password
     ]
   }
 }
