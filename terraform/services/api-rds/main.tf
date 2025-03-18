@@ -219,7 +219,7 @@ resource "aws_db_instance" "api" {
       var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds" : local.db_name),
       "role" = "db",
       "cpm backup" = var.app == "ab2d" ? "Monthly" : (
-        var.app == "bcda" && var.env == "opensbx" ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
+        var.app == "bcda" && var.env == "sbx" ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
       ) # Daily Weekly Monthly for bcda
     })
   )
