@@ -42,8 +42,6 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
-      - name: PWD and LS
-        run: pwd && ls -alh; ls scripts; head -n 2 scripts/temp/ip-sets/ab2d/allowed_ips.txt
       - name: Run WAF Sync Script
         working-directory: scripts
         run: bash waf-ip-set-sync.sh
