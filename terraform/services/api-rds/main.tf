@@ -1,16 +1,16 @@
 locals {
   db_name = {
     ab2d = {
-      dev  = "ab2d-dev"
-      test = "ab2d-east-impl"
-      prod = "ab2d-east-prod"
-      sbx  = "ab2d-sbx-sandbox"
+      dev     = "ab2d-dev"
+      test    = "ab2d-east-impl"
+      prod    = "ab2d-east-prod"
+      opensbx = "ab2d-sbx-sandbox"
     }[var.env]
     bcda = {
-      dev  = "bcda-dev-rds"
-      test = "bcda-test-rds"
-      prod = "bcda-prod-rds-20190201"
-      sbx  = "bcda-opensbx-rds-20190311"
+      dev     = "bcda-dev-rds"
+      test    = "bcda-test-rds"
+      prod    = "bcda-prod-rds-20190201"
+      opensbx = "bcda-opensbx-rds-20190311"
     }[var.env]
 
     dpc = "${var.app}-${var.env}"
@@ -19,17 +19,17 @@ locals {
   sg_name = {
     ab2d = "${local.db_name}-database-sg"
     bcda = {
-      dev  = "bcda-dev-rds"
-      test = "bcda-test-rds"
-      prod = "bcda-prod-rds"
-      sbx  = "bcda-opensbx-rds"
+      dev     = "bcda-dev-rds"
+      test    = "bcda-test-rds"
+      prod    = "bcda-prod-rds"
+      opensbx = "bcda-opensbx-rds"
     }[var.env]
     dpc = "${var.app}-${var.env}"
   }[var.app]
 
   instance_class = {
     ab2d = "db.m6i.2xlarge"
-    bcda = var.env == "sbx" ? "db.m6i.xlarge" : "db.m6i.large"
+    bcda = var.env == "opensbx" ? "db.m6i.xlarge" : "db.m6i.large"
   }[var.app]
 
   allocated_storage = {
@@ -135,8 +135,7 @@ resource "aws_vpc_security_group_ingress_rule" "quicksight" {
 # Create database subnet group
 
 resource "aws_db_subnet_group" "subnet_group" {
-  name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : (
-  var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds-subnets" : "${var.app}-${var.env}-rds-subnets")
+  name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "${var.app}-${var.env}-rds-subnets"
 
   subnet_ids = data.aws_subnets.db.ids
 
@@ -144,6 +143,7 @@ resource "aws_db_subnet_group" "subnet_group" {
     Name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "RDS subnet group"
   }
 }
+
 
 # Create database parameter group
 
@@ -219,7 +219,7 @@ resource "aws_db_instance" "api" {
       var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds" : local.db_name),
       "role" = "db",
       "cpm backup" = var.app == "ab2d" ? "Monthly" : (
-        var.app == "bcda" && var.env == "sbx" ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
+        var.app == "bcda" && var.env == "opensbx" ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
       ) # Daily Weekly Monthly for bcda
     })
   )
@@ -244,7 +244,7 @@ resource "aws_route53_record" "rds" {
 
 resource "aws_route53_zone" "local_zone" {
   count = var.app == "bcda" ? 1 : 0
-  name  = var.app == "bcda" && var.env == "sbx" ? "bcda-open${var.env}.local" : "bcda-${var.env}.local"
+  name  = "bcda-${var.env}.local"
 
   vpc {
     vpc_id = data.aws_vpc.target_vpc.id
