@@ -35,7 +35,7 @@ jobs:
           sparse-checkout: |
             ip-sets/ab2d/allowed_ips.txt
           sparse-checkout-cone-mode: false
-          path: ./scripts/allowed_ips.txt
+          path: ./scripts
           token: ${{ env.OPS_GITHUB_TOKEN }}
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
