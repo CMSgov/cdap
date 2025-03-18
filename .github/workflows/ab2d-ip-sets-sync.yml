@@ -20,8 +20,6 @@ jobs:
     steps:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
-        with:
-          path: main
       - name: Get AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
@@ -34,9 +32,10 @@ jobs:
         with:
           repository: CMSgov/cdap-private
           ref: 'main'
-          sparse-checkout: ip_sets/ab2d/allowed_ips.txt
+          sparse-checkout: |
+            ip-sets/ab2d/allowed_ips.txt
           sparse-checkout-cone-mode: false
-          path: ips
+          path: ./scripts/ip-sets
           token: ${{ env.OPS_GITHUB_TOKEN }}
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -44,7 +43,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - name: PWD and LS
-        run: pwd && ls -alh
+        run: pwd && ls -alh; ls scripts; ls scripts/ip-sets
       - name: Run WAF Sync Script
         run: bash waf-ip-set-sync.sh
         env:
