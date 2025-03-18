@@ -13,7 +13,6 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: scripts
     strategy:
       matrix:
         app: [ab2d]
