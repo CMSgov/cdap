@@ -23,4 +23,5 @@ aws wafv2 update-ip-set \
   --id $IPV4_SET_ID \
   --region us-east-1 \
   --addresses $IPV4_LIST \
-  --lock-token $LOCK_TOKEN
+  --lock-token $LOCK_TOKEN \
+  > /dev/null 2>&1
