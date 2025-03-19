@@ -4,7 +4,7 @@ set -euo pipefail
 
 echo "Generating IP set"
 
-IPV4_LIST_RAW=$(grep -v '^#' temp/ip-sets/ab2d/allowed_ips.txt | jq -Rs '{Addresses: split("\n") | map(select(length > 0))}' | jq -r .Addresses)
+IPV4_LIST_RAW=$(grep -v '^#' temp/ip-sets/ab2d/allowed_ips.txt | jq -Rs '{Addresses: split("\n") | map(select(length > 0))}' | jq -rc .Addresses)
 IPV4_LIST="'$IPV4_LIST_RAW'"
 
 echo "Fetching IP set IDs"
