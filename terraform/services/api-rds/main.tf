@@ -48,8 +48,6 @@ locals {
 
 }
 
-## Begin module/main.tf
-
 # Create database security group
 resource "aws_security_group" "sg_database" {
   name        = local.sg_name
