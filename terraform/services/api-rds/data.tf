@@ -1,34 +1,42 @@
 locals {
+  stdenv      = var.env == "sbx" ? "opensbx" : var.env
   secret_date = "2020-01-02-09-15-01"
   gdit_security_group_names = [
-    "bcda-${var.env}-vpn-private",
-    "bcda-${var.env}-vpn-public",
-    "bcda-${var.env}-remote-management",
-    "bcda-${var.env}-enterprise-tools",
-    "bcda-${var.env}-allow-zscaler-private"
+    "${var.app}-${local.stdenv}-vpn-private",
+    "${var.app}-${local.stdenv}-vpn-public",
+    "${var.app}-${local.stdenv}-remote-management",
+    "${var.app}-${local.stdenv}-enterprise-tools",
+    "${var.app}-${local.stdenv}-allow-zscaler-private"
   ]
+  db_username = {
+    ab2d = "${var.app}/${local.db_name}/module/db/database_user/${local.secret_date}"
+    bcda = "${var.app}/${local.stdenv}/db/username"
+  }[var.app]
+
+  db_password = {
+    ab2d = "${var.app}/${local.db_name}/module/db/database_password/${local.secret_date}"
+    bcda = "${var.app}/${local.stdenv}/db/password"
+  }[var.app]
 }
 
 data "aws_default_tags" "data_tags" {}
 
 # Fetching the secret for database username
-data "aws_secretsmanager_secret" "secret_database_user" {
-  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${var.env}/rds-main-credentials" : null
+data "aws_secretsmanager_secret" "database_user" {
+  name = local.db_username
 }
 
 data "aws_secretsmanager_secret_version" "database_user" {
-  secret_id = data.aws_secretsmanager_secret.secret_database_user.id
+  secret_id = data.aws_secretsmanager_secret.database_user.id
 }
 
 # Fetching the secret for database password
-data "aws_secretsmanager_secret" "secret_database_password" {
-  count = var.app == "ab2d" ? 1 : 0
-  name  = "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}"
+data "aws_secretsmanager_secret" "database_password" {
+  name = local.db_password
 }
 
 data "aws_secretsmanager_secret_version" "database_password" {
-  count     = var.app == "ab2d" ? 1 : 0
-  secret_id = data.aws_secretsmanager_secret.secret_database_password[0].id
+  secret_id = data.aws_secretsmanager_secret.database_password.id
 }
 
 data "aws_caller_identity" "current" {}
@@ -39,7 +47,7 @@ data "aws_vpc" "target_vpc" {
   filter {
     name = "tag:Name"
     values = [
-      var.app == "ab2d" ? local.db_name : "${var.app}-${var.env}-vpc"
+      var.app == "ab2d" ? local.db_name : "${var.app}-${local.stdenv}-vpc"
     ]
   }
 }
@@ -51,9 +59,9 @@ data "aws_subnets" "db" {
       "${local.db_name}-private-a",
       "${local.db_name}-private-b"
       ] : [
-      "${var.app}-${var.env}-az1-data",
-      "${var.app}-${var.env}-az2-data",
-      "${var.app}-${var.env}-az3-data"
+      "${var.app}-${local.stdenv}-az1-data",
+      "${var.app}-${local.stdenv}-az2-data",
+      "${var.app}-${local.stdenv}-az3-data"
     ]
   }
 }
@@ -76,7 +84,7 @@ data "aws_security_group" "app_sg" {
   count = var.app == "bcda" ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = ["bcda-api-${var.env}"] # This will look for the bcda api app security group named based on the environment
+    values = ["${var.app}-api-${local.stdenv}"] # This will look for the bcda api app security group named based on the environment
   }
 }
 
@@ -84,7 +92,7 @@ data "aws_security_group" "worker_sg" {
   count = var.app == "bcda" ? 1 : 0
   filter {
     name   = "tag:Name"
-    values = ["bcda-worker-${var.env}"] # This looks for the bcda worker security group named based on the environment
+    values = ["${var.app}-worker-${local.stdenv}"] #This looks for the bcda worker security group named based on the environment
   }
 }
 
@@ -107,5 +115,5 @@ data "aws_security_group" "github_runner" {
 
 data "aws_ssm_parameter" "quicksight_cidr_blocks" {
   count = var.app != "ab2d" ? 1 : 0
-  name  = "/${var.app}/${var.env}/quicksight-rds/cidr-blocks"
+  name  = "/${var.app}/${local.stdenv}/quicksight-rds/cidr-blocks"
 }

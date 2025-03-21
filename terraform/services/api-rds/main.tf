@@ -135,7 +135,8 @@ resource "aws_vpc_security_group_ingress_rule" "quicksight" {
 # Create database subnet group
 
 resource "aws_db_subnet_group" "subnet_group" {
-  name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "${var.app}-${var.env}-rds-subnets"
+  name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : (
+  var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds-subnets" : "${var.app}-${var.env}-rds-subnets")
 
   subnet_ids = data.aws_subnets.db.ids
 
@@ -191,7 +192,7 @@ resource "aws_db_instance" "api" {
   instance_class      = local.instance_class
   identifier          = local.db_name
   storage_encrypted   = true
-  deletion_protection = var.app == "ab2d" || var.app == "bcda" && (var.env == "prod" || var.env == "opensbx") ? true : false
+  deletion_protection = var.app == "ab2d" || var.app == "bcda" && (var.env == "prod" || var.env == "sbx") ? true : false
   enabled_cloudwatch_logs_exports = [
     "postgresql",
     "upgrade",
@@ -208,9 +209,8 @@ resource "aws_db_instance" "api" {
   kms_key_id              = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
   multi_az                = var.env == "prod" || var.app == "bcda" ? true : false
   vpc_security_group_ids  = var.app == "bcda" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
-  username                = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : var.app == "bcda" ? jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string)["username"] : null
-  password                = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password[0].secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string)["password"]
-
+  username                = data.aws_secretsmanager_secret_version.database_user.secret_string
+  password                = data.aws_secretsmanager_secret_version.database_password.secret_string
   # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 
 
   tags = merge(
@@ -243,7 +243,7 @@ resource "aws_route53_record" "rds" {
 
 resource "aws_route53_zone" "local_zone" {
   count = var.app == "bcda" ? 1 : 0
-  name  = "bcda-${var.env}.local"
+  name  = var.app == "bcda" && var.env == "sbx" ? "bcda-open${var.env}.local" : "bcda-${var.env}.local"
 
   vpc {
     vpc_id = data.aws_vpc.target_vpc.id
