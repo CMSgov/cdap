@@ -211,7 +211,6 @@ resource "aws_db_instance" "api" {
   vpc_security_group_ids  = var.app == "bcda" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
   username                = data.aws_secretsmanager_secret_version.database_user.secret_string
   password                = data.aws_secretsmanager_secret_version.database_password.secret_string
-  # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 
 
   tags = merge(
     data.aws_default_tags.data_tags.tags,
