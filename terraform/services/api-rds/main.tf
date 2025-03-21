@@ -214,14 +214,12 @@ resource "aws_db_instance" "api" {
     data.aws_default_tags.data_tags.tags,
     tomap({ "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : (
       var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds" : (
-        var.app == "bcda" && var.env == "prod" ? "${var.app}-${var.env}-rds" : local.db_name
-      )
+      var.app == "bcda" && var.env == "prod" ? "${var.app}-${var.env}-rds" : local.db_name)
       ),
       "role"       = "db",
       "cpm backup" = (var.app == "bcda" && var.env == "sbx") || var.env == "prod" ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
     })
   )
-
 
   lifecycle {
     ignore_changes = [
