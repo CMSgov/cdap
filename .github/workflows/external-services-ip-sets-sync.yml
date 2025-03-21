@@ -15,8 +15,8 @@ jobs:
         shell: bash
     strategy:
       matrix:
-        app: [ab2d]
-        env: [test]
+        env: [dev, test, prod]
+        app: [ab2d, bcda, dpc]
     steps:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
