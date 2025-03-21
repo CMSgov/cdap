@@ -2,34 +2,41 @@ locals {
   stdenv      = var.env == "sbx" ? "opensbx" : var.env
   secret_date = "2020-01-02-09-15-01"
   gdit_security_group_names = [
-    "bcda-${local.stdenv}-vpn-private",
-    "bcda-${local.stdenv}-vpn-public",
-    "bcda-${local.stdenv}-remote-management",
-    "bcda-${local.stdenv}-enterprise-tools",
-    "bcda-${local.stdenv}-allow-zscaler-private"
+    "${var.app}-${local.stdenv}-vpn-private",
+    "${var.app}-${local.stdenv}-vpn-public",
+    "${var.app}-${local.stdenv}-remote-management",
+    "${var.app}-${local.stdenv}-enterprise-tools",
+    "${var.app}-${local.stdenv}-allow-zscaler-private"
   ]
+  db_username = {
+    ab2d = "${var.app}/${local.db_name}/module/db/database_user/${local.secret_date}"
+    bcda = "${var.app}/${local.stdenv}/db/username"
+  }[var.app]
+
+  db_password = {
+    ab2d = "${var.app}/${local.db_name}/module/db/database_password/${local.secret_date}"
+    bcda = "${var.app}/${local.stdenv}/db/password"
+  }[var.app]
 }
 
 data "aws_default_tags" "data_tags" {}
 
 # Fetching the secret for database username
-data "aws_secretsmanager_secret" "secret_database_user" {
-  name = var.app == "ab2d" ? "ab2d/${local.db_name}/module/db/database_user/${local.secret_date}" : var.app == "bcda" ? "${var.app}/${local.stdenv}/rds-main-credentials" : null
+data "aws_secretsmanager_secret" "database_user" {
+  name = local.db_username
 }
 
 data "aws_secretsmanager_secret_version" "database_user" {
-  secret_id = data.aws_secretsmanager_secret.secret_database_user.id
+  secret_id = data.aws_secretsmanager_secret.database_user.id
 }
 
 # Fetching the secret for database password
-data "aws_secretsmanager_secret" "secret_database_password" {
-  count = var.app == "ab2d" ? 1 : 0
-  name  = "ab2d/${local.db_name}/module/db/database_password/${local.secret_date}"
+data "aws_secretsmanager_secret" "database_password" {
+  name = local.db_password
 }
 
 data "aws_secretsmanager_secret_version" "database_password" {
-  count     = var.app == "ab2d" ? 1 : 0
-  secret_id = data.aws_secretsmanager_secret.secret_database_password[0].id
+  secret_id = data.aws_secretsmanager_secret.database_password.id
 }
 
 data "aws_caller_identity" "current" {}
