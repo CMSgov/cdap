@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         env: [test, dev]
-        app: [ab2d]
+        app: [ab2d, bcda, dpc]
     steps:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
