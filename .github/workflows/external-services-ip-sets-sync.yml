@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         env: [test]
-        app: [ab2d, bcda, dpc]
+        app: [ab2d, bcda] # DPC is not required since external services IP set is shared with BCDA.
     steps:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
