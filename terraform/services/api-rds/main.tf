@@ -206,13 +206,15 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 # Create database instance
 
 resource "aws_db_instance" "api" {
-  allocated_storage   = local.allocated_storage
-  engine              = "postgres"
-  engine_version      = local.engine_version
-  instance_class      = local.instance_class
-  identifier          = local.db_name
-  storage_encrypted   = true
-  deletion_protection = var.app == "dpc" ? local.is_prod : (var.app == "ab2d" || var.app == "bcda") && (var.env == "prod" || var.env == "sbx") ? true : false
+  allocated_storage = local.allocated_storage
+  engine            = "postgres"
+  engine_version    = local.engine_version
+  instance_class    = local.instance_class
+  identifier        = local.db_name
+  storage_encrypted = true
+  deletion_protection = var.app == "dpc" ? local.is_prod : var.app == "ab2d" ? true : (
+  var.app == "bcda" && (var.env == "prod" || var.env == "sbx")) ? true : false
+
   enabled_cloudwatch_logs_exports = [
     "postgresql",
     "upgrade",
@@ -228,7 +230,7 @@ resource "aws_db_instance" "api" {
   iops                                  = var.app == "bcda" ? "1000" : var.app == "dpc" ? "0" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
   apply_immediately                     = true
   max_allocated_storage                 = var.app == "bcda" ? "1000" : (var.app == "dpc" ? "100" : null)
-  storage_type                          = var.app == "dpc" || var.app == "bcda" ? "gp2" : null
+  storage_type                          = var.app == "dpc" ? "gp2" : null
   monitoring_interval                   = var.app == "dpc" ? 60 : null
   monitoring_role_arn                   = var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null
   performance_insights_enabled          = var.app == "dpc" ? true : null
