@@ -21,15 +21,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d]
+        app: [ab2d, bcda]
         env: [dev, test, sbx, prod]
         include:
-          - app: bcda
+          - app: dpc
             env: test
-          - app: bcda
-            env: dev
-          - app: bcda
-            env: sbx
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
@@ -43,7 +39,6 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            TF_VAR_jenkins_security_group_id=/jenkins/security-group
             TF_VAR_mgmt_vpc_cidr=/mgmt/vpc-cidr
       - run: terraform apply -auto-approve
         env:

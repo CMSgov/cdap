@@ -90,9 +90,11 @@ data "aws_security_group" "controller_security_group_id" {
 }
 
 data "aws_kms_alias" "main_kms" {
-  count = var.app == "ab2d" ? 1 : 0 # Only query the KMS alias for ab2d
-  name  = "alias/${local.db_name}-main-kms"
+  count = var.app == "ab2d" || var.app == "dpc" ? 1 : 0 # Only query the KMS alias for ab2d or dpc
+
+  name = var.app == "ab2d" ? "alias/${local.db_name}-main-kms" : "alias/dpc-${var.env}-master-key"
 }
+
 
 data "aws_security_group" "app_sg" {
   count = var.app == "bcda" ? 1 : 0

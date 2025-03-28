@@ -13,7 +13,6 @@ locals {
       prod = "bcda-prod-rds-20190201"
       sbx  = "bcda-opensbx-rds-20190311"
     }[var.env]
-
     dpc = "${var.app}-${var.env}-db-20190829"
   }[var.app]
 
@@ -30,8 +29,8 @@ locals {
 
   instance_class = {
     ab2d = "db.m6i.2xlarge"
-    bcda = var.env == "sbx" ? "db.m6i.xlarge" : "db.m6i.large"
-    dpc  = "db.m6i.large"
+    bcda = (var.env == "sbx" || var.env == "prod") ? "db.m6i.xlarge" : "db.m6i.large"
+    dpc  = "db.m6i.large" # node_type for instance class
   }[var.app]
 
   allocated_storage = {
@@ -43,17 +42,25 @@ locals {
   backup_retention_period = {
     ab2d = 7
     bcda = 35
-    dpc  = 21
+    dpc  = 21 # 3 ETL periods instead of the default 7 days
   }[var.app]
 
+  engine_version = {
+    ab2d = 16.4
+    bcda = 16.4
+    dpc  = 11
+  }[var.app]
   additional_ingress_sgs = var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : (
   var.app == "dpc" ? flatten(data.aws_security_groups.dpc_additional_sg.ids) : [])
   gdit_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? flatten([for sg in data.aws_security_group.gdit : sg.id]) : []
   quicksight_cidr_blocks  = var.app != "ab2d" && length(data.aws_ssm_parameter.quicksight_cidr_blocks) > 0 ? jsondecode(data.aws_ssm_parameter.quicksight_cidr_blocks[0].value) : []
 
+  dpc_specific_tags = {
+    Layer       = "data"
+    State       = "persistent"
+    Environment = "test"
+  }
 }
-
-## Begin module/main.tf
 
 # Create database security group
 resource "aws_security_group" "sg_database" {
@@ -62,15 +69,18 @@ resource "aws_security_group" "sg_database" {
   var.app == "dpc" ? "Security group for DPC DB" : "App ELB security group")
 
   vpc_id = data.aws_vpc.target_vpc.id
+
   tags = merge(
     data.aws_default_tags.data_tags.tags,
-    tomap({ "Name" = local.sg_name })
+    { "Name" = local.sg_name },
+    var.app == "dpc" ? local.dpc_specific_tags : {}
   )
 
   lifecycle {
     create_before_destroy = true
   }
 }
+
 
 resource "aws_vpc_security_group_egress_rule" "egress_all" {
   security_group_id = aws_security_group.sg_database.id
@@ -140,7 +150,6 @@ resource "aws_vpc_security_group_ingress_rule" "quicksight" {
 }
 
 # Create database subnet group
-
 resource "aws_db_subnet_group" "subnet_group" {
   name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : (
     var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds-subnets" : (
@@ -148,9 +157,12 @@ resource "aws_db_subnet_group" "subnet_group" {
 
   subnet_ids = data.aws_subnets.db.ids
 
-  tags = {
-    Name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "RDS subnet group"
-  }
+  tags = merge(
+    {
+      Name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "RDS subnet group"
+    },
+    var.app == "dpc" ? local.dpc_specific_tags : {} # Merging DPC-specific tags if applicable
+  )
 }
 
 # Create database parameter group
@@ -196,66 +208,65 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 resource "aws_db_instance" "api" {
   allocated_storage   = local.allocated_storage
   engine              = "postgres"
-  engine_version      = 16.4
+  engine_version      = local.engine_version
   instance_class      = local.instance_class
   identifier          = local.db_name
   storage_encrypted   = true
-  deletion_protection = var.app == "ab2d" || var.app == "bcda" && (var.env == "prod" || var.env == "sbx") ? true : false
+  deletion_protection = var.app == "dpc" ? local.is_prod : (var.app == "ab2d" || var.app == "bcda") && (var.env == "prod" || var.env == "sbx") ? true : false
   enabled_cloudwatch_logs_exports = [
     "postgresql",
     "upgrade",
   ]
-  skip_final_snapshot = true
-
+  skip_final_snapshot                   = var.app == "dpc" ? !local.is_prod : true
+  snapshot_identifier                   = var.app == "dpc" ? var.snapshot : null # default will be null
+  final_snapshot_identifier             = var.app == "dpc" ? "dpc-${var.env}-${var.name}-20190829-final" : null
+  auto_minor_version_upgrade            = var.app == "dpc" ? true : null
+  allow_major_version_upgrade           = var.app == "bcda" ? true : null
   db_subnet_group_name                  = aws_db_subnet_group.subnet_group.name
   parameter_group_name                  = var.app == "ab2d" ? aws_db_parameter_group.v16_parameter_group[0].name : null
   backup_retention_period               = local.backup_retention_period
   iops                                  = var.app == "bcda" ? "1000" : var.app == "dpc" ? "0" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
   apply_immediately                     = true
   max_allocated_storage                 = var.app == "bcda" ? "1000" : (var.app == "dpc" ? "100" : null)
+  storage_type                          = var.app == "dpc" || var.app == "bcda" ? "gp2" : null
   monitoring_interval                   = var.app == "dpc" ? 60 : null
   monitoring_role_arn                   = var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null
   performance_insights_enabled          = var.app == "dpc" ? true : null
   performance_insights_retention_period = var.app == "dpc" ? 7 : null
+  backup_window                         = var.app == "dpc" || var.app == "bcda" ? "05:00-05:30" : null #1 am EST
   copy_tags_to_snapshot                 = var.app == "bcda" || var.app == "dpc" ? true : false
-  kms_key_id                            = var.app == "ab2d" && length(data.aws_kms_alias.main_kms) > 0 ? data.aws_kms_alias.main_kms[0].target_key_arn : null
+  kms_key_id                            = var.app == "ab2d" || var.app == "dpc" ? data.aws_kms_alias.main_kms[0].target_key_arn : null
   multi_az                              = var.app == "dpc" ? local.is_prod : (var.env == "prod" || var.app == "bcda" ? true : false)
-  vpc_security_group_ids                = (var.app == "bcda" || var.app == "dpc") ? concat(
-                                          [aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
-  username                              = data.aws_secretsmanager_secret_version.database_user.secret_string
-  password                              = data.aws_secretsmanager_secret_version.database_password.secret_string
-  # I'd really love to swap the password parameter here to manage_master_user_password since it's already in secrets store 
+  vpc_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? concat(
+  [aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
+  username = data.aws_secretsmanager_secret_version.database_user.secret_string
+  password = data.aws_secretsmanager_secret_version.database_password.secret_string
 
   tags = merge(
     data.aws_default_tags.data_tags.tags,
-    tomap({ "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : (
-      var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds" : (
+    {
+      "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : (
+        var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds" : (
       var.app == "dpc" ? "${var.app}-${var.env}-website-db" : local.db_name))
-      "role" = "db",
-      "cpm backup" = var.app == "ab2d" ? "Monthly" : (
-        var.app == "bcda" && var.env == "sbx" ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
-      ) # Daily Weekly Monthly for bcda
-
-      # Additional tags specific to dpc
-      "layer"       = var.app == "dpc" ? "data" : null,
-      "State"       = var.app == "dpc" ? "persistent" : null,
-      "Environment" = var.app == "dpc" ? "test" : null
-    })
+      "role"       = "db"
+      "cpm backup" = (var.app == "bcda" && var.env == "sbx") || var.env == "prod" ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
+    },
+    var.app == "dpc" ? local.dpc_specific_tags : {}
   )
 
   lifecycle {
     ignore_changes = [
       username,
-      password
+      password,
+      engine_version
     ]
   }
 }
-
 /* DB - Route53 */
 resource "aws_route53_record" "rds" {
-  count   = var.app == "bcda" ? 1 : 0
+  count   = var.app == "bcda" || var.app == "dpc" ? 1 : 0
   zone_id = aws_route53_zone.local_zone[0].zone_id
-  name    = "rds.${aws_route53_zone.local_zone[0].name}"
+  name    = var.app == "dpc" ? "db.${aws_route53_zone.local_zone[0].name}" : "rds.${aws_route53_zone.local_zone[0].name}"
   type    = "CNAME"
   ttl     = "300"
   records = [aws_db_instance.api.address]
@@ -263,6 +274,7 @@ resource "aws_route53_record" "rds" {
 
 resource "aws_route53_zone" "local_zone" {
   count = (var.app == "bcda" || var.app == "dpc") ? 1 : 0
+
   name = (
     var.app == "bcda" && var.env == "sbx" ? "bcda-open${var.env}.local" :
     var.app == "bcda" ? "bcda-${var.env}.local" :
@@ -272,4 +284,9 @@ resource "aws_route53_zone" "local_zone" {
   vpc {
     vpc_id = data.aws_vpc.target_vpc.id
   }
+
+  tags = merge(
+    data.aws_default_tags.data_tags.tags,
+    var.app == "dpc" ? local.dpc_specific_tags : {}
+  )
 }
