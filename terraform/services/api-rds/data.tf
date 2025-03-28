@@ -48,11 +48,6 @@ data "aws_secretsmanager_secret" "database_password" {
 data "aws_secretsmanager_secret_version" "database_password" {
   secret_id = data.aws_secretsmanager_secret.database_password.id
 }
-# Fetch the Jenkins security group ID from AWS SSM Parameter Store based on the app
-data "aws_ssm_parameter" "jenkins_sg" {
-  count = var.app == "bcda" || var.app == "ab2d" ? 1 : 0
-  name  = "/${var.app}/jenkins/security-group"
-}
 
 data "aws_caller_identity" "current" {}
 
