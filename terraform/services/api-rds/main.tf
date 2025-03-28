@@ -45,11 +45,6 @@ locals {
     dpc  = 21 # 3 ETL periods instead of the default 7 days
   }[var.app]
 
-  engine_version = {
-    ab2d = 16.4
-    bcda = 16.4
-    dpc  = 11
-  }[var.app]
   additional_ingress_sgs = var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : (
   var.app == "dpc" ? flatten(data.aws_security_groups.dpc_additional_sg.ids) : [])
   gdit_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? flatten([for sg in data.aws_security_group.gdit : sg.id]) : []
@@ -91,11 +86,12 @@ resource "aws_vpc_security_group_egress_rule" "egress_all" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
+  count                        = var.app == "bcda" || var.app == "ab2d" ? 1 : 0
   description                  = "Jenkins Agent Access"
   from_port                    = "5432"
   to_port                      = "5432"
   ip_protocol                  = "tcp"
-  referenced_security_group_id = data.aws_ssm_parameter.jenkins_sg.value
+  referenced_security_group_id = data.aws_ssm_parameter.jenkins_sg[0].value
   security_group_id            = aws_security_group.sg_database.id
 }
 
@@ -208,7 +204,7 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 resource "aws_db_instance" "api" {
   allocated_storage = local.allocated_storage
   engine            = "postgres"
-  engine_version    = local.engine_version
+  engine_version    = 16.4
   instance_class    = local.instance_class
   identifier        = local.db_name
   storage_encrypted = true
