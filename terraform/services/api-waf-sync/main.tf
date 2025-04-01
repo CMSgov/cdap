@@ -27,7 +27,7 @@ module "api_waf_sync_function" {
   environment_variables = {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-api-waf-sync"
-    DB_HOST  = "data.aws_ssm_parameter.dpc_db_host.value"
+    DB_HOST  = data.aws_ssm_parameter.dpc_db_host.value
   }
 }
 
@@ -64,4 +64,5 @@ data "aws_iam_policy_document" "aws_waf_access" {
 # db host
 data "aws_ssm_parameter" "dpc_db_host" {
   name = "/dpc/${var.env}/db/url"
+  value = ""
 }
