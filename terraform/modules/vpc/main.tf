@@ -20,3 +20,16 @@ data "aws_vpc" "this" {
     }
   }
 }
+
+resource "aws_s3_bucket" "backend_bucket" {
+  bucket        = "${var.app}-${var.env}-tfstate"
+}
+
+terraform {
+  backend "s3" {
+    bucket = ""
+    key    = ""
+    dynamodb_table = ""
+    encrypt = true
+  }
+}
