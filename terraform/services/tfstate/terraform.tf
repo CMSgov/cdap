@@ -13,8 +13,8 @@ resource "aws_s3_bucket" "backend_bucket" {
 
 terraform {
   backend "s3" {
-    key    = "tfstate/terraform.tfstate"
-    bucket = ""
+    key            = "tfstate/terraform.tfstate"
+    bucket         = ""
     dynamodb_table = ""
     encrypt        = true
 
