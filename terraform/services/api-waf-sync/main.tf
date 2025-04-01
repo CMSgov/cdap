@@ -64,4 +64,5 @@ data "aws_iam_policy_document" "aws_waf_access" {
 # db host
 data "aws_ssm_parameter" "dpc_db_host" {
   name  = "/dpc/${var.env}/db/url"
+
 }
