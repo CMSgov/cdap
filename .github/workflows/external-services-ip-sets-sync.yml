@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         app: [ab2d]
-        env: [mgmt, dev, test, sbx]
+        env: [mgmt, dev, test, sbx, prod]
         include:
         - app: bcda
           env: prod
