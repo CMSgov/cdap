@@ -9,10 +9,13 @@ LOCK_TOKEN=$(aws wafv2 get-ip-set --name external-services --scope REGIONAL --id
 
 echo "Beginning 'external services' IPv4 set update."
 
-aws wafv2 update-ip-set \
-  --name external-services \
-  --scope REGIONAL \
-  --id $IPV4_SET_ID \
-  --region us-east-1 \
-  --addresses $IPV4_LIST \
-  --lock-token $LOCK_TOKEN
+# aws wafv2 update-ip-set \
+#   --name external-services \
+#   --scope REGIONAL \
+#   --id $IPV4_SET_ID \
+#   --region us-east-1 \
+#   --addresses $IPV4_LIST \
+#   --lock-token $LOCK_TOKEN
+
+SAMPLE_NAME=$(aws ec2 describe-instances | jq -r '.Reservations[0].Instances[].Tags[] | select( .Key=="Name") | .Value')
+echo "Sample name is ${SAMPLE_NAME}"
