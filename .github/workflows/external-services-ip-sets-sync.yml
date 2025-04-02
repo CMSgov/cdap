@@ -1,7 +1,7 @@
 name: External Services WAF IP Sets Sync
 
 on:
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,7 +19,7 @@ jobs:
         env: [mgmt, dev, test, sbx, prod]
         include:
         - app: bcda
-          env: prod
+          env: prod # All BCDA and DPC envs share one external-services IPSet.
     steps:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: CMSgov/cdap-private
-          ref: 'jscott/PLT-506'
+          ref: 'main'
           sparse-checkout:
             ip-sets/external-services/allowed_ips.txt
           sparse-checkout-cone-mode: false
