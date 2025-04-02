@@ -16,10 +16,10 @@ jobs:
     strategy:
       matrix:
         app: [ab2d]
-        env: [mgmt, dev, test]
+        env: [mgmt, dev, test, sbx]
         include:
         - app: bcda
-          env: mgmt
+          env: prod
     steps:
       - name: Checkout Platform Repository
         uses: actions/checkout@v4
