@@ -12,6 +12,7 @@ resource "aws_s3_bucket" "backend_bucket" {
 }
 
 terraform {
+  # Comment out backend block and init without -backend-config for initial creation of resources
   backend "s3" {
     key            = "tfstate/terraform.tfstate"
     bucket         = ""
