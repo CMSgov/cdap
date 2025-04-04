@@ -215,7 +215,7 @@ resource "aws_db_instance" "api" {
     "postgresql",
     "upgrade",
   ]
-  skip_final_snapshot                   = var.app == "dpc" ? true : false
+  skip_final_snapshot                   = true
   snapshot_identifier                   = var.app == "dpc" ? var.snapshot : null # default will be null
   final_snapshot_identifier             = var.app == "dpc" ? "dpc-${var.env}-${var.name}-20190829-final" : null
   auto_minor_version_upgrade            = var.app == "dpc" ? true : null
