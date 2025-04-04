@@ -215,7 +215,7 @@ resource "aws_db_instance" "api" {
     "postgresql",
     "upgrade",
   ]
-  skip_final_snapshot                   = var.app == "dpc" ? local.is_prod : true
+  skip_final_snapshot                   = var.app == "dpc" ? true : false
   snapshot_identifier                   = var.app == "dpc" ? var.snapshot : null # default will be null
   final_snapshot_identifier             = var.app == "dpc" ? "dpc-${var.env}-${var.name}-20190829-final" : null
   auto_minor_version_upgrade            = var.app == "dpc" ? true : null
@@ -244,7 +244,7 @@ resource "aws_db_instance" "api" {
     data.aws_default_tags.data_tags.tags,
     {
       "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : (
-        var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${local.stdenv}-rds" : (
+        var.app == "bcda" && var.env == "sbx" ? "${var.app}-${local.stdenv}-rds" : (
           var.app == "bcda" && var.env == "prod" ? "${var.app}-${local.stdenv}-rds" : (
             var.app == "dpc" && var.env == "sbx" ? "${var.app}-${local.stdenv}-website-db" :
             (var.app == "dpc" ? "${var.app}-${local.stdenv}-website-db" : local.db_name)
