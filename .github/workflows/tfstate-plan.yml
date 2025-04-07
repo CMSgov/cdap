@@ -6,7 +6,6 @@ on:
       legacy:
         required: true
         type: boolean
-
   pull_request:
     paths:
       - .github/workflows/tfstate-plan.yml
