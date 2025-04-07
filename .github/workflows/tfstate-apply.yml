@@ -1,6 +1,10 @@
 name: Terraform apply for tfstate
 
 on:
+  inputs:
+    legacy:
+      required: true
+      type: boolean
   push:
     branches:
       - main
