@@ -1,6 +1,12 @@
 name: tfstate plan terraform
 
 on:
+  workflow_call:
+    inputs:
+      legacy:
+        required: true
+        type: boolean
+
   pull_request:
     paths:
       - .github/workflows/tfstate-plan.yml
