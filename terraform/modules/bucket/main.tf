@@ -8,7 +8,8 @@ module "bucket_key" {
 }
 
 resource "aws_s3_bucket" "this" {
-  bucket        = var.name
+  bucket        = var.legacy == true ? var.name : null
+  bucket_prefix = var.legacy == false ? var.name : null
   force_destroy = true
 }
 
