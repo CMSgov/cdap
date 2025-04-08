@@ -207,8 +207,7 @@ resource "aws_db_instance" "api" {
   instance_class    = local.instance_class
   identifier        = local.db_name
   storage_encrypted = true
-  deletion_protection = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : var.app == "ab2d" ? true : (
-  var.app == "bcda" && (var.env == "prod" || var.env == "sbx")) ? true : false
+  deletion_protection = true
 
   enabled_cloudwatch_logs_exports = [
     "postgresql",
