@@ -19,8 +19,8 @@ echo "Setting up GH Actions runner tool cache"
 sudo mkdir -p /opt/hostedtoolcache
 sudo chown -R ec2-user:ec2-user /opt/hostedtoolcache
 
-# Workaround for idm ems issue
-
+# The IDM server that AB2D needs to access doesn't support TLSv1.2 with EMS
+# See https://www.redhat.com/en/blog/tls-extended-master-secret-and-fips-rhel
 sudo update-crypto-policies --set FIPS:NO-ENFORCE-EMS
 
 echo "Creating actions-runner directory for the GH Action installation"
