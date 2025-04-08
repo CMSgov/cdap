@@ -1,6 +1,11 @@
 name: Terraform apply for tfstate
 
 on:
+  workflow_call:
+    inputs:
+      legacy:
+        required: true
+        type: boolean
   push:
     branches:
       - main
