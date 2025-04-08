@@ -1,5 +1,4 @@
 locals {
-  is_prod = local.stdenv == "prod" || local.stdenv == "prod-sbx"
   db_name = {
     ab2d = {
       dev  = "ab2d-dev"
@@ -208,7 +207,7 @@ resource "aws_db_instance" "api" {
   instance_class    = local.instance_class
   identifier        = local.db_name
   storage_encrypted = true
-  deletion_protection = var.app == "dpc" ? local.is_prod : var.app == "ab2d" ? true : (
+  deletion_protection = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : var.app == "ab2d" ? true : (
   var.app == "bcda" && (var.env == "prod" || var.env == "sbx")) ? true : false
 
   enabled_cloudwatch_logs_exports = [
@@ -234,7 +233,7 @@ resource "aws_db_instance" "api" {
   backup_window                         = var.app == "dpc" || var.app == "bcda" ? "05:00-05:30" : null #1 am EST
   copy_tags_to_snapshot                 = var.app == "bcda" || var.app == "dpc" ? true : false
   kms_key_id                            = var.app == "ab2d" || var.app == "dpc" ? data.aws_kms_alias.main_kms[0].target_key_arn : null
-  multi_az                              = var.app == "dpc" ? local.is_prod : (var.env == "prod" || var.app == "bcda" ? true : false)
+  multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : (var.env == "prod" || var.app == "bcda" ? true : false)
   vpc_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? concat(
   [aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
   username = data.aws_secretsmanager_secret_version.database_user.secret_string
