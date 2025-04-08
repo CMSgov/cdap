@@ -8,3 +8,9 @@ variable "cross_account_read_roles" {
   type        = list(any)
   default     = []
 }
+
+variable "legacy" {
+  description = "Is this deployment in the greenfield environment (false)?"
+  type        = bool
+  default     = true
+}
