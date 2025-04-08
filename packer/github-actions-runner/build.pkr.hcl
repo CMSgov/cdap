@@ -49,8 +49,6 @@ build {
 
   provisioner "shell" {
     remote_folder     = "/home/ec2-user/"
-    expect_disconnect = true
-    pause_before      = "30s" # Gives EC2 a little time to fully boot again
     inline = [
       "chmod +x /home/ec2-user/install-runner.sh",
       "/home/ec2-user/install-runner.sh"
