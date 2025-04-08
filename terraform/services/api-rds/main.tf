@@ -201,12 +201,12 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 # Create database instance
 
 resource "aws_db_instance" "api" {
-  allocated_storage = local.allocated_storage
-  engine            = "postgres"
-  engine_version    = 16.4
-  instance_class    = local.instance_class
-  identifier        = local.db_name
-  storage_encrypted = true
+  allocated_storage   = local.allocated_storage
+  engine              = "postgres"
+  engine_version      = 16.4
+  instance_class      = local.instance_class
+  identifier          = local.db_name
+  storage_encrypted   = true
   deletion_protection = true
 
   enabled_cloudwatch_logs_exports = [
