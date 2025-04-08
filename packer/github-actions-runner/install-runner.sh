@@ -19,6 +19,10 @@ echo "Setting up GH Actions runner tool cache"
 sudo mkdir -p /opt/hostedtoolcache
 sudo chown -R ec2-user:ec2-user /opt/hostedtoolcache
 
+# Workaround for idm ems issue
+
+sudo update-crypto-policies --set FIPS:NO-ENFORCE-EMS
+
 echo "Creating actions-runner directory for the GH Action installation"
 sudo mkdir -p /opt/actions-runner
 sudo chown -R ec2-user:ec2-user /opt/actions-runner
