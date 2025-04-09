@@ -48,7 +48,7 @@ build {
   }
 
   provisioner "shell" {
-    remote_folder     = "/home/ec2-user/"
+    remote_folder = "/home/ec2-user/"
     inline = [
       "chmod +x /home/ec2-user/install-runner.sh",
       "/home/ec2-user/install-runner.sh"
