@@ -15,7 +15,6 @@ def create_boto3_client(config_file_section):
 def generate_optional_kwargs_from_parameter(parameter):
     put_parameter_optional_fields = [
         'Description',
-        'KeyId',
         'AllowedPattern',
         'Tags',
         'Tier',
@@ -48,15 +47,7 @@ def process_parameter_list(parameter_list, exclusion_list):
 
 def write_parameters(source_client, target_client, parameter_list):
     for parameter in parameter_list:
-
-
-        response = source_client.get_parameter(
-            Name=parameter['Name'], 
-            WithDecryption=True
-        )
-
-        print(parameter['Name'] + "; value " + str(response['Parameter']['Value']))
-
+        print(parameter['Name'])
 
         if config['MISCELLANEOUS']['DRY-RUN'] == 'false':
             response = source_client.get_parameter(
@@ -75,7 +66,7 @@ def write_parameters(source_client, target_client, parameter_list):
             )
 
 config = configparser.ConfigParser()
-config.read('migrate_parameters.ini')
+config.read('settings.ini')
 
 print("Creating BCDA account client.")
 bcda_client = create_boto3_client('SOURCE.ACCOUNT.CREDENTIALS')
@@ -122,10 +113,10 @@ write_parameters(
     non_prod_account_write_list
 )
 
-print("Writing to the AWS Prod account parameter store:")
+# print("Writing to the AWS Prod account parameter store:")
 
-write_parameters(
-    bcda_client, 
-    prod_client, 
-    prod_account_write_list
-)
+# write_parameters(
+#     bcda_client, 
+#     prod_client, 
+#     prod_account_write_list
+# )
