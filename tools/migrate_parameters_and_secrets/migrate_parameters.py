@@ -113,10 +113,10 @@ write_parameters(
     non_prod_account_write_list
 )
 
-# print("Writing to the AWS Prod account parameter store:")
+print("Writing to the AWS Prod account parameter store:")
 
-# write_parameters(
-#     bcda_client, 
-#     prod_client, 
-#     prod_account_write_list
-# )
+write_parameters(
+    bcda_client, 
+    prod_client, 
+    prod_account_write_list
+)
