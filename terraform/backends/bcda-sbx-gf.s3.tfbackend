@@ -1,0 +1,2 @@
+bucket         = "bcda-sbx-tfstate-20250410142904110700000001"
+dynamodb_table = "bcda-sbx-tfstate"

@@ -1,0 +1,2 @@
+bucket         = "ab2d-test-tfstate-20250410134820763500000001"
+dynamodb_table = "ab2d-test-tfstate"

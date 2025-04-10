@@ -1,0 +1,2 @@
+bucket         = "dpc-sbx-tfstate-20250410145025265200000001"
+dynamodb_table = "dpc-sbx-tfstate"
