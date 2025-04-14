@@ -21245,7 +21245,7 @@ var loggerMiddleware = /* @__PURE__ */ __name(() => (next, context) => async (ar
   var _a, _b;
   try {
     const response = await next(args);
-    const { clientName, commandName, logger, dynamoDbDocumentClientOptions = {} } = context;
+    const { clientName, commandName, logger } = context;
     const { overrideInputFilterSensitiveLog, overrideOutputFilterSensitiveLog } = dynamoDbDocumentClientOptions;
     const inputFilterSensitiveLog = overrideInputFilterSensitiveLog ?? context.inputFilterSensitiveLog;
     const outputFilterSensitiveLog = overrideOutputFilterSensitiveLog ?? context.outputFilterSensitiveLog;
@@ -21259,7 +21259,7 @@ var loggerMiddleware = /* @__PURE__ */ __name(() => (next, context) => async (ar
     });
     return response;
   } catch (error) {
-    const { clientName, commandName, logger, dynamoDbDocumentClientOptions = {} } = context;
+    const { clientName, commandName, logger } = context;
     const { overrideInputFilterSensitiveLog } = dynamoDbDocumentClientOptions;
     const inputFilterSensitiveLog = overrideInputFilterSensitiveLog ?? context.inputFilterSensitiveLog;
     (_b = logger == null ? void 0 : logger.error) == null ? void 0 : _b.call(logger, {
