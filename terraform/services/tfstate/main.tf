@@ -8,7 +8,3 @@ module "tfstate_bucket" {
   legacy = var.legacy
 }
 
-module "tfstate_table" {
-  source = "../../modules/table"
-  name   = local.name
-}
