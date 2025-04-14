@@ -4,7 +4,7 @@ set -x
 
 # Only bcda and dpc for now since each ab2d env is in its own account
 apps="bcda dpc"
-envs="dev test prod sbx"
+envs="dev test prod sandbox"
 
 for app in $apps; do
   for env in $envs; do

@@ -12,7 +12,7 @@ set -x
 #apps="ab2d"
 apps="bcda dpc"
 #envs="mgmt"
-envs="dev test prod sbx mgmt"
+envs="dev test prod sandbox mgmt"
 
 description="$1"
 shift

@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [ab2d]
-        env: [mgmt, dev, test, sbx, prod]
+        env: [mgmt, dev, test, sandbox, prod]
         include:
           - app: bcda
             env: mgmt
@@ -41,7 +41,7 @@ jobs:
       - uses: slackapi/slack-github-action@v1.26.0
         if: ${{ failure() }}
         with:
-          channel-id: 'C04UG13JF9B' 
+          channel-id: 'C04UG13JF9B'
           slack-message: "Terraform apply failure: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

@@ -7,10 +7,6 @@ on:
     paths:
       - .github/workflows/quicksight-apply.yml
       - terraform/services/quicksight/**
-#      - terraform/modules/athena/**
-#      - terraform/modules/glue/**
-#      - terraform/modules/firehose/**
-#      - terraform/modules/quicksight/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -33,8 +29,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        app: [ab2d, bcda, dpc]
-#        env: [dev, test, sbx, prod]
         app: [dpc]
         env: [dev, test]
     steps:
