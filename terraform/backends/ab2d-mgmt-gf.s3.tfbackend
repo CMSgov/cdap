@@ -1,2 +1,1 @@
 bucket         = "ab2d-mgmt-tfstate-20250409210420915900000001"
-dynamodb_table = "ab2d-mgmt-tfstate"

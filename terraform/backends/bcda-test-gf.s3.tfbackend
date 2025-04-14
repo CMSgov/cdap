@@ -1,2 +1,1 @@
 bucket         = "bcda-test-tfstate-20250409171646342600000001"
-dynamodb_table = "bcda-test-tfstate"

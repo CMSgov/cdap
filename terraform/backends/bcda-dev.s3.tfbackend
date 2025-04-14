@@ -1,2 +1,1 @@
 bucket         = "bcda-dev-tfstate"
-dynamodb_table = "bcda-dev-tfstate"
