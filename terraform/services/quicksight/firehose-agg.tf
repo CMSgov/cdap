@@ -69,8 +69,8 @@ resource "aws_glue_security_configuration" "main" {
 resource "aws_cloudwatch_log_subscription_filter" "quicksight-cloudwatch-agg-log-subscription" {
   name = "${local.stack_prefix}-agg-subscription"
   # Set the log group name so that if we use an environment ending in "-dev", it will get logs from
-  # the "real" log group for that environment. So we could make an environment "prod-sbx-dev" that
-  # we can use for development, and it will read from the "prod-sbx" environment.
+  # the "real" log group for that environment. So we could make an environment "prod-sandbox-dev" that
+  # we can use for development, and it will read from the "prod-sandbox" environment.
   log_group_name  = "/aws/ecs/fargate/dpc-${local.this_env}-aggregation"
   filter_pattern  = ""
   destination_arn = aws_kinesis_firehose_delivery_stream.ingester_agg.arn
