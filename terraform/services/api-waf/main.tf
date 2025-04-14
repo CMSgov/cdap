@@ -1,5 +1,5 @@
 locals {
-  is_sandbox = var.env == "sbx"
+  is_sandbox = var.env == "sandbox"
   ab2d_env_lbs = {
     dev  = "ab2d-dev"
     test = "ab2d-east-impl"
@@ -8,8 +8,8 @@ locals {
   }
   load_balancers = {
     ab2d = "${local.ab2d_env_lbs[var.env]}"
-    bcda = "bcda-api-${local.is_sandbox ? "opensbx" : var.env}-01"
     dpc  = "dpc-${local.is_sandbox ? "prod-sbx" : var.env}-1"
+    bcda = "bcda-api-${local.is_sandbox ? "sandbox" : var.env}-01"
   }
 }
 
