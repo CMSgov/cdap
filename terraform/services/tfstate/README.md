@@ -1,6 +1,6 @@
 # Terraform for initializing tfstate resources
 
-This terraform creates the S3 buckets and DynamoDB table for storing terraform state in AWS.
+This terraform creates the S3 buckets for storing terraform state in AWS.
 
 To create the resources with the first run of `terraform init`, comment out the backend block in terraform.tf. This will create a local terraform.tfstate file.
 
