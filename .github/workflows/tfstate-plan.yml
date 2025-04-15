@@ -6,6 +6,7 @@ on:
       - .github/workflows/tfstate-plan.yml
       - terraform/services/tfstate/**
       - terraform/modules/bucket/**
+      - terraform/modules/table/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -29,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [ab2d, bcda, dpc]
-        env: [dev, test, sbx, prod]
+        env: [dev, test, sbx, prod, mgmt]
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
