@@ -1,1 +1,2 @@
 bucket         = "ab2d-dev-tfstate"
+dynamodb_table = "ab2d-dev-tfstate"
