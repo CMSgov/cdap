@@ -8,3 +8,9 @@ module "tfstate_bucket" {
   legacy = var.legacy
 }
 
+module "tfstate_table" {
+  source = "../../modules/table"
+  name   = local.name
+  count  = var.legacy == true ? 1 : 0
+}
+
