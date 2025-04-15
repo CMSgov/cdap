@@ -1,1 +1,2 @@
 bucket         = "dpc-prod-tfstate-20250411204900543700000001"
+use_lockfile   = true

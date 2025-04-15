@@ -1,1 +1,2 @@
 bucket         = "ab2d-test-tfstate-20250410134820763500000001"
+use_lockfile   = true
