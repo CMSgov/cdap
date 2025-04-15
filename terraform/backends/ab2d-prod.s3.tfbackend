@@ -1,3 +1,2 @@
 bucket         = "ab2d-prod-tfstate"
 dynamodb_table = "ab2d-prod-tfstate"
-

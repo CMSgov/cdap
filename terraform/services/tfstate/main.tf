@@ -13,4 +13,3 @@ module "tfstate_table" {
   name   = local.name
   count  = var.legacy == true ? 1 : 0
 }
-
