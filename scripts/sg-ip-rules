@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 if { [ -z "$1" ]; }; then
-  # shellcheck disable=SC2296
   echo 2>&1 "Usage: ${BASH_SOURCE:-${(%):-%x}} <description> <CIDRs>..."
   echo 2>&1 "  Where <CIDRs> are IP ranges to be added as ingress rules"
   echo 2>&1 "  and <description> is applied to each rule."
