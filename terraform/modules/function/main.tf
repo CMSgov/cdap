@@ -126,15 +126,15 @@ resource "aws_iam_role" "function" {
   }
 }
 
-# Get prod and sandbox account IDs in the test environment for cross-account roles
+# Get prod and sbx account IDs in the test environment for cross-account roles
 data "aws_ssm_parameter" "prod_account" {
   count = var.env == "test" ? 1 : 0
   name  = "/${var.app}/prod/account-id"
 }
 
-data "aws_ssm_parameter" "sandbox_account" {
+data "aws_ssm_parameter" "sbx_account" {
   count = var.env == "test" ? 1 : 0
-  name  = "/${var.app}/sandbox/account-id"
+  name  = "/${var.app}/sbx/account-id"
 }
 
 module "zip_bucket" {
@@ -143,7 +143,7 @@ module "zip_bucket" {
   name = "${var.name}-function"
   cross_account_read_roles = var.env == "test" ? [
     "arn:aws:iam::${data.aws_ssm_parameter.prod_account[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
-    "arn:aws:iam::${data.aws_ssm_parameter.sandbox_account[0].value}:role/delegatedadmin/developer/${var.app}-sandbox-github-actions",
+    "arn:aws:iam::${data.aws_ssm_parameter.sbx_account[0].value}:role/delegatedadmin/developer/${var.app}-sbx-github-actions",
   ] : []
 }
 

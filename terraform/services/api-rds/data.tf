@@ -1,7 +1,7 @@
 locals {
   stdenv = (
-    var.app == "bcda" ? (var.env == "sandbox" ? "opensandbox" : var.env) :
-    var.app == "dpc" ? (var.env == "sandbox" ? "prod-sandbox" : var.env) :
+    var.app == "bcda" ? (var.env == "sbx" ? "opensbx" : var.env) :
+    var.app == "dpc" ? (var.env == "sbx" ? "prod-sbx" : var.env) :
     var.env
   )
   secret_date = "2020-01-02-09-15-01"

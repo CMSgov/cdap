@@ -3,12 +3,12 @@ data "aws_vpc" "this" {
     name = "tag:stack"
     values = [
       var.app == "ab2d" && var.env == "mgmt" ? "dev" : # Yes, dev is the stack name for the ab2d mgmt vpc
-      var.app == "ab2d" && var.env == "sandbox" ? "sandbox" :
+      var.app == "ab2d" && var.env == "sbx" ? "sandbox" :
       var.app == "ab2d" && var.env == "test" ? "impl" :
       var.app == "bcda" && var.env == "mgmt" ? "managed" :
-      var.app == "bcda" && var.env == "sandbox" ? "opensandbox" :
+      var.app == "bcda" && var.env == "sbx" ? "opensbx" :
       var.app == "dpc" && var.env == "mgmt" ? "management" :
-      var.app == "dpc" && var.env == "sandbox" ? "prod-sandbox" :
+      var.app == "dpc" && var.env == "sbx" ? "prod-sbx" :
       var.env
     ]
   }
