@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [ab2d, bcda, dpc]
-        env: [dev, test, sandbox, prod]
+        env: [dev, test, sbx, prod]
         account: [greenfield, legacy]
         include:
           - app: cdap
@@ -48,10 +48,10 @@ jobs:
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ matrix.account == 'legacy' && (matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT) || contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.account == 'legacy' && matrix.env == 'sandbox' && 'sbx' || matrix.env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ matrix.account == 'legacy' && (matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT) || contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.account == 'greenfield' && matrix.env == 'sbx' && 'sandbox' || matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.account == 'legacy' && matrix.env == 'sandbox' && 'sbx' || matrix.env }}.s3.tfbackend
+      - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.account == 'greenfield' && matrix.env == 'sbx' && 'sandbox' || matrix.env }}.s3.tfbackend
       - run: terraform plan
         env:
           TF_VAR_app: ${{ matrix.app }}
-          TF_VAR_env: ${{ matrix.env }}
+          TF_VAR_env: ${{ matrix.account == 'greenfield' && matrix.env == 'sbx' && 'sandbox' || matrix.env }}
