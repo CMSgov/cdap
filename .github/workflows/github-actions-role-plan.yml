@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.account == 'legacy' && 'ubuntu-latest' || format('codebuild-runner-cdap-container-{0}-{1}', github.run_id, github.run_attempt) }}
     defaults:
       run:
         working-directory: ./terraform/services/github-actions-role
@@ -28,15 +28,29 @@ jobs:
       fail-fast: false
       matrix:
         app: [ab2d, bcda, dpc]
-        env: [dev, test, sbx, prod, mgmt]
+        env: [dev, test, sandbox, prod]
+        account: [greenfield, legacy]
+        include:
+          - app: cdap
+            env: mgmt
+            account: greenfield
+          - app: ab2d
+            env: mgmt
+            account: legacy
+          - app: bcda
+            env: mgmt
+            account: legacy
+          - app: dpc
+            env: mgmt
+            account: legacy
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ matrix.account == 'legacy' && (matrix.app == 'ab2d' && secrets[format('{0}_{1}_ACCOUNT', matrix.app, matrix.env)] || secrets.BCDA_ACCOUNT) || contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.account == 'legacy' && matrix.env == 'sandbox' && 'sbx' || matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.account == 'legacy' && matrix.env == 'sandbox' && 'sbx' || matrix.env }}.s3.tfbackend
       - run: terraform plan
         env:
           TF_VAR_app: ${{ matrix.app }}
