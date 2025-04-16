@@ -3,16 +3,16 @@ variable "app" {
   type        = string
   validation {
     condition     = contains(["ab2d", "bcda", "dpc", "cdap"], var.app)
-    error_message = "Valid value for app is ab2d, bcda, cdap, or dpc."
+    error_message = "Valid value for app is ab2d, bcda, dpc, or cdap."
   }
 }
 
 variable "env" {
-  description = "The application environment (dev, test, sbx, prod, mgmt)"
+  description = "The application environment (dev, test, sbx, sandbox, prod, mgmt)"
   type        = string
   validation {
-    condition     = contains(["dev", "test", "sbx", "prod", "mgmt"], var.env)
-    error_message = "Valid value for env is dev, test, sbx, mgmt or prod."
+    condition     = contains(["dev", "test", "sbx", "sandbox", "prod", "mgmt"], var.env)
+    error_message = "Valid value for env is dev, test, sbx, sandbox, mgmt, or prod."
   }
 }
 
