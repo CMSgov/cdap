@@ -4,13 +4,13 @@ locals {
       dev  = "ab2d-dev"
       test = "ab2d-east-impl"
       prod = "ab2d-east-prod"
-      sbx  = "ab2d-sbx-sandbox"
+      sandbox  = "ab2d-sandbox-sandbox"
     }[var.env]
     bcda = {
       dev  = "bcda-dev-rds"
       test = "bcda-test-rds"
       prod = "bcda-prod-rds-20190201"
-      sbx  = "bcda-opensbx-rds-20190311"
+      sandbox  = "bcda-opensandbox-rds-20190311"
     }[var.env]
     dpc = "${var.app}-${local.stdenv}-db-20190829"
   }[var.app]
@@ -21,14 +21,14 @@ locals {
       dev  = "bcda-dev-rds"
       test = "bcda-test-rds"
       prod = "bcda-prod-rds"
-      sbx  = "bcda-opensbx-rds"
+      sandbox  = "bcda-opensandbox-rds"
     }[var.env]
     dpc = "${var.app}-${local.stdenv}-db"
   }[var.app]
 
   instance_class = {
     ab2d = "db.m6i.2xlarge"
-    bcda = (var.env == "sbx" || var.env == "prod") ? "db.m6i.xlarge" : "db.m6i.large"
+    bcda = (var.env == "sandbox" || var.env == "prod") ? "db.m6i.xlarge" : "db.m6i.large"
     dpc  = "db.m6i.large" # node_type for instance class
   }[var.app]
 
@@ -147,7 +147,7 @@ resource "aws_vpc_security_group_ingress_rule" "quicksight" {
 # Create database subnet group
 resource "aws_db_subnet_group" "subnet_group" {
   name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : (
-    var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds-subnets" : (
+    var.app == "bcda" && var.env == "sandbox" ? "${var.app}-open${var.env}-rds-subnets" : (
   var.app == "dpc" ? "${var.app}-${local.stdenv}-rds-subnet" : "${var.app}-${var.env}-rds-subnets"))
 
   subnet_ids = data.aws_subnets.db.ids
@@ -232,7 +232,7 @@ resource "aws_db_instance" "api" {
   backup_window                         = var.app == "dpc" || var.app == "bcda" ? "05:00-05:30" : null #1 am EST
   copy_tags_to_snapshot                 = var.app == "bcda" || var.app == "dpc" ? true : false
   kms_key_id                            = var.app == "ab2d" || var.app == "dpc" ? data.aws_kms_alias.main_kms[0].target_key_arn : null
-  multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : (var.env == "prod" || var.app == "bcda" ? true : false)
+  multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sandbox") : (var.env == "prod" || var.app == "bcda" ? true : false)
   vpc_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? concat(
   [aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
   username = data.aws_secretsmanager_secret_version.database_user.secret_string
@@ -242,16 +242,16 @@ resource "aws_db_instance" "api" {
     data.aws_default_tags.data_tags.tags,
     {
       "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : (
-        var.app == "bcda" && var.env == "sbx" ? "${var.app}-${local.stdenv}-rds" : (
+        var.app == "bcda" && var.env == "sandbox" ? "${var.app}-${local.stdenv}-rds" : (
           var.app == "bcda" && var.env == "prod" ? "${var.app}-${local.stdenv}-rds" : (
-            var.app == "dpc" && var.env == "sbx" ? "${var.app}-${local.stdenv}-website-db" :
+            var.app == "dpc" && var.env == "sandbox" ? "${var.app}-${local.stdenv}-website-db" :
             (var.app == "dpc" ? "${var.app}-${local.stdenv}-website-db" : local.db_name)
           )
         )
       ),
       "role" = "db",
-      "cpm backup" = (var.app == "bcda" && var.env == "sbx") || var.env == "prod" || (
-      var.app == "dpc" && var.env == "sbx") ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
+      "cpm backup" = (var.app == "bcda" && var.env == "sandbox") || var.env == "prod" || (
+      var.app == "dpc" && var.env == "sandbox") ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
     },
     var.app == "dpc" ? local.dpc_specific_tags : {}
   )
@@ -278,7 +278,7 @@ resource "aws_route53_zone" "local_zone" {
   count = (var.app == "bcda" || var.app == "dpc") ? 1 : 0
 
   name = (
-    var.app == "bcda" && var.env == "sbx" ? "bcda-open${var.env}.local" :
+    var.app == "bcda" && var.env == "sandbox" ? "bcda-open${var.env}.local" :
     var.app == "bcda" ? "bcda-${local.stdenv}.local" :
     var.app == "dpc" ? "dpc-${local.stdenv}.local" : null
   )

@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [ab2d]
-        env: [mgmt, dev, test, sbx, prod]
+        env: [mgmt, dev, test, sandbox, prod]
         include:
           - app: bcda
             env: mgmt

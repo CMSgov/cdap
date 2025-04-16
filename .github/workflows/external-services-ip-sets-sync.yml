@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         app: [ab2d]
-        env: [mgmt, dev, test, sbx, prod]
+        env: [mgmt, dev, test, sandbox, prod]
         include:
         - app: bcda
           env: prod # All BCDA and DPC envs share one external-services IPSet.

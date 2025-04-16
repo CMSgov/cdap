@@ -1,6 +1,6 @@
 locals {
   full_name   = "${var.app}-${var.env}-admin-create-aco-creds"
-  db_sg_name  = "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds"
+  db_sg_name  = "bcda-${var.env == "sandbox" ? "opensandbox" : var.env}-rds"
   memory_size = 256
 }
 
@@ -15,7 +15,7 @@ data "aws_kms_alias" "aco_creds_kms" {
 data "aws_iam_policy_document" "creds_bucket" {
   statement {
     actions   = ["s3:PutObject"]
-    resources = ["arn:aws:s3:::bcda-aco-credentials/${var.env == "sbx" ? "opensbx" : var.env}/*"]
+    resources = ["arn:aws:s3:::bcda-aco-credentials/${var.env == "sandbox" ? "opensandbox" : var.env}/*"]
   }
 }
 
