@@ -1,2 +1,2 @@
-bucket         = "bcda-sandbox-gf-tfstate"
-use_lockfile   = true
+bucket       = "bcda-sandbox-gf-tfstate"
+use_lockfile = true

@@ -1,2 +1,2 @@
-bucket         = "ab2d-sandbox-gf-tfstate"
-use_lockfile   = true
+bucket       = "ab2d-sandbox-gf-tfstate"
+use_lockfile = true
