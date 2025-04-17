@@ -9,7 +9,7 @@ provider "aws" {
 }
 
 terraform {
-  # # Comment out backend block and init without -backend-config for initial creation of resources
+  # Comment out backend block and init without -backend-config for initial creation of resources
   backend "s3" {
     key = "tfstate/terraform.tfstate"
   }
