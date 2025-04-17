@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 module "bucket_key" {
   source      = "../key"
-  name        = "${var.name}-bucket"
+  name        = data.aws_s3_bucket.bucket_access_logs.bucket
   description = "For ${var.name} S3 bucket and its access logs"
   user_roles  = var.cross_account_read_roles
 }
@@ -98,7 +98,8 @@ data "aws_s3_bucket" "bucket_access_logs" {
 }
 
 resource "aws_s3_bucket_logging" "this" {
-  bucket = aws_s3_bucket.this.bucket
+
+  bucket = data.aws_s3_bucket.bucket_access_logs.bucket
 
   target_bucket = data.aws_s3_bucket.bucket_access_logs.bucket
   target_prefix = "${var.name}/"
