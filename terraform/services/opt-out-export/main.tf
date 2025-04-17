@@ -91,5 +91,5 @@ resource "aws_vpc_security_group_ingress_rule" "function_access" {
   ip_protocol = "tcp"
   description = "opt-out-export function access"
 
-  security_group_id        = data.aws_security_group.db.id
+  security_group_id = data.aws_security_group.db.id
 }
