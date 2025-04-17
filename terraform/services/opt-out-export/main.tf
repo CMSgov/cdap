@@ -90,6 +90,7 @@ resource "aws_vpc_security_group_ingress_rule" "function_access" {
   to_port     = 5432
   ip_protocol = "tcp"
   description = "opt-out-export function access"
+  cidr_ipv4   = "0.0.0.0/0"
 
   security_group_id = data.aws_security_group.db.id
 }
