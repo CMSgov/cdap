@@ -3,6 +3,6 @@ on: [push]
 jobs:
   Hello-World-Job:
     runs-on:
-      - codebuild-runner-cdap-container-${{ github.run_id }}-${{ github.run_attempt }}
+      - codebuild-cdap-lambda-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - run: echo "Hello World!"
