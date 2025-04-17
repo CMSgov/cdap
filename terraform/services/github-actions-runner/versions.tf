@@ -13,5 +13,4 @@ terraform {
   backend "s3" {
     key = "github-actions/terraform.tfstate"
   }
-  required_version = "~> 1.5.5"
 }

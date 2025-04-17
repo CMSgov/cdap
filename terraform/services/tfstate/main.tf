@@ -11,4 +11,10 @@ module "tfstate_bucket" {
 module "tfstate_table" {
   source = "../../modules/table"
   name   = local.name
+  count  = var.legacy == true ? 1 : 0
+}
+
+moved {
+  from = module.tfstate_table
+  to   = module.tfstate_table[0]
 }
