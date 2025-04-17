@@ -91,6 +91,9 @@ resource "aws_security_group_rule" "function_access" {
   to_port     = 5432
   protocol    = "tcp"
   description = "opt-out-export function access"
+  lifecycle {
+    create_before_destroy = true
+  }
 
   security_group_id        = data.aws_security_group.db.id
   source_security_group_id = module.opt_out_export_function.security_group_id
