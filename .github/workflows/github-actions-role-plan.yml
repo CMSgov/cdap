@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ${{ matrix.account == 'legacy' && 'ubuntu-latest' || format('codebuild-cdap-lambda-{0}-{1}', github.run_id, github.run_attempt) }}
+    runs-on: ${{ matrix.account == 'legacy' && 'ubuntu-latest' || format('codebuild-runner-cdap-container-{0}-{1}', github.run_id, github.run_attempt) }}
     defaults:
       run:
         working-directory: ./terraform/services/github-actions-role
