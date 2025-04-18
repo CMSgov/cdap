@@ -27,22 +27,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d, bcda, dpc]
-        env: [dev, test, sbx, prod]
-        account: [greenfield, legacy]
-        include:
-          - app: cdap
-            env: mgmt
-            account: greenfield
-          - app: ab2d
-            env: mgmt
-            account: legacy
-          - app: bcda
-            env: mgmt
-            account: legacy
-          - app: dpc
-            env: mgmt
-            account: legacy
+        #app: [ab2d, bcda, dpc]
+        #env: [dev, test, sbx, prod]
+        #account: [greenfield, legacy]
+        #include:
+        #  - app: cdap
+        #    env: mgmt
+        #    account: greenfield
+        #  - app: ab2d
+        #    env: mgmt
+        #    account: legacy
+        #  - app: bcda
+        #    env: mgmt
+        #    account: legacy
+        #  - app: dpc
+        #    env: mgmt
+        #    account: legacy
+        app: [cdap]
+        env: [mgmt]
+        account: [greenfield]
     steps:
       - uses: actions/checkout@v4
       - run: |
