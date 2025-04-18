@@ -21,6 +21,9 @@ locals {
       "repo:CMSgov/dpc-app:*",
       "repo:CMSgov/dpc-static-site:*",
     ]
+    cdap = [
+      "repo:CMSgov/ab2d-bcda-dpc-platform:*",
+    ]
   }
   admin_app = var.legacy ? (var.app == "dpc" ? "bcda" : var.app) : "bcda"
 }
