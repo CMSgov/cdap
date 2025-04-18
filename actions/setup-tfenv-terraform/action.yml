@@ -14,8 +14,7 @@ runs:
         else
           TMPDIR=$(mktemp -d)
           git clone --depth=1 --branch v3.0.0 https://github.com/tfutils/tfenv.git $TMPDIR
-          mv $TMPDIR ~/.tfenv
-          echo "PATH=$HOME/.tfenv/bin:$PATH" >> "$GITHUB_ENV"
+          echo "PATH=$TMPDIR:$PATH" >> "$GITHUB_ENV"
         fi
       shell: bash
 
