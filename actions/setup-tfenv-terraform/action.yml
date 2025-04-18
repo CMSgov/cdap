@@ -19,5 +19,5 @@ runs:
       shell: bash
 
     - working-directory: ${{ inputs.directory }}
-      run: TFENV_CURL_OUTPUT=0 tfenv use
+      run: DEBUG=1 TFENV_CURL_OUTPUT=0 tfenv use
       shell: bash
