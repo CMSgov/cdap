@@ -45,6 +45,8 @@ jobs:
             account: legacy
     steps:
       - uses: actions/checkout@v4
+      - run: |
+        hash sha256sum
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v4
         with:
