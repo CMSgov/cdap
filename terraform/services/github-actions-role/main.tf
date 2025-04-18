@@ -22,7 +22,7 @@ locals {
       "repo:CMSgov/dpc-static-site:*",
     ]
   }
-  admin_app = var.app == "dpc" ? "bcda" : var.app
+  admin_app = var.legacy ? (var.app == "dpc" ? "bcda" : var.app) : "bcda"
 }
 
 data "aws_iam_openid_connect_provider" "github" {
