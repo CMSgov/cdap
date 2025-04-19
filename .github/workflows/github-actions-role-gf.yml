@@ -21,7 +21,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-runner-cdap-container-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     defaults:
       run:
         working-directory: ./terraform/services/github-actions-role
