@@ -1,0 +1,82 @@
+{
+  "rules": [
+    {
+      "rulePriority": 1,
+      "description": "Keep 3 main images",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["main"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 3
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
+    {
+      "rulePriority": 2,
+      "description": "Keep 3 prod images",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["ab2d-east-prod"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 3
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
+    {
+      "rulePriority": 3,
+      "description": "Keep 3 sbx images",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["ab2d-sbx-sandbox"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 3
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
+    {
+      "rulePriority": 4,
+      "description": "Keep 3 dev images",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["ab2d-dev"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 3
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
+    {
+      "rulePriority": 5,
+      "description": "Keep 5 impl images",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["ab2d-east-impl"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 5
+      },
+      "action": {
+        "type": "expire"
+      }
+    },
+    {
+      "rulePriority": 6,
+      "description": "Keep 3 prod-test images",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["ab2d-prod-test"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 3
+      },
+      "action": {
+        "type": "expire"
+      }
+    }
+  ]
+}
