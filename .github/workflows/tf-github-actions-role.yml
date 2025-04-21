@@ -2,22 +2,28 @@ name: github-actions-role tf
 
 on:
   push:
+    #branches:
+    #  - main
   pull_request:
     paths:
-      - .github/workflows/github-actions-role-gf.yml
+      - .github/workflows/tf-github-actions-role.yml
       - terraform/services/github-actions-role/**
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      apply:
+        required: false
+        type: boolean
 
 jobs:
-  check-terraform-fmt:
-    runs-on: ubuntu-latest
+  check-fmt:
+    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
       - run: terraform fmt -check -diff -recursive terraform/services/github-actions-role
 
-  terraform-plan:
-    needs: check-terraform-fmt
+  plan-apply:
+    needs: check-fmt
     permissions:
       contents: read
       id-token: write
@@ -43,8 +49,10 @@ jobs:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}-gf.s3.tfbackend
-      - run: terraform plan
+      - run: terraform plan -out=tf.plan
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
           TF_VAR_legacy: "false"
+      - run: terraform apply -auto-approve tf.plan
+        if: ${{ inputs.apply == true }} || ${{ github.ref == "refs/heads/main" }}
