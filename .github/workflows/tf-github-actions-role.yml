@@ -2,8 +2,8 @@ name: tf-github-actions-role
 
 on:
   push:
-    #branches:
-    #  - main
+    branches:
+      - main
   pull_request:
     paths:
       - .github/workflows/tf-github-actions-role.yml
