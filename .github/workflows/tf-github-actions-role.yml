@@ -1,4 +1,4 @@
-name: github-actions-role tf
+name: tf-github-actions-role
 
 on:
   push:
