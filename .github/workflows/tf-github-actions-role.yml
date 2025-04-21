@@ -56,5 +56,5 @@ jobs:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
           TF_VAR_legacy: "false"
-      - run: terraform apply -auto-approve tf.plan
-        if: ${{ inputs.apply == true }} || ${{ github.ref == 'refs/heads/main' }}
+      - if: ${{ inputs.apply == true }}
+        run: terraform apply -auto-approve tf.plan
