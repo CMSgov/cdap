@@ -12,6 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       apply:
+        default: false
         required: false
         type: boolean
 
