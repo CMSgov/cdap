@@ -34,7 +34,7 @@ data "aws_iam_openid_connect_provider" "github" {
 
 data "aws_ssm_parameter" "github_runner_role_arn" {
   count = var.legacy ? 1 : 0
-  name = "/github-runner/role-arn"
+  name  = "/github-runner/role-arn"
 }
 
 data "aws_iam_role" "admin" {
