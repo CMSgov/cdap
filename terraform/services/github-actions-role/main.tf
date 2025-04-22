@@ -3,8 +3,10 @@ locals {
   repos = {
     ab2d = [
       "repo:CMSgov/ab2d-bcda-dpc-platform:*",
+      "repo:CMSgov/ab2d-contracts:*",
       "repo:CMSgov/ab2d-events:*",
       "repo:CMSgov/ab2d-lambdas:*",
+      "repo:CMSgov/ab2d-properties:*",
       "repo:CMSgov/ab2d-website:*",
       "repo:CMSgov/ab2d:*",
     ]
@@ -19,8 +21,11 @@ locals {
       "repo:CMSgov/dpc-app:*",
       "repo:CMSgov/dpc-static-site:*",
     ]
+    cdap = [
+      "repo:CMSgov/ab2d-bcda-dpc-platform:*",
+    ]
   }
-  admin_app = var.app == "dpc" ? "bcda" : var.app
+  admin_app = var.legacy ? (var.app == "dpc" ? "bcda" : var.app) : "bcda"
 }
 
 data "aws_iam_openid_connect_provider" "github" {
@@ -28,7 +33,8 @@ data "aws_iam_openid_connect_provider" "github" {
 }
 
 data "aws_ssm_parameter" "github_runner_role_arn" {
-  name = "/github-runner/role-arn"
+  count = var.legacy ? 1 : 0
+  name  = "/github-runner/role-arn"
 }
 
 data "aws_iam_role" "admin" {
@@ -36,8 +42,8 @@ data "aws_iam_role" "admin" {
 }
 
 data "aws_iam_policy_document" "github_actions_role_assume" {
-  # Allow access from the instance profile role for our runners and
-  # from the admin role
+  # Allow access from the admin role
+  # And instance profile role for runners in legacy
   statement {
     actions = [
       "sts:AssumeRole",
@@ -46,10 +52,10 @@ data "aws_iam_policy_document" "github_actions_role_assume" {
 
     principals {
       type = "AWS"
-      identifiers = [
-        data.aws_ssm_parameter.github_runner_role_arn.value,
+      identifiers = compact([
         data.aws_iam_role.admin.arn,
-      ]
+        var.legacy ? data.aws_ssm_parameter.github_runner_role_arn[0].value : null,
+      ])
     }
   }
 
