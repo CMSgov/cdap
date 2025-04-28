@@ -12,7 +12,7 @@ locals {
       prod = "bcda-prod-rds-20190201"
       sbx  = "bcda-opensbx-rds-20190311"
     }[var.env]
-    dpc = "${var.app}-${local.stdenv}-db-20190829"
+    dpc = "${var.app}-46111-${local.stdenv}"
   }[var.app]
 
   sg_name = {
@@ -225,8 +225,8 @@ resource "aws_db_instance" "api" {
   apply_immediately                     = true
   max_allocated_storage                 = var.app == "bcda" ? "1000" : (var.app == "dpc" ? "100" : null)
   storage_type                          = var.app == "dpc" ? "gp2" : null
-  monitoring_interval                   = var.app == "dpc" ? 60 : null
-  monitoring_role_arn                   = var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null
+  # monitoring_interval                   = var.app == "dpc" ? 60 : null
+  # monitoring_role_arn                   = var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null
   performance_insights_enabled          = var.app == "dpc" ? true : null
   performance_insights_retention_period = var.app == "dpc" ? 7 : null
   backup_window                         = var.app == "dpc" || var.app == "bcda" ? "05:00-05:30" : null #1 am EST
