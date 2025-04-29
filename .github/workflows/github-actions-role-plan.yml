@@ -2,9 +2,6 @@ name: github-actions-role plan terraform
 
 on:
   pull_request:
-    paths:
-      - .github/workflows/github-actions-role-plan.yml
-      - terraform/services/github-actions-role/**
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -13,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
-      - run: terraform fmt -check -diff -recursive terraform/services/github-actions-role
+      - run: terraform fmt -check -diff -recursive terraform/services/services-ecr
 
   terraform-plan:
     needs: check-terraform-fmt
@@ -23,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./terraform/services/github-actions-role
+        working-directory: ./terraform/services/services-ecr
     strategy:
       fail-fast: false
       matrix:

@@ -1,4 +1,4 @@
-resource "aws_ecr_repository" "ab2d_${var.env}_services" {
+resource "aws_ecr_repository" "ab2d_services" {
   name                 = "ab2d-${var.env}-services"
   image_tag_mutability = "MUTABLE"
 
@@ -15,7 +15,9 @@ resource "aws_ecr_repository" "ab2d_${var.env}_services" {
   }
 }
 
-resource "aws_ecr_lifecycle_policy" "ab2d_${var.env}_services_policy" {
-  repository = aws_ecr_repository.ab2d_${var.env}_services.name
+resource "aws_ecr_lifecycle_policy" "ab2d_services_policy" {
+  repository = aws_ecr_repository.ab2d_services.name
   policy     = file("${path.module}/ab2d-services-lifecycle-policy.json")
 }
+
+
