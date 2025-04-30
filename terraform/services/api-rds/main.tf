@@ -213,18 +213,18 @@ resource "aws_db_instance" "api" {
     "postgresql",
     "upgrade",
   ]
-  skip_final_snapshot                   = true
-  snapshot_identifier                   = var.app == "dpc" ? var.snapshot : null # default will be null
-  final_snapshot_identifier             = var.app == "dpc" ? "dpc-${var.env}-${var.name}-20190829-final" : null
-  auto_minor_version_upgrade            = var.app == "dpc" ? true : null
-  allow_major_version_upgrade           = var.app == "bcda" ? true : null
-  db_subnet_group_name                  = aws_db_subnet_group.subnet_group.name
-  parameter_group_name                  = var.app == "ab2d" ? aws_db_parameter_group.v16_parameter_group[0].name : null
-  backup_retention_period               = local.backup_retention_period
-  iops                                  = var.app == "bcda" ? "1000" : var.app == "dpc" ? "0" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
-  apply_immediately                     = true
-  max_allocated_storage                 = var.app == "bcda" ? "1000" : (var.app == "dpc" ? "100" : null)
-  storage_type                          = var.app == "dpc" ? "gp2" : null
+  skip_final_snapshot         = true
+  snapshot_identifier         = var.app == "dpc" ? var.snapshot : null # default will be null
+  final_snapshot_identifier   = var.app == "dpc" ? "dpc-${var.env}-${var.name}-20190829-final" : null
+  auto_minor_version_upgrade  = var.app == "dpc" ? true : null
+  allow_major_version_upgrade = var.app == "bcda" ? true : null
+  db_subnet_group_name        = aws_db_subnet_group.subnet_group.name
+  parameter_group_name        = var.app == "ab2d" ? aws_db_parameter_group.v16_parameter_group[0].name : null
+  backup_retention_period     = local.backup_retention_period
+  iops                        = var.app == "bcda" ? "1000" : var.app == "dpc" ? "0" : local.db_name == "ab2d-east-prod" ? "20000" : "5000"
+  apply_immediately           = true
+  max_allocated_storage       = var.app == "bcda" ? "1000" : (var.app == "dpc" ? "100" : null)
+  storage_type                = var.app == "dpc" ? "gp2" : null
   # monitoring_interval                   = var.app == "dpc" ? 60 : null
   # monitoring_role_arn                   = var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null
   performance_insights_enabled          = var.app == "dpc" ? true : null
