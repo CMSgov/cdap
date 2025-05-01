@@ -147,7 +147,7 @@ data "aws_security_groups" "dpc_additional_sg" {
   }
 }
 
-# data "aws_iam_role" "rds_monitoring" {
-#   count = var.app == "dpc" ? 1 : 0
-#   name  = "rds-monitoring-role"
-# }
+data "aws_iam_role" "rds_monitoring" {
+  count = var.app == "dpc" ? 1 : 0
+  name  = "rds-monitoring-role"
+}
