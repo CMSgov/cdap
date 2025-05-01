@@ -5,17 +5,28 @@ locals {
     var.env
   )
   secret_date = "2020-01-02-09-15-01"
-  gdit_security_group_names = var.app == "bcda" ? [
-    "${var.app}-${local.stdenv}-vpn-private",
-    "${var.app}-${local.stdenv}-vpn-public",
-    "${var.app}-${local.stdenv}-remote-management",
-    "${var.app}-${local.stdenv}-enterprise-tools",
-    "${var.app}-${local.stdenv}-allow-zscaler-private"
-    ] : var.app == "dpc" ? [
-    "${var.app}-${local.stdenv}-remote-management",
-    "${var.app}-${local.stdenv}-enterprise-tools",
-    "${var.app}-${local.stdenv}-allow-zscaler-private"
-  ] : []
+  gdit_security_group_names = var.app == "bcda" ? (
+    var.legacy ? [
+      "${var.app}-${local.stdenv}-vpn-private",
+      "${var.app}-${local.stdenv}-vpn-public",
+      "${var.app}-${local.stdenv}-allow-zscaler-private"
+      ] : [
+      "${var.app}-${local.stdenv}-vpn-private",
+      "${var.app}-${local.stdenv}-vpn-public",
+      "${var.app}-${local.stdenv}-remote-management",
+      "${var.app}-${local.stdenv}-enterprise-tools",
+      "${var.app}-${local.stdenv}-allow-zscaler-private"
+    ]
+    ) : var.app == "dpc" ? (
+    var.legacy ? [
+      "${var.app}-${local.stdenv}-allow-zscaler-private"
+      ] : [
+      "${var.app}-${local.stdenv}-remote-management",
+      "${var.app}-${local.stdenv}-enterprise-tools",
+      "${var.app}-${local.stdenv}-allow-zscaler-private"
+    ]
+  ) : []
+
   db_username = {
     ab2d = "${var.app}/${local.db_name}/module/db/database_user/${local.secret_date}"
     bcda = "${var.app}/${local.stdenv}/db/username"
@@ -57,7 +68,9 @@ data "aws_vpc" "target_vpc" {
   filter {
     name = "tag:Name"
     values = [
-      var.app == "ab2d" ? local.db_name : "${var.app}-${local.stdenv}-vpc"
+      var.legacy ? "${var.app}-east-${local.stdenv}" :
+      var.app == "ab2d" ? local.db_name :
+      "${var.app}-${local.stdenv}-vpc"
     ]
   }
 }
@@ -65,14 +78,23 @@ data "aws_vpc" "target_vpc" {
 data "aws_subnets" "db" {
   filter {
     name = "tag:Name"
-    values = var.app == "ab2d" ? [
-      "${local.db_name}-private-a",
-      "${local.db_name}-private-b"
-      ] : [
-      "${var.app}-${local.stdenv}-az1-data",
-      "${var.app}-${local.stdenv}-az2-data",
-      "${var.app}-${local.stdenv}-az3-data"
-    ]
+    values = var.legacy ? [
+      "${var.app}-east-${local.stdenv}-private-a",
+      "${var.app}-east-${local.stdenv}-private-b",
+      "${var.app}-east-${local.stdenv}-private-c",
+      "${var.app}-east-${local.stdenv}-public-a",
+      "${var.app}-east-${local.stdenv}-public-b",
+      "${var.app}-east-${local.stdenv}-public-c"
+      ] : (
+      var.app == "ab2d" ? [
+        "${local.db_name}-private-a",
+        "${local.db_name}-private-b"
+        ] : [
+        "${var.app}-${local.stdenv}-az1-data",
+        "${var.app}-${local.stdenv}-az2-data",
+        "${var.app}-${local.stdenv}-az3-data"
+      ]
+    )
   }
 }
 
@@ -86,7 +108,7 @@ data "aws_security_group" "controller_security_group_id" {
 }
 
 data "aws_kms_alias" "main_kms" {
-  count = var.app == "ab2d" || var.app == "dpc" ? 1 : 0 # Only query the KMS alias for ab2d or dpc
+  count = (!var.legacy && (var.app == "ab2d" || var.app == "dpc")) ? 1 : 0
 
   name = var.app == "ab2d" ? "alias/${local.db_name}-main-kms" : "alias/dpc-${local.stdenv}-master-key"
 }
@@ -146,6 +168,12 @@ data "aws_security_groups" "dpc_additional_sg" {
 }
 
 data "aws_iam_role" "rds_monitoring" {
-  count = var.app == "dpc" ? 1 : 0
+  count = (var.app == "dpc" && var.legacy == false) ? 1 : 0
   name  = "rds-monitoring-role"
+}
+
+data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
+  count = var.legacy ? 1 : 0
+
+  name = "/cdap/mgmt-vpc/cidr"
 }

@@ -12,7 +12,7 @@ locals {
       prod = "bcda-prod-rds-20190201"
       sbx  = "bcda-opensbx-rds-20190311"
     }[var.env]
-    dpc = "${var.app}-${local.stdenv}-db-20190829"
+    dpc = "${var.app}-46111-dev"
   }[var.app]
 
   sg_name = {
@@ -225,18 +225,32 @@ resource "aws_db_instance" "api" {
   apply_immediately                     = true
   max_allocated_storage                 = var.app == "bcda" ? "1000" : (var.app == "dpc" ? "100" : null)
   storage_type                          = var.app == "dpc" ? "gp2" : null
-  monitoring_interval                   = var.app == "dpc" ? 60 : null
-  monitoring_role_arn                   = var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null
+  #monitoring_interval                   = var.app == "dpc" ? 60 : 0
+  #monitoring_role_arn                   = (var.app == "dpc" && var.legacy == false) ? data.aws_iam_role.rds_monitoring[0].arn : null
   performance_insights_enabled          = var.app == "dpc" ? true : null
   performance_insights_retention_period = var.app == "dpc" ? 7 : null
   backup_window                         = var.app == "dpc" || var.app == "bcda" ? "05:00-05:30" : null #1 am EST
   copy_tags_to_snapshot                 = var.app == "bcda" || var.app == "dpc" ? true : false
-  kms_key_id                            = var.app == "ab2d" || var.app == "dpc" ? data.aws_kms_alias.main_kms[0].target_key_arn : null
+  kms_key_id                            = (!var.legacy && (var.app == "ab2d" || var.app == "dpc") ? data.aws_kms_alias.main_kms[0].target_key_arn : aws_kms_key.greenfield_master_key[0].arn)
   multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : (var.env == "prod" || var.app == "bcda" ? true : false)
-  vpc_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? concat(
-  [aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
-  username = data.aws_secretsmanager_secret_version.database_user.secret_string
-  password = data.aws_secretsmanager_secret_version.database_password.secret_string
+  vpc_security_group_ids = (
+    (var.app == "bcda" || var.app == "dpc") ?
+    (var.legacy == true ?
+      concat(
+        [aws_security_group.sg_database.id],
+        local.gdit_security_group_ids,
+        aws_security_group.remote_management[*].id,
+        aws_security_group.enterprise_tools[*].id
+      ) :
+      concat(
+        [aws_security_group.sg_database.id],
+        local.gdit_security_group_ids
+      )
+    ) :
+    [aws_security_group.sg_database.id]
+  )
+  username = "post"
+  password = "postmeme"
 
   tags = merge(
     data.aws_default_tags.data_tags.tags,
@@ -291,4 +305,115 @@ resource "aws_route53_zone" "local_zone" {
     data.aws_default_tags.data_tags.tags,
     var.app == "dpc" ? local.dpc_specific_tags : {}
   )
+}
+
+resource "aws_security_group" "remote_management" {
+  count       = var.legacy ? 1 : 0
+  name        = "${local.stdenv}-east-remote-management"
+  description = "Security group for remote management"
+  vpc_id      = data.aws_vpc.target_vpc.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "remote_management_allow_all" {
+  count             = var.legacy ? 1 : 0
+  security_group_id = aws_security_group.remote_management[0].id
+  description       = "Allow all traffic to CDAP management VPC"
+  cidr_ipv4         = var.legacy ? data.aws_ssm_parameter.cdap_mgmt_vpc_cidr[0].value : null
+  from_port         = 5432
+  to_port           = 5432
+  ip_protocol       = "tcp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "remote_management_egress" {
+  count             = var.legacy ? 1 : 0
+  security_group_id = aws_security_group.remote_management[0].id
+
+  description = "Allow all egress"
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = -1
+}
+
+resource "aws_security_group" "enterprise_tools" {
+  count       = var.legacy ? 1 : 0
+  name        = "${local.stdenv}-east-enterprise-tools"
+  description = "Security group for enterprise tools"
+  vpc_id      = data.aws_vpc.target_vpc.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "enterprise_tools_allow_all" {
+  count             = var.legacy ? 1 : 0
+  security_group_id = aws_security_group.enterprise_tools[0].id
+  description       = "Allow all traffic to CDAP management VPC"
+  cidr_ipv4         = var.legacy ? data.aws_ssm_parameter.cdap_mgmt_vpc_cidr[0].value : null
+  from_port         = 5432
+  to_port           = 5432
+  ip_protocol       = "tcp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "enterprise_tools_egress" {
+  count             = var.legacy ? 1 : 0
+  security_group_id = aws_security_group.enterprise_tools[0].id
+
+  description = "Allow all egress"
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = -1
+}
+
+
+resource "aws_kms_key" "greenfield_master_key" {
+  count               = var.legacy ? 1 : 0
+  description         = "dpc-${local.stdenv} Greenfield Customer Master Key"
+  enable_key_rotation = false
+
+  policy = <<-POLICY
+  {
+    "Version": "2012-10-17",
+    "Id": "dpc-${local.stdenv}-greenfield-key-policy",
+    "Statement": [
+      {
+        "Sid": "AdminPermissions",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::539247469933:role/delegatedadmin/developer/dpc-${local.stdenv}-github-actions"
+        },
+        "Action": [
+          "kms:Create*",
+          "kms:Describe*",
+          "kms:Enable*",
+          "kms:List*",
+          "kms:Put*",
+          "kms:Update*",
+          "kms:Revoke*",
+          "kms:Disable*",
+          "kms:Get*",
+          "kms:Delete*",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion",
+          "kms:TagResource",
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "EnableRootUserPermissions",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        },
+        "Action": "kms:*",
+        "Resource": "*"
+      }
+    ]
+  }
+  POLICY
+}
+
+resource "aws_kms_alias" "greenfield_key_alias" {
+  count         = var.legacy ? 1 : 0
+  name          = "alias/dpc-${local.stdenv}-greenfield-key"
+  target_key_id = aws_kms_key.greenfield_master_key[0].key_id
 }

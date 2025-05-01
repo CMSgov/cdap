@@ -1,8 +1,8 @@
 data "aws_vpc" "this" {
   filter {
-    name = "tag:stack"
+    name   = "tag:stack"
     values = [
-      var.app == "ab2d" && var.env == "mgmt" ? "dev" : # Yes, dev is the stack name for the ab2d mgmt vpc
+      var.app == "ab2d" && var.env == "mgmt" ? "dev" :
       var.app == "ab2d" && var.env == "sbx" ? "sandbox" :
       var.app == "ab2d" && var.env == "test" ? "impl" :
       var.app == "bcda" && var.env == "mgmt" ? "managed" :
@@ -12,11 +12,18 @@ data "aws_vpc" "this" {
       var.env
     ]
   }
+
   dynamic "filter" {
-    for_each = var.app == "bcda" || var.app == "dpc" ? [1] : []
+    for_each = var.app == "bcda" || var.app == "dpc" || var.legacy == true ? [1] : []
     content {
-      name   = "tag:application"
-      values = [var.app]
+      # Use tag:Name when legacy is true, otherwise fallback to tag:application
+      name = var.legacy == true ? "tag:Name" : "tag:application"
+      
+      values = var.legacy == true ? [
+        "${var.app}-east-${var.env}"  # Greenfield account name format (e.g., dpc-east-test)
+      ] : [
+        var.app  # Non-Greenfield account uses the tag:application value (e.g., dpc)
+      ]
     }
   }
 }
