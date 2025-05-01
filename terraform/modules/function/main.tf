@@ -166,8 +166,8 @@ resource "aws_s3_object" "empty_function_zip" {
 module "vpc" {
   source = "../vpc"
 
-  app = var.app
-  env = var.env
+  app    = var.app
+  env    = var.env
   legacy = var.legacy
 }
 

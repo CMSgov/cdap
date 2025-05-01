@@ -5,6 +5,6 @@ variable "name" {
 
 variable "buckets" {
   description = "ARNs for S3 buckets that need to publish event notifications to the SNS topic"
-  type        = list
+  type        = list(any)
   default     = []
 }

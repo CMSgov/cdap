@@ -13,7 +13,7 @@ data "aws_vpc" "this" {
     ]
   }
   dynamic "filter" {
-    for_each = var.legacy == false ?  [1] : []
+    for_each = var.legacy == false ? [1] : []
     content {
       name   = "tag:Name"
       values = ["${var.app}-east-${var.env}"]
