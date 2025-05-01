@@ -12,6 +12,8 @@ locals {
     "${var.app}-${local.stdenv}-enterprise-tools",
     "${var.app}-${local.stdenv}-allow-zscaler-private"
     ] : var.app == "dpc" ? [
+    "${var.app}-${local.stdenv}-remote-management",
+    "${var.app}-${local.stdenv}-enterprise-tools",
     "${var.app}-${local.stdenv}-allow-zscaler-private"
   ] : []
   db_username = {
