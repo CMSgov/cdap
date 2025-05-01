@@ -16,6 +16,12 @@ variable "env" {
   }
 }
 
+variable "legacy" {
+  description = "Is this deployment in the greenfield environment (false)?"
+  type        = bool
+  default     = true
+}
+
 variable "name" {
   description = "Name of the lambda function"
   type        = string

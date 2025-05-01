@@ -15,8 +15,8 @@ data "aws_vpc" "this" {
   dynamic "filter" {
     for_each = var.app == "bcda" || var.app == "dpc" ? [1] : []
     content {
-      name   = "tag:application"
-      values = [var.app]
+      name   = "tag:Name"
+      values = ["${var.app}-east-${var.env}"]
     }
   }
 }

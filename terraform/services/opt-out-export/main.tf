@@ -55,6 +55,7 @@ module "opt_out_export_function" {
 
   app = var.app
   env = var.env
+  legacy = var.legacy
 
   name        = local.full_name
   description = "Exports data files to a BFD bucket for opt-out"

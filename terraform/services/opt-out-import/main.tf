@@ -42,6 +42,7 @@ module "opt_out_import_function" {
 
   app = var.app
   env = var.env
+  legacy = var.legacy
 
   name        = local.full_name
   description = "Ingests the most recent beneficiary opt-out list from BFD"

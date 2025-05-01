@@ -11,6 +11,7 @@ module "api_waf_sync_function" {
 
   app = var.app
   env = var.env
+  legacy = var.legacy
 
   name        = local.full_name
   description = "Synchronizes the IP whitelist in ${var.app} with the WAF IP Set"
