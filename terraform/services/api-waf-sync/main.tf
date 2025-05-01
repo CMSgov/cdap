@@ -9,8 +9,8 @@ locals {
 module "api_waf_sync_function" {
   source = "../../modules/function"
 
-  app = var.app
-  env = var.env
+  app    = var.app
+  env    = var.env
   legacy = var.legacy
 
   name        = local.full_name

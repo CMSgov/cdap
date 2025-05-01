@@ -40,8 +40,8 @@ data "aws_ssm_parameter" "opt_out_db_host" {
 module "opt_out_import_function" {
   source = "../../modules/function"
 
-  app = var.app
-  env = var.env
+  app    = var.app
+  env    = var.env
   legacy = var.legacy
 
   name        = local.full_name

@@ -101,7 +101,7 @@ data "aws_iam_account_alias" "current" {}
 data "aws_s3_bucket" "bucket_access_logs" {
   bucket = (var.legacy == true ? "${data.aws_caller_identity.current.account_id}-bucket-access-logs" :
     data.aws_iam_account_alias.current.account_alias == "aws-cms-oeda-bcda-prod" ? "bucket-access-logs-20250411172631068600000001" :
-      "bucket-access-logs-20250409172631068600000001")
+  "bucket-access-logs-20250409172631068600000001")
 }
 
 resource "aws_s3_bucket_logging" "this" {

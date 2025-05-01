@@ -146,7 +146,7 @@ module "zip_bucket" {
     "arn:aws:iam::${data.aws_ssm_parameter.sbx_account[0].value}:role/delegatedadmin/developer/${var.app}-sbx-github-actions",
   ] : []
 
-  legacy = var.legacy
+  legacy        = var.legacy
   ssm_parameter = "/${var.app}/${var.env}/${var.name}-bucket"
 }
 
