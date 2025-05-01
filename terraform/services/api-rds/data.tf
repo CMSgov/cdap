@@ -60,6 +60,14 @@ data "aws_vpc" "target_vpc" {
   }
 }
 
+module "vpc" {
+  source = "../../modules/vpc"
+
+  app    = var.app
+  env    = var.env
+  legacy = var.legacy
+}
+
 data "aws_subnets" "db" {
   filter {
     name = "tag:Name"
@@ -139,7 +147,7 @@ data "aws_security_groups" "dpc_additional_sg" {
 
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.target_vpc.id]
+    values = [module.vpc.id]
   }
 }
 
