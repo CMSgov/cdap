@@ -62,13 +62,17 @@ module "vpc" {
 data "aws_subnets" "db" {
   filter {
     name = "tag:Name"
-    values = var.app == "ab2d" ? [
+    values = var.legacy ? var.app == "ab2d" ? [
       "${local.db_name}-private-a",
       "${local.db_name}-private-b"
       ] : [
+      "${var.app}-${local.stdenv}-az1-data",
+      "${var.app}-${local.stdenv}-az2-data",
+      "${var.app}-${local.stdenv}-az3-data"
+      ] : [
       "${var.app}-east-${local.stdenv}-private-a",
       "${var.app}-east-${local.stdenv}-private-b",
-      "${var.app}-east-${local.stdenv}-private-c",
+      "${var.app}-east-${local.stdenv}-private-c"
     ]
   }
 }
