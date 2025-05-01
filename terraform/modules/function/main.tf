@@ -177,6 +177,7 @@ module "subnets" {
   vpc_id = module.vpc.id
   app    = var.app
   layer  = "data"
+  legacy = var.legacy
 }
 
 resource "aws_security_group" "function" {
