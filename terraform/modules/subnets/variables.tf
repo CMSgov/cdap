@@ -36,4 +36,3 @@ variable "legacy" {
   type        = bool
   default     = true
 }
-
