@@ -30,3 +30,10 @@ variable "use" {
     error_message = "Valid value for use is private or public."
   }
 }
+
+variable "legacy" {
+  description = "Is this deployment in the greenfield environment (false)?"
+  type        = bool
+  default     = true
+}
+

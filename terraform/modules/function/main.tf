@@ -168,6 +168,7 @@ module "vpc" {
 
   app = var.app
   env = var.env
+  legacy = var.legacy
 }
 
 module "subnets" {
