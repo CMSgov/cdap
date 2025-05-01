@@ -51,15 +51,6 @@ data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
-data "aws_vpc" "target_vpc" {
-  filter {
-    name = "tag:Name"
-    values = [
-      var.app == "ab2d" ? local.db_name : "${var.app}-east-${local.stdenv}"
-    ]
-  }
-}
-
 module "vpc" {
   source = "../../modules/vpc"
 
