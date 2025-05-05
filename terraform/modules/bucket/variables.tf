@@ -14,9 +14,3 @@ variable "legacy" {
   type        = bool
   default     = true
 }
-
-variable "ssm_parameter" {
-  description = "SSM Parameter path for bucket output"
-  type        = string
-  default     = null
-}

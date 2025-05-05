@@ -147,7 +147,6 @@ module "zip_bucket" {
   ] : []
 
   legacy        = var.legacy
-  ssm_parameter = "/${var.app}/${var.env}/${var.name}-bucket"
 }
 
 resource "aws_s3_object" "empty_function_zip" {

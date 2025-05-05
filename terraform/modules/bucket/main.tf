@@ -13,13 +13,6 @@ resource "aws_s3_bucket" "this" {
   force_destroy = true
 }
 
-resource "aws_ssm_parameter" "bucket" {
-  count = var.ssm_parameter != null ? 1 : 0
-  name  = var.ssm_parameter
-  value = aws_s3_bucket.this.id
-  type  = "String"
-}
-
 resource "aws_s3_bucket_versioning" "this" {
   bucket = aws_s3_bucket.this.id
 
