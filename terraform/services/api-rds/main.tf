@@ -12,6 +12,7 @@ locals {
       prod = "bcda-prod-rds-20190201"
       sbx  = "bcda-opensbx-rds-20190311"
     }[var.env]
+    # TODO: This will have to change for Greenfield
     dpc = "${var.app}-${local.stdenv}-db-20190829"
   }[var.app]
 
@@ -62,7 +63,7 @@ resource "aws_security_group" "sg_database" {
   description = var.app == "ab2d" ? "${local.db_name} database security group" : (
   var.app == "dpc" ? "Security group for DPC DB" : "App ELB security group")
 
-  vpc_id = data.aws_vpc.target_vpc.id
+  vpc_id = module.vpc.id
 
   tags = merge(
     data.aws_default_tags.data_tags.tags,
@@ -284,7 +285,7 @@ resource "aws_route53_zone" "local_zone" {
   )
 
   vpc {
-    vpc_id = data.aws_vpc.target_vpc.id
+    vpc_id = module.vpc.id
   }
 
   tags = merge(

@@ -145,6 +145,8 @@ module "zip_bucket" {
     "arn:aws:iam::${data.aws_ssm_parameter.prod_account[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
     "arn:aws:iam::${data.aws_ssm_parameter.sbx_account[0].value}:role/delegatedadmin/developer/${var.app}-sbx-github-actions",
   ] : []
+
+  legacy = var.legacy
 }
 
 resource "aws_s3_object" "empty_function_zip" {
@@ -163,8 +165,9 @@ resource "aws_s3_object" "empty_function_zip" {
 module "vpc" {
   source = "../vpc"
 
-  app = var.app
-  env = var.env
+  app    = var.app
+  env    = var.env
+  legacy = var.legacy
 }
 
 module "subnets" {
@@ -173,6 +176,7 @@ module "subnets" {
   vpc_id = module.vpc.id
   app    = var.app
   layer  = "data"
+  legacy = var.legacy
 }
 
 resource "aws_security_group" "function" {

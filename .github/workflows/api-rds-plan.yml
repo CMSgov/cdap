@@ -29,6 +29,10 @@ jobs:
       matrix:
         app: [ab2d, bcda, dpc]
         env: [dev, test, sbx, prod]
+        # NOTE: Temporary test-ab2d exclusion until CLDSPT-84850 is resolved
+        exclude:
+          - app: ab2d
+            env: test
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform

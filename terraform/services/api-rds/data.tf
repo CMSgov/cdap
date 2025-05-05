@@ -53,25 +53,28 @@ data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
-data "aws_vpc" "target_vpc" {
-  filter {
-    name = "tag:Name"
-    values = [
-      var.app == "ab2d" ? local.db_name : "${var.app}-${local.stdenv}-vpc"
-    ]
-  }
+module "vpc" {
+  source = "../../modules/vpc"
+
+  app    = var.app
+  env    = var.env
+  legacy = var.legacy
 }
 
 data "aws_subnets" "db" {
   filter {
     name = "tag:Name"
-    values = var.app == "ab2d" ? [
+    values = var.legacy ? var.app == "ab2d" ? [
       "${local.db_name}-private-a",
       "${local.db_name}-private-b"
       ] : [
       "${var.app}-${local.stdenv}-az1-data",
       "${var.app}-${local.stdenv}-az2-data",
       "${var.app}-${local.stdenv}-az3-data"
+      ] : [
+      "${var.app}-east-${local.stdenv}-private-a",
+      "${var.app}-east-${local.stdenv}-private-b",
+      "${var.app}-east-${local.stdenv}-private-c"
     ]
   }
 }
@@ -88,6 +91,7 @@ data "aws_security_group" "controller_security_group_id" {
 data "aws_kms_alias" "main_kms" {
   count = var.app == "ab2d" || var.app == "dpc" ? 1 : 0 # Only query the KMS alias for ab2d or dpc
 
+  #TODO: This will have to change for Greenfield
   name = var.app == "ab2d" ? "alias/${local.db_name}-main-kms" : "alias/dpc-${local.stdenv}-master-key"
 }
 
@@ -141,7 +145,7 @@ data "aws_security_groups" "dpc_additional_sg" {
 
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.target_vpc.id]
+    values = [module.vpc.id]
   }
 }
 
