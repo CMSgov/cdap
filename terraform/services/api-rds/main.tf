@@ -268,7 +268,8 @@ resource "aws_db_instance" "api" {
     ignore_changes = [
       username,
       password,
-      engine_version
+      engine_version,
+      kms_key_id #FIXME temporary allowance for legacy environments 😬
     ]
   }
 }
