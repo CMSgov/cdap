@@ -215,7 +215,7 @@ resource "aws_db_instance" "api" {
     "upgrade",
   ]
   skip_final_snapshot                   = true
-  snapshot_identifier                   = var.app == "dpc" ? var.snapshot : null # default will be null
+  snapshot_identifier                   = var.snapshot
   final_snapshot_identifier             = var.app == "dpc" ? "dpc-${var.env}-${var.name}-20190829-final" : null
   auto_minor_version_upgrade            = var.app == "dpc" ? true : null
   allow_major_version_upgrade           = var.app == "bcda" ? true : null
