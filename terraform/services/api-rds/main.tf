@@ -203,7 +203,6 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 }
 
 # Create database instance
-
 resource "aws_db_instance" "api" {
   allocated_storage   = local.allocated_storage
   engine              = "postgres"
