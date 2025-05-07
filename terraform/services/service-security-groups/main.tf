@@ -2,6 +2,7 @@ module "vpc" {
   source = "../../modules/vpc"
   app    = var.app
   env    = var.env
+  legacy = var.legacy
 }
 
 resource "aws_security_group" "zscaler_public" {
