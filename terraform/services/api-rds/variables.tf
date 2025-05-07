@@ -26,6 +26,7 @@ variable "jenkins_security_group_id" {
 variable "mgmt_vpc_cidr" {
   description = "CIDR for the Management VPC"
   type        = string
+  default     = null
 }
 
 variable "name" {

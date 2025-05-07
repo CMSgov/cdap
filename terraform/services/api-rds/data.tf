@@ -130,6 +130,12 @@ data "aws_security_group" "github_runner" {
   }
 }
 
+data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
+  count = var.legacy ? 0 : 1
+
+  name = "/cdap/mgmt-vpc/cidr"
+}
+
 data "aws_ssm_parameter" "quicksight_cidr_blocks" {
   count = var.app != "ab2d" ? 1 : 0
   name  = "/${var.app}/${local.stdenv}/quicksight-rds/cidr-blocks"
