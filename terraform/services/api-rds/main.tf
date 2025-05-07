@@ -45,7 +45,8 @@ locals {
     dpc  = 21 # 3 ETL periods instead of the default 7 days
   }[var.app]
 
-  additional_ingress_sgs = var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : (
+  #FIXME: Temporarily disabled in greenfield
+  additional_ingress_sgs = var.legacy && var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : (
   var.app == "dpc" ? flatten(data.aws_security_groups.dpc_additional_sg.ids) : [])
   gdit_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? flatten([for sg in data.aws_security_group.gdit : sg.id]) : []
   quicksight_cidr_blocks  = var.app != "ab2d" && length(data.aws_ssm_parameter.quicksight_cidr_blocks) > 0 ? jsondecode(data.aws_ssm_parameter.quicksight_cidr_blocks[0].value) : []
@@ -96,7 +97,8 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
-  count                        = var.app == "ab2d" ? 1 : 0
+  #FIXME: Temporarily disabled in greenfield
+  count                        = var.legacy && var.app == "ab2d" ? 1 : 0
   description                  = "Controller Access"
   from_port                    = "5432"
   to_port                      = "5432"
@@ -126,7 +128,8 @@ resource "aws_vpc_security_group_ingress_rule" "additional_ingress" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "runner_access" {
-  count                        = var.app == "bcda" ? 1 : 0
+  #FIXME: Temporarily disabled in greenfield
+  count                        = var.legacy && var.app == "bcda" ? 1 : 0
   description                  = "GitHub Actions runner access"
   from_port                    = 5432
   to_port                      = 5432
@@ -226,8 +229,8 @@ resource "aws_db_instance" "api" {
   apply_immediately                     = true
   max_allocated_storage                 = var.app == "bcda" ? "1000" : (var.app == "dpc" ? "100" : null)
   storage_type                          = var.app == "dpc" ? "gp2" : null
-  monitoring_interval                   = var.app == "dpc" ? 60 : null
-  monitoring_role_arn                   = var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null
+  monitoring_interval                   = var.legacy && var.app == "dpc" ? 60 : null                                      #FIXME: Temporarily disabled in greenfield
+  monitoring_role_arn                   = var.legacy && var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null #FIXME: Temporarily disabled in greenfield:
   performance_insights_enabled          = var.app == "dpc" ? true : null
   performance_insights_retention_period = var.app == "dpc" ? 7 : null
   backup_window                         = var.app == "dpc" || var.app == "bcda" ? "05:00-05:30" : null #1 am EST
