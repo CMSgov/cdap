@@ -96,8 +96,8 @@ data "aws_kms_alias" "main_kms" {
   name  = var.app == "ab2d" ? "alias/${local.db_name}-main-kms" : "alias/dpc-${local.stdenv}-master-key"
 }
 
-  #TODO: This will have to change for Greenfield
-  name = var.app == "ab2d" ? "alias/${local.db_name}-main-kms" : "alias/dpc-${local.stdenv}-master-key"
+data "aws_kms_alias" "default_rds" {
+  name = "alias/aws/rds"
 }
 
 
