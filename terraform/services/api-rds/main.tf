@@ -287,6 +287,11 @@ resource "aws_route53_zone" "local_zone" {
   count = var.app == "dpc" ? 1 : 0
 
   name = "${var.app}-${local.stdenv}.local"
+
+  vpc {
+    vpc_id = module.vpc.id
+  }
+
   tags = merge(
     data.aws_default_tags.data_tags.tags,
     var.app == "dpc" ? local.dpc_specific_tags : {}
