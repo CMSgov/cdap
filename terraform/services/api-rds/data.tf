@@ -6,8 +6,9 @@ locals {
   )
   secret_date = "2020-01-02-09-15-01"
   gdit_security_group_names = var.app == "bcda" ? [
-    "${var.app}-${local.stdenv}-vpn-private",
-    "${var.app}-${local.stdenv}-vpn-public",
+    #FIXME: Temporarily disabled in greenfield, potentially permanently
+    var.legacy ? "${var.app}-${local.stdenv}-vpn-private" : null,
+    var.legacy ? "${var.app}-${local.stdenv}-vpn-public" : null,
     "${var.app}-${local.stdenv}-remote-management",
     "${var.app}-${local.stdenv}-enterprise-tools",
     "${var.app}-${local.stdenv}-allow-zscaler-private"
@@ -16,6 +17,7 @@ locals {
     "${var.app}-${local.stdenv}-enterprise-tools",
     "${var.app}-${local.stdenv}-allow-zscaler-private"
   ] : []
+  #NOTE: `db_username` and `db_password` are path/names to secrets for secrets manager datasource
   db_username = {
     ab2d = "${var.app}/${local.db_name}/module/db/database_user/${local.secret_date}"
     bcda = "${var.app}/${local.stdenv}/db/username"
@@ -81,7 +83,8 @@ data "aws_subnets" "db" {
 
 # Fetch the security group for ab2d
 data "aws_security_group" "controller_security_group_id" {
-  count = var.app == "ab2d" ? 1 : 0
+  #FIXME: Temporarily disabled in greenfield
+  count = var.legacy && var.app == "ab2d" ? 1 : 0
 
   tags = {
     Name = "${local.db_name}-deployment-controller-sg"
@@ -89,15 +92,19 @@ data "aws_security_group" "controller_security_group_id" {
 }
 
 data "aws_kms_alias" "main_kms" {
-  count = var.app == "ab2d" || var.app == "dpc" ? 1 : 0 # Only query the KMS alias for ab2d or dpc
+  #FIXME: Temporarily disabled in greenfield
+  count = var.legacy && (var.app == "ab2d" || var.app == "dpc") ? 1 : 0 # Only query the KMS alias for ab2d or dpc
+  name  = var.app == "ab2d" ? "alias/${local.db_name}-main-kms" : "alias/dpc-${local.stdenv}-master-key"
+}
 
-  #TODO: This will have to change for Greenfield
-  name = var.app == "ab2d" ? "alias/${local.db_name}-main-kms" : "alias/dpc-${local.stdenv}-master-key"
+data "aws_kms_alias" "default_rds" {
+  name = "alias/aws/rds"
 }
 
 
 data "aws_security_group" "app_sg" {
-  count = var.app == "bcda" ? 1 : 0
+  #FIXME: Temporarily disabled in greenfield
+  count = var.legacy && var.app == "bcda" ? 1 : 0
   filter {
     name   = "tag:Name"
     values = ["${var.app}-api-${local.stdenv}"] # This will look for the bcda api app security group named based on the environment
@@ -105,7 +112,8 @@ data "aws_security_group" "app_sg" {
 }
 
 data "aws_security_group" "worker_sg" {
-  count = var.app == "bcda" ? 1 : 0
+  #FIXME: Temporarily disabled in greenfield
+  count = var.legacy && var.app == "bcda" ? 1 : 0
   filter {
     name   = "tag:Name"
     values = ["${var.app}-worker-${local.stdenv}"] #This looks for the bcda worker security group named based on the environment
@@ -113,7 +121,7 @@ data "aws_security_group" "worker_sg" {
 }
 
 data "aws_security_group" "gdit" {
-  for_each = toset(local.gdit_security_group_names)
+  for_each = toset([for name in local.gdit_security_group_names : name if name != null])
 
   filter {
     name   = "tag:Name" # Filter by 'Name' tag
@@ -122,12 +130,19 @@ data "aws_security_group" "gdit" {
 }
 
 data "aws_security_group" "github_runner" {
-  count = var.app == "bcda" ? 1 : 0
+  #FIXME: Temporarily disabled in greenfield
+  count = var.legacy && var.app == "bcda" ? 1 : 0
 
   filter {
     name   = "tag:Name"
     values = ["github-actions-action-runner"]
   }
+}
+
+data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
+  count = var.legacy ? 0 : 1
+
+  name = "/cdap/mgmt-vpc/cidr"
 }
 
 data "aws_ssm_parameter" "quicksight_cidr_blocks" {
@@ -150,6 +165,6 @@ data "aws_security_groups" "dpc_additional_sg" {
 }
 
 data "aws_iam_role" "rds_monitoring" {
-  count = var.app == "dpc" ? 1 : 0
+  count = var.legacy && var.app == "dpc" ? 1 : 0
   name  = "rds-monitoring-role"
 }

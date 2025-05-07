@@ -45,7 +45,8 @@ locals {
     dpc  = 21 # 3 ETL periods instead of the default 7 days
   }[var.app]
 
-  additional_ingress_sgs = var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : (
+  #FIXME: Temporarily disabled in greenfield
+  additional_ingress_sgs = var.legacy && var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : (
   var.app == "dpc" ? flatten(data.aws_security_groups.dpc_additional_sg.ids) : [])
   gdit_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? flatten([for sg in data.aws_security_group.gdit : sg.id]) : []
   quicksight_cidr_blocks  = var.app != "ab2d" && length(data.aws_ssm_parameter.quicksight_cidr_blocks) > 0 ? jsondecode(data.aws_ssm_parameter.quicksight_cidr_blocks[0].value) : []
@@ -86,7 +87,7 @@ resource "aws_vpc_security_group_egress_rule" "egress_all" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
-  count                        = var.app == "bcda" || var.app == "ab2d" ? 1 : 0
+  count                        = var.legacy && (var.app == "bcda" || var.app == "ab2d") ? 1 : 0
   description                  = "Jenkins Agent Access"
   from_port                    = "5432"
   to_port                      = "5432"
@@ -96,7 +97,8 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
-  count                        = var.app == "ab2d" ? 1 : 0
+  #FIXME: Temporarily disabled in greenfield
+  count                        = var.legacy && var.app == "ab2d" ? 1 : 0
   description                  = "Controller Access"
   from_port                    = "5432"
   to_port                      = "5432"
@@ -111,7 +113,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
   from_port         = 5432
   to_port           = 5432
   ip_protocol       = "tcp"
-  cidr_ipv4         = var.mgmt_vpc_cidr
+  cidr_ipv4         = var.legacy ? var.mgmt_vpc_cidr : data.aws_ssm_parameter.cdap_mgmt_vpc_cidr[0].value
   security_group_id = aws_security_group.sg_database.id
 }
 
@@ -126,7 +128,8 @@ resource "aws_vpc_security_group_ingress_rule" "additional_ingress" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "runner_access" {
-  count                        = var.app == "bcda" ? 1 : 0
+  #FIXME: Temporarily disabled in greenfield
+  count                        = var.legacy && var.app == "bcda" ? 1 : 0
   description                  = "GitHub Actions runner access"
   from_port                    = 5432
   to_port                      = 5432
@@ -200,7 +203,6 @@ resource "aws_db_parameter_group" "v16_parameter_group" {
 }
 
 # Create database instance
-
 resource "aws_db_instance" "api" {
   allocated_storage   = local.allocated_storage
   engine              = "postgres"
@@ -215,7 +217,7 @@ resource "aws_db_instance" "api" {
     "upgrade",
   ]
   skip_final_snapshot                   = true
-  snapshot_identifier                   = var.app == "dpc" ? var.snapshot : null # default will be null
+  snapshot_identifier                   = var.snapshot
   final_snapshot_identifier             = var.app == "dpc" ? "dpc-${var.env}-${var.name}-20190829-final" : null
   auto_minor_version_upgrade            = var.app == "dpc" ? true : null
   allow_major_version_upgrade           = var.app == "bcda" ? true : null
@@ -226,18 +228,22 @@ resource "aws_db_instance" "api" {
   apply_immediately                     = true
   max_allocated_storage                 = var.app == "bcda" ? "1000" : (var.app == "dpc" ? "100" : null)
   storage_type                          = var.app == "dpc" ? "gp2" : null
-  monitoring_interval                   = var.app == "dpc" ? 60 : null
-  monitoring_role_arn                   = var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null
+  monitoring_interval                   = var.legacy && var.app == "dpc" ? 60 : null                                      #FIXME: Temporarily disabled in greenfield
+  monitoring_role_arn                   = var.legacy && var.app == "dpc" ? data.aws_iam_role.rds_monitoring[0].arn : null #FIXME: Temporarily disabled in greenfield:
   performance_insights_enabled          = var.app == "dpc" ? true : null
   performance_insights_retention_period = var.app == "dpc" ? 7 : null
   backup_window                         = var.app == "dpc" || var.app == "bcda" ? "05:00-05:30" : null #1 am EST
   copy_tags_to_snapshot                 = var.app == "bcda" || var.app == "dpc" ? true : false
-  kms_key_id                            = var.app == "ab2d" || var.app == "dpc" ? data.aws_kms_alias.main_kms[0].target_key_arn : null
+  kms_key_id                            = var.legacy && (var.app == "ab2d" || var.app == "dpc") ? data.aws_kms_alias.main_kms[0].target_key_arn : data.aws_kms_alias.default_rds.target_key_arn
   multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : (var.env == "prod" || var.app == "bcda" ? true : false)
   vpc_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? concat(
   [aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
-  username = data.aws_secretsmanager_secret_version.database_user.secret_string
-  password = data.aws_secretsmanager_secret_version.database_password.secret_string
+
+  #NOTE: Differences between secretsmanager representations yields these ternary expression
+  # - ab2d uses plaintext
+  # - bcda/dpc use key-value storage
+  username = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string).username
+  password = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_password.secret_string).password
 
   tags = merge(
     data.aws_default_tags.data_tags.tags,
@@ -261,28 +267,26 @@ resource "aws_db_instance" "api" {
     ignore_changes = [
       username,
       password,
-      engine_version
+      engine_version,
+      kms_key_id #FIXME temporary allowance for legacy environments 😬
     ]
   }
 }
+
 /* DB - Route53 */
 resource "aws_route53_record" "rds" {
   count   = var.app == "bcda" || var.app == "dpc" ? 1 : 0
-  zone_id = aws_route53_zone.local_zone[0].zone_id
-  name    = var.app == "dpc" ? "db.${aws_route53_zone.local_zone[0].name}" : "rds.${aws_route53_zone.local_zone[0].name}"
+  zone_id = var.app == "dpc" ? aws_route53_zone.local_zone[0].zone_id : data.aws_route53_zone.local_zone[0].zone_id
+  name    = var.app == "dpc" ? "db.${aws_route53_zone.local_zone[0].name}" : "rds.${data.aws_route53_zone.local_zone[0].name}"
   type    = "CNAME"
   ttl     = "300"
   records = [aws_db_instance.api.address]
 }
 
 resource "aws_route53_zone" "local_zone" {
-  count = (var.app == "bcda" || var.app == "dpc") ? 1 : 0
+  count = var.app == "dpc" ? 1 : 0
 
-  name = (
-    var.app == "bcda" && var.env == "sbx" ? "bcda-open${var.env}.local" :
-    var.app == "bcda" ? "bcda-${local.stdenv}.local" :
-    var.app == "dpc" ? "dpc-${local.stdenv}.local" : null
-  )
+  name = "${var.app}-${local.stdenv}.local"
 
   vpc {
     vpc_id = module.vpc.id
@@ -292,4 +296,10 @@ resource "aws_route53_zone" "local_zone" {
     data.aws_default_tags.data_tags.tags,
     var.app == "dpc" ? local.dpc_specific_tags : {}
   )
+}
+
+data "aws_route53_zone" "local_zone" {
+  count        = var.app == "bcda" ? 1 : 0
+  name         = "${var.app}-${local.stdenv}.local"
+  private_zone = true
 }
