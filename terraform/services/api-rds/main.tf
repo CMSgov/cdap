@@ -86,7 +86,7 @@ resource "aws_vpc_security_group_egress_rule" "egress_all" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
-  count                        = var.app == "bcda" || var.app == "ab2d" ? 1 : 0
+  count                        = var.legacy && (var.app == "bcda" || var.app == "ab2d") ? 1 : 0
   description                  = "Jenkins Agent Access"
   from_port                    = "5432"
   to_port                      = "5432"
