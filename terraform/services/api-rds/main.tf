@@ -268,28 +268,26 @@ resource "aws_db_instance" "api" {
 /* DB - Route53 */
 resource "aws_route53_record" "rds" {
   count   = var.app == "bcda" || var.app == "dpc" ? 1 : 0
-  zone_id = aws_route53_zone.local_zone[0].zone_id
-  name    = var.app == "dpc" ? "db.${aws_route53_zone.local_zone[0].name}" : "rds.${aws_route53_zone.local_zone[0].name}"
+  zone_id = var.app == "dpc" ? aws_route53_zone.local_zone[0].zone_id : data.aws_route53_zone.local_zone[0].zone_id
+  name    = var.app == "dpc" ? "db.${aws_route53_zone.local_zone[0].name}" : "rds.${data.aws_route53_zone.local_zone[0].name}"
   type    = "CNAME"
   ttl     = "300"
   records = [aws_db_instance.api.address]
 }
 
+
 resource "aws_route53_zone" "local_zone" {
-  count = (var.app == "bcda" || var.app == "dpc") ? 1 : 0
+  count = var.app == "dpc" ? 1 : 0
 
-  name = (
-    var.app == "bcda" && var.env == "sbx" ? "bcda-open${var.env}.local" :
-    var.app == "bcda" ? "bcda-${local.stdenv}.local" :
-    var.app == "dpc" ? "dpc-${local.stdenv}.local" : null
-  )
-
-  vpc {
-    vpc_id = module.vpc.id
-  }
-
+  name = "${var.app}-${local.stdenv}.local"
   tags = merge(
     data.aws_default_tags.data_tags.tags,
     var.app == "dpc" ? local.dpc_specific_tags : {}
   )
+}
+
+data "aws_route53_zone" "local_zone" {
+  count        = var.app == "bcda" ? 1 : 0
+  name         = "${var.app}-${local.stdenv}.local"
+  private_zone = true
 }
