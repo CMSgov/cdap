@@ -272,6 +272,7 @@ resource "aws_db_instance" "api" {
     ]
   }
 }
+
 /* DB - Route53 */
 resource "aws_route53_record" "rds" {
   count   = var.app == "bcda" || var.app == "dpc" ? 1 : 0
@@ -281,7 +282,6 @@ resource "aws_route53_record" "rds" {
   ttl     = "300"
   records = [aws_db_instance.api.address]
 }
-
 
 resource "aws_route53_zone" "local_zone" {
   count = var.app == "dpc" ? 1 : 0
