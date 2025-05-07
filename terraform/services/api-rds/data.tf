@@ -17,6 +17,7 @@ locals {
     "${var.app}-${local.stdenv}-enterprise-tools",
     "${var.app}-${local.stdenv}-allow-zscaler-private"
   ] : []
+  #NOTE: `db_username` and `db_password` are path/names to secrets for secrets manager datasource
   db_username = {
     ab2d = "${var.app}/${local.db_name}/module/db/database_user/${local.secret_date}"
     bcda = "${var.app}/${local.stdenv}/db/username"

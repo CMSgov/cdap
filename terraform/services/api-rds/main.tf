@@ -239,8 +239,12 @@ resource "aws_db_instance" "api" {
   multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : (var.env == "prod" || var.app == "bcda" ? true : false)
   vpc_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? concat(
   [aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
-  username = data.aws_secretsmanager_secret_version.database_user.secret_string
-  password = data.aws_secretsmanager_secret_version.database_password.secret_string
+
+  #NOTE: Differences between secretsmanager representations yields these ternary expression
+  # - ab2d uses plaintext
+  # - bcda/dpc use key-value storage
+  username = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string).username
+  password = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_password.secret_string).password
 
   tags = merge(
     data.aws_default_tags.data_tags.tags,
