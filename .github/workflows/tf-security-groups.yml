@@ -3,9 +3,6 @@ run-name: tf-security-groups ${{ inputs.apply && 'apply' || 'plan' }}
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
     paths:
       - .github/workflows/tf-security-groups.yml
       - terraform/services/security-groups/**
