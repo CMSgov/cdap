@@ -20,29 +20,29 @@ module "vpc" {
 }
 
 resource "aws_security_group" "zscaler_public" {
-  name        = "${var.app}-${var.env}-allow-zscaler-public"
+  name        = var.legacy && "${var.app}-${var.env}-allow-zscaler-public" || "zscaler-public"
   description = "Allow public zscaler traffic"
   vpc_id      = module.vpc.id
   tags = {
-    Name = "${var.app}-${var.env}-allow-zscaler-public"
+    Name = var.legacy && "${var.app}-${var.env}-allow-zscaler-public" || "zscaler-public"
   }
 }
 
 resource "aws_security_group" "zscaler_private" {
-  name        = "${var.app}-${var.env}-allow-zscaler-private"
+  name        = var.legacy && "${var.app}-${var.env}-allow-zscaler-private" || "zscaler-private"
   description = "Allow internet zscaler traffic private"
   vpc_id      = module.vpc.id
   tags = {
-    Name = "${var.app}-${var.env}-allow-zscaler-private"
+    Name = var.legacy && "${var.app}-${var.env}-allow-zscaler-private" || "zscaler-private"
   }
 }
 
 resource "aws_security_group" "internet" {
-  name        = "${var.app}-${var.env}-internet"
+  name        = var.legacy && "${var.app}-${var.env}-internet" || "internet"
   description = "Allow access to the internet"
   vpc_id      = module.vpc.id
   tags = {
-    Name = "${var.app}-${var.env}-internet"
+    Name = var.legacy && "${var.app}-${var.env}-internet" || "internet"
   }
 }
 
@@ -68,58 +68,19 @@ resource "aws_vpc_security_group_egress_rule" "internet_https" {
 
 resource "aws_security_group" "remote_management" {
   count       = var.legacy ? 0 : 1
-  name        = "${var.app}-${local.stdenv}-remote-management"
-  description = "Security group for remote management"
+  name        = "remote-management"
+  description = "Allow access from remote management VPC"
   vpc_id      = module.vpc.id
   tags = {
-    Name = "${var.app}-${local.stdenv}-remote-management"
+    Name = "remote-management"
   }
 }
 
 resource "aws_vpc_security_group_ingress_rule" "remote_management_allow_all" {
   count             = var.legacy ? 0 : 1
   security_group_id = aws_security_group.remote_management[0].id
-  description       = "Allow all traffic to CDAP management VPC"
-  cidr_ipv4         = !var.legacy ? data.aws_ssm_parameter.cdap_mgmt_vpc_cidr[0].value : null
-  from_port         = 5432
-  to_port           = 5432
-  ip_protocol       = "tcp"
-}
 
-resource "aws_vpc_security_group_egress_rule" "remote_management_egress" {
-  count             = var.legacy ? 0 : 1
-  security_group_id = aws_security_group.remote_management[0].id
-
-  description = "Allow all egress"
-  cidr_ipv4   = "0.0.0.0/0"
-  ip_protocol = -1
-}
-
-resource "aws_security_group" "enterprise_tools" {
-  count       = var.legacy ? 0 : 1
-  name        = "${var.app}-${local.stdenv}-enterprise-tools"
-  description = "Security group for enterprise tools"
-  vpc_id      = module.vpc.id
-  tags = {
-    Name = "${var.app}-${local.stdenv}-enterprise-tools"
-  }
-}
-
-resource "aws_vpc_security_group_ingress_rule" "enterprise_tools_allow_all" {
-  count             = var.legacy ? 0 : 1
-  security_group_id = aws_security_group.enterprise_tools[0].id
-  description       = "Allow all traffic to CDAP management VPC"
-  cidr_ipv4         = !var.legacy ? data.aws_ssm_parameter.cdap_mgmt_vpc_cidr[0].value : null
-  from_port         = 5432
-  to_port           = 5432
-  ip_protocol       = "tcp"
-}
-
-resource "aws_vpc_security_group_egress_rule" "enterprise_tools_egress" {
-  count             = var.legacy ? 0 : 1
-  security_group_id = aws_security_group.enterprise_tools[0].id
-
-  description = "Allow all egress"
-  cidr_ipv4   = "0.0.0.0/0"
+  description = "Allow all traffic from CDAP management VPC"
+  cidr_ipv4   = data.aws_ssm_parameter.cdap_mgmt_vpc_cidr[0].value
   ip_protocol = -1
 }
