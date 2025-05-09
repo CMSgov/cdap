@@ -20,29 +20,29 @@ module "vpc" {
 }
 
 resource "aws_security_group" "zscaler_public" {
-  name        = var.legacy && "${var.app}-${var.env}-allow-zscaler-public" || "zscaler-public"
+  name        = var.legacy ? "${var.app}-${var.env}-allow-zscaler-public" : "zscaler-public"
   description = "Allow public zscaler traffic"
   vpc_id      = module.vpc.id
   tags = {
-    Name = var.legacy && "${var.app}-${var.env}-allow-zscaler-public" || "zscaler-public"
+    Name = var.legacy ? "${var.app}-${var.env}-allow-zscaler-public" : "zscaler-public"
   }
 }
 
 resource "aws_security_group" "zscaler_private" {
-  name        = var.legacy && "${var.app}-${var.env}-allow-zscaler-private" || "zscaler-private"
+  name        = var.legacy ? "${var.app}-${var.env}-allow-zscaler-private" : "zscaler-private"
   description = "Allow internet zscaler traffic private"
   vpc_id      = module.vpc.id
   tags = {
-    Name = var.legacy && "${var.app}-${var.env}-allow-zscaler-private" || "zscaler-private"
+    Name = var.legacy ? "${var.app}-${var.env}-allow-zscaler-private" : "zscaler-private"
   }
 }
 
 resource "aws_security_group" "internet" {
-  name        = var.legacy && "${var.app}-${var.env}-internet" || "internet"
+  name        = var.legacy ? "${var.app}-${var.env}-internet" : "internet"
   description = "Allow access to the internet"
   vpc_id      = module.vpc.id
   tags = {
-    Name = var.legacy && "${var.app}-${var.env}-internet" || "internet"
+    Name = var.legacy ? "${var.app}-${var.env}-internet" : "internet"
   }
 }
 
