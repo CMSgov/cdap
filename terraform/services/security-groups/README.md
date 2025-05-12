@@ -4,6 +4,7 @@ This terraform service creates and manages shared security groups. Currently inc
 
 - access from public and private Zscaler (ingress CIDRs managed outside of terraform)
 - access to the internet (http and https)
+- access from the CDAP management VPC
 
 ## Instructions
 
