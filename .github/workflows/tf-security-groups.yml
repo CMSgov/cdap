@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - .github/workflows/tf-security-groups.yml
+      - terraform/modules/vpc/**
       - terraform/services/security-groups/**
   workflow_dispatch:
     inputs:
