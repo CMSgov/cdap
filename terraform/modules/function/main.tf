@@ -21,6 +21,10 @@ data "aws_iam_role" "admin" {
   name = var.app == "dpc" ? "ct-ado-bcda-application-admin" : "ct-ado-${var.app}-application-admin"
 }
 
+data "aws_iam_role" "dasg_admin" {
+  name = "ct-ado-dasg-application-admin"
+}
+
 data "aws_iam_policy_document" "function_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -65,7 +69,7 @@ data "aws_iam_policy_document" "function_assume_role" {
 
     principals {
       type        = "AWS"
-      identifiers = [data.aws_iam_role.admin.arn]
+      identifiers = [data.aws_iam_role.admin.arn, data.aws_iam_role.dasg_admin.arn]
     }
   }
 }

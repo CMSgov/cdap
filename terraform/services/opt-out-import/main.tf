@@ -33,8 +33,31 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
+data "aws_db_instances" "this" {
+  tags = {
+    environment = var.env
+    application = var.app
+  }
+}
+
+data "aws_db_instance" "this" {
+  db_instance_identifier = one(one(data.aws_db_instances.this[*]).instance_identifiers)
+}
+
+#TODO: Post greenfield migration removal
 data "aws_ssm_parameter" "opt_out_db_host" {
   name = "/${var.app}/${var.env}/opt-out/db-host"
+}
+
+locals {
+  #FIXME: database host parameters should be standardized
+  db_hosts = sensitive({
+    ab2d = "postgres://${data.aws_db_instance.this.address}:5432"
+    bcda = "postgres://${data.aws_db_instance.this.address}:5432/bcda"
+    dpc  = data.aws_db_instance.this.address
+  })
+  #TODO: Post greenfield migration removal: just use the db_hosts value
+  opt_out_db_host = var.legacy ? data.aws_ssm_parameter.opt_out_db_host.value : local.db_hosts[var.app]
 }
 
 module "opt_out_import_function" {
@@ -59,7 +82,7 @@ module "opt_out_import_function" {
   environment_variables = {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-opt-out-import"
-    DB_HOST  = data.aws_ssm_parameter.opt_out_db_host.value
+    DB_HOST  = local.opt_out_db_host
   }
 }
 
