@@ -1,9 +1,10 @@
-# Terraform for service security groups
+# Terraform for security groups
 
-This terraform service creates and manages security groups for various services. Currently included:
+This terraform service creates and manages shared security groups. Currently included:
 
 - access from public and private Zscaler (ingress CIDRs managed outside of terraform)
 - access to the internet (http and https)
+- access from the CDAP management VPC
 
 ## Instructions
 
