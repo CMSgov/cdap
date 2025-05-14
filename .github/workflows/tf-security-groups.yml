@@ -1,5 +1,5 @@
 name: tf-security-groups
-run-name: tf-security-groups ${{ inputs.apply && 'apply' || 'plan' }}
+run-name: tf-security-groups ${{ inputs.apply || github.ref == 'refs/heads/main' && 'apply' || 'plan' }}
 
 on:
   push:
@@ -51,5 +51,5 @@ jobs:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
           TF_VAR_legacy: "false"
-      - if: inputs.apply == true || github.ref == 'refs/heads/main'
+      - if: inputs.apply || github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tf.plan
