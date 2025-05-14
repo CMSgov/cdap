@@ -1,5 +1,5 @@
 name: tf-security-groups
-run-name: tf-security-groups ${{ env.APPLY && 'apply' || 'plan' }}
+run-name: tf-security-groups ${{ inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') && 'apply' || 'plan' }}
 
 on:
   push:
@@ -12,9 +12,6 @@ on:
       apply:
         required: false
         type: boolean
-
-env:
-  APPLY: ${{ inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
 
 jobs:
   check-fmt:
@@ -54,5 +51,5 @@ jobs:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
           TF_VAR_legacy: "false"
-      - if: env.APPLY
+      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: terraform apply -auto-approve tf.plan
