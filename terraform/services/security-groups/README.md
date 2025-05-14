@@ -6,6 +6,8 @@ This terraform service creates and manages shared security groups. Currently inc
 - access to the internet (http and https)
 - access from the CDAP management VPC
 
+Note that Zscaler security groups are created without rules. Those are added and kept in sync by workflows that parse CIDR files in the private repo.
+
 ## Instructions
 
 Pass in a backend file when running terraform init. Example:
