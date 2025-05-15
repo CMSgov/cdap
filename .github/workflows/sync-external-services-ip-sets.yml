@@ -42,12 +42,12 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), inputs.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ inputs.env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - name: Run IP set sync script
         run: |
           scripts/sync-ip-set --name=external-services --scope=REGIONAL cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt
           scripts/sync-ip-set --name=external-services --scope=CLOUDFRONT cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt
         env:
-          ENV: ${{ inputs.env }}
+          ENV: ${{ matrix.env }}
           CIDR_FILE: ${{ inputs.cidr_file }}
