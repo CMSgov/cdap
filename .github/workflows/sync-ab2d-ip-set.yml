@@ -4,12 +4,17 @@ on:
   workflow_dispatch: # Allow manual trigger
     inputs:
       env:
-        required: true
+        required: false
         type: choice
         options:
           - dev
           - test
           - prod
+        default: prod
+      cidr_file:
+        required: false
+        type: string
+        default: cidr/ab2d-customers.txt
       private_branch:
         description: Which branch of the private repo to check out
         required: false
@@ -47,6 +52,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), inputs.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ inputs.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - name: Run IP set sync script
-        run: scripts/sync-ip-set --name=ab2d-$ENV-api-customers --scope=REGIONAL cidr/ab2d-customers.txt
+        run: scripts/sync-ip-set --name=ab2d-$ENV-api-customers --scope=REGIONAL $CIDR_FILE
         env:
           ENV: ${{ inputs.env }}
+          CIDR_FILE: ${{ inputs.cidr_file }}
