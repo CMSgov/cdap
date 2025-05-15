@@ -18,7 +18,7 @@ defaults:
     shell: bash
 
 jobs:
-  waf-ip-sync:
+  ip-set-sync:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     strategy:
       fail-fast: false
