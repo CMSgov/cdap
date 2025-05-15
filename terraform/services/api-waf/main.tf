@@ -10,7 +10,7 @@ locals {
     ab2d = "${local.ab2d_env_lbs[var.env]}"
     bcda = "bcda-api-${local.is_sandbox ? "opensbx" : var.env}-01"
     dpc  = "dpc-${local.is_sandbox ? "prod-sbx" : var.env}-1"
-  } : {
+    } : {
     ab2d = "ab2d-${var.env}"
     bcda = "bcda-api-${var.env}-01"
     dpc  = "dpc-${var.env}-1"
