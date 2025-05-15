@@ -1,7 +1,6 @@
 name: sync-external-services-ip-sets
 
 on:
-  push:
   workflow_dispatch: # Allow manual trigger
     inputs:
       private_branch:
