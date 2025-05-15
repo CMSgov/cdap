@@ -1,0 +1,53 @@
+name: sync-external-services-ip-sets
+
+on:
+  workflow_dispatch: # Allow manual trigger
+    inputs:
+      private_branch:
+        description: Which branch of the private repo to check out
+        required: false
+        type: string
+        default: main
+
+permissions:
+  contents: read
+  id-token: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  waf-ip-sync:
+    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
+    strategy:
+      fail-fast: false
+      matrix: # Only one per account
+        app: [bcda]
+        env: [test, prod]
+    steps:
+      - name: Get AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            CI_GITHUB_TOKEN=/ci/github/token
+      - name: Check out private repo
+        uses: actions/checkout@v4
+        with:
+          repository: CMSgov/cdap-private
+          token: ${{ env.CI_GITHUB_TOKEN }}
+          ref: ${{ inputs.private_branch }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), inputs.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ inputs.env }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Run IP set sync script
+        run: |
+          scripts/sync-ip-set --name=external-services --scope=REGIONAL cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt
+          scripts/sync-ip-set --name=external-services --scope=CLOUDFRONT cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt
+        env:
+          ENV: ${{ inputs.env }}
+          CIDR_FILE: ${{ inputs.cidr_file }}
