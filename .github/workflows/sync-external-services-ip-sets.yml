@@ -48,6 +48,3 @@ jobs:
         run: |
           scripts/sync-ip-set --name=external-services --scope=REGIONAL cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt
           scripts/sync-ip-set --name=external-services --scope=CLOUDFRONT cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt
-        env:
-          ENV: ${{ matrix.env }}
-          CIDR_FILE: ${{ inputs.cidr_file }}
