@@ -1,4 +1,4 @@
-name: sync-external-services-ip-sets
+name: sync-security-groups
 
 on:
   workflow_dispatch: # Allow manual trigger
@@ -22,7 +22,7 @@ jobs:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     strategy:
       fail-fast: false
-      matrix: # Only one per account
+      matrix: # Only run once per account
         app: [bcda]
         env: [test, prod]
     steps:
@@ -44,7 +44,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
-      - name: Run IP set sync script
+      - name: Run script to sync security groups
         run: |
-          scripts/sync-ip-set --name=external-services --scope=REGIONAL cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt
-          scripts/sync-ip-set --name=external-services --scope=CLOUDFRONT cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt
+          scripts/sync-security-groups zscaler-private
+          scripts/sync-security-groups zscaler-public
