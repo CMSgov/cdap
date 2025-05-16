@@ -103,3 +103,34 @@ resource "aws_s3_bucket_logging" "this" {
   target_bucket = data.aws_s3_bucket.bucket_access_logs.id
   target_prefix = "${var.name}/"
 }
+
+resource "aws_s3_bucket_policy" "denyhttp" {
+  bucket = aws_s3_bucket.this.bucket
+  policy = data.aws_iam_policy_document.https_only_policy.json
+}
+
+data "aws_iam_policy_document" "https_only_policy" {
+  statement {
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    effect = "Deny"
+
+    actions = [
+      "s3:*"
+    ]
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+
+    resources = [
+      "${aws_s3_bucket.this.arn}/*",
+    ]
+  }
+}
+
