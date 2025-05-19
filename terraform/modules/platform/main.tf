@@ -1,0 +1,125 @@
+locals {
+  app              = var.app
+  env              = var.env
+  established_envs = ["test", "dev", "sandbox", "prod"]
+  module_root      = var.module_root
+  parent_env       = one([for x in local.established_envs : x if can(regex("${x}$$", local.env))])
+  sdlc_env         = contains(["sandbox", "prod"], local.parent_env) ? "production" : "non-production"
+  service          = var.service
+
+  static_tags = {
+    parent_env     = local.parent_env
+    env            = local.env
+    app            = local.app
+    business       = "oeda"
+    service        = local.service
+    terraform      = true
+    tf_module_root = local.module_root
+  }
+
+  access_logs_bucket = {
+    "dev"     = "bucket-access-logs-20250409172631068600000001"
+    "test"    = "bucket-access-logs-20250409172631068600000001"
+    "sandbox" = "bucket-access-logs-20250411172631068600000001"
+    "prod"    = "bucket-access-logs-20250411172631068600000001"
+  }
+
+  aws_iam_role_names = [
+    "ct-ado-bcda-application-admin",
+    "ct-ado-dasg-application-admin"
+  ]
+
+  aws_security_group_names = [
+      "cmscloud-security-tools",
+      "internet",
+      "remote-management",
+      "zscaler-private",
+      "zscaler-public",
+  ]
+}
+
+data "aws_region" "this" {}
+data "aws_caller_identity" "this" {}
+
+data "aws_iam_policy" "permissions_boundary" {
+  name = "ct-ado-poweruser-permissions-boundary-policy"
+}
+
+data "aws_vpc" "this" {
+  filter {
+    name   = "tag:Name"
+    values = ["${local.app}-east-${local.parent_env}"]
+  }
+}
+
+data "aws_subnets" "private" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.this.id]
+  }
+  filter {
+    name   = "tag:use"
+    values = ["private"]
+  }
+}
+
+data "aws_subnets" "public" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.this.id]
+  }
+  filter {
+    name   = "tag:use"
+    values = ["public"]
+  }
+}
+
+data "aws_subnet" "private" {
+  for_each = toset(data.aws_subnets.private.ids)
+  id       = each.key
+}
+
+data "aws_subnet" "public" {
+  for_each = toset(data.aws_subnets.public.ids)
+  id       = each.key
+}
+
+data "aws_s3_bucket" "access_logs" {
+  bucket = local.access_logs_bucket[local.parent_env]
+}
+
+data "aws_security_groups" "this" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.this.id]
+  }
+  filter {
+    name = "tag:Name"
+    values = [
+      "cmscloud-security-tools",
+      "internet",
+      "remote-management",
+      "zscaler-private",
+      "zscaler-public",
+    ]
+  }
+}
+
+data "aws_security_group" "this" {
+  for_each = toset(local.aws_security_group_names)
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.this.id]
+  }
+  name = each.key
+}
+
+data "aws_ssm_parameter" "platform_cidr" {
+  name            = "/cdap/mgmt-vpc/cidr"
+  with_decryption = true
+}
+
+data "aws_iam_role" "this" {
+  for_each = toset(local.aws_iam_role_names)
+  name = each.key
+}
