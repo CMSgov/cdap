@@ -50,6 +50,7 @@ No modules.
 |------|------|
 | [aws_caller_identity.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy.permissions_boundary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy) | data source |
+| [aws_iam_role.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role) | data source |
 | [aws_region.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_s3_bucket.access_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
 | [aws_security_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
@@ -75,7 +76,8 @@ No modules.
 | <a name="output_default_tags"></a> [default\_tags](#output\_default\_tags) | Tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags` |
 | <a name="output_env"></a> [env](#output\_env) | The solution's application environment name. |
 | <a name="output_is_ephemeral_env"></a> [is\_ephemeral\_env](#output\_is\_ephemeral\_env) | Returns true when environment is \_ephemeral\_, false when \_established\_ |
-| <a name="output_logging_bucket_arn"></a> [logging\_bucket\_arn](#output\_logging\_bucket\_arn) | The designated access log bucket for this current environment |
+| <a name="output_kion_roles"></a> [kion\_roles](#output\_kion\_roles) | A map of common kion/cloudtamer `aws_iam_role` data sources organized by name. For administrative use in CMS Hybrid Cloud and DASG. |
+| <a name="output_logging_bucket"></a> [logging\_bucket](#output\_logging\_bucket) | The designated access log bucket for this current environment |
 | <a name="output_parent_env"></a> [parent\_env](#output\_parent\_env) | The solution's source environment. For established environments this is equal to the environment's name |
 | <a name="output_platform_cidr"></a> [platform\_cidr](#output\_platform\_cidr) | The CIDR-range for the CDAP-managed VPC for CI and other administrative functions. |
 | <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | The current environment and VPC's private subnet ids |

@@ -30,11 +30,11 @@ locals {
   ]
 
   aws_security_group_names = [
-      "cmscloud-security-tools",
-      "internet",
-      "remote-management",
-      "zscaler-private",
-      "zscaler-public",
+    "cmscloud-security-tools",
+    "internet",
+    "remote-management",
+    "zscaler-private",
+    "zscaler-public",
   ]
 }
 
@@ -121,5 +121,5 @@ data "aws_ssm_parameter" "platform_cidr" {
 
 data "aws_iam_role" "this" {
   for_each = toset(local.aws_iam_role_names)
-  name = each.key
+  name     = each.key
 }

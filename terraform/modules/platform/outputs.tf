@@ -54,7 +54,7 @@ output "default_tags" {
 
 output "vpc_id" {
   description = "The current environment's VPC (data.aws_vpc) ID value."
-  sensitive   = true
+  sensitive   = false
   value       = data.aws_vpc.this.id
 }
 
@@ -73,21 +73,23 @@ output "public_subnet_ids" {
 output "logging_bucket" {
   description = "The designated access log bucket for this current environment"
   value       = data.aws_s3_bucket.access_logs
+  sensitive   = false
 }
 
 output "security_groups" {
   description = "Common security groups relevant to the current environment."
-  sensitive   = false
+  sensitive   = true
   value       = data.aws_security_group.this
 }
 
 output "platform_cidr" {
-  value       = data.aws_ssm_parameter.platform_cidr.value
   description = "The CIDR-range for the CDAP-managed VPC for CI and other administrative functions."
   sensitive   = true
+  value       = data.aws_ssm_parameter.platform_cidr.value
 }
 
 output "kion_roles" {
-  value = data.aws_iam_role.this
-  sensitive = false
+  description = "A map of common kion/cloudtamer `aws_iam_role` data sources organized by name. For administrative use in CMS Hybrid Cloud and DASG."
+  sensitive   = false
+  value       = data.aws_iam_role.this
 }
