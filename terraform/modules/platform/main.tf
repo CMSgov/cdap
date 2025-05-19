@@ -9,8 +9,8 @@ locals {
 
   static_tags = {
     parent_env     = local.parent_env
-    env            = local.env
-    app            = local.app
+    environment    = local.env
+    application    = local.app
     business       = "oeda"
     service        = local.service
     terraform      = true
