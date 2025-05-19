@@ -2,7 +2,7 @@ locals {
   app              = var.app
   env              = var.env
   established_envs = ["test", "dev", "sandbox", "prod"]
-  module_root      = var.module_root
+  root_module      = var.root_module
   parent_env       = one([for x in local.established_envs : x if can(regex("${x}$$", local.env))])
   sdlc_env         = contains(["sandbox", "prod"], local.parent_env) ? "production" : "non-production"
   service          = var.service
@@ -14,7 +14,7 @@ locals {
     business       = "oeda"
     service        = local.service
     terraform      = true
-    tf_module_root = local.module_root
+    tf_root_module = local.root_module
   }
 
   access_logs_bucket = {

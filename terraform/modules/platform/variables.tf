@@ -27,7 +27,7 @@ variable "additional_tags" {
   type        = map(string)
 }
 
-variable "module_root" {
+variable "root_module" {
   description = "The full URL to the terraform module root at issue for this infrastructure"
   type        = string
 }
