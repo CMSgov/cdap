@@ -48,8 +48,8 @@ output "parent_env" {
 
 output "default_tags" {
   description = "Map of tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags`"
-  value       = merge(var.additional_tags, local.static_tags)
   sensitive   = false
+  value       = merge(var.additional_tags, local.static_tags)
 }
 
 output "vpc_id" {
@@ -72,8 +72,8 @@ output "public_subnets" {
 
 output "logging_bucket" {
   description = "The designated access log bucket [aws_s3_bucket data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket#attribute-reference) for the current environment"
-  value       = data.aws_s3_bucket.access_logs
   sensitive   = false
+  value       = data.aws_s3_bucket.access_logs
 }
 
 output "security_groups" {
@@ -90,7 +90,7 @@ output "platform_cidr" {
 
 output "kion_roles" {
   description = "Map of common kion/cloudtamer [aws_iam_role data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `name`."
-  sensitive   = false
+  sensitive   = true
   value       = data.aws_iam_role.this
 }
 
