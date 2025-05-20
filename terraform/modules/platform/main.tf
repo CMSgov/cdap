@@ -109,13 +109,7 @@ data "aws_security_groups" "this" {
   }
   filter {
     name = "tag:Name"
-    values = [
-      "cmscloud-security-tools",
-      "internet",
-      "remote-management",
-      "zscaler-private",
-      "zscaler-public",
-    ]
+    values = local.aws_security_group_names
   }
 }
 
