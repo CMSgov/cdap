@@ -53,19 +53,19 @@ output "default_tags" {
 }
 
 output "vpc_id" {
-  description = "The current environment's VPC ID value"
+  description = "The current environment VPC ID value"
   sensitive   = false
   value       = data.aws_vpc.this.id
 }
 
 output "private_subnets" {
-  description = "Map of current VPCs **private** [aws_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `subnet_id`"
+  description = "Map of current VPC **private** [aws_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `subnet_id`"
   sensitive   = true
   value       = data.aws_subnet.private
 }
 
 output "public_subnets" {
-  description = "Map of current VPCs **public** [aws_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `id`"
+  description = "Map of current VPC **public** [aws_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `id`"
   sensitive   = true
   value       = data.aws_subnet.public
 }
@@ -95,7 +95,7 @@ output "kion_roles" {
 }
 
 output "nat_gateways" {
-  description = "Map of current VPC's **available** [aws_nat_gateway data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `id`."
+  description = "Map of current VPC **available** [aws_nat_gateway data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `id`."
   sensitive   = true
   value       = data.aws_nat_gateway.this
 }

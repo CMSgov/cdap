@@ -1,6 +1,32 @@
 # Platform Child Module
 
-This is a simple child module comprised of data sources, outputs, and some modest logic to encourage adoption of emerging, platform-wide standards.
+This simple [child module](https://developer.hashicorp.com/terraform/language/modules#child-modules) comprises data sources, outputs, and some modest logic to encourage adoption of DASG's emerging, _platform_-wide standards for use in CDAP-customer terraform modules.
+The resources that are referenced by terraform data source in this module are managed by the CMS Hybrid Cloud team and/or the CDAP team.
+
+## Example Usage
+
+```hcl
+## AB2D API Module Usage Example
+module "platform" {
+  # Ensure `ref` in the following line is pinned to something static
+  # e.g. a known branch, commit hash, or tag from **this repository**
+  source = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=plt-1033"
+
+  app         = "ab2d"
+  env         = var.env
+  root_module = "https://github.com/CMSgov/ab2d-ops/tree/main/terraform/services/api"
+  service     = "api"
+}
+
+## Configure the aws provider with the default tag standards sourced from the `platform` child module
+provider "aws" {
+  region = "us-east-1"
+
+  default_tags {
+    tags = module.platform.default_tags
+  }
+}
+```
 
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -80,14 +106,14 @@ No modules.
 | <a name="output_is_ephemeral_env"></a> [is\_ephemeral\_env](#output\_is\_ephemeral\_env) | Returns true when environment is \_ephemeral\_, false when \_established\_ |
 | <a name="output_kion_roles"></a> [kion\_roles](#output\_kion\_roles) | Map of common kion/cloudtamer [aws\_iam\_role data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `name`. |
 | <a name="output_logging_bucket"></a> [logging\_bucket](#output\_logging\_bucket) | The designated access log bucket [aws\_s3\_bucket data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket#attribute-reference) for the current environment |
-| <a name="output_nat_gateways"></a> [nat\_gateways](#output\_nat\_gateways) | Map of current VPC's **available** [aws\_nat\_gateway data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `id`. |
+| <a name="output_nat_gateways"></a> [nat\_gateways](#output\_nat\_gateways) | Map of current VPC **available** [aws\_nat\_gateway data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `id`. |
 | <a name="output_parent_env"></a> [parent\_env](#output\_parent\_env) | The solution's source environment. For established environments this is equal to the environment's name |
 | <a name="output_platform_cidr"></a> [platform\_cidr](#output\_platform\_cidr) | The CIDR-range for the CDAP-managed VPC for CI and other administrative functions. |
-| <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | Map of current VPCs **private** [aws\_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `subnet_id` |
-| <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | Map of current VPCs **public** [aws\_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `id` |
+| <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | Map of current VPC **private** [aws\_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `subnet_id` |
+| <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | Map of current VPC **public** [aws\_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `id` |
 | <a name="output_region_name"></a> [region\_name](#output\_region\_name) | The region name associated with the current caller identity |
 | <a name="output_sdlc_env"></a> [sdlc\_env](#output\_sdlc\_env) | The SDLC (production vs non-production) environment. |
 | <a name="output_security_groups"></a> [security\_groups](#output\_security\_groups) | Map of current VPC's common [aws\_security\_group data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group#attribute-reference), keyed by `name` |
 | <a name="output_service"></a> [service](#output\_service) | The name of the current service or terraservice. |
-| <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The current environment's VPC ID value |
+| <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The current environment VPC ID value |
 <!-- END_TF_DOCS -->
