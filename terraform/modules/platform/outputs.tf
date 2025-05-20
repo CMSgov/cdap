@@ -93,3 +93,9 @@ output "kion_roles" {
   sensitive   = false
   value       = data.aws_iam_role.this
 }
+
+output "nat_gateways" {
+  description = "Map of current VPC's **available** [aws_nat_gateway data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `id`."
+  sensitive   = true
+  value       = data.aws_nat_gateway.this
+}

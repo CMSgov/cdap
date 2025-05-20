@@ -84,6 +84,20 @@ data "aws_subnet" "public" {
   id       = each.key
 }
 
+data "aws_nat_gateways" "this" {
+  vpc_id = data.aws_vpc.this.id
+
+  filter {
+    name   = "state"
+    values = ["available"]
+  }
+}
+
+data "aws_nat_gateway" "this" {
+  for_each = toset(data.aws_nat_gateways.this.ids)
+  id       = each.key
+}
+
 data "aws_s3_bucket" "access_logs" {
   bucket = local.access_logs_bucket[local.parent_env]
 }
