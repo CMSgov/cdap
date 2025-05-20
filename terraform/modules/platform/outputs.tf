@@ -47,37 +47,37 @@ output "parent_env" {
 }
 
 output "default_tags" {
-  description = "Tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags`"
+  description = "Map of tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags`"
   value       = merge(var.additional_tags, local.static_tags)
   sensitive   = false
 }
 
 output "vpc_id" {
-  description = "The current environment's VPC (data.aws_vpc) ID value."
+  description = "The current environment's VPC ID value"
   sensitive   = false
   value       = data.aws_vpc.this.id
 }
 
-output "private_subnet_ids" {
-  description = "The current environment and VPC's private subnet ids"
+output "private_subnets" {
+  description = "Map of current VPCs **private** [aws_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `subnet_id`"
   sensitive   = true
   value       = data.aws_subnet.private
 }
 
-output "public_subnet_ids" {
-  description = "The current environment and VPC's public subnet ids"
+output "public_subnets" {
+  description = "Map of current VPCs **public** [aws_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `id`"
   sensitive   = true
   value       = data.aws_subnet.public
 }
 
 output "logging_bucket" {
-  description = "The designated access log bucket for this current environment"
+  description = "The designated access log bucket [aws_s3_bucket data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket#attribute-reference) for the current environment"
   value       = data.aws_s3_bucket.access_logs
   sensitive   = false
 }
 
 output "security_groups" {
-  description = "Common security groups relevant to the current environment."
+  description = "Map of current VPC's common [aws_security_group data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group#attribute-reference), keyed by `name`"
   sensitive   = true
   value       = data.aws_security_group.this
 }
@@ -89,7 +89,7 @@ output "platform_cidr" {
 }
 
 output "kion_roles" {
-  description = "A map of common kion/cloudtamer `aws_iam_role` data sources organized by name. For administrative use in CMS Hybrid Cloud and DASG."
+  description = "Map of common kion/cloudtamer [aws_iam_role data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `name`."
   sensitive   = false
   value       = data.aws_iam_role.this
 }
