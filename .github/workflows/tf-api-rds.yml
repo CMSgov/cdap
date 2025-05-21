@@ -34,7 +34,12 @@ jobs:
       fail-fast: false
       matrix:
         app: [ab2d, bcda, dpc]
-        env: [dev, test, sandbox, prod]
+        env: [dev]
+        include:
+          - app: bcda
+            env: test
+          - app: dpc
+            env: test
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
