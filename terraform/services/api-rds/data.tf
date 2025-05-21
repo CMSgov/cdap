@@ -10,11 +10,11 @@ locals {
     "${var.app}-${local.stdenv}-vpn-public",
     "${var.app}-${local.stdenv}-remote-management",
     "${var.app}-${local.stdenv}-enterprise-tools",
-    "${var.app}-${local.stdenv}-allow-zscaler-private"
+    "${var.app}-${var.env}-allow-zscaler-private"
     ] : var.app == "dpc" ? [
     "${var.app}-${local.stdenv}-remote-management",
     "${var.app}-${local.stdenv}-enterprise-tools",
-    "${var.app}-${local.stdenv}-allow-zscaler-private"
+    "${var.app}-${var.env}-allow-zscaler-private"
   ] : []
   #NOTE: `db_username` and `db_password` are path/names to secrets for secrets manager datasource
   db_username = {
