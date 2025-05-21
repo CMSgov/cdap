@@ -67,7 +67,7 @@ locals {
 
   #FIXME: Temporarily disabled in greenfield
   additional_ingress_sgs = var.legacy && var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : (
-  var.app == "dpc" ? flatten(data.aws_security_groups.dpc_additional_sg.ids) : [])
+  var.legacy && var.app == "dpc" ? flatten(data.aws_security_groups.dpc_additional_sg[0].ids) : [])
   gdit_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? flatten([for sg in data.aws_security_group.gdit : sg.id]) : []
   quicksight_cidr_blocks  = var.app != "ab2d" && length(data.aws_ssm_parameter.quicksight_cidr_blocks) > 0 ? jsondecode(data.aws_ssm_parameter.quicksight_cidr_blocks[0].value) : []
 

@@ -172,6 +172,7 @@ data "aws_ssm_parameter" "quicksight_cidr_blocks" {
 }
 
 data "aws_security_groups" "dpc_additional_sg" {
+  count = var.legacy && var.app == "dpc" ? 1 : 0
   filter {
     name = "description"
     values = [
