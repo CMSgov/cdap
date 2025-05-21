@@ -8,10 +8,10 @@ locals {
   service          = var.service
 
   static_tags = {
-    parent_env     = local.parent_env
-    environment    = local.env
     application    = local.app
     business       = "oeda"
+    environment    = local.env
+    parent_env     = local.parent_env
     service        = local.service
     terraform      = true
     tf_root_module = local.root_module
@@ -108,7 +108,7 @@ data "aws_security_groups" "this" {
     values = [data.aws_vpc.this.id]
   }
   filter {
-    name = "tag:Name"
+    name   = "tag:Name"
     values = local.aws_security_group_names
   }
 }
