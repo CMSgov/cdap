@@ -37,5 +37,5 @@ output "default_tags" {
 output "default_permissions_boundary" {
   description = "Default permissions boundary [aws_iam_policy data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy#attribute-reference)"
   sensitive   = false
-  value       = merge(var.additional_tags, local.static_tags)
+  value       = data.aws_iam_policy.permissions_boundary
 }
