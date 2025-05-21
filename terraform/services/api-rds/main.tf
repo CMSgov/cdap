@@ -260,8 +260,8 @@ resource "aws_db_instance" "api" {
     aws_security_group.sg_database.id,
     ] : [
     aws_security_group.sg_database.id,
-    data.aws_security_group.remote_management[0].id,
-    data.aws_security_group.zscaler_private[0].id,
+    module.platform[0].security_groups["remote-management"].id,
+    module.platform[0].security_groups["zscaler-private"].id,
   ]
 
   #NOTE: Differences between secretsmanager representations yields these ternary expression

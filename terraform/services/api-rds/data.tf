@@ -138,28 +138,6 @@ data "aws_security_group" "github_runner" {
   }
 }
 
-data "aws_security_group" "zscaler_private" {
-  # Only in greenfield
-  count = var.legacy ? 0 : 1
-
-  name = "zscaler-private"
-  filter {
-    name   = "vpc-id"
-    values = [module.vpc.id]
-  }
-}
-
-data "aws_security_group" "remote_management" {
-  # Only in greenfield
-  count = var.legacy ? 0 : 1
-
-  name = "remote-management"
-  filter {
-    name   = "vpc-id"
-    values = [module.vpc.id]
-  }
-}
-
 data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
   count = var.legacy ? 0 : 1
 
