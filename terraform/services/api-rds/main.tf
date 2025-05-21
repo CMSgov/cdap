@@ -238,7 +238,7 @@ resource "aws_db_instance" "api" {
   multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : (var.env == "prod" || var.app == "bcda" ? true : false)
   vpc_security_group_ids = var.legacy ? var.app == "bcda" || var.app == "dpc" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [
     aws_security_group.sg_database.id,
-  ] : [
+    ] : [
     aws_security_group.sg_database.id,
     data.aws_security_group.remote_management[0].id,
     data.aws_security_group.zscaler_private[0].id,
