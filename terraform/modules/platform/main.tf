@@ -108,7 +108,7 @@ data "aws_security_groups" "this" {
     values = [data.aws_vpc.this.id]
   }
   filter {
-    name = "tag:Name"
+    name   = "tag:Name"
     values = local.aws_security_group_names
   }
 }

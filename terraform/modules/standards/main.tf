@@ -1,8 +1,8 @@
 locals {
-  app              = var.app
-  env              = var.env
-  root_module      = var.root_module
-  service          = var.service
+  app         = var.app
+  env         = var.env
+  root_module = var.root_module
+  service     = var.service
 
   static_tags = {
     application    = local.app
