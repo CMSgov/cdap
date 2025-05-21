@@ -108,17 +108,17 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
-  count             = var.app == "ab2d" || var.app == "dpc" ? 1 : 0
+  count             = var.legacy && (var.app == "ab2d" || var.app == "dpc") ? 1 : 0
   description       = "Management VPC Access"
   from_port         = 5432
   to_port           = 5432
   ip_protocol       = "tcp"
-  cidr_ipv4         = var.legacy ? var.mgmt_vpc_cidr : data.aws_ssm_parameter.cdap_mgmt_vpc_cidr[0].value
+  cidr_ipv4         = var.mgmt_vpc_cidr
   security_group_id = aws_security_group.sg_database.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "additional_ingress" {
-  for_each                     = var.app == "bcda" || var.app == "dpc" ? toset(local.additional_ingress_sgs) : toset([])
+  for_each                     = var.legacy && (var.app == "bcda" || var.app == "dpc") ? toset(local.additional_ingress_sgs) : toset([])
   description                  = "Allow additional ingress to RDS on port 5432"
   from_port                    = 5432
   to_port                      = 5432
@@ -236,8 +236,11 @@ resource "aws_db_instance" "api" {
   copy_tags_to_snapshot                 = var.app == "bcda" || var.app == "dpc" ? true : false
   kms_key_id                            = var.legacy && (var.app == "ab2d" || var.app == "dpc") ? data.aws_kms_alias.main_kms[0].target_key_arn : data.aws_kms_alias.default_rds.target_key_arn
   multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : (var.env == "prod" || var.app == "bcda" ? true : false)
-  vpc_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? concat(
-  [aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
+  vpc_security_group_ids = var.legacy && (var.app == "bcda" || var.app == "dpc") ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [
+    aws_security_group.sg_database.id,
+    data.aws_security_group.remote_management[0].id,
+    data.aws_security_group.zscaler_private[0].id,
+  ]
 
   #NOTE: Differences between secretsmanager representations yields these ternary expression
   # - ab2d uses plaintext
@@ -291,11 +294,6 @@ resource "aws_route53_zone" "local_zone" {
   vpc {
     vpc_id = module.vpc.id
   }
-
-  tags = merge(
-    data.aws_default_tags.data_tags.tags,
-    var.app == "dpc" ? local.dpc_specific_tags : {}
-  )
 }
 
 data "aws_route53_zone" "local_zone" {

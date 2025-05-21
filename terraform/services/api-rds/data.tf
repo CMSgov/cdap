@@ -6,9 +6,8 @@ locals {
   )
   secret_date = "2020-01-02-09-15-01"
   gdit_security_group_names = var.app == "bcda" ? [
-    #FIXME: Temporarily disabled in greenfield, potentially permanently
-    var.legacy ? "${var.app}-${local.stdenv}-vpn-private" : null,
-    var.legacy ? "${var.app}-${local.stdenv}-vpn-public" : null,
+    "${var.app}-${local.stdenv}-vpn-private",
+    "${var.app}-${local.stdenv}-vpn-public",
     "${var.app}-${local.stdenv}-remote-management",
     "${var.app}-${local.stdenv}-enterprise-tools",
     "${var.app}-${local.stdenv}-allow-zscaler-private"
@@ -121,7 +120,7 @@ data "aws_security_group" "worker_sg" {
 }
 
 data "aws_security_group" "gdit" {
-  for_each = toset([for name in local.gdit_security_group_names : name if name != null])
+  for_each = var.legacy ? toset([for name in local.gdit_security_group_names : name if name != null]) : toset([])
 
   filter {
     name   = "tag:Name" # Filter by 'Name' tag
@@ -136,6 +135,35 @@ data "aws_security_group" "github_runner" {
   filter {
     name   = "tag:Name"
     values = ["github-actions-action-runner"]
+  }
+}
+
+data "aws_vpc" "this" {
+  filter {
+    name   = "tag:Name"
+    values = ["${var.app}-east-${var.env}"]
+  }
+}
+
+data "aws_security_group" "zscaler_private" {
+  # Only in greenfield
+  count = var.legacy ? 0 : 1
+
+  name = "zscaler-private"
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.this.id]
+  }
+}
+
+data "aws_security_group" "remote_management" {
+  # Only in greenfield
+  count = var.legacy ? 0 : 1
+
+  name = "remote-management"
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.this.id]
   }
 }
 
