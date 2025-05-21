@@ -55,6 +55,8 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 module "vpc" {
+  count = var.legacy ? 1 : 0
+
   source = "../../modules/vpc"
 
   app    = var.app
@@ -160,7 +162,7 @@ data "aws_security_groups" "dpc_additional_sg" {
 
   filter {
     name   = "vpc-id"
-    values = [module.vpc.id]
+    values = [module.vpc[0].id]
   }
 }
 

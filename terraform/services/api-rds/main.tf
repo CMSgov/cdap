@@ -84,7 +84,7 @@ resource "aws_security_group" "sg_database" {
   description = var.app == "ab2d" ? "${local.db_name} database security group" : (
   var.app == "dpc" ? "Security group for DPC DB" : "App ELB security group")
 
-  vpc_id = module.vpc.id
+  vpc_id = var.legacy ? module.vpc[0].id : module.platform[0].vpc_id
 
   tags = var.legacy ? merge(
     data.aws_default_tags.data_tags.tags,
@@ -314,7 +314,7 @@ resource "aws_route53_zone" "local_zone" {
   name = "${var.app}-${local.stdenv}.local"
 
   vpc {
-    vpc_id = module.vpc.id
+    vpc_id = var.legacy ? module.vpc[0].id : module.platform[0].vpc_id
   }
 }
 
