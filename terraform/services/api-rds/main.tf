@@ -82,15 +82,16 @@ locals {
 resource "aws_security_group" "sg_database" {
   name = local.sg_name
   description = var.app == "ab2d" ? "${local.db_name} database security group" : (
-    var.app == "dpc" ? "Security group for DPC DB" : "App ELB security group")
+  var.app == "dpc" ? "Security group for DPC DB" : "App ELB security group")
 
   vpc_id = var.legacy ? module.vpc[0].id : module.platform[0].vpc_id
 
   tags = var.legacy ? merge(
-    data.aws_default_tags.data_tags.tags,
     { "Name" = local.sg_name },
     var.app == "dpc" ? local.dpc_specific_tags : {}
-  ) : {}
+    ) : {
+    Name = local.sg_name,
+  }
 }
 
 
@@ -168,7 +169,7 @@ resource "aws_vpc_security_group_ingress_rule" "quicksight" {
 resource "aws_db_subnet_group" "subnet_group" {
   name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : (
     var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds-subnets" : (
-    var.app == "dpc" ? "${var.app}-${local.stdenv}-rds-subnet" : "${var.app}-${var.env}-rds-subnets"))
+  var.app == "dpc" ? "${var.app}-${local.stdenv}-rds-subnet" : "${var.app}-${var.env}-rds-subnets"))
 
   subnet_ids = data.aws_subnets.db.ids
 
@@ -267,7 +268,6 @@ resource "aws_db_instance" "api" {
   password = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_password.secret_string).password
 
   tags = var.legacy ? merge(
-    data.aws_default_tags.data_tags.tags,
     {
       "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : (
         var.app == "bcda" && var.env == "sbx" ? "${var.app}-${local.stdenv}-rds" : (
@@ -282,7 +282,9 @@ resource "aws_db_instance" "api" {
       var.app == "dpc" && var.env == "sbx") ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
     },
     var.app == "dpc" ? local.dpc_specific_tags : {}
-  ) : {}
+    ) : {
+    AWS_Backup = "4hr7_w90",
+  }
 
   lifecycle {
     ignore_changes = [

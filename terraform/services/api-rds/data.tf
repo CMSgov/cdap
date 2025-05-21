@@ -30,8 +30,6 @@ locals {
   }[var.app]
 }
 
-data "aws_default_tags" "data_tags" {}
-
 # Fetching the secret for database username
 data "aws_secretsmanager_secret" "database_user" {
   name = local.db_username
