@@ -86,11 +86,11 @@ resource "aws_security_group" "sg_database" {
 
   vpc_id = module.vpc.id
 
-  tags = merge(
+  tags = var.legacy ? merge(
     data.aws_default_tags.data_tags.tags,
     { "Name" = local.sg_name },
     var.app == "dpc" ? local.dpc_specific_tags : {}
-  )
+  ) : {}
 
   lifecycle {
     create_before_destroy = true
@@ -176,12 +176,12 @@ resource "aws_db_subnet_group" "subnet_group" {
 
   subnet_ids = data.aws_subnets.db.ids
 
-  tags = merge(
+  tags = var.legacy ? merge(
     {
       Name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "RDS subnet group"
     },
     var.app == "dpc" ? local.dpc_specific_tags : {} # Merging DPC-specific tags if applicable
-  )
+  ) : {}
 }
 
 # Create database parameter group
@@ -270,7 +270,7 @@ resource "aws_db_instance" "api" {
   username = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string).username
   password = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_password.secret_string).password
 
-  tags = merge(
+  tags = var.legacy ? merge(
     data.aws_default_tags.data_tags.tags,
     {
       "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : (
@@ -286,7 +286,7 @@ resource "aws_db_instance" "api" {
       var.app == "dpc" && var.env == "sbx") ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
     },
     var.app == "dpc" ? local.dpc_specific_tags : {}
-  )
+  ) : {}
 
   lifecycle {
     ignore_changes = [
