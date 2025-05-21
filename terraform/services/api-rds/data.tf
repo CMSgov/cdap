@@ -138,16 +138,6 @@ data "aws_security_group" "github_runner" {
   }
 }
 
-data "aws_vpc" "this" {
-  # Only in greenfield
-  count = var.legacy ? 0 : 1
-
-  filter {
-    name   = "tag:Name"
-    values = ["${var.app}-east-${var.env}"]
-  }
-}
-
 data "aws_security_group" "zscaler_private" {
   # Only in greenfield
   count = var.legacy ? 0 : 1
@@ -155,7 +145,7 @@ data "aws_security_group" "zscaler_private" {
   name = "zscaler-private"
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.this[0].id]
+    values = [module.vpc.id]
   }
 }
 
@@ -166,7 +156,7 @@ data "aws_security_group" "remote_management" {
   name = "remote-management"
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.this[0].id]
+    values = [module.vpc.id]
   }
 }
 
