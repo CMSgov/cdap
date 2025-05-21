@@ -3,6 +3,15 @@
 This simple [child module](https://developer.hashicorp.com/terraform/language/modules#child-modules) comprises data sources, outputs, and some modest logic to encourage adoption of DASG's emerging, _platform_-wide standards for use in CDAP-customer terraform modules.
 The resources that are referenced by terraform data source in this module are managed by the CMS Hybrid Cloud team and/or the CDAP team.
 
+**NOTE** Ensure changes made to local.static_tags that are relevant to both **this** module and the `standards` module remain synchronized. 
+
+## Limitations
+
+**This module is suitable for CDAP-customer usage in greenfield environments only.**
+
+This child module is opinionated and makes various assumptions about the environment in which it operates in order to balance a maximum value with limited complexity.
+The key assumptions are focused on the existence of resources that managed externally from customer infrastructure-as-code repositories, such as account-level and vpc-level resources, provided by the CMS Hybrid Cloud and CDAP teams.
+
 ## Example Usage
 
 ```hcl
