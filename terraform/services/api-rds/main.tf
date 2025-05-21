@@ -82,7 +82,7 @@ locals {
 resource "aws_security_group" "api_db" {
   name = local.sg_name
   description = var.legacy ? (var.app == "ab2d" ? "${local.db_name} database security group" : (
-  var.app == "dpc" ? "Security group for DPC DB" : "App ELB security group")
+    var.app == "dpc" ? "Security group for DPC DB" : "App ELB security group")
   ) : "For ${local.db_name} api database"
 
   vpc_id = var.legacy ? module.vpc[0].id : module.platform[0].vpc_id
@@ -173,7 +173,7 @@ resource "aws_vpc_security_group_ingress_rule" "quicksight" {
 resource "aws_db_subnet_group" "subnet_group" {
   name = var.legacy ? (var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : (
     var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds-subnets" : (
-  var.app == "dpc" ? "${var.app}-${local.stdenv}-rds-subnet" : "${var.app}-${var.env}-rds-subnets"))
+    var.app == "dpc" ? "${var.app}-${local.stdenv}-rds-subnet" : "${var.app}-${var.env}-rds-subnets"))
   ) : "${var.app}-${var.env}"
 
   subnet_ids = data.aws_subnets.db.ids
