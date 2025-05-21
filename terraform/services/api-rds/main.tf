@@ -19,7 +19,7 @@ module "platform" {
 }
 
 locals {
-  db_name = {
+  db_name = var.legacy ? {
     ab2d = {
       dev  = "ab2d-dev"
       test = "ab2d-east-impl"
@@ -34,9 +34,9 @@ locals {
     }[var.env]
     # TODO: This will have to change for Greenfield
     dpc = "${var.app}-${local.stdenv}-db-20190829"
-  }[var.app]
+  }[var.app] : "${var.app}-${var.env}"
 
-  sg_name = {
+  sg_name = var.legacy ? {
     ab2d = "${local.db_name}-database-sg"
     bcda = {
       dev  = "bcda-dev-rds"
@@ -45,7 +45,7 @@ locals {
       sbx  = "bcda-opensbx-rds"
     }[var.env]
     dpc = "${var.app}-${local.stdenv}-db"
-  }[var.app]
+  }[var.app] : "${var.app}-${var.env}-db"
 
   instance_class = {
     ab2d = "db.m6i.2xlarge"
@@ -79,10 +79,11 @@ locals {
 }
 
 # Create database security group
-resource "aws_security_group" "sg_database" {
+resource "aws_security_group" "api_db" {
   name = local.sg_name
-  description = var.app == "ab2d" ? "${local.db_name} database security group" : (
+  description = var.legacy ? (var.app == "ab2d" ? "${local.db_name} database security group" : (
   var.app == "dpc" ? "Security group for DPC DB" : "App ELB security group")
+  ) : "For ${local.db_name} api database"
 
   vpc_id = var.legacy ? module.vpc[0].id : module.platform[0].vpc_id
 
@@ -99,7 +100,7 @@ resource "aws_security_group" "sg_database" {
 
 
 resource "aws_vpc_security_group_egress_rule" "egress_all" {
-  security_group_id = aws_security_group.sg_database.id
+  security_group_id = aws_security_group.api_db.id
 
   description = "Allow all egress"
   cidr_ipv4   = "0.0.0.0/0"
@@ -113,7 +114,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_jenkins_agent" {
   to_port                      = "5432"
   ip_protocol                  = "tcp"
   referenced_security_group_id = var.jenkins_security_group_id
-  security_group_id            = aws_security_group.sg_database.id
+  security_group_id            = aws_security_group.api_db.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
@@ -124,7 +125,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
   to_port                      = "5432"
   ip_protocol                  = "tcp"
   referenced_security_group_id = data.aws_security_group.controller_security_group_id[count.index].id
-  security_group_id            = aws_security_group.sg_database.id
+  security_group_id            = aws_security_group.api_db.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
@@ -134,7 +135,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
   to_port           = 5432
   ip_protocol       = "tcp"
   cidr_ipv4         = var.mgmt_vpc_cidr
-  security_group_id = aws_security_group.sg_database.id
+  security_group_id = aws_security_group.api_db.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "additional_ingress" {
@@ -143,7 +144,7 @@ resource "aws_vpc_security_group_ingress_rule" "additional_ingress" {
   from_port                    = 5432
   to_port                      = 5432
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.sg_database.id
+  security_group_id            = aws_security_group.api_db.id
   referenced_security_group_id = each.value
 }
 
@@ -154,7 +155,7 @@ resource "aws_vpc_security_group_ingress_rule" "runner_access" {
   from_port                    = 5432
   to_port                      = 5432
   ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.sg_database.id
+  security_group_id            = aws_security_group.api_db.id
   referenced_security_group_id = data.aws_security_group.github_runner[count.index].id
 }
 
@@ -164,15 +165,16 @@ resource "aws_vpc_security_group_ingress_rule" "quicksight" {
   from_port         = 5432
   to_port           = 5432
   ip_protocol       = "tcp"
-  security_group_id = aws_security_group.sg_database.id
+  security_group_id = aws_security_group.api_db.id
   cidr_ipv4         = local.quicksight_cidr_blocks[count.index]
 }
 
 # Create database subnet group
 resource "aws_db_subnet_group" "subnet_group" {
-  name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : (
+  name = var.legacy ? (var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : (
     var.app == "bcda" && var.env == "sbx" ? "${var.app}-open${var.env}-rds-subnets" : (
   var.app == "dpc" ? "${var.app}-${local.stdenv}-rds-subnet" : "${var.app}-${var.env}-rds-subnets"))
+  ) : "${var.app}-${var.env}"
 
   subnet_ids = data.aws_subnets.db.ids
 
@@ -256,10 +258,10 @@ resource "aws_db_instance" "api" {
   copy_tags_to_snapshot                 = var.app == "bcda" || var.app == "dpc" ? true : false
   kms_key_id                            = var.legacy && (var.app == "ab2d" || var.app == "dpc") ? data.aws_kms_alias.main_kms[0].target_key_arn : data.aws_kms_alias.default_rds.target_key_arn
   multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : (var.env == "prod" || var.app == "bcda" ? true : false)
-  vpc_security_group_ids = var.legacy ? var.app == "bcda" || var.app == "dpc" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [
-    aws_security_group.sg_database.id,
+  vpc_security_group_ids = var.legacy ? var.app == "bcda" || var.app == "dpc" ? concat([aws_security_group.api_db.id], local.gdit_security_group_ids) : [
+    aws_security_group.api_db.id,
     ] : [
-    aws_security_group.sg_database.id,
+    aws_security_group.api_db.id,
     module.platform[0].security_groups["remote-management"].id,
     module.platform[0].security_groups["zscaler-private"].id,
   ]
