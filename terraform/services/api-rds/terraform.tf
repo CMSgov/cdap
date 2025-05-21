@@ -1,13 +1,6 @@
 provider "aws" {
   default_tags {
-    tags = {
-      application = var.app
-      business    = "oeda"
-      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/api-rds"
-      component   = "api-rds"
-      environment = var.env
-      terraform   = true
-    }
+    tags = var.legacy ? module.standards[0].default_tags : module.platform[0].default_tags
   }
 }
 
