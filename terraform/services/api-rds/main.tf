@@ -19,7 +19,7 @@ module "platform" {
 }
 
 locals {
-  db_name = {
+  db_name = var.legacy ? {
     ab2d = {
       dev  = "ab2d-dev"
       test = "ab2d-east-impl"
@@ -34,9 +34,9 @@ locals {
     }[var.env]
     # TODO: This will have to change for Greenfield
     dpc = "${var.app}-${local.stdenv}-db-20190829"
-  }[var.app]
+  }[var.app] : "${var.app}-${var.env}"
 
-  sg_name = {
+  sg_name = var.legacy ? {
     ab2d = "${local.db_name}-database-sg"
     bcda = {
       dev  = "bcda-dev-rds"
@@ -45,7 +45,7 @@ locals {
       sbx  = "bcda-opensbx-rds"
     }[var.env]
     dpc = "${var.app}-${local.stdenv}-db"
-  }[var.app]
+  }[var.app] : "${var.app}-${var.env}-db"
 
   instance_class = {
     ab2d = "db.m6i.2xlarge"
@@ -67,7 +67,7 @@ locals {
 
   #FIXME: Temporarily disabled in greenfield
   additional_ingress_sgs = var.legacy && var.app == "bcda" ? flatten([data.aws_security_group.app_sg[0].id, data.aws_security_group.worker_sg[0].id]) : (
-  var.app == "dpc" ? flatten(data.aws_security_groups.dpc_additional_sg.ids) : [])
+  var.legacy && var.app == "dpc" ? flatten(data.aws_security_groups.dpc_additional_sg[0].ids) : [])
   gdit_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? flatten([for sg in data.aws_security_group.gdit : sg.id]) : []
   quicksight_cidr_blocks  = var.app != "ab2d" && length(data.aws_ssm_parameter.quicksight_cidr_blocks) > 0 ? jsondecode(data.aws_ssm_parameter.quicksight_cidr_blocks[0].value) : []
 
@@ -84,16 +84,13 @@ resource "aws_security_group" "sg_database" {
   description = var.app == "ab2d" ? "${local.db_name} database security group" : (
   var.app == "dpc" ? "Security group for DPC DB" : "App ELB security group")
 
-  vpc_id = module.vpc.id
+  vpc_id = var.legacy ? module.vpc[0].id : module.platform[0].vpc_id
 
-  tags = merge(
-    data.aws_default_tags.data_tags.tags,
+  tags = var.legacy ? merge(
     { "Name" = local.sg_name },
     var.app == "dpc" ? local.dpc_specific_tags : {}
-  )
-
-  lifecycle {
-    create_before_destroy = true
+    ) : {
+    Name = local.sg_name,
   }
 }
 
@@ -128,17 +125,17 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_controller" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
-  count             = var.app == "ab2d" || var.app == "dpc" ? 1 : 0
+  count             = var.legacy && (var.app == "ab2d" || var.app == "dpc") ? 1 : 0
   description       = "Management VPC Access"
   from_port         = 5432
   to_port           = 5432
   ip_protocol       = "tcp"
-  cidr_ipv4         = var.legacy ? var.mgmt_vpc_cidr : data.aws_ssm_parameter.cdap_mgmt_vpc_cidr[0].value
+  cidr_ipv4         = var.mgmt_vpc_cidr
   security_group_id = aws_security_group.sg_database.id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "additional_ingress" {
-  for_each                     = var.app == "bcda" || var.app == "dpc" ? toset(local.additional_ingress_sgs) : toset([])
+  for_each                     = var.legacy && (var.app == "bcda" || var.app == "dpc") ? toset(local.additional_ingress_sgs) : toset([])
   description                  = "Allow additional ingress to RDS on port 5432"
   from_port                    = 5432
   to_port                      = 5432
@@ -176,12 +173,12 @@ resource "aws_db_subnet_group" "subnet_group" {
 
   subnet_ids = data.aws_subnets.db.ids
 
-  tags = merge(
+  tags = var.legacy ? merge(
     {
       Name = var.app == "ab2d" ? "${local.db_name}-rds-subnet-group" : "RDS subnet group"
     },
     var.app == "dpc" ? local.dpc_specific_tags : {} # Merging DPC-specific tags if applicable
-  )
+  ) : {}
 }
 
 # Create database parameter group
@@ -256,8 +253,14 @@ resource "aws_db_instance" "api" {
   copy_tags_to_snapshot                 = var.app == "bcda" || var.app == "dpc" ? true : false
   kms_key_id                            = var.legacy && (var.app == "ab2d" || var.app == "dpc") ? data.aws_kms_alias.main_kms[0].target_key_arn : data.aws_kms_alias.default_rds.target_key_arn
   multi_az                              = var.app == "dpc" ? (local.stdenv == "prod" || local.stdenv == "prod-sbx") : (var.env == "prod" || var.app == "bcda" ? true : false)
-  vpc_security_group_ids = (var.app == "bcda" || var.app == "dpc") ? concat(
-  [aws_security_group.sg_database.id], local.gdit_security_group_ids) : [aws_security_group.sg_database.id]
+  vpc_security_group_ids = var.legacy ? var.app == "bcda" || var.app == "dpc" ? concat([aws_security_group.sg_database.id], local.gdit_security_group_ids) : [
+    aws_security_group.sg_database.id,
+    ] : [
+    aws_security_group.sg_database.id,
+    module.platform[0].security_groups["cmscloud-security-tools"].id,
+    module.platform[0].security_groups["remote-management"].id,
+    module.platform[0].security_groups["zscaler-private"].id,
+  ]
 
   #NOTE: Differences between secretsmanager representations yields these ternary expression
   # - ab2d uses plaintext
@@ -265,8 +268,7 @@ resource "aws_db_instance" "api" {
   username = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string).username
   password = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_password.secret_string).password
 
-  tags = merge(
-    data.aws_default_tags.data_tags.tags,
+  tags = var.legacy ? merge(
     {
       "Name" = var.app == "ab2d" ? "${local.db_name}-rds" : (
         var.app == "bcda" && var.env == "sbx" ? "${var.app}-${local.stdenv}-rds" : (
@@ -281,7 +283,9 @@ resource "aws_db_instance" "api" {
       var.app == "dpc" && var.env == "sbx") ? "4HR Daily Weekly Monthly" : "Daily Weekly Monthly"
     },
     var.app == "dpc" ? local.dpc_specific_tags : {}
-  )
+    ) : {
+    AWS_Backup = "4hr7_w90",
+  }
 
   lifecycle {
     ignore_changes = [
@@ -309,13 +313,8 @@ resource "aws_route53_zone" "local_zone" {
   name = "${var.app}-${local.stdenv}.local"
 
   vpc {
-    vpc_id = module.vpc.id
+    vpc_id = var.legacy ? module.vpc[0].id : module.platform[0].vpc_id
   }
-
-  tags = merge(
-    data.aws_default_tags.data_tags.tags,
-    var.app == "dpc" ? local.dpc_specific_tags : {}
-  )
 }
 
 data "aws_route53_zone" "local_zone" {

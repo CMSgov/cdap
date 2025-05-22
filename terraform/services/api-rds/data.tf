@@ -6,9 +6,8 @@ locals {
   )
   secret_date = "2020-01-02-09-15-01"
   gdit_security_group_names = var.app == "bcda" ? [
-    #FIXME: Temporarily disabled in greenfield, potentially permanently
-    var.legacy ? "${var.app}-${local.stdenv}-vpn-private" : null,
-    var.legacy ? "${var.app}-${local.stdenv}-vpn-public" : null,
+    "${var.app}-${local.stdenv}-vpn-private",
+    "${var.app}-${local.stdenv}-vpn-public",
     "${var.app}-${local.stdenv}-remote-management",
     "${var.app}-${local.stdenv}-enterprise-tools",
     "${var.app}-${var.env}-allow-zscaler-private"
@@ -30,8 +29,6 @@ locals {
     dpc  = "${var.app}/${local.stdenv}/db/password"
   }[var.app]
 }
-
-data "aws_default_tags" "data_tags" {}
 
 # Fetching the secret for database username
 data "aws_secretsmanager_secret" "database_user" {
@@ -56,6 +53,8 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 module "vpc" {
+  count = var.legacy ? 1 : 0
+
   source = "../../modules/vpc"
 
   app    = var.app
@@ -121,7 +120,7 @@ data "aws_security_group" "worker_sg" {
 }
 
 data "aws_security_group" "gdit" {
-  for_each = toset([for name in local.gdit_security_group_names : name if name != null])
+  for_each = var.legacy ? toset([for name in local.gdit_security_group_names : name if name != null]) : toset([])
 
   filter {
     name   = "tag:Name" # Filter by 'Name' tag
@@ -151,6 +150,7 @@ data "aws_ssm_parameter" "quicksight_cidr_blocks" {
 }
 
 data "aws_security_groups" "dpc_additional_sg" {
+  count = var.legacy && var.app == "dpc" ? 1 : 0
   filter {
     name = "description"
     values = [
@@ -160,7 +160,7 @@ data "aws_security_groups" "dpc_additional_sg" {
 
   filter {
     name   = "vpc-id"
-    values = [module.vpc.id]
+    values = [module.vpc[0].id]
   }
 }
 
