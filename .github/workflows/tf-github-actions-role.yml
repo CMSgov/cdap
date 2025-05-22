@@ -1,11 +1,8 @@
 name: tf-github-actions-role
-run-name: tf-github-actions-role ${{ inputs.apply && 'apply' || 'plan' }}
+run-name: tf-github-actions-role ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
     paths:
       - .github/workflows/tf-github-actions-role.yml
       - terraform/services/github-actions-role/**
@@ -53,5 +50,5 @@ jobs:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
           TF_VAR_legacy: "false"
-      - if: inputs.apply == true || github.ref == 'refs/heads/main'
+      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: terraform apply -auto-approve tf.plan
