@@ -132,22 +132,30 @@ resource "aws_iam_role" "function" {
 
 # Get prod and sbx account IDs in the test environment for cross-account roles
 data "aws_ssm_parameter" "prod_account" {
-  count = var.env == "test" ? 1 : 0
+  count = var.legacy && var.env == "test" ? 1 : 0
   name  = "/${var.app}/prod/account-id"
 }
 
 data "aws_ssm_parameter" "sbx_account" {
-  count = var.env == "test" ? 1 : 0
+  count = var.legacy && var.env == "test" ? 1 : 0
   name  = "/${var.app}/sbx/account-id"
+}
+
+data "aws_ssm_parameter" "prod_account_id" {
+  count = !var.legacy && var.env == "test" ? 1 : 0
+  name  = "/prod/account-id"
 }
 
 module "zip_bucket" {
   source = "../bucket"
 
   name = "${var.name}-function"
-  cross_account_read_roles = var.env == "test" ? [
+  cross_account_read_roles = var.env == "test" ? var.legacy ? [
     "arn:aws:iam::${data.aws_ssm_parameter.prod_account[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
     "arn:aws:iam::${data.aws_ssm_parameter.sbx_account[0].value}:role/delegatedadmin/developer/${var.app}-sbx-github-actions",
+  ] : [
+    "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
+    "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-sandbox-github-actions",
   ] : []
 
   legacy        = var.legacy
