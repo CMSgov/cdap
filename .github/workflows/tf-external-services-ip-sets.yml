@@ -1,5 +1,5 @@
 name: tf-external-services-ip-sets
-run-name: tf-external-services-ip-sets ${{ inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') && 'apply' || 'plan' }}
+run-name: tf-external-services-ip-sets ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
 
 on:
   push:
