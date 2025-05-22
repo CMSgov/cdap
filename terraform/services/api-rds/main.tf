@@ -257,6 +257,7 @@ resource "aws_db_instance" "api" {
     aws_security_group.sg_database.id,
     ] : [
     aws_security_group.sg_database.id,
+    module.platform[0].security_groups["cmscloud-security-tools"].id,
     module.platform[0].security_groups["remote-management"].id,
     module.platform[0].security_groups["zscaler-private"].id,
   ]
