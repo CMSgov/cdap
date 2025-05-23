@@ -42,7 +42,7 @@ data "aws_ssm_parameter" "bfd_account" {
 data "aws_iam_policy_document" "assume_bucket_role" {
   statement {
     actions   = ["sts:AssumeRole"]
-    resources = ["arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/bfd-${local.bfd_env}-eft-${var.app}-bucket-role"]
+    resources = ["arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"]
   }
 }
 

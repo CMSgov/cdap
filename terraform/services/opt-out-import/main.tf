@@ -1,5 +1,6 @@
 locals {
   full_name = "${var.app}-${var.env}-opt-out-import"
+  bfd_env   = var.env == "prod" ? "prod" : "test"
   ab2d_db_envs = {
     dev  = "dev"
     test = "east-impl"
@@ -22,14 +23,14 @@ locals {
   }
 }
 
-data "aws_ssm_parameter" "bfd_bucket_role_arn" {
-  name = "/opt-out-import/${var.app}/${var.env}/bfd-bucket-role-arn"
+data "aws_ssm_parameter" "bfd_account" {
+  name = "/bfd/account-id"
 }
 
 data "aws_iam_policy_document" "assume_bucket_role" {
   statement {
     actions   = ["sts:AssumeRole"]
-    resources = [data.aws_ssm_parameter.bfd_bucket_role_arn.value]
+    resources = ["arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"]
   }
 }
 
