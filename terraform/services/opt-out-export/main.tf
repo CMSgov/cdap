@@ -59,6 +59,7 @@ data "aws_db_instance" "this" {
 
 #TODO: Post greenfield migration removal
 data "aws_ssm_parameter" "opt_out_db_host" {
+  count = var.legacy ? 1 : 0
   name = "/${var.app}/${var.env}/opt-out/db-host"
 }
 
@@ -70,7 +71,7 @@ locals {
     dpc  = data.aws_db_instance.this.address
   })
   #TODO: Post greenfield migration removal: just use the db_hosts value
-  opt_out_db_host = var.legacy ? data.aws_ssm_parameter.opt_out_db_host.value : local.db_hosts[var.app]
+  opt_out_db_host = var.legacy ? data.aws_ssm_parameter.opt_out_db_host[0].value : local.db_hosts[var.app]
 }
 
 module "opt_out_export_function" {
