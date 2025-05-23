@@ -23,11 +23,11 @@ locals {
     test = "east-impl"
     prod = "east-prod"
   }
-  db_sg_name = {
+  db_sg_name = var.legacy ? {
     ab2d = "ab2d-${local.ab2d_db_envs[var.env]}-database-sg"
     bcda = "bcda-${var.env}-rds"
     dpc  = "dpc-${var.env}-db"
-  }
+  } : "${var.app}-${var.env}"
   memory_size = {
     ab2d = 10240
     bcda = null
