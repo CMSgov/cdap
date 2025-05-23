@@ -60,7 +60,7 @@ data "aws_db_instance" "this" {
 #TODO: Post greenfield migration removal
 data "aws_ssm_parameter" "opt_out_db_host" {
   count = var.legacy ? 1 : 0
-  name = "/${var.app}/${var.env}/opt-out/db-host"
+  name  = "/${var.app}/${var.env}/opt-out/db-host"
 }
 
 locals {
