@@ -27,7 +27,7 @@ locals {
     ab2d = "ab2d-${local.ab2d_db_envs[var.env]}-database-sg"
     bcda = "bcda-${var.env}-rds"
     dpc  = "dpc-${var.env}-db"
-  } : "${var.app}-${var.env}"
+  }[var.app] : "${var.app}-${var.env}"
   memory_size = {
     ab2d = 10240
     bcda = null
@@ -111,7 +111,7 @@ module "opt_out_export_function" {
 # Add a rule to the database security group to allow access from the function
 
 data "aws_security_group" "db" {
-  name = local.db_sg_name[var.app]
+  name = local.db_sg_name
 }
 
 resource "aws_vpc_security_group_ingress_rule" "function_access" {
