@@ -27,7 +27,7 @@ locals {
     ab2d = "ab2d-${local.ab2d_db_envs[var.env]}-database-sg"
     bcda = "bcda-${var.env}-rds"
     dpc  = "dpc-${var.env}-db"
-  }[var.app] : "${var.app}-${var.env}"
+  }[var.app] : "${var.app}-${var.env}-db"
   memory_size = {
     ab2d = 10240
     bcda = null
