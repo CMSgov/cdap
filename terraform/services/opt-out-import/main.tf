@@ -5,11 +5,11 @@ locals {
     test = "east-impl"
     prod = "east-prod"
   }
-  db_sg_name = {
+  db_sg_name = var.legacy ? {
     ab2d = "ab2d-${local.ab2d_db_envs[var.env]}-database-sg"
     bcda = "bcda-${var.env}-rds"
     dpc  = "dpc-${var.env}-db"
-  }
+  }[var.app] : "${var.app}-${var.env}-db"
   memory_size = {
     ab2d = 1024
     bcda = null
@@ -104,7 +104,7 @@ module "opt_out_import_queue" {
 # Add a rule to the database security group to allow access from the function
 
 data "aws_security_group" "db" {
-  name = local.db_sg_name[var.app]
+  name = local.db_sg_name
 }
 
 resource "aws_security_group_rule" "function_access" {
