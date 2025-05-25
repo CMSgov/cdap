@@ -1,6 +1,7 @@
 formatter: markdown table
 sections:
   show:
+    - providers
     - requirements
     - inputs
     - resources
@@ -16,6 +17,9 @@ content: |-
          Manually updating sections between TF_DOCS tags may be overwritten.
          See https://terraform-docs.io/user-guide/configuration/ for more information.
     -->`}}
+
+    {{- $warning }}
+    {{ .Providers }}
 
     {{- $warning }}
     {{ .Requirements }}
