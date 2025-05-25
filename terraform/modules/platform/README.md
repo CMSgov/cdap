@@ -43,12 +43,19 @@ provider "aws" {
      Manually updating sections between TF_DOCS tags may be overwritten.
      See https://terraform-docs.io/user-guide/configuration/ for more information.
 -->
-## Requirements
+## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | 1.10.5 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~>5 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| <a name="provider_aws.secondary"></a> [aws.secondary](#provider\_aws.secondary) | n/a |<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Requirements
+
+No requirements.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -88,6 +95,7 @@ No modules.
 | [aws_iam_role.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role) | data source |
 | [aws_nat_gateway.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/nat_gateway) | data source |
 | [aws_nat_gateways.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/nat_gateways) | data source |
+| [aws_region.secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_region.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_s3_bucket.access_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
 | [aws_security_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
@@ -108,8 +116,9 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_account_id"></a> [account\_id](#output\_account\_id) | The AWS account ID associated with the current caller identity |
+| <a name="output_account_id"></a> [account\_id](#output\_account\_id) | Deprecated. Use `aws_caller_identity.account_id`. The AWS account ID associated with the current caller identity |
 | <a name="output_app"></a> [app](#output\_app) | The short name for the delivery team or ADO. |
+| <a name="output_aws_caller_identity"></a> [aws\_caller\_identity](#output\_aws\_caller\_identity) | The current data.aws\_caller\_identity object. |
 | <a name="output_default_tags"></a> [default\_tags](#output\_default\_tags) | Map of tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags` |
 | <a name="output_env"></a> [env](#output\_env) | The solution's application environment name. |
 | <a name="output_is_ephemeral_env"></a> [is\_ephemeral\_env](#output\_is\_ephemeral\_env) | Returns true when environment is \_ephemeral\_, false when \_established\_ |
@@ -118,10 +127,12 @@ No modules.
 | <a name="output_nat_gateways"></a> [nat\_gateways](#output\_nat\_gateways) | Map of current VPC **available** [aws\_nat\_gateway data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `id`. |
 | <a name="output_parent_env"></a> [parent\_env](#output\_parent\_env) | The solution's source environment. For established environments this is equal to the environment's name |
 | <a name="output_platform_cidr"></a> [platform\_cidr](#output\_platform\_cidr) | The CIDR-range for the CDAP-managed VPC for CI and other administrative functions. |
+| <a name="output_primary_region"></a> [primary\_region](#output\_primary\_region) | The primary data.aws\_region object from the current caller identity |
 | <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | Map of current VPC **private** [aws\_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `subnet_id` |
 | <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | Map of current VPC **public** [aws\_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `id` |
-| <a name="output_region_name"></a> [region\_name](#output\_region\_name) | The region name associated with the current caller identity |
+| <a name="output_region_name"></a> [region\_name](#output\_region\_name) | **Deprecated**. Use `primary_region.name`. The region name associated with the current caller identity |
 | <a name="output_sdlc_env"></a> [sdlc\_env](#output\_sdlc\_env) | The SDLC (production vs non-production) environment. |
+| <a name="output_secondary_region"></a> [secondary\_region](#output\_secondary\_region) | The secondary data.aws\_region object associated with the secondary region. |
 | <a name="output_security_groups"></a> [security\_groups](#output\_security\_groups) | Map of current VPC's common [aws\_security\_group data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group#attribute-reference), keyed by `name` |
 | <a name="output_service"></a> [service](#output\_service) | The name of the current service or terraservice. |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The current environment VPC ID value |
