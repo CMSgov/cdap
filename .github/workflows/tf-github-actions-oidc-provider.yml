@@ -33,11 +33,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d, bcda, dpc]
-        env: [dev, test, sandbox, prod]
-        include:
-          - app: cdap
-            env: mgmt
+        app: [bcda]
+        env: [test, prod]
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
