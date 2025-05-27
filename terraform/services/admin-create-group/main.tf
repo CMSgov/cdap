@@ -1,6 +1,6 @@
 locals {
   full_name   = "${var.app}-${var.env}-admin-create-group"
-  db_sg_name  = var.legacy ? "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds" : "bcda-${var.env}"
+  db_sg_name  = var.legacy ? "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds" : "bcda-${var.env}-db"
   memory_size = 2048
 }
 
