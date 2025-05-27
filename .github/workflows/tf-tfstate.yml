@@ -1,4 +1,4 @@
-ame: tf-tfstate
+name: tf-tfstate
 run-name: tf-tfstate ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
 
 on:

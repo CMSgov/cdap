@@ -1,4 +1,4 @@
-ame: tf-github-actions-oidc-provider
+name: tf-github-actions-oidc-provider
 run-name: tf-github-actions-oidc-provider ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
 
 on:

@@ -1,4 +1,4 @@
-ame: tf-snyk
+name: tf-snyk
 run-name: tf-snyk ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
 
 on:
