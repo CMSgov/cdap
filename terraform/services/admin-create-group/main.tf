@@ -23,7 +23,7 @@ module "admin_create_group_function" {
     APP_NAME = "${var.app}-${var.env}-admin-create-group"
   }
 
-  legacy = true
+  legacy = var.legacy
 }
 
 # Add a rule to the database security group to allow access from the function

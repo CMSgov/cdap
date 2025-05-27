@@ -23,7 +23,7 @@ module "admin_aco_deny_function" {
     APP_NAME = "${var.app}-${var.env}-admin-aco-deny"
   }
 
-  legacy = true
+  legacy = var.legacy
 }
 
 # Add a rule to the database security group to allow access from the function
