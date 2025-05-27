@@ -22,6 +22,8 @@ module "admin_create_group_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-admin-create-group"
   }
+
+  legacy = true
 }
 
 # Add a rule to the database security group to allow access from the function

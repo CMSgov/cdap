@@ -22,6 +22,8 @@ module "admin_create_aco_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-admin-create-aco"
   }
+
+  legacy = true
 }
 
 # Add a rule to the database security group to allow access from the function

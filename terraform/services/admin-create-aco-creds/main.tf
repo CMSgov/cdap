@@ -58,6 +58,8 @@ module "admin_create_aco_creds_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-admin-create-aco-creds"
   }
+
+  legacy = true
 }
 
 # Add a rule to the database security group to allow access from the function
