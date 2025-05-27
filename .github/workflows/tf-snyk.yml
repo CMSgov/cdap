@@ -1,5 +1,5 @@
-name: tf-snyk
-run-name: tf-snyk ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
+name: tf-snyk-integration
+run-name: tf-snyk-integration ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
 
 on:
   push:
