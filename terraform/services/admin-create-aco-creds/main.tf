@@ -1,6 +1,6 @@
 locals {
   full_name   = "${var.app}-${var.env}-admin-create-aco-creds"
-  db_sg_name  = "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds"
+  db_sg_name  = var.legacy ? "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds" : "bcda-${var.env}-db"
   memory_size = 256
 }
 
@@ -58,6 +58,8 @@ module "admin_create_aco_creds_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-admin-create-aco-creds"
   }
+
+  legacy = var.legacy
 }
 
 # Add a rule to the database security group to allow access from the function

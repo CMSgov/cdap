@@ -8,8 +8,9 @@ module "bucket_key" {
 }
 
 resource "aws_s3_bucket" "this" {
-  bucket        = var.legacy == true ? var.name : null
-  bucket_prefix = var.legacy == false ? "${var.name}-" : null
+  bucket = var.legacy == true ? var.name : null
+  # Max length on bucket_prefix is 37, so cut it to 36 plus the dash
+  bucket_prefix = var.legacy == false ? "${substr(var.name, 0, 36)}-" : null
   force_destroy = true
 }
 
@@ -93,6 +94,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
       kms_master_key_id = module.bucket_key.id
       sse_algorithm     = "aws:kms"
     }
+    bucket_key_enabled = var.legacy ? false : true
   }
 }
 
@@ -108,5 +110,5 @@ resource "aws_s3_bucket_logging" "this" {
   bucket = aws_s3_bucket.this.id
 
   target_bucket = data.aws_s3_bucket.bucket_access_logs.id
-  target_prefix = "${var.name}/"
+  target_prefix = "${aws_s3_bucket.this.id}/"
 }
