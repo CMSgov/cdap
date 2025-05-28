@@ -126,6 +126,6 @@ data "aws_iam_policy_document" "this" {
 }
 
 resource "aws_kms_key_policy" "this" {
-  key_id = aws_kms_key.this.id
+  key_id = aws_kms_key.this.key_id
   policy = data.aws_iam_policy_document.this.json
 }
