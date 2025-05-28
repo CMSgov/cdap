@@ -46,6 +46,8 @@ module "cclf_import_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-cclf-import"
   }
+
+  legacy = var.legacy
 }
 
 # Set up queue for receiving messages when a file is added to the bucket
