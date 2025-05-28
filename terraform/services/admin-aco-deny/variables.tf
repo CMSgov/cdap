@@ -15,3 +15,9 @@ variable "env" {
     error_message = "Valid value for env is dev, test, sbx, or prod."
   }
 }
+
+variable "legacy" {
+  description = "Is this a legacy deployment?"
+  type        = bool
+  default     = true
+}
