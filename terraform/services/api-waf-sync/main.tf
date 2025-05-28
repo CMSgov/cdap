@@ -1,9 +1,9 @@
 locals {
   full_name = "${var.app}-${var.env}-api-waf-sync"
-  db_sg_names = {
+  db_sg_names = var.legacy ? {
     bcda = "bcda-${var.env}-rds"
     dpc  = "dpc-${var.env}-db"
-  }
+  } : "${var.app}-${var.env}-db"
 }
 
 module "api_waf_sync_function" {
