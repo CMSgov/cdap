@@ -8,10 +8,16 @@ variable "app" {
 }
 
 variable "env" {
-  description = "The application environment (dev, test, sbx, prod)"
+  description = "The application environment (dev, test, sbx, sandbox, prod)"
   type        = string
   validation {
-    condition     = contains(["dev", "test", "sbx", "prod"], var.env)
-    error_message = "Valid value for env is dev, test, sbx, or prod."
+    condition     = contains(["dev", "test", "sbx", "sandbox", "prod"], var.env)
+    error_message = "Valid value for env is dev, test, sbx, sandbox, or prod."
   }
+}
+
+variable "legacy" {
+  description = "Is this a legacy deployment?"
+  type        = bool
+  default     = true
 }
