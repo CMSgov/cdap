@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - .github/workflows/tf-tfstate.yml
+      - terraform/modules/bucket/**
+      - terraform/modules/key/**
       - terraform/services/tfstate/**
   workflow_dispatch:
     inputs:
