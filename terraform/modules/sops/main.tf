@@ -15,7 +15,7 @@ locals {
   is_ephemeral_env = var.platform["is_ephemeral_env"]
   env              = var.platform["env"]
   parent_env       = var.platform["parent_env"]
-  env_key_arn      = var.platform["kms_alias_primary"].id
+  env_key_alias_id = var.platform["kms_alias_primary"].id
 
   # Local Variables with Input Variable Overrides
   sops_values_dir            = coalesce(var.sops_values_dir, "${path.root}/values")
@@ -27,7 +27,6 @@ locals {
   raw_sops_parent_yaml    = file(local.sops_parent_yaml_file_path)
   valid_sops_parent_yaml  = data.external.valid_sops_yaml.result.valid_sops
   enc_parent_data         = yamldecode(local.valid_sops_parent_yaml)
-  sops_key_alias_arn      = one(local.enc_parent_data.sops.kms[*].arn)
   sops_nonsensitive_regex = local.enc_parent_data.sops.unencrypted_regex
 
   decrypted_parent_data = yamldecode(data.sops_external.this.raw)
@@ -97,8 +96,9 @@ data "sops_external" "this" {
   input_type = "yaml"
 }
 
+#NOTE: While this is technically unused, it does provide validation of KMS Key existence
 data "aws_kms_key" "sops_key" {
-  key_id = local.sops_key_alias_arn
+  key_id = local.env_key_alias_id
 }
 
 resource "aws_ssm_parameter" "this" {
@@ -109,7 +109,7 @@ resource "aws_ssm_parameter" "this" {
   value          = each.value.is_sensitive ? each.value.str_val : null
   insecure_value = each.value.is_sensitive ? null : try(nonsensitive(each.value.str_val), each.value.str_val)
   type           = each.value.is_sensitive ? "SecureString" : "String"
-  key_id         = each.value.is_sensitive ? local.env_key_arn : null
+  key_id         = each.value.is_sensitive ? local.env_key_alias_id : null
 
   tags = {
     source_file    = each.value.source
