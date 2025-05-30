@@ -135,3 +135,13 @@ data "aws_iam_role" "this" {
   for_each = toset(local.aws_iam_role_names)
   name     = each.key
 }
+
+data "aws_kms_alias" "primary" {
+  name = "alias/${local.app}-${local.parent_env}"
+}
+
+data "aws_kms_alias" "secondary" {
+  provider = aws.secondary
+
+  name = "alias/${local.app}-${local.parent_env}"
+}
