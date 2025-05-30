@@ -24,7 +24,7 @@ locals {
   # Internal and Other Derived Variables
   template_var_regex      = "/\\$\\{{0,1}%s\\}{0,1}/"
   raw_sops_parent_yaml    = file(local.sops_parent_yaml_file_path)
-  valid_sops_parent_yaml  = replace(local.raw_sops_parent_yaml, format(local.template_var_regex, "ACCOUNT_ID"), local.account_id)
+  valid_sops_parent_yaml  = data.external.valid_sops_yaml.result.valid_sops
   enc_parent_data         = yamldecode(local.valid_sops_parent_yaml)
   sops_key_alias_arn      = one(local.enc_parent_data.sops.kms[*].arn)
   sops_nonsensitive_regex = local.enc_parent_data.sops.unencrypted_regex
@@ -75,6 +75,23 @@ locals {
   }
 }
 
+
+data "external" "valid_sops_yaml" {
+  # sops (not sopsw, our custom wrapper) cannot decrypt the YAML until the KMS key ARNs include the
+  # Account ID and the sops metadata block includes valid "lastmodified" and "mac" properties. We
+  # need to use sopsw's "-c/--cat" function to construct a valid sops file so that it can be
+  # consumed by the sops provider
+  program = [
+    "bash",
+    "-c",
+    # Allows us to pipe to yq so that sopsw does not need to emit JSON to work with this external
+    # data source
+    <<-EOF
+    ${path.module}/bin/sopsw -c ${local.sops_parent_yaml_file} | yq -o=json '{"valid_sops": (. | tostring)}'
+    EOF
+  ]
+}
+
 data "sops_external" "this" {
   source     = local.valid_sops_parent_yaml
   input_type = "yaml"
@@ -101,13 +118,11 @@ resource "aws_ssm_parameter" "this" {
 }
 
 resource "local_file" "sopsw" {
-  content = templatefile("${path.module}/sopsw.sh.tftpl", {
-    DASG_APP_NAME   = local.app
-    SOPS_VALUES_DIR = local.sops_values_dir
-  })
-  filename = "${path.root}/sopsw.sh"
+  count = var.create_local_sopsw_file ? 1 : 0
+  content = file("${path.module}/bin/sopsw")
+  filename = "${path.root}/bin/sopsw"
 }
 
 output "sopsw" {
-  value = "${local_file.sopsw.filename} ${local.parent_env}"
+  value = var.create_local_sopsw_file ? "${local_file.sopsw[0].filename} ${local.parent_env}" : null
 }

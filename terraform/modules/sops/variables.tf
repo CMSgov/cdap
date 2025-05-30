@@ -13,3 +13,9 @@ variable "sops_parent_yaml_file" {
   description = "Override. The specific sops.yaml file to be used. Defaults to `$app-$env.sops.yaml`."
   type        = string
 }
+
+variable "create_local_sopsw_file" {
+  default     = true
+  description = "Specify whether a local sopsw file should be created for locally applying adjustments to sops files."
+  type        = string
+}
