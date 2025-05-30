@@ -47,15 +47,17 @@ provider "aws" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
-| <a name="provider_aws.secondary"></a> [aws.secondary](#provider\_aws.secondary) | n/a |<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~>5 |
+| <a name="provider_aws.secondary"></a> [aws.secondary](#provider\_aws.secondary) | ~>5 |<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
      Manually updating sections between TF_DOCS tags may be overwritten.
      See https://terraform-docs.io/user-guide/configuration/ for more information.
 -->
 ## Requirements
 
-No requirements.
+| Name | Version |
+|------|---------|
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~>5 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
