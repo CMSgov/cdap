@@ -15,6 +15,7 @@ locals {
   is_ephemeral_env = var.platform["is_ephemeral_env"]
   env              = var.platform["env"]
   parent_env       = var.platform["parent_env"]
+  env_key_arn      = var.platform["kms_alias_primary"].id
 
   # Local Variables with Input Variable Overrides
   sops_values_dir            = coalesce(var.sops_values_dir, "${path.root}/values")
@@ -108,7 +109,7 @@ resource "aws_ssm_parameter" "this" {
   value          = each.value.is_sensitive ? each.value.str_val : null
   insecure_value = each.value.is_sensitive ? null : try(nonsensitive(each.value.str_val), each.value.str_val)
   type           = each.value.is_sensitive ? "SecureString" : "String"
-  key_id         = each.value.is_sensitive ? data.aws_kms_key.sops_key.id : null
+  key_id         = each.value.is_sensitive ? local.env_key_arn : null
 
   tags = {
     source_file    = each.value.source
