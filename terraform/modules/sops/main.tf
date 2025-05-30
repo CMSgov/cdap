@@ -75,7 +75,6 @@ locals {
   }
 }
 
-
 data "external" "valid_sops_yaml" {
   # sops (not sopsw, our custom wrapper) cannot decrypt the YAML until the KMS key ARNs include the
   # Account ID and the sops metadata block includes valid "lastmodified" and "mac" properties. We
@@ -87,7 +86,7 @@ data "external" "valid_sops_yaml" {
     # Allows us to pipe to yq so that sopsw does not need to emit JSON to work with this external
     # data source
     <<-EOF
-    ${path.module}/bin/sopsw -c ${local.sops_parent_yaml_file} | yq -o=json '{"valid_sops": (. | tostring)}'
+    ${path.module}/bin/sopsw -c ${local.sops_parent_yaml_file_path} | yq -o=json '{"valid_sops": (. | tostring)}'
     EOF
   ]
 }
