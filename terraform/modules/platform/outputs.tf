@@ -117,3 +117,15 @@ output "nat_gateways" {
   sensitive   = true
   value       = data.aws_nat_gateway.this
 }
+
+output "kms_alias_primary" {
+  description = "Primary [KMS Key Alias Data Source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias#attribute-reference)"
+  sensitive   = true
+  value       = data.aws_kms_alias.primary
+}
+
+output "kms_alias_secondary" {
+  description = "Secondary [KMS Key Alias Data Source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias#attribute-reference)"
+  sensitive   = true
+  value       = data.aws_kms_alias.secondary
+}
