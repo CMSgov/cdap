@@ -134,7 +134,7 @@ output "iam_defaults" {
   description = "Map of default permissions `boundary` and IAM resources `path`."
   sensitive   = false
   value = {
-    boundary = data.aws_iam_policy.permissions_boundary.name
+    boundary = data.aws_iam_policy.permissions_boundary.arn
     path = "/delegatedadmin/developer/"
   }
 }
