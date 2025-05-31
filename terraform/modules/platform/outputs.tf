@@ -129,3 +129,12 @@ output "kms_alias_secondary" {
   sensitive   = true
   value       = data.aws_kms_alias.secondary
 }
+
+output "iam_defaults" {
+  description = "Map of default permissions `boundary` and IAM resources `path`."
+  sensitive   = false
+  value = {
+    boundary = data.aws_iam_policy.permissions_boundary.name
+    path = "/delegatedadmin/developer/"
+  }
+}
