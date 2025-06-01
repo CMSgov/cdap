@@ -38,6 +38,14 @@ locals {
   ]
 }
 
+data "aws_ssm_parameters_by_path" "ssm" {
+  for_each = var.ssm_root_map
+
+  recursive       = true
+  path            = each.value
+  with_decryption = true
+}
+
 data "aws_region" "this" {}
 data "aws_region" "secondary" {
   provider = aws.secondary

@@ -31,3 +31,9 @@ variable "root_module" {
   description = "The full URL to the terraform module root at issue for this infrastructure"
   type        = string
 }
+
+variable "ssm_root_map" {
+  default     = {}
+  description = "FIXME"
+  type        = map
+}
