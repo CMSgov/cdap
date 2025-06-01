@@ -141,5 +141,5 @@ output "iam_defaults" {
 
 output "ssm" {
   description = "FIXME"
-  value = { for named_root,data in data.aws_ssm_parameters_by_path.ssm : named_root => {for each in [for value,arn in zipmap(data["values"], data["arns"]) : {"value" = value, "arn" = arn}] : reverse(split("/", each["arn"]))[0] => each} }
+  value = {for named_root,data in data.aws_ssm_parameters_by_path.ssm : named_root => {for each in [for arn,value in zipmap(data.arns, data.values) : {"value" = value, "arn" = arn}] : reverse(split("/", each.arn))[0] => each}}
 }
