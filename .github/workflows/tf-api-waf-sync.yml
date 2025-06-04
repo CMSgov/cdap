@@ -40,6 +40,9 @@ jobs:
       matrix:
         app: [bcda, dpc]
         env: [dev, test, prod]
+        exclude:
+          - app: dpc
+            env: prod
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
