@@ -9,9 +9,10 @@
 --
 -- This script must be run on each database in the cluster. To run with
 -- timing in psql:
+--
 --   postgres=> \timing
---   postgres=> \c postgres
---   postgres=> \i prewarm.sql
+--   postgres=> \c prod
+--   prod=> \i prewarm.sql
 
 -- Run VACUUM ANALYZE to update postgres stats on relpages, etc.
 VACUUM ANALYZE;
