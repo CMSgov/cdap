@@ -1,4 +1,8 @@
+locals {
+  app = length(var.app) > 0 ? var.app : ["ab2d", "bcda", "dpc"]
+}
 data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy" "developer_boundary_policy" {
   name = "developer-boundary-policy"
 }
@@ -28,7 +32,7 @@ data "aws_iam_policy_document" "snyk_trust" {
 }
 
 data "aws_iam_policy_document" "snyk_pull" {
-  for_each = toset(var.app)
+  for_each = toset(local.app)
 
   statement {
     sid    = "SnykAllowPull${each.key}"
@@ -52,7 +56,7 @@ data "aws_iam_policy_document" "snyk_pull" {
 }
 
 resource "aws_iam_policy" "snyk_pull" {
-  for_each    = toset(var.app)
+  for_each    = toset(local.app)
   name        = "snyk-${each.key}-pull-ecr"
   path        = "/delegatedadmin/developer/"
   description = "Policy for Snyk to pull ${each.key} images from ECR"
@@ -60,7 +64,7 @@ resource "aws_iam_policy" "snyk_pull" {
 }
 
 resource "aws_iam_role" "snyk" {
-  for_each = toset(var.app)
+  for_each = toset(local.app)
 
   name                 = "snyk-${each.key}"
   path                 = "/delegatedadmin/developer/"
@@ -69,7 +73,7 @@ resource "aws_iam_role" "snyk" {
 }
 
 resource "aws_iam_role_policy_attachment" "snyk_pull_policy_attachment" {
-  for_each = toset(var.app)
+  for_each = toset(local.app)
 
   role       = aws_iam_role.snyk[each.key].name
   policy_arn = aws_iam_policy.snyk_pull[each.key].arn
