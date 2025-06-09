@@ -1,5 +1,5 @@
 locals {
-  app = length(var.app) > 0 ? var.app : ["ab2d", "bcda", "dpc"]
+  app = ["ab2d", "bcda", "dpc"]
 }
 data "aws_caller_identity" "current" {}
 
