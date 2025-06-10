@@ -36,7 +36,7 @@ data "aws_iam_policy_document" "snyk_pull" {
   for_each = toset(local.app)
 
   statement {
-    sid    = "${each.key}SnykAllowPull"
+    sid    = "${title(each.key)}SnykAllowPull"
     effect = "Allow"
     actions = [
       "ecr:GetLifecyclePolicyPreview",
