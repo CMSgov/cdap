@@ -25,6 +25,7 @@ CREATE TEMP TABLE warmrels AS
   JOIN pg_user u ON u.usesysid = c.relowner
   WHERE u.usename NOT IN ('rdsadmin', 'rdsrepladmin', ' pg_signal_backend', 'rds_superuser', 'rds_replication')
   AND c.relkind NOT IN ('v', 'I', 'p')
+  AND c.relpages > 0
   ORDER BY c.relpages ASC;
 SELECT * FROM warmrels;
 
