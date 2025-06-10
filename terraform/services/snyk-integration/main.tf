@@ -1,6 +1,7 @@
 locals {
   app = ["ab2d", "bcda", "dpc"]
 }
+
 data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy" "developer_boundary_policy" {
@@ -35,7 +36,7 @@ data "aws_iam_policy_document" "snyk_pull" {
   for_each = toset(local.app)
 
   statement {
-    sid    = "SnykAllowPull${each.key}"
+    sid    = "title(${each.key})SnykAllowPull"
     effect = "Allow"
     actions = [
       "ecr:GetLifecyclePolicyPreview",
@@ -55,26 +56,19 @@ data "aws_iam_policy_document" "snyk_pull" {
   }
 }
 
-resource "aws_iam_policy" "snyk_pull" {
-  for_each    = toset(local.app)
-  name        = "snyk-${each.key}-pull-ecr"
-  path        = "/delegatedadmin/developer/"
-  description = "Policy for Snyk to pull ${each.key} images from ECR"
-  policy      = data.aws_iam_policy_document.snyk_pull[each.key].json
+resource "aws_iam_role_policy" "snyk_pull" {
+  for_each = toset(local.app)
+
+  name   = "${each.key}-snyk-pull-ecr"
+  role   = aws_iam_role.snyk[each.key].name
+  policy = data.aws_iam_policy_document.snyk_pull[each.key].json
 }
 
 resource "aws_iam_role" "snyk" {
   for_each = toset(local.app)
 
-  name                 = "snyk-${each.key}"
+  name                 = "${each.key}-snyk"
   path                 = "/delegatedadmin/developer/"
   assume_role_policy   = data.aws_iam_policy_document.snyk_trust.json
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
-}
-
-resource "aws_iam_role_policy_attachment" "snyk_pull_policy_attachment" {
-  for_each = toset(local.app)
-
-  role       = aws_iam_role.snyk[each.key].name
-  policy_arn = aws_iam_policy.snyk_pull[each.key].arn
 }

@@ -4,4 +4,3 @@ output "snyk_role_arns" {
     for app in local.app : app => aws_iam_role.snyk[app].arn
   }
 }
-
