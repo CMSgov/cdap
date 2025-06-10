@@ -1,5 +1,5 @@
 name: tf-api-rds
-run-name: tf-api-rds ${{ inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') && 'apply' || 'plan' }}
+run-name: tf-api-rds ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
 
 on:
   push:
