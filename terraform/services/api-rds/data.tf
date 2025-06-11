@@ -32,7 +32,7 @@ locals {
 
 # Fetching the secret for database username
 data "aws_secretsmanager_secret" "database_user" {
-  name = local.db_username
+  name = var.legacy ? local.db_username : "${var.app}/${var.env}/db/username"
 }
 
 data "aws_secretsmanager_secret_version" "database_user" {
@@ -41,7 +41,7 @@ data "aws_secretsmanager_secret_version" "database_user" {
 
 # Fetching the secret for database password
 data "aws_secretsmanager_secret" "database_password" {
-  name = local.db_password
+  name = var.legacy ? local.db_password : "${var.app}/${var.env}/db/password"
 }
 
 data "aws_secretsmanager_secret_version" "database_password" {
