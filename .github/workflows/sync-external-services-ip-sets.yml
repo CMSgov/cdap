@@ -46,5 +46,5 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       - name: Run IP set sync script
         run: |
-          scripts/sync-ip-set --name=external-services --scope=REGIONAL cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt cidr/${{ matrix.env == 'test' && 'non-' }}prod-nat.txt
-          scripts/sync-ip-set --name=external-services --scope=CLOUDFRONT cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt cidr/${{ matrix.env == 'test' && 'non-' }}prod-nat.txt
+          scripts/sync-ip-set --name=external-services --scope=REGIONAL cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt cidr/${{ matrix.env == 'test' && 'non-prod' || 'prod' }}-nat.txt
+          scripts/sync-ip-set --name=external-services --scope=CLOUDFRONT cidr/cdap-mgmt.txt cidr/new-relic.txt cidr/zscaler-public.txt cidr/${{ matrix.env == 'test' && 'non-prod' || 'prod' }}-nat.txt
