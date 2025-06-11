@@ -263,10 +263,10 @@ resource "aws_db_instance" "api" {
   ]
 
   #NOTE: Differences between secretsmanager representations yields these ternary expression
-  # - ab2d uses plaintext
-  # - bcda/dpc use key-value storage
-  username = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string).username
-  password = var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_password.secret_string).password
+  # - ab2d in legacy uses plaintext
+  # - all others use key-value storage
+  username = var.legacy && var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_user.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_user.secret_string).username
+  password = var.legacy && var.app == "ab2d" ? data.aws_secretsmanager_secret_version.database_password.secret_string : jsondecode(data.aws_secretsmanager_secret_version.database_password.secret_string).password
 
   tags = var.legacy ? merge(
     {
