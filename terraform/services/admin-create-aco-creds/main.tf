@@ -1,7 +1,7 @@
 locals {
-  full_name   = "${var.app}-${var.env}-admin-create-aco-creds"
-  db_sg_name  = var.legacy ? "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds" : "bcda-${var.env}-db"
-  memory_size = 256
+  full_name         = "${var.app}-${var.env}-admin-create-aco-creds"
+  db_sg_name        = var.legacy ? "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds" : "bcda-${var.env}-db"
+  memory_size       = 256
   creds_bucket_name = var.legacy ? ("bcda-aco-credentials/${var.env == "sbx" ? "opensbx" : var.env}/*") : ("bcda-${var.env}-aco-creds-*")
 }
 
