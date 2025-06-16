@@ -1,7 +1,8 @@
 locals {
-  full_name   = "${var.app}-${var.env}-admin-create-aco-creds"
-  db_sg_name  = var.legacy ? "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds" : "bcda-${var.env}-db"
-  memory_size = 256
+  full_name         = "${var.app}-${var.env}-admin-create-aco-creds"
+  db_sg_name        = var.legacy ? "bcda-${var.env == "sbx" ? "opensbx" : var.env}-rds" : "bcda-${var.env}-db"
+  memory_size       = 256
+  creds_bucket_name = var.legacy ? ("bcda-aco-credentials/${var.env == "sbx" ? "opensbx" : var.env}/*") : ("bcda-${var.env}-aco-creds-*")
 }
 
 data "aws_caller_identity" "current" {}
@@ -9,13 +10,14 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 data "aws_kms_alias" "aco_creds_kms" {
-  name = "alias/bcda-aco-creds-kms"
+  count = var.legacy ? 1 : 0
+  name  = "alias/bcda-aco-creds-kms"
 }
 
 data "aws_iam_policy_document" "creds_bucket" {
   statement {
     actions   = ["s3:PutObject"]
-    resources = ["arn:aws:s3:::bcda-aco-credentials/${var.env == "sbx" ? "opensbx" : var.env}/*"]
+    resources = ["arn:aws:s3:::${local.creds_bucket_name}"]
   }
 }
 
@@ -28,9 +30,10 @@ data "aws_iam_policy_document" "kms_access" {
 }
 
 data "aws_iam_policy_document" "kms_generate" {
+  count = var.legacy ? 1 : 0
   statement {
     actions   = ["kms:GenerateDataKey"]
-    resources = [data.aws_kms_alias.aco_creds_kms.target_key_arn]
+    resources = [data.aws_kms_alias.aco_creds_kms[0].target_key_arn]
   }
 }
 
@@ -48,11 +51,11 @@ module "admin_create_aco_creds_function" {
 
   memory_size = local.memory_size
 
-  function_role_inline_policies = {
+  function_role_inline_policies = var.legacy ? {
     assume-bucket-role       = data.aws_iam_policy_document.creds_bucket.json
     assume-kms-role          = data.aws_iam_policy_document.kms_access.json
-    assume-kms-generate-role = data.aws_iam_policy_document.kms_generate.json
-  }
+    assume-kms-generate-role = data.aws_iam_policy_document.kms_generate[0].json
+  } : { assume-bucket-role = data.aws_iam_policy_document.creds_bucket.json }
 
   environment_variables = {
     ENV      = var.env
