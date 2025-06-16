@@ -10,7 +10,8 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 data "aws_kms_alias" "aco_creds_kms" {
-  name = "alias/bcda-aco-creds-kms"
+  count = var.legacy ? 1 : 0
+  name  = "alias/bcda-aco-creds-kms"
 }
 
 data "aws_iam_policy_document" "creds_bucket" {
