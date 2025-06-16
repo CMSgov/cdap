@@ -30,6 +30,7 @@ data "aws_iam_policy_document" "kms_access" {
 }
 
 data "aws_iam_policy_document" "kms_generate" {
+  count = var.legacy ? 1 : 0
   statement {
     actions   = ["kms:GenerateDataKey"]
     resources = [data.aws_kms_alias.aco_creds_kms[0].target_key_arn]
@@ -53,7 +54,7 @@ module "admin_create_aco_creds_function" {
   function_role_inline_policies = var.legacy ? {
     assume-bucket-role       = data.aws_iam_policy_document.creds_bucket.json
     assume-kms-role          = data.aws_iam_policy_document.kms_access.json
-    assume-kms-generate-role = data.aws_iam_policy_document.kms_generate.json
+    assume-kms-generate-role = data.aws_iam_policy_document.kms_generate[0].json
   } : { assume-bucket-role = data.aws_iam_policy_document.creds_bucket.json }
 
   environment_variables = {
