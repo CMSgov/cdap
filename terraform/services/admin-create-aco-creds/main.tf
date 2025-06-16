@@ -32,7 +32,7 @@ data "aws_iam_policy_document" "kms_access" {
 data "aws_iam_policy_document" "kms_generate" {
   statement {
     actions   = ["kms:GenerateDataKey"]
-    resources = [data.aws_kms_alias.aco_creds_kms.target_key_arn]
+    resources = [data.aws_kms_alias.aco_creds_kms[0].target_key_arn]
   }
 }
 
