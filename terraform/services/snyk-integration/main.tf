@@ -39,7 +39,7 @@ data "aws_iam_policy_document" "snyk_pull" {
   for_each = toset(local.app)
 
   statement {
-    sid    = "${title(each.key)}SnykAllowGlobalActions"
+    sid    = "${title(each.key)}SnykAllowPull"
     effect = "Allow"
     actions = [
       "ecr:GetAuthorizationToken",
@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "snyk_pull" {
 
   # Scoped actions restricted to each app’s ECR repos
   statement {
-    sid    = "${title(each.key)}SnykAllowScopedRepoActions"
+    sid    = "${title(each.key)}SnykAllowPull"
     effect = "Allow"
     actions = [
       "ecr:ListTagsForResource",
