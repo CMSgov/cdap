@@ -1,8 +1,7 @@
 data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "bucket_access_logs" {
-  bucket        = var.legacy == true ? "${data.aws_caller_identity.current.account_id}-bucket-access-logs" : null
-  bucket_prefix = var.legacy == false ? "bucket-access-logs-" : null
+  bucket_prefix = "bucket-access-logs-"
   force_destroy = true
 }
 
@@ -21,6 +20,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "bucket_access_log
     apply_server_side_encryption_by_default {
       sse_algorithm = "aws:kms"
     }
+    bucket_key_enabled = true
   }
 }
 
