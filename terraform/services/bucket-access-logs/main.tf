@@ -18,9 +18,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "bucket_access_log
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "aws:kms"
+      # Encryption must be AES256. See the final bullet in the alert box at the top of
+      # https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-server-access-logging.html
+      sse_algorithm = "AES256"
     }
-    bucket_key_enabled = true
   }
 }
 
