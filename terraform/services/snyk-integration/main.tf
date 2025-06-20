@@ -9,7 +9,8 @@ data "aws_iam_policy" "developer_boundary_policy" {
 }
 
 data "aws_ssm_parameter" "external_id" {
-  name = "/snyk-integration/external-id"
+  for_each = toset(local.app)
+  name     = "/${each.key}/snyk-integration/external-id"
 }
 
 data "aws_ssm_parameter" "ecr_integration_user" {
@@ -17,6 +18,8 @@ data "aws_ssm_parameter" "ecr_integration_user" {
 }
 
 data "aws_iam_policy_document" "snyk_trust" {
+  for_each = toset(local.app)
+
   statement {
     effect = "Allow"
     principals {
@@ -27,7 +30,7 @@ data "aws_iam_policy_document" "snyk_trust" {
     condition {
       test     = "StringEquals"
       variable = "sts:ExternalId"
-      values   = [data.aws_ssm_parameter.external_id.value]
+      values   = [data.aws_ssm_parameter.external_id[each.key].value]
     }
   }
 }
@@ -39,22 +42,33 @@ data "aws_iam_policy_document" "snyk_pull" {
     sid    = "${title(each.key)}SnykAllowPull"
     effect = "Allow"
     actions = [
-      "ecr:GetLifecyclePolicyPreview",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:BatchGetImage",
-      "ecr:DescribeImages",
       "ecr:GetAuthorizationToken",
-      "ecr:DescribeRepositories",
+      "ecr:DescribeRepositories"
+    ]
+    resources = ["*"]
+  }
+
+  # Scoped actions restricted to each app’s ECR repos
+  statement {
+    sid    = "${title(each.key)}SnykAllowScopedRepoActions"
+    effect = "Allow"
+    actions = [
       "ecr:ListTagsForResource",
       "ecr:ListImages",
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:GetRepositoryPolicy"
+      "ecr:GetRepositoryPolicy",
+      "ecr:GetLifecyclePolicy",
+      "ecr:GetLifecyclePolicyPreview",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:DescribeImages",
+      "ecr:BatchGetImage",
+      "ecr:BatchCheckLayerAvailability"
     ]
     resources = [
       "arn:aws:ecr:us-east-1:${data.aws_caller_identity.current.account_id}:repository/${each.key}-*"
     ]
   }
 }
+
 
 resource "aws_iam_role_policy" "snyk_pull" {
   for_each = toset(local.app)
@@ -69,6 +83,6 @@ resource "aws_iam_role" "snyk" {
 
   name                 = "${each.key}-snyk"
   path                 = "/delegatedadmin/developer/"
-  assume_role_policy   = data.aws_iam_policy_document.snyk_trust.json
+  assume_role_policy   = data.aws_iam_policy_document.snyk_trust[each.key].json
   permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
 }
