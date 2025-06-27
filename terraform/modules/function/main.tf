@@ -133,12 +133,12 @@ resource "aws_iam_role" "function" {
 # Get prod and sbx account IDs in the test environment for cross-account roles
 data "aws_ssm_parameter" "prod_account" {
   count = var.env == "test" ? 1 : 0
-  name  = "/${var.app}/prod/account-id"
+  name  = "/prod/account-id"
 }
 
 data "aws_ssm_parameter" "sbx_account" {
   count = var.env == "test" ? 1 : 0
-  name  = "/${var.app}/sbx/account-id"
+  name  = "/sandbox/account-id"
 }
 
 data "aws_ssm_parameter" "prod_account_id" {

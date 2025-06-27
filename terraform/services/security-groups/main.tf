@@ -1,11 +1,3 @@
-locals {
-  stdenv = (
-    var.app == "bcda" ? (var.env == "sbx" ? "opensbx" : var.env) :
-    var.app == "dpc" ? (var.env == "sbx" ? "prod-sbx" : var.env) :
-    var.env
-  )
-}
-
 data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
   name = "/cdap/mgmt-vpc/cidr"
 }
