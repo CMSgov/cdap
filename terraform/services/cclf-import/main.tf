@@ -1,6 +1,6 @@
 locals {
-  full_name = "${var.app}-${var.env}-cclf-import"
-  bfd_env   = var.env == "prod" ? "prod" : "test"
+  full_name  = "${var.app}-${var.env}-cclf-import"
+  bfd_env    = var.env == "prod" ? "prod" : "test"
   db_sg_name = "${var.app}-${var.env}-db"
   memory_size = {
     bcda = 2048

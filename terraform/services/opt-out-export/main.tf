@@ -68,8 +68,8 @@ locals {
 module "opt_out_export_function" {
   source = "../../modules/function"
 
-  app    = var.app
-  env    = var.env
+  app = var.app
+  env = var.env
 
   name        = local.full_name
   description = "Exports data files to a BFD bucket for opt-out"

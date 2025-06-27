@@ -56,8 +56,8 @@ locals {
 module "opt_out_import_function" {
   source = "../../modules/function"
 
-  app    = var.app
-  env    = var.env
+  app = var.app
+  env = var.env
 
   name        = local.full_name
   description = "Ingests the most recent beneficiary opt-out list from BFD"

@@ -138,7 +138,7 @@ data "aws_ssm_parameter" "prod_account" {
 
 data "aws_ssm_parameter" "sbx_account" {
   count = var.env == "test" ? 1 : 0
-  name  = "/sandbox/account-id"
+  name  = "/prod/account-id"
 }
 
 data "aws_ssm_parameter" "prod_account_id" {
