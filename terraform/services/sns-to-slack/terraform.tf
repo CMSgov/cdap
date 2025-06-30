@@ -14,6 +14,5 @@ provider "aws" {
 terraform {
   backend "s3" {
     key = "sns-to-slack/terraform.tfstate"
-    region = "us-east-1"
   }
 }

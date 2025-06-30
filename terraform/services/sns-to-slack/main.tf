@@ -1,7 +1,7 @@
 locals {
   full_name = "${var.app}-${var.env}-sns-to-slack"
   handler_name = {
-    dpc  = "bootstrap"
+    dpc = "bootstrap"
   }
 }
 
@@ -26,9 +26,9 @@ module "sns_to_slack_function" {
 
 # Set up queue for receiving messages when a cloudwatch alert is sent
 data "aws_sns_topic" "cloudwatch" {
-  name              = "${var.app}-${var.env}-cloudwatch-alarms"
+  name = "${var.app}-${var.env}-cloudwatch-alarms"
 }
-  
+
 module "sns_to_slack_queue" {
   source = "../../modules/queue"
 
