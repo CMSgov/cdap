@@ -39,7 +39,7 @@ locals {
   }
 
   ephemeral_yaml_file = "${local.sops_values_dir}/ephemeral.yaml"
-  ephemeral_data      = fileexists(local.ephemeral_yaml_file) ? yamldecode(file(local.ephemeral_yaml_file)) : yamldecode("{}")
+  ephemeral_data      = fileexists(local.ephemeral_yaml_file) ? yamldecode(file(local.ephemeral_yaml_file)) : yamldecode("{\"copy\": {}, \"value\": {}}")
   ephemeral_to_copy = [
     for key in keys(local.parent_ssm_config)
     # Using anytrue+strcontains to enable recursive copying from the parent environment, e.g.
