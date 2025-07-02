@@ -32,15 +32,8 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
-data "aws_db_instances" "this" {
-  tags = {
-    environment = var.env
-    application = var.app
-  }
-}
-
 data "aws_db_instance" "this" {
-  db_instance_identifier = one(one(data.aws_db_instances.this[*]).instance_identifiers)
+  db_instance_identifier = "${var.app}-${var.env}"
 }
 
 locals {
