@@ -5,6 +5,10 @@ locals {
   }
 }
 
+data "aws_ssm_parameter" "slack_webhook_url" {
+  name = "/${var.app}/${var.env}/slack_webhook_url"
+}
+
 module "sns_to_slack_function" {
   source = "../../modules/function"
 
@@ -21,6 +25,7 @@ module "sns_to_slack_function" {
   environment_variables = {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-sns-to-slack"
+    SLACK_WEBHOOK_URL = data.aws_ssm_parameter.slack_webhook_url.value
   }
 }
 
