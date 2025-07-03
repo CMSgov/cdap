@@ -23,8 +23,8 @@ module "sns_to_slack_function" {
   runtime = "provided.al2"
 
   environment_variables = {
-    ENV      = var.env
-    APP_NAME = "${var.app}-${var.env}-alarm-to-slack"
+    ENV               = var.env
+    APP_NAME          = "${var.app}-${var.env}-alarm-to-slack"
     SLACK_WEBHOOK_URL = data.aws_ssm_parameter.slack_webhook_url.value
   }
 }
