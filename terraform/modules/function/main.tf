@@ -181,8 +181,6 @@ module "subnets" {
   source = "../subnets"
 
   vpc_id = module.vpc.id
-  app    = var.app
-  layer  = "data"
 }
 
 resource "aws_security_group" "function" {

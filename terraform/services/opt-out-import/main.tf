@@ -39,7 +39,7 @@ data "aws_db_instance" "this" {
 locals {
   #FIXME: database host parameters should be standardized
   db_hosts = sensitive({
-    ab2d = "postgres://${data.aws_db_instance.this.address}:5432"
+    ab2d = data.aws_db_instance.this.address
     bcda = "postgres://${data.aws_db_instance.this.address}:5432/bcda"
     dpc  = data.aws_db_instance.this.address
   })
