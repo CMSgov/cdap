@@ -3,8 +3,8 @@ provider "aws" {
     tags = {
       application = var.app
       business    = "oeda"
-      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/sns-to-slack"
-      component   = "sns-to-slack"
+      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/alarm-to-slack"
+      component   = "alarm-to-slack"
       environment = var.env
       terraform   = true
     }
@@ -13,6 +13,6 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "sns-to-slack/terraform.tfstate"
+    key = "alarm-to-slack/terraform.tfstate"
   }
 }

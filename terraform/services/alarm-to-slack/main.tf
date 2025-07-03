@@ -1,12 +1,12 @@
 locals {
-  full_name = "${var.app}-${var.env}-sns-to-slack"
+  full_name = "${var.app}-${var.env}-alarm-to-slack"
   handler_name = {
     dpc = "bootstrap"
   }
 }
 
 data "aws_ssm_parameter" "slack_webhook_url" {
-  name = "/${var.app}/${var.env}/slack_webhook_url"
+  name = "/${var.app}/lambda/slack_webhook_url"
 }
 
 module "sns_to_slack_function" {
@@ -24,7 +24,7 @@ module "sns_to_slack_function" {
 
   environment_variables = {
     ENV      = var.env
-    APP_NAME = "${var.app}-${var.env}-sns-to-slack"
+    APP_NAME = "${var.app}-${var.env}-alarm-to-slack"
     SLACK_WEBHOOK_URL = data.aws_ssm_parameter.slack_webhook_url.value
   }
 }
