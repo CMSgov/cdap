@@ -46,7 +46,7 @@ data "aws_ssm_parameters_by_path" "ssm" {
   with_decryption = true
 }
 
-data "aws_region" "this" {}
+data "aws_region" "primary" {}
 data "aws_region" "secondary" {
   provider = aws.secondary
 }
