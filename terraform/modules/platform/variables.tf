@@ -35,5 +35,5 @@ variable "root_module" {
 variable "ssm_root_map" {
   default     = {}
   description = "FIXME"
-  type        = map
+  type        = map(any)
 }
