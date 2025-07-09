@@ -135,13 +135,13 @@ output "iam_defaults" {
   sensitive   = false
   value = {
     boundary = data.aws_iam_policy.permissions_boundary.arn
-    path = "/delegatedadmin/developer/"
+    path     = "/delegatedadmin/developer/"
   }
 }
 
 output "ssm" {
   description = "FIXME"
-  value = {for named_root,data in data.aws_ssm_parameters_by_path.ssm : named_root => {for each in [for arn,value in zipmap(data.arns, data.values) : {"value" = value, "arn" = arn}] : reverse(split("/", each.arn))[0] => each}}
+  value       = { for named_root, data in data.aws_ssm_parameters_by_path.ssm : named_root => { for each in [for arn, value in zipmap(data.arns, data.values) : { "value" = value, "arn" = arn }] : reverse(split("/", each.arn))[0] => each } }
 }
 
 output "network_access_logs_bucket" {

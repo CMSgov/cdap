@@ -73,6 +73,7 @@ provider "aws" {
 | <a name="input_root_module"></a> [root\_module](#input\_root\_module) | The full URL to the terraform module root at issue for this infrastructure | `string` | n/a | yes |
 | <a name="input_service"></a> [service](#input\_service) | Service _or_ terraservice name. | `string` | n/a | yes |
 | <a name="input_additional_tags"></a> [additional\_tags](#input\_additional\_tags) | Additional tags to merge into final default\_tags output | `map(string)` | `{}` | no |
+| <a name="input_ssm_root_map"></a> [ssm\_root\_map](#input\_ssm\_root\_map) | FIXME | `map(any)` | `{}` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -99,12 +100,13 @@ No modules.
 | [aws_kms_alias.secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias) | data source |
 | [aws_nat_gateway.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/nat_gateway) | data source |
 | [aws_nat_gateways.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/nat_gateways) | data source |
+| [aws_region.primary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_region.secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
-| [aws_region.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_s3_bucket.access_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
 | [aws_security_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_security_groups.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_groups) | data source |
 | [aws_ssm_parameter.platform_cidr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
+| [aws_ssm_parameters_by_path.ssm](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameters_by_path) | data source |
 | [aws_subnet.private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
 | [aws_subnet.public](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
 | [aws_subnets.private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnets) | data source |
@@ -125,12 +127,14 @@ No modules.
 | <a name="output_aws_caller_identity"></a> [aws\_caller\_identity](#output\_aws\_caller\_identity) | The current data.aws\_caller\_identity object. |
 | <a name="output_default_tags"></a> [default\_tags](#output\_default\_tags) | Map of tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags` |
 | <a name="output_env"></a> [env](#output\_env) | The solution's application environment name. |
+| <a name="output_iam_defaults"></a> [iam\_defaults](#output\_iam\_defaults) | Map of default permissions `boundary` and IAM resources `path`. |
 | <a name="output_is_ephemeral_env"></a> [is\_ephemeral\_env](#output\_is\_ephemeral\_env) | Returns true when environment is \_ephemeral\_, false when \_established\_ |
 | <a name="output_kion_roles"></a> [kion\_roles](#output\_kion\_roles) | Map of common kion/cloudtamer [aws\_iam\_role data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `name`. |
 | <a name="output_kms_alias_primary"></a> [kms\_alias\_primary](#output\_kms\_alias\_primary) | Primary [KMS Key Alias Data Source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias#attribute-reference) |
 | <a name="output_kms_alias_secondary"></a> [kms\_alias\_secondary](#output\_kms\_alias\_secondary) | Secondary [KMS Key Alias Data Source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias#attribute-reference) |
 | <a name="output_logging_bucket"></a> [logging\_bucket](#output\_logging\_bucket) | The designated access log bucket [aws\_s3\_bucket data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket#attribute-reference) for the current environment |
 | <a name="output_nat_gateways"></a> [nat\_gateways](#output\_nat\_gateways) | Map of current VPC **available** [aws\_nat\_gateway data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `id`. |
+| <a name="output_network_access_logs_bucket"></a> [network\_access\_logs\_bucket](#output\_network\_access\_logs\_bucket) | FIXME: Supporting PLT-1077 |
 | <a name="output_parent_env"></a> [parent\_env](#output\_parent\_env) | The solution's source environment. For established environments this is equal to the environment's name |
 | <a name="output_platform_cidr"></a> [platform\_cidr](#output\_platform\_cidr) | The CIDR-range for the CDAP-managed VPC for CI and other administrative functions. |
 | <a name="output_primary_region"></a> [primary\_region](#output\_primary\_region) | The primary data.aws\_region object from the current caller identity |
@@ -141,5 +145,6 @@ No modules.
 | <a name="output_secondary_region"></a> [secondary\_region](#output\_secondary\_region) | The secondary data.aws\_region object associated with the secondary region. |
 | <a name="output_security_groups"></a> [security\_groups](#output\_security\_groups) | Map of current VPC's common [aws\_security\_group data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group#attribute-reference), keyed by `name` |
 | <a name="output_service"></a> [service](#output\_service) | The name of the current service or terraservice. |
+| <a name="output_ssm"></a> [ssm](#output\_ssm) | FIXME |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The current environment VPC ID value |
 <!-- END_TF_DOCS -->
