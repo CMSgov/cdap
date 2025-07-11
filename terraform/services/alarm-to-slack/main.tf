@@ -20,7 +20,7 @@ module "sns_to_slack_function" {
   name        = local.full_name
   description = "Listens for CloudWatch Alerts and forwards to Slack"
 
-  handler = "lambda_function.py"
+  handler = "lambda_function.lambda_handler"
   runtime = "python3.13"
 
   environment_variables = {
