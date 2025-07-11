@@ -198,7 +198,7 @@ resource "aws_db_instance" "api" {
 /* DB - Route53 */
 resource "aws_route53_record" "rds" {
   count   = var.app == "bcda" || var.app == "dpc" ? 1 : 0
-  zone_id = var.app == "dpc" ? data.aws_route53_zone.local_zone[0].zone_id : data.aws_route53_zone.local_zone[0].zone_id
+  zone_id = var.app == "dpc" ? aws_route53_zone.local_zone[0].zone_id : data.aws_route53_zone.local_zone[0].zone_id
   name    = var.app == "dpc" ? "db.${aws_route53_zone.local_zone[0].name}" : "rds.${data.aws_route53_zone.local_zone[0].name}"
   type    = "CNAME"
   ttl     = "300"
