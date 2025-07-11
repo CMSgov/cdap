@@ -42,11 +42,11 @@ def test_enriched_cloudwatch_message_ok_record():
         'body': json.dumps({'Message': json.dumps(cloudwatch_message)})})
     assert message == enriched_cloudwatch_message
 
-@patch.dict(os.environ, { 'BLOCK_OK': 'true' }, clear=True)
-def test_enriched_cloudwatch_message_ok_record_ok_blocked():
+@patch.dict(os.environ, { 'IGNORE_OK': 'true' }, clear=True)
+def test_enriched_cloudwatch_message_ok_record_ok_ignored():
     cloudwatch_message = { 'OldStateValue': 'ALARM', 'NewStateValue': 'OK' }
     message = lambda_function.enriched_cloudwatch_message({
-        'messageId': 'OK Blocked',
+        'messageId': 'OK Ignored',
         'body': json.dumps({'Message': json.dumps(cloudwatch_message)})})
     assert message is None
 

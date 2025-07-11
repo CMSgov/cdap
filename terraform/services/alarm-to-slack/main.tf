@@ -1,7 +1,8 @@
 locals {
   full_name = "${var.app}-${var.env}-alarm-to-slack"
-  handler_name = {
-    dpc = "bootstrap"
+  # Whether to send messages when state returns to OK
+  ignore_ok = {
+    "dpc" = "true"
   }
 }
 
@@ -19,14 +20,14 @@ module "sns_to_slack_function" {
   name        = local.full_name
   description = "Listens for CloudWatch Alerts and forwards to Slack"
 
-  handler = local.handler_name[var.app]
-  runtime = "provided.al2"
+  handler = "lambda_function.py"
+  runtime = "python3.13"
 
   environment_variables = {
     ENV               = var.env
     APP_NAME          = "${var.app}-${var.env}-alarm-to-slack"
     SLACK_WEBHOOK_URL = data.aws_ssm_parameter.slack_webhook_url.value
-    BLOCK_OK          = 'true'
+    IGNORE_OK         = local.ignore_ok[var.app]
   }
 }
 

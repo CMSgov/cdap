@@ -26,7 +26,7 @@ jobs:
       - uses: ./actions/setup-tfenv-terraform
       - run: terraform fmt -check -diff -recursive terraform/services/alarm-to-slack
 
-  plan-apply:
+  plan-apply-deploy:
     needs: check-fmt
     permissions:
       contents: read
@@ -42,6 +42,7 @@ jobs:
         env: [dev, test, sandbox, prod]
     steps:
       - uses: actions/checkout@v4
+      - run: pytest lambda_src
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -54,4 +55,8 @@ jobs:
           TF_VAR_env: ${{ matrix.env }}
           TF_VAR_legacy: "false"
       - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-        run: terraform apply -auto-approve tf.plan
+        run: |
+          terraform apply -auto-approve tf.plan
+          cd lambda_src
+          zip deploy.zip lambda_function.py
+          aws lambda update-function-code --function-name "${{ matrix.app }}-${{ matrix.env }}-alarm-to-slack" --zip-file fileb://deploy.zip
