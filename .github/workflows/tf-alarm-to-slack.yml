@@ -43,9 +43,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          pip install pylint
+          pip install pylint pytest
           pylint lambda_src
-          pip install pytest
           pytest lambda_src
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v4
