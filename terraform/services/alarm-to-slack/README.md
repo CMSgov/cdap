@@ -13,8 +13,8 @@ If you want to see the log messages, you can run pytest with the -s flag.
 Pass in a backend file when running terraform init. See variables.tf for variables to include. Example:
 
 ```bash
-terraform init -backend-config=../../backends/dpc-dev-gf.s3.tfbackend
-terraform apply
+AWS_REGION=us-east-1 terraform init -backend-config=../../backends/dpc-dev-gf.s3.tfbackend
+AWS_REGION=us-east-1 terraform apply
 ```
 
 ## Automated deploy
