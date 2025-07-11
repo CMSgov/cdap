@@ -29,7 +29,7 @@ locals {
     dpc  = 21 # 3 ETL periods instead of the default 7 days
   }[var.app]
 
-  quicksight_cidr_blocks  = var.app != "ab2d" && length(data.aws_ssm_parameter.quicksight_cidr_blocks) > 0 ? jsondecode(data.aws_ssm_parameter.quicksight_cidr_blocks[0].value) : []
+  quicksight_cidr_blocks = var.app != "ab2d" && length(data.aws_ssm_parameter.quicksight_cidr_blocks) > 0 ? jsondecode(data.aws_ssm_parameter.quicksight_cidr_blocks[0].value) : []
 
   dpc_specific_tags = {
     Layer       = "data"
