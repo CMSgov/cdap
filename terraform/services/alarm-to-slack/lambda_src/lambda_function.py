@@ -25,9 +25,8 @@ def cloudwatch_message(record):
         if message.get('OldStateValue'):
             return message
     except JSONDecodeError:
-        pass
-    log({'messageId': record.get('messageId'),
-         'msg': 'Did not receive an SNS Cloudwatch payload',})
+        log({'messageId': record.get('messageId'),
+             'msg': 'Did not receive an SNS Cloudwatch payload',})
     return None
 
 def enriched_cloudwatch_message(record):
