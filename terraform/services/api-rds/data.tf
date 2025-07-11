@@ -84,15 +84,6 @@ data "aws_security_group" "worker_sg" {
   }
 }
 
-data "aws_security_group" "github_runner" {
-  count = var.app == "bcda" ? 1 : 0
-
-  filter {
-    name   = "tag:Name"
-    values = ["github-actions-action-runner"]
-  }
-}
-
 data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
   name = "/cdap/mgmt-vpc/cidr"
 }

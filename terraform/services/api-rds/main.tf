@@ -80,16 +80,6 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
   security_group_id = aws_security_group.sg_database.id
 }
 
-resource "aws_vpc_security_group_ingress_rule" "runner_access" {
-  count                        = var.app == "bcda" ? 1 : 0
-  description                  = "GitHub Actions runner access"
-  from_port                    = 5432
-  to_port                      = 5432
-  ip_protocol                  = "tcp"
-  security_group_id            = aws_security_group.sg_database.id
-  referenced_security_group_id = data.aws_security_group.github_runner[count.index].id
-}
-
 resource "aws_vpc_security_group_ingress_rule" "quicksight" {
   count             = var.app != "ab2d" ? length(local.quicksight_cidr_blocks) : 0
   description       = "Allow inbound traffic from AWS QuickSight"
