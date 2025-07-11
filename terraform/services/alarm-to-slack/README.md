@@ -2,6 +2,12 @@
 
 This service sets up the infrastructure for the alarm-to-slack lambda function in upper and lower environments for DPC
 
+## Updating the lambda code
+
+The executable for this lambda is in labda_src. It must pass both pylint and pytest checks.
+
+If you want to see the log messages, you can run pytest with the -s flag.
+
 ## Manual deploy
 
 Pass in a backend file when running terraform init. See variables.tf for variables to include. Example:
