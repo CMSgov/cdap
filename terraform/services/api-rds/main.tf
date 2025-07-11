@@ -13,7 +13,7 @@ locals {
 
   instance_class = {
     ab2d = "db.m6i.2xlarge"
-    bcda = (var.env == "sandbox" || var.env == "prod") ? "db.m6i.xlarge" : "db.m6i.large"
+    bcda = var.env == "prod" ? "db.m6i.xlarge" : "db.m6i.large"
     dpc  = "db.m6i.large" # node_type for instance class
   }[var.app]
 
