@@ -1,3 +1,8 @@
+"""
+Receives messages from CloudWatch alarms via SQS subscription to SNS.
+Forwards the alarms to Slack, with an emoji that says good or bad.
+"""
+
 from datetime import datetime, timezone
 import json
 from json.decoder import JSONDecodeError
@@ -6,6 +11,7 @@ from urllib import request
 from urllib.error import URLError
 
 def lambda_handler(event, _):
+    """ Entry point for lambda """
     for record in event['Records']:
         message = enriched_cloudwatch_message(record)
         if message:
@@ -16,6 +22,10 @@ def lambda_handler(event, _):
     }
 
 def cloudwatch_message(record):
+    """
+    Parses the SQS record for the CloudWatch Alarm json.
+    Returns None if it can't find it.
+    """
     try:
         body_s = record['body']
         body = json.loads(body_s)
@@ -30,6 +40,10 @@ def cloudwatch_message(record):
     return None
 
 def enriched_cloudwatch_message(record):
+    """
+    Logs the CloudWatch message (if it exists).
+    Enriches the message with an emoji for display.
+    """
     message = cloudwatch_message(record)
     if message:
         log({'messageId': record.get('messageId'),
@@ -48,6 +62,9 @@ def enriched_cloudwatch_message(record):
     return message
 
 def send_message_to_slack(message, message_id):
+    """
+    Calls the webhook with the message. Returns success.
+    """
     webhook = os.environ.get('SLACK_WEBHOOK_URL')
     if not webhook:
         log({'messageId': message_id,
@@ -73,5 +90,9 @@ def send_message_to_slack(message, message_id):
         return False
 
 def log(data):
+    """
+    Enriches the log message with the time.
+    Prints the data to standard out
+    """
     data['time'] = datetime.now().astimezone(tz=timezone.utc).isoformat()
-    print(data)
+    print(json.dumps(data))
