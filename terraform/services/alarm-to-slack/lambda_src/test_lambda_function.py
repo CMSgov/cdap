@@ -70,6 +70,20 @@ def test_enriched_cloudwatch_message_ok_record():
         'body': json.dumps({'Message': json.dumps(cloudwatch_message)})})
     assert message == enriched_cloudwatch_message
 
+@patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
+def test_enriched_cloudwatch_message_ok_record_ignore_false():
+    """
+    Tests happy path of enriching CloudWatch OK Message from SQS record
+    when IGNORE_OK set to false.
+    """
+    cloudwatch_message = {'OldStateValue': 'ALARM', 'NewStateValue': 'OK'}
+    enriched_cloudwatch_message = cloudwatch_message.copy()
+    enriched_cloudwatch_message['Emoji'] = ':checked:'
+    message = lambda_function.enriched_cloudwatch_message({
+        'messageId': 'OK Sent',
+        'body': json.dumps({'Message': json.dumps(cloudwatch_message)})})
+    assert message == enriched_cloudwatch_message
+
 @patch.dict(os.environ, {'IGNORE_OK': 'true'}, clear=True)
 def test_enriched_cloudwatch_message_ok_record_ok_ignored():
     """

@@ -54,7 +54,7 @@ def enriched_cloudwatch_message(record):
              'msg': 'Received CloudWatch Alarm',
             })
         if message['NewStateValue'] == 'OK':
-            if os.environ.get('IGNORE_OK'):
+            if os.environ.get('IGNORE_OK') == 'true':
                 return None
             message['Emoji'] = ':checked:'
         else:
