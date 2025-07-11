@@ -76,7 +76,7 @@ resource "aws_vpc_security_group_ingress_rule" "db_access_from_mgmt" {
   from_port         = 5432
   to_port           = 5432
   ip_protocol       = "tcp"
-  cidr_ipv4         = var.mgmt_vpc_cidr
+  cidr_ipv4         = data.aws_ssm_parameter.cdap_mgmt_vpc_cidr.value
   security_group_id = aws_security_group.sg_database.id
 }
 

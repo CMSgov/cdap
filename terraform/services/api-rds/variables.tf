@@ -18,12 +18,6 @@ variable "env" {
   }
 }
 
-variable "mgmt_vpc_cidr" {
-  description = "CIDR for the Management VPC"
-  type        = string
-  default     = null
-}
-
 variable "name" {
   description = "If more than one RDS instance is needed, this variable should be set"
   type        = string
