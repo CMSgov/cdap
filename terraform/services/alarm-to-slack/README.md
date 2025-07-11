@@ -4,7 +4,7 @@ This service sets up the infrastructure for the alarm-to-slack lambda function i
 
 ## Updating the lambda code
 
-The executable for this lambda is in labmda_src. It must pass both pylint and pytest checks.
+The executable for this lambda is in lambda_src. It must pass both pylint and pytest checks.
 
 If you want to see the log messages, you can run pytest with the -s flag.
 
