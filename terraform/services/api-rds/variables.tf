@@ -18,12 +18,6 @@ variable "env" {
   }
 }
 
-variable "jenkins_security_group_id" {
-  description = "Stores the security group managing Jenkins Agent for AB2D including account number for AB2D Management"
-  type        = string
-  default     = null
-}
-
 variable "mgmt_vpc_cidr" {
   description = "CIDR for the Management VPC"
   type        = string
