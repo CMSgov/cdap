@@ -42,7 +42,9 @@ jobs:
         env: [dev, test, sandbox, prod]
     steps:
       - uses: actions/checkout@v4
-      - run: pytest lambda_src
+      - run: |
+          pip install pytest
+          pytest lambda_src
       - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v4
         with:
