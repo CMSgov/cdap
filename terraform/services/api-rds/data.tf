@@ -92,8 +92,3 @@ data "aws_ssm_parameter" "quicksight_cidr_blocks" {
   count = var.app != "ab2d" ? 1 : 0
   name  = "/${var.app}/${var.env}/quicksight-rds/cidr-blocks"
 }
-
-data "aws_iam_role" "rds_monitoring" {
-  count = var.app == "dpc" ? 1 : 0
-  name  = "rds-monitoring-role"
-}
