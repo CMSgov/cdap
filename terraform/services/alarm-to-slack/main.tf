@@ -13,8 +13,8 @@ data "aws_ssm_parameter" "slack_webhook_url" {
 module "sns_to_slack_function" {
   source = "../../modules/function"
 
-  app    = var.app
-  env    = var.env
+  app = var.app
+  env = var.env
 
   name        = local.full_name
   description = "Listens for CloudWatch Alerts and forwards to Slack"
