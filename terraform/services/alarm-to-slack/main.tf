@@ -15,7 +15,6 @@ module "sns_to_slack_function" {
 
   app    = var.app
   env    = var.env
-  legacy = false
 
   name        = local.full_name
   description = "Listens for CloudWatch Alerts and forwards to Slack"
