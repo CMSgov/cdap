@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d, bcda, dpc]
+        app: [bcda, dpc]
         env: [dev, test, prod]
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +52,5 @@ jobs:
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
-          TF_VAR_legacy: "false"
       - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: terraform apply -auto-approve tf.plan
