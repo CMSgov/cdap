@@ -3,7 +3,7 @@ provider "aws" {
     tags = {
       application = var.app
       business    = "oeda"
-      code        = "https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/alarm-to-slack"
+      code        = "https://github.com/CMSgov/cdap/tree/main/terraform/services/alarm-to-slack"
       component   = "alarm-to-slack"
       environment = var.env
       terraform   = true
