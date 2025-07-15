@@ -87,7 +87,6 @@ resource "aws_vpc_security_group_ingress_rule" "runner_access" {
   to_port                      = 5432
   ip_protocol                  = "tcp"
   security_group_id            = aws_security_group.sg_database.id
-  referenced_security_group_id = data.aws_security_group.github_runner[count.index].id
 }
 
 resource "aws_vpc_security_group_ingress_rule" "quicksight" {
