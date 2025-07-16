@@ -42,15 +42,15 @@ resource "aws_kms_alias" "primary" {
 }
 
 resource "aws_kms_key" "secondary" {
-  provider                             = aws.secondary
-  bypass_policy_lockout_safety_check  = false
-  deletion_window_in_days              = local.kms_default_deletion_window_days
-  description                          = "Secondary ${local.app} ${local.env} CMK"
-  enable_key_rotation                  = true
-  is_enabled                           = true
-  multi_region                         = false
-  policy                               = data.aws_iam_policy_document.default_kms_key_policy.json
-  rotation_period_in_days              = 365
+  provider                           = aws.secondary
+  bypass_policy_lockout_safety_check = false
+  deletion_window_in_days            = local.kms_default_deletion_window_days
+  description                        = "Secondary ${local.app} ${local.env} CMK"
+  enable_key_rotation                = true
+  is_enabled                         = true
+  multi_region                       = false
+  policy                             = data.aws_iam_policy_document.default_kms_key_policy.json
+  rotation_period_in_days            = 365
 
   lifecycle {
     prevent_destroy = true
