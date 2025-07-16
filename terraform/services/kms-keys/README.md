@@ -5,7 +5,7 @@ This service provisions a **pair of AWS KMS Customer Managed Keys (CMKs)** — o
 
 ## Purpose
 
-Creates and manages standard KMS keys and aliases per environment (e.g., dev, impl, prod) across primary and secondary AWS accounts using Terraform.
+Creates and manages standard KMS keys and aliases per environment (e.g., dev, test, prod) across primary and secondary AWS accounts using Terraform.
 
 ## Manual Deploy
 
