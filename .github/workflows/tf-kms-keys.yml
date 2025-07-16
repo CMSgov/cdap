@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - .github/workflows/tf-kms-keys.yml
-      - terraform/services/kms-key/**
+      - terraform/services/kms-keys/**
   workflow_dispatch:
     inputs:
       apply:
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
-      - run: terraform fmt -check -diff -recursive terraform/services/kms-key
+      - run: terraform fmt -check -diff -recursive terraform/services/kms-keys
 
   plan-apply:
     needs: check-fmt
@@ -29,7 +29,7 @@ jobs:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     defaults:
       run:
-        working-directory: ./terraform/services/kms-key
+        working-directory: ./terraform/services/kms-keys
     strategy:
       fail-fast: false
       matrix:
