@@ -1,9 +1,15 @@
-data "aws_caller_identity" "current" {}
+module "standards" {
+  source      = "../../modules/standards"
+  app         = var.app
+  env         = var.env
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/kms-keys"
+  service     = "kms-keys"
+}
 
 locals {
-  env                              = var.env
-  app                              = var.app
-  account_id                       = data.aws_caller_identity.current.account_id
+  env                              = module.standards.env
+  app                              = module.standards.app
+  account_id                       = module.standards.account_id
   kms_default_deletion_window_days = 30
   key_alias                        = "alias/${local.app}-${local.env}"
 }

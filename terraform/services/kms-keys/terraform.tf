@@ -13,14 +13,14 @@ terraform {
 
 provider "aws" {
   default_tags {
-    tags = {
-      Terraform = true
-      business  = "oeda"
-      code      = "https://github.com/CMSgov/cdap/tree/main/terraform/services/kms-keys"
-    }
+    tags = module.standards.default_tags
   }
 }
 
 provider "aws" {
-  alias = "secondary"
+  alias  = "secondary"
+  region = "us-west-2"
+  default_tags {
+    tags = module.standards.default_tags
+  }
 }
