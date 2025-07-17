@@ -12,7 +12,7 @@ Creates and manages standard KMS keys and aliases per environment (e.g., dev, te
 To deploy manually, pass in a backend config file during `terraform init`. Example:
 
 ```bash
-terraform init -backend-config=../../backends/ab2d-dev.s3.tfbackend
+terraform init -backend-config=../../backends/ab2d-dev.s3-gf.tfbackend
 terraform plan
 ```
 
