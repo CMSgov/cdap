@@ -15,15 +15,20 @@ variable "platform" {
   type        = any
 }
 
-variable "kms_key_override" {
+
+variable "kms_key_override" { #TODO: Consider removing this all together.
   default     = null
   description = "Override to the platform-managed KMS key"
   type        = string
 }
 
 variable "instance_class" {
-  description = "Aurora cluster instance class"
+  description = "Aurora cluster instance class, restricted to RI instances"
   type        = string
+  validation {
+    condition     = contains(["db.r8g.large", "db.r8g.xlarge", "db.r8g.2xlarge"], var.instance_class)
+    error_message = "Supporting instance classes that are part of DASG's 2025-2026 DB reserved instance allocation"
+  }
 }
 
 variable "instance_count" {
@@ -43,14 +48,14 @@ variable "maintenance_window" {
   type        = string
 }
 
-variable "backup_window" {
+variable "backup_window" { #TODO: Consider removing this in favor of AWS Backups
   description = "Daily time range during which automated backups are created if automated backups are enabled in UTC, e.g. `04:00-09:00`"
   type        = string
 }
 
 variable "monitoring_interval" {
   default     = 15
-  description = "[monitoring_interval](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#monitoring_interval-1). Interval, in seconds, in seconds, between points when Enhanced Monitoring metrics are collected for the DB cluster."
+  description = "The [monitoring_interval](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#monitoring_interval-1) in seconds determines the time between sampling enhanced monitoring metrics for the cluster."
   type        = number
 }
 
@@ -98,8 +103,7 @@ variable "engine_version" {
   type        = string
 }
 
-#TODO does this help or hurt matters?
-variable "backup_retention_period" {
+variable "backup_retention_period" { #TODO: Consider removing this in favor of AWS Backups
   default     = 1
   description = "Days to retain backups for."
   type        = number
@@ -123,6 +127,6 @@ variable "cluster_identifier" {
 
 variable "aws_backup_tag" {
   default     = "4hr7_w90"
-  description = "Override for the standard"
+  description = "Override for a standard, CDAP-managed backup tag for AWS Backups"
   type        = string
 }
