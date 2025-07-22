@@ -44,7 +44,7 @@ resource "aws_rds_cluster_parameter_group" "this" {
   }
 }
 
-resource "aws_db_parameter_group" "aurora" {
+resource "aws_db_parameter_group" "this" {
   name        = "${local.service_prefix}-instance"
   family      = local.aurora_family
   description = "Aurora DB instance parameter group for ${local.service_prefix}"
@@ -136,7 +136,7 @@ resource "aws_rds_cluster_instance" "this" {
   publicly_accessible        = false
   apply_immediately          = true
   auto_minor_version_upgrade = true
-  db_parameter_group_name    = aws_db_parameter_group.aurora.name
+  db_parameter_group_name    = aws_db_parameter_group.this.name
   tags = {
     Name = "${local.service_prefix}-${count.index}"
   }
