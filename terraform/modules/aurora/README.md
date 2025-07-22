@@ -1,3 +1,115 @@
+# Aurora Child Module
+This module creates the minimum set of semi-opinionated resources directly supporting creation and ongoing maintenance of an [Amazon Aurora DB Cluster](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_Aurora.html) with ephemeral environment support.
+For a complete list of resources managed by this module, please see the [Resources section](#user-content-resources) below.
+
+## Important Usage Notes
+
+### Platform Module Expectations
+While emerging standardized `platform` isn't strictly required, usage is strongly recommended. **this** module expects the input variable `var.platform` as an object that includes the following, prescriptive fields:
+- `var.platform.is_ephemeral_env`
+- `var.platform.security_groups.cmscloud-security-tools.id`
+- `var.platform.security_groups.remote-management.id`
+- `var.platform.security_groups.zscaler-private.id`
+- `var.platform.app`
+- `var.platform.env`
+- `var.platform.vpc_id`
+- `var.platform.kms_alias_primary.target_key_arn`
+
+### Cluster and Cluster Instance Parameters
+At the time of this writing, this module does not set any specific parameters for the Cluster nor Cluster Instance Parameter Groups.
+While the list of parameters can be highly contextual and require tuning and updates to an application's usage of the datastore, the following cluster instance parameters are modest and have some dramatic performance implications to such an extent they may well find their way into **this** module's definition itself as part of a _sensible default_:
+
+``` hcl
+cluster_instance_parameters = [
+  {
+    apply_method = "immediate"
+    name         = "random_page_cost"
+    value        = "1.1"
+  },
+  {
+    apply_method = "immediate"
+    name         = "work_mem"
+    value        = "32768"
+  },
+  {
+    apply_method = "immediate"
+    name         = "statement_timeout"
+    value        = "1200000"
+  },
+]
+```
+
+## Example Usage
+
+``` hcl
+locals {
+  default_tags = module.platform.default_tags
+  env          = terraform.workspace
+  service      = "core"
+}
+
+# declare the `platform` module to be used as an input to the `db` module below
+module "platform" {
+  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
+  providers = { aws = aws, aws.secondary = aws.secondary }
+
+  app         = local.app
+  env         = local.env
+  root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-core"
+  service     = local.service
+  ssm_root_map = {
+    core = "/ab2d/${local.env}/core/"
+  }
+}
+
+# declare the `db` module, defining the desired input variables
+module "db" {
+  source = "github.com/CMSgov/cdap//terraform/modules/aurora"
+
+  backup_retention_period = module.platform.is_ephemeral_env ? 1 : 7
+  deletion_protection     = !module.platform.is_ephemeral_env
+  password                = module.platform.ssm.core.database_password.value
+  username                = module.platform.ssm.core.database_user.value
+  platform                = module.platform
+
+  cluster_instance_parameters = [
+    {
+      apply_method = "immediate"
+      name         = "random_page_cost"
+      value        = "1.1"
+    },
+    {
+      apply_method = "immediate"
+      name         = "work_mem"
+      value        = "32768"
+    },
+    {
+      apply_method = "immediate"
+      name         = "statement_timeout"
+      value        = "1200000"
+    },
+    {
+      apply_method = "pending-reboot"
+      name         = "cron.database_name"
+      value        = local.env
+    },
+    {
+      apply_method = "pending-reboot"
+      name         = "shared_preload_libraries"
+      value        = "pg_stat_statements,pg_cron"
+    }
+  ]
+}
+
+# use the `db` module's output to write parameter to SSM parameter store:
+resource "aws_ssm_parameter" "writer_endpoint" {
+  name  = "/ab2d/${local.env}/core/nonsensitive/writer_endpoint"
+  value = "${module.db.aurora_cluster.endpoint}:${module.db.aurora_cluster.port}"
+  type  = "String"
+}
+
+```
+
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
