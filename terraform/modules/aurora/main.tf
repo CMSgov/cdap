@@ -89,6 +89,9 @@ resource "aws_rds_cluster" "this" {
     AWS_Backup = var.aws_backup_tag
   }
 
+  # Along with the bleow commentary from @malessi on the support for monitoring-related settings,
+  # this is largely for support of novel clusters (e.g. ephemeral clusters) and for clusters that take advantage
+  # of Application Autoscaling. Note: Application Autoscaling is not yet supported in this module.
   provisioner "local-exec" {
     environment = {
       DB_CLUSTER_ID                    = self.cluster_identifier
