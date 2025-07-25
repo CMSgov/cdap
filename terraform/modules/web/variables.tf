@@ -21,67 +21,57 @@ variable "comment" {
 }
 
 variable "custom_error_responses" {
-  default     = null
+  default     = []
   description = "(Optional) - One or more custom error response elements (multiples allowed)."
   type        = list(object({
-    error_caching_min_ttl   = number
-    error_code              = number
-    response_code           = number
-    response_page_path      = string
+    error_caching_min_ttl = optional(number)
+    error_code            = number
+    response_code         = optional(number)
+    response_page_path    = optional(string)
   }))
 }
 
 variable "default_cache_behavior" {
-  default     = [{
+  default     = {
     allowed_methods             = ["GET", "HEAD"]
     cached_methods              = ["GET", "HEAD"]
-    cache_policy_id             = null
-    compress                    = false
     default_ttl                 = 3600
-    field_level_encryption_id   = null
-    grpc_config                 = null
-    lambda_function_association = null
-    function_association        = null
+    function_association        = []
+    lambda_function_association = []
     max_ttl                     = 86400
     min_ttl                     = 0
-    origin_request_policy_id    = null
-    realtime_log_config_arn     = null
-    response_headers_policy_id  = null
-    smooth_streaming            = null
     target_origin_id            = "s3_origin"
-    trusted_key_groups          = null
-    trusted_signers             = null
     viewer_protocol_policy      = "redirect-to-https"
-  }]
+  }
   description = "(Required) - Default cache behavior for this distribution (maximum one). Requires either cache_policy_id (preferred) or forwarded_values (deprecated) be set."
   type        = object({
     allowed_methods             = list(string)
     cached_methods              = list(string)
-    cache_policy_id             = string
-    compress                    = bool
-    default_ttl                 = number
-    field_level_encryption_id   = string
-    grpc_config                 = object({
+    cache_policy_id             = optional(string)
+    compress                    = optional(bool)
+    default_ttl                 = optional(number)
+    field_level_encryption_id   = optional(string)
+    grpc_config                 = optional(object({
       enabled = bool
-    })
-    lambda_function_association = list(object({
+    }))
+    lambda_function_association = optional(list(object({
       event_type    = string
       lambda_arn    = string
       include_body  = bool
-    }))
-    function_association        = list(object({
+    })))
+    function_association        = optional(list(object({
       event_type    = string
       function_arn  = string
-    }))
-    max_ttl                     = number
-    min_ttl                     = number
-    origin_request_policy_id    = string
-    realtime_log_config_arn     = string
-    response_headers_policy_id  = string
-    smooth_streaming            = bool
+    })))
+    max_ttl                     = optional(number)
+    min_ttl                     = optional(number)
+    origin_request_policy_id    = optional(string)
+    realtime_log_config_arn     = optional(string)
+    response_headers_policy_id  = optional(string)
+    smooth_streaming            = optional(bool)
     target_origin_id            = string
-    trusted_key_groups          = list(string)
-    trusted_signers             = list(string)
+    trusted_key_groups          = optional(list(string))
+    trusted_signers             = optional(list(string))
     viewer_protocol_policy      = string
   })
 }
@@ -110,23 +100,23 @@ variable "is_ipv6_enabled" {
 }
 
 variable "logging_config" {
-  default     = null
+  default     = []
   description = "(Optional) - The logging configuration that controls how logs are written to your distribution (maximum one). AWS provides two versions of access logs for CloudFront: Legacy and v2. This argument configures legacy version standard logs."
-  type        = object({
+  type        = list(object({
     bucket          = string
-    include_cookies = bool
-    prefix          = string 
-  })
+    include_cookies = optional(bool)
+    prefix          = optional(string)
+  }))
 }
 
 variable "origin" {
   description = "(Required) - One or more origins for this distribution (multiples allowed)."
   type        = object({
-    connection_attempts = number
-    connection_timeout  = number
+    connection_attempts = optional(number)
+    connection_timeout  = optional(number)
     domain_name         = string
     origin_id           = string
-    origin_path         = string
+    origin_path         = optional(string)
   })
 }
 
@@ -137,10 +127,10 @@ variable "price_class" {
 }
 
 variable "restrictions" {
-  default     = [{
+  default     = {
     locations         = ["US"]
     restriction_type  = "whitelist"
-  }]
+  }
   description = "(Required) - The restriction configuration for this distribution (maximum one)."
   type        = object({
     locations         = list(string)
@@ -154,17 +144,17 @@ variable "staging" {
   type        = string
 }
 
-# variable "tags" {
-#   default     = null
-#   description = "(Optional) A map of tags to assign to the resource. If configured with a provider default_tags configuration block present, tags with matching keys will overwrite those defined at the provider-level."
-#   type        = string
-# }
+variable "tags" {
+  default     = null
+  description = "(Optional) A map of tags to assign to the resource. If configured with a provider default_tags configuration block present, tags with matching keys will overwrite those defined at the provider-level."
+  type        = map(string)
+}
 
 variable "viewer_certificate" {
-  default     = [{
+  default     = {
     minimum_protocol_version = "TLSv1.2_2021"
     ssl_support_method       = "sni-only"
-  }]
+  }
   description = "(Required) - The SSL configuration for this distribution (maximum one)."
   type        = object({
     minimum_protocol_version  = string
@@ -190,7 +180,7 @@ variable "aws_cloudfront_origin_access_control" {
   description = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   type        = object({
     name                              = string
-    description                       = string
+    description                       = optional(string)
     origin_access_control_origin_type = string
     signing_behavior                  = string
     signing_protocol                  = string
@@ -198,13 +188,13 @@ variable "aws_cloudfront_origin_access_control" {
 }
 
 variable "aws_wafv2_web_acl" {
-  default     = [{
+  default     = {
     name  = "SamQuickACLEnforcingV2"
     scope = "CLOUDFRONT"
-  }]
+  }
   description = "Creates a WAFv2 Web ACL resource."
   type        = object({
-    name  = string
+    name  = optional(string)
     scope = string 
   })
 }
