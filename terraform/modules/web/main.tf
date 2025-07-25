@@ -54,7 +54,7 @@ resource "aws_cloudfront_distribution" "this" {
     realtime_log_config_arn     = var.default_cache_behavior.realtime_log_config_arn
     response_headers_policy_id  = var.default_cache_behavior.response_headers_policy_id
     smooth_streaming            = var.default_cache_behavior.smooth_streaming
-    target_origin_id            = var.default_cache_behavior.target_origin_id
+    target_origin_id            = var.origin.origin_id
     trusted_key_groups          = var.default_cache_behavior.trusted_key_groups
     trusted_signers             = var.default_cache_behavior.trusted_signers
     viewer_protocol_policy      = var.default_cache_behavior.viewer_protocol_policy
