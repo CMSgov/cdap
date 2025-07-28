@@ -1,21 +1,9 @@
-terraform {
-  required_providers {
-    sops = {
-      source  = "carlpett/sops"
-      version = "1.2.0"
-    }
-    #TODO specify the other provider versions here
-  }
-}
-
 locals {
   # Platform Provided Local Variables
-  app              = var.platform["app"]
-  account_id       = var.platform["account_id"]
-  is_ephemeral_env = var.platform["is_ephemeral_env"]
-  env              = var.platform["env"]
-  parent_env       = var.platform["parent_env"]
-  env_key_alias_id = var.platform["kms_alias_primary"]["id"]
+  is_ephemeral_env = var.platform.is_ephemeral_env
+  env              = var.platform.env
+  parent_env       = var.platform.parent_env
+  env_key_arn      = var.platform.kms_alias_primary.id
 
   # Local Variables with Input Variable Overrides
   sops_values_dir            = coalesce(var.sops_values_dir, "${path.root}/values")
@@ -25,11 +13,11 @@ locals {
   # Internal and Other Derived Variables
   template_var_regex      = "/\\$\\{{0,1}%s\\}{0,1}/"
   raw_sops_parent_yaml    = file(local.sops_parent_yaml_file_path)
-  valid_sops_parent_yaml  = data.external.valid_sops_yaml.result.valid_sops
-  enc_parent_data         = yamldecode(local.valid_sops_parent_yaml)
+  enc_parent_data         = yamldecode(local.raw_sops_parent_yaml)
   sops_nonsensitive_regex = local.enc_parent_data.sops.unencrypted_regex
 
-  decrypted_parent_data = yamldecode(data.sops_external.this.raw)
+  # decrypted_parent_data = yamldecode(data.sops_external.this.raw)
+  decrypted_parent_data = yamldecode(data.external.decrypted_sops.result.decrypted_sops)
   parent_ssm_config = {
     for key, val in nonsensitive(local.decrypted_parent_data) : key => {
       str_val      = tostring(val)
@@ -68,7 +56,7 @@ locals {
   ) : local.parent_ssm_config
   env_config = {
     for k, v in local.untemplated_env_config
-    : "${replace(k, format(local.template_var_regex, "env"), local.env)}" => {
+    : replace(k, format(local.template_var_regex, "env"), local.env) => {
       str_val      = replace(v.str_val, format(local.template_var_regex, "env"), local.env)
       is_sensitive = v.is_sensitive
       source       = v.source
@@ -76,7 +64,7 @@ locals {
   }
 }
 
-data "external" "valid_sops_yaml" {
+data "external" "decrypted_sops" {
   # sops (not sopsw, our custom wrapper) cannot decrypt the YAML until the KMS key ARNs include the
   # Account ID and the sops metadata block includes valid "lastmodified" and "mac" properties. We
   # need to use sopsw's "-c/--cat" function to construct a valid sops file so that it can be
@@ -87,19 +75,9 @@ data "external" "valid_sops_yaml" {
     # Allows us to pipe to yq so that sopsw does not need to emit JSON to work with this external
     # data source
     <<-EOF
-    ${path.module}/bin/sopsw -c ${local.sops_parent_yaml_file_path} | yq -o=json '{"valid_sops": (. | tostring)}'
+    ${path.module}/bin/sopsw -d ${local.sops_parent_yaml_file_path} | yq -o=json '{"decrypted_sops": (. | tostring)}'
     EOF
   ]
-}
-
-data "sops_external" "this" {
-  source     = local.valid_sops_parent_yaml
-  input_type = "yaml"
-}
-
-#NOTE: While this is technically unused, it does provide validation of KMS Key existence
-data "aws_kms_key" "sops_key" {
-  key_id = local.env_key_alias_id
 }
 
 resource "aws_ssm_parameter" "this" {
@@ -110,7 +88,7 @@ resource "aws_ssm_parameter" "this" {
   value          = each.value.is_sensitive ? each.value.str_val : null
   insecure_value = each.value.is_sensitive ? null : try(nonsensitive(each.value.str_val), each.value.str_val)
   type           = each.value.is_sensitive ? "SecureString" : "String"
-  key_id         = each.value.is_sensitive ? local.env_key_alias_id : null
+  key_id         = each.value.is_sensitive ? local.env_key_arn : null
 
   tags = {
     source_file    = each.value.source
