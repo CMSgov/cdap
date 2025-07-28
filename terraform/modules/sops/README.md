@@ -13,17 +13,17 @@
 | Name | Version |
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| <a name="provider_external"></a> [external](#provider\_external) | n/a |
 | <a name="provider_local"></a> [local](#provider\_local) | n/a |
-| <a name="provider_sops"></a> [sops](#provider\_sops) | 1.2.0 |<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
      Manually updating sections between TF_DOCS tags may be overwritten.
      See https://terraform-docs.io/user-guide/configuration/ for more information.
 -->
 ## Requirements
 
-| Name | Version |
-|------|---------|
-| <a name="requirement_sops"></a> [sops](#requirement\_sops) | 1.2.0 |
+No requirements.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -34,7 +34,8 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_platform"></a> [platform](#input\_platform) | The input for higher-order platform-provided resources, such as the CDAP `platform` module, to encourage standards adoption. | `any` | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | `any` | n/a | yes |
+| <a name="input_create_local_sopsw_file"></a> [create\_local\_sopsw\_file](#input\_create\_local\_sopsw\_file) | Specify whether a local sopsw file should be created for locally applying adjustments to sops files. | `string` | `true` | no |
 | <a name="input_sops_parent_yaml_file"></a> [sops\_parent\_yaml\_file](#input\_sops\_parent\_yaml\_file) | Override. The specific sops.yaml file to be used. Defaults to `$app-$env.sops.yaml`. | `string` | `null` | no |
 | <a name="input_sops_values_dir"></a> [sops\_values\_dir](#input\_sops\_values\_dir) | Override. Path to the root module's directory where secured, sops.yaml files are stored. Defaults to `./values/`. | `string` | `null` | no |
 
@@ -58,8 +59,7 @@ No modules.
 |------|------|
 | [aws_ssm_parameter.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [local_file.sopsw](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
-| [aws_kms_key.sops_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_key) | data source |
-| [sops_external.this](https://registry.terraform.io/providers/carlpett/sops/1.2.0/docs/data-sources/external) | data source |
+| [external_external.decrypted_sops](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

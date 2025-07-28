@@ -1,5 +1,6 @@
 variable "platform" {
-  description = "The input for higher-order platform-provided resources, such as the CDAP `platform` module, to encourage standards adoption."
+  description = "Object that describes standardized platform values."
+  type        = any
 }
 
 variable "sops_values_dir" {
