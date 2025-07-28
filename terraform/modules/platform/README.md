@@ -14,36 +14,38 @@ The key assumptions are focused on the existence of resources that managed exter
 
 ## Example Usage
 
+
+1. To use data and ssm parameters, import the cdap platform module.
 ```hcl
 ## AB2D API Module Usage Example
 module "platform" {
-  # Ensure `ref` in the following line is pinned to something static
-  # e.g. a known branch, commit hash, or tag from **this repository**
-  source = "github.com/CMSgov/cdap//terraform/modules/platform?ref=<hash|tag|branch>"
+  source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app         = "ab2d"
-  env         = var.env
-  root_module = "https://github.com/CMSgov/ab2d-ops/tree/main/terraform/services/api"
-  service     = "api"
+  app          = local.app
+  env          = local.env
+  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
+  service      = local.service
+  ssm_root_map = local.ssm_root_map
+}
+```
+ssm_root_map is a local variable populated by sops that contains SSM parameters keyed to the root module.
+
+To retrieve values stored in the sops platform module:
+```hcl
+default_tags = module.platform.default_tags
+```
+
+2. Optionally, if you want access to the sopsw editor/cli, import the cdap sops module with reference to the platform module and output the sopsw script. 
+```hcl
+module "sops" {
+  source = "git::https://github.com/CMSgov/cdap.git//terraform/modules/sops?ref=PLT-1099"
+
+  platform = module.platform
 }
 
-## Configure the primary, secondary aws providers with the default tag standards sourced from the `platform` child module
-provider "aws" {
-  region = "us-east-1"
-
-  default_tags {
-    tags = module.platform.default_tags
-  }
-}
-
-provider "aws" {
-  alias = "secondary"
-
-  region = "us-west-2"
-  default_tags {
-    tags = module.platform.default_tags
-  }
+output "edit" {
+  value = module.sops.sopsw
 }
 ```
 
