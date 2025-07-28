@@ -140,11 +140,11 @@ output "iam_defaults" {
 }
 
 output "ssm" {
-  description = "FIXME"
+  description = "SSM parameter resources available based on the `var.ssm_root_map` input variable."
   value       = { for named_root, data in data.aws_ssm_parameters_by_path.ssm : named_root => { for each in [for arn, value in zipmap(data.arns, data.values) : { "value" = value, "arn" = arn }] : reverse(split("/", each.arn))[0] => each } }
 }
 
 output "network_access_logs_bucket" {
-  description = "FIXME: Supporting PLT-1077"
+  description = "Standardized CMS Hybrid Cloud Providued Network Access Logs bucket Name"
   value       = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}"
 }
