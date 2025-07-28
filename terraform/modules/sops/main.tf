@@ -119,8 +119,8 @@ resource "aws_ssm_parameter" "this" {
 }
 
 resource "local_file" "sopsw" {
-  count = var.create_local_sopsw_file ? 1 : 0
-  content = file("${path.module}/bin/sopsw")
+  count    = var.create_local_sopsw_file ? 1 : 0
+  content  = file("${path.module}/bin/sopsw")
   filename = "${path.root}/bin/sopsw"
 }
 
