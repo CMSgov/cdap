@@ -1,9 +1,14 @@
 terraform {
-  required_providers {
-    aws = {
-      source                = "hashicorp/aws"
-      version               = "~>5"
-      configuration_aliases = [aws.secondary]
-    }
+  backend "s3" {
+    key = "platform/terraform.tfstate"
   }
 }
+
+provider "aws" {
+}
+
+provider "aws" {
+  alias  = "secondary"
+  region = "us-west-2"
+}
+
