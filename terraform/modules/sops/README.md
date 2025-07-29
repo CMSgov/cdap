@@ -71,5 +71,5 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_sopsw"></a> [sopsw](#output\_sopsw) | n/a |
+| <a name="output_sopsw"></a> [sopsw](#output\_sopsw) | When `var.create_local_sops_wrapper` true, output tui/cli command for editing the current environment's wrapped, sops 'sopsw' values file. |
 <!-- END_TF_DOCS -->
