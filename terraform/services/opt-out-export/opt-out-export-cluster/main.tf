@@ -2,11 +2,6 @@ locals {
   full_name = "${var.app}-${var.env}-opt-out-export"
   bfd_env   = var.env == "prod" ? "prod" : "test"
   cron = {
-    ab2d = {
-      prod = "cron(0 1 ? * WED *)"
-      test = "cron(0 13 ? * * *)"
-      dev  = "cron(0 15 ? * * *)"
-    }
     bcda = {
       prod = "cron(0 1 ? * * *)"
       test = "cron(0 13 ? * * *)"
@@ -18,14 +13,8 @@ locals {
       dev  = "cron(0 15 ? * * *)"
     }
   }
-  ab2d_db_envs = {
-    dev  = "dev"
-    test = "east-impl"
-    prod = "east-prod"
-  }
   db_sg_name = "${var.app}-${var.env}-db"
   memory_size = {
-    ab2d = 10240
     bcda = null
     dpc  = 2048
   }
@@ -51,7 +40,6 @@ data "aws_rds_cluster" "this" {
 locals {
   #FIXME: database host parameters should be standardized
   db_hosts = sensitive({
-    ab2d = data.aws_rds_cluster.this.endpoint
     bcda = "postgres://${data.aws_rds_cluster.this.endpoint}:5432/bcda"
     dpc  = data.aws_rds_cluster.this.endpoint
   })
@@ -67,8 +55,8 @@ module "opt_out_export_function" {
   name        = local.full_name
   description = "Exports data files to a BFD bucket for opt-out"
 
-  handler = var.app == "ab2d" ? "gov.cms.ab2d.attributiondatashare.AttributionDataShareHandler" : "bootstrap"
-  runtime = var.app == "ab2d" ? "java17" : "provided.al2"
+  handler = "bootstrap"
+  runtime = "provided.al2"
 
   memory_size = local.memory_size[var.app]
 
