@@ -1,6 +1,6 @@
 locals {
-  full_name = "${var.app}-${var.env}-opt-out-import"
-  bfd_env   = var.env == "prod" ? "prod" : "test"
+  full_name  = "${var.app}-${var.env}-opt-out-import"
+  bfd_env    = var.env == "prod" ? "prod" : "test"
   db_sg_name = "${var.app}-${var.env}-db"
 }
 
