@@ -24,20 +24,42 @@ module "platform" {
   source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=<hash|tag|branch>"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app          = local.app
-  env          = local.env
+  app          = "ab2d"
+  env          = "dev"
   root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
-  service      = local.service
+  service      = "microservices"
   ssm_root_map = local.ssm_root_map
+}
+locals {
+  default_tags = module.platform.default_tags
+
+  ssm_root_map = {
+    common = "/ab2d/${local.parent_env}/common"
+    core   = "/ab2d/${local.parent_env}/core"
+  }
 }
 ```
 ssm_root_map is a local variable populated by sops that contains SSM parameters keyed to the root module.
 
-To retrieve values stored in the sops platform module:
-```hcl
-default_tags = module.platform.default_tags
-```
 
+```hcl
+## Configure the aws provider with the default tag standards sourced from the `platform` child module
+provider "aws" {
+  region = var.region
+  default_tags {
+    tags = local.default_tags
+  }
+}
+
+provider "aws" {
+  alias = "secondary"
+
+  region = var.secondary_region
+  default_tags {
+    tags = local.default_tags
+  }
+}
+```
 2. Optionally, if you want access to the sopsw editor/cli, import the cdap sops module with reference to the platform module and output the sopsw script. 
 ```hcl
 module "sops" {
