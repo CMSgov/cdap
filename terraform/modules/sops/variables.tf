@@ -23,6 +23,6 @@ variable "sopsw_parent_yaml_file" {
 
 variable "create_local_sops_wrapper" {
   default     = true
-  description = "Specify whether a local sops wrapper file should be created for locally editing the sops-encrypted values files."
+  description = "Specify whether to create the script for localling editing the wrapped, sops 'sopsw' values file."
   type        = string
 }
