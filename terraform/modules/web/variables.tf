@@ -110,11 +110,11 @@ variable "logging_config" {
 }
 
 variable "origin" {
-  description = "(Required) - One or more origins for this distribution (multiples allowed)."
+  description = "(Required) - The S3 origin for this distribution."
   type        = object({
     connection_attempts = optional(number)
     connection_timeout  = optional(number)
-    domain_name         = string
+    s3_bucket_name      = string
     origin_id           = string
     origin_path         = optional(string)
   })
@@ -151,12 +151,9 @@ variable "tags" {
 }
 
 variable "viewer_certificate" {
-  default     = {
-    minimum_protocol_version = "TLSv1.2_2021"
-    ssl_support_method       = "sni-only"
-  }
   description = "(Required) - The SSL configuration for this distribution (maximum one)."
   type        = object({
+    acm_certificate_arn       = string
     minimum_protocol_version  = string
     ssl_support_method        = string  
   })
