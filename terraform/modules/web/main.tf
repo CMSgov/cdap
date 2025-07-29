@@ -3,11 +3,6 @@ data "aws_wafv2_web_acl" "this" {
   scope = var.aws_wafv2_web_acl.scope
 }
 
-data "aws_acm_certificate" "this" {
-  domain   = var.origin.domain_name
-  statuses = ["ISSUED"]
-}
-
 resource "aws_cloudfront_origin_access_control" "this" {
   name                              = var.aws_cloudfront_origin_access_control.name
   description                       = var.aws_cloudfront_origin_access_control.description
@@ -89,7 +84,7 @@ resource "aws_cloudfront_distribution" "this" {
   origin {
     connection_attempts       = var.origin.connection_attempts
     connection_timeout        = var.origin.connection_timeout
-    domain_name               = var.origin.domain_name
+    domain_name               = "${var.origin.s3_bucket_name}.s3.us-east-1.amazonaws.com"
     origin_access_control_id  = aws_cloudfront_origin_access_control.this.id
     origin_id                 = var.origin.origin_id
     origin_path               = var.origin.origin_path
@@ -103,7 +98,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = data.aws_acm_certificate.this.arn
+    acm_certificate_arn      = var.viewer_certificate.acm_certificate_arn
     minimum_protocol_version = var.viewer_certificate.minimum_protocol_version
     ssl_support_method       = var.viewer_certificate.ssl_support_method
   }
