@@ -3,20 +3,26 @@ variable "platform" {
   type        = any
 }
 
-variable "sops_values_dir" {
-  default     = null
-  description = "Override. Path to the root module's directory where secured, sops.yaml files are stored. Defaults to `./values/`."
+variable "sopsw_values_file_extension" {
+  default     = "sopsw.yaml"
+  description = "Override. File extension of the wrapped sops 'sopsw' values file."
   type        = string
 }
 
-variable "sops_parent_yaml_file" {
+variable "sopsw_values_dir" {
   default     = null
-  description = "Override. The specific sops.yaml file to be used. Defaults to `$app-$env.sops.yaml`."
+  description = "Override. Path to the root module's directory where the wrapped sops 'sopsw' values files directory. Defaults to `./values/` within the root module."
   type        = string
 }
 
-variable "create_local_sopsw_file" {
+variable "sopsw_parent_yaml_file" {
+  default     = null
+  description = "Override. With `var.sopsw_values_file_extension`, specifies the wrapped, sops 'sopsw' values file base name. Defaults to `$${local.parent_env}.$${local.sops_values_file_extension}`, e.g. `prod.sops.yaml`."
+  type        = string
+}
+
+variable "create_local_sops_wrapper" {
   default     = true
-  description = "Specify whether a local sopsw file should be created for locally applying adjustments to sops files."
+  description = "Specify whether a local sops wrapper file should be created for locally editing the sops-encrypted values files."
   type        = string
 }
