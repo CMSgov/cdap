@@ -41,7 +41,7 @@ default_tags = module.platform.default_tags
 2. Optionally, if you want access to the sopsw editor/cli, import the cdap sops module with reference to the platform module and output the sopsw script. 
 ```hcl
 module "sops" {
-  source = "git::https://github.com/CMSgov/cdap.git//terraform/modules/sops?ref=PLT-1099"
+  source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=<hash|tag|branch>"
 
   platform = module.platform
 }
