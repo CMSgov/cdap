@@ -50,7 +50,7 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | `any` | n/a | yes |
 | <a name="input_create_local_sops_wrapper"></a> [create\_local\_sops\_wrapper](#input\_create\_local\_sops\_wrapper) | Specify whether to create the script for localling editing the wrapped, sops 'sopsw' values file. | `string` | `true` | no |
-| <a name="input_sopsw_parent_yaml_file"></a> [sopsw\_parent\_yaml\_file](#input\_sopsw\_parent\_yaml\_file) | Override. With `var.sopsw_values_file_extension`, specifies the wrapped, sops 'sopsw' values file base name. Defaults to `${local.parent_env}.${local.sops_values_file_extension}`, e.g. `prod.sops.yaml`. | `string` | `null` | no |
+| <a name="input_sopsw_parent_yaml_file"></a> [sopsw\_parent\_yaml\_file](#input\_sopsw\_parent\_yaml\_file) | Override. With `var.sopsw_values_file_extension`, specifies the wrapped, sops 'sopsw' values file base name. Defaults to `${local.parent_env}.${var.sopsw_values_file_extension}`, e.g. `prod.sopsw.yaml`. | `string` | `null` | no |
 | <a name="input_sopsw_values_dir"></a> [sopsw\_values\_dir](#input\_sopsw\_values\_dir) | Override. Path to the root module's directory where the wrapped sops 'sopsw' values files directory. Defaults to `./values/` within the root module. | `string` | `null` | no |
 | <a name="input_sopsw_values_file_extension"></a> [sopsw\_values\_file\_extension](#input\_sopsw\_values\_file\_extension) | Override. File extension of the wrapped sops 'sopsw' values file. | `string` | `"sopsw.yaml"` | no |
 

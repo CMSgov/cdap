@@ -17,7 +17,7 @@ variable "sopsw_values_dir" {
 
 variable "sopsw_parent_yaml_file" {
   default     = null
-  description = "Override. With `var.sopsw_values_file_extension`, specifies the wrapped, sops 'sopsw' values file base name. Defaults to `$${local.parent_env}.$${local.sops_values_file_extension}`, e.g. `prod.sops.yaml`."
+  description = "Override. With `var.sopsw_values_file_extension`, specifies the wrapped, sops 'sopsw' values file base name. Defaults to `$${local.parent_env}.$${var.sopsw_values_file_extension}`, e.g. `prod.sopsw.yaml`."
   type        = string
 }
 
