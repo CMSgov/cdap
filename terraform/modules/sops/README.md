@@ -1,5 +1,19 @@
 # SOPS Child Module
 
+This module faciliates adoption of a terraform/tofu infrastructure-as-code strategy for managing both secure and nonsecure configuration values in AWS SSM Parameter Store with the following:
+* distributes a wrapper script `sopsw` for getsops.io that helps us avoid:
+  * frequent, largely meaningless git merge conflicts for this specific getsops.io use-case
+  * needlessly oversharing semi-sensitive AWS Account IDs
+* provides a loose framework for securely managing configuration under a single root module for multiple environments through environment-specific _"sopsw.yaml"_ files
+* supports ephemeral environments that are based on a given enduring _parent environment_
+
+## Dependencies
+The distributed `sopsw` wrapper script requires the following to be installed for locally editing sopsw files:
+* awscli
+* getsops.io
+* yq
+* envsubst
+
 <!-- TODO: Write standards, examples, etc for usage of this module -->
 
 <!-- BEGIN_TF_DOCS -->
