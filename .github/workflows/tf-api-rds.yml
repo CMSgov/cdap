@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [bcda, dpc]
+        app: [dpc]
         env: [dev, test, sandbox, prod]
     steps:
       - uses: actions/checkout@v4
