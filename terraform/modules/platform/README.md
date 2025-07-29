@@ -19,7 +19,9 @@ The key assumptions are focused on the existence of resources that managed exter
 ```hcl
 ## AB2D API Module Usage Example
 module "platform" {
-  source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
+  # Ensure `ref` in the following line is pinned to something static
+  # e.g. a known branch, commit hash, or tag from **this repository**
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=<hash|tag|branch>"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
