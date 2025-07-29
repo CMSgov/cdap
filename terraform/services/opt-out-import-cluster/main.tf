@@ -2,10 +2,6 @@ locals {
   full_name = "${var.app}-${var.env}-opt-out-import"
   bfd_env   = var.env == "prod" ? "prod" : "test"
   db_sg_name = "${var.app}-${var.env}-db"
-  memory_size = {
-    bcda = null
-    dpc  = null
-  }
 }
 
 data "aws_ssm_parameter" "bfd_account" {
@@ -45,8 +41,6 @@ module "opt_out_import_function" {
 
   handler = "bootstrap"
   runtime = "provided.al2"
-
-  memory_size = local.memory_size[var.app]
 
   function_role_inline_policies = {
     assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
