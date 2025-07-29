@@ -1,21 +1,10 @@
 locals {
   full_name = "${var.app}-${var.env}-opt-out-import"
   bfd_env   = var.env == "prod" ? "prod" : "test"
-  ab2d_db_envs = {
-    dev  = "dev"
-    test = "east-impl"
-    prod = "east-prod"
-  }
   db_sg_name = "${var.app}-${var.env}-db"
   memory_size = {
-    ab2d = 1024
     bcda = null
     dpc  = null
-  }
-  handler_name = {
-    ab2d = "gov.cms.ab2d.optout.OptOutHandler"
-    bcda = "bootstrap"
-    dpc  = "bootstrap"
   }
 }
 
@@ -39,7 +28,6 @@ data "aws_rds_cluster" "this" {
 locals {
   #FIXME: database host parameters should be standardized
   db_hosts = sensitive({
-    ab2d = data.aws_rds_cluster.this.endpoint
     bcda = "postgres://${data.aws_rds_cluster.this.endpoint}:5432/bcda"
     dpc  = data.aws_rds_cluster.this.endpoint
   })
@@ -55,8 +43,8 @@ module "opt_out_import_function" {
   name        = local.full_name
   description = "Ingests the most recent beneficiary opt-out list from BFD"
 
-  handler = local.handler_name[var.app]
-  runtime = var.app == "ab2d" ? "java11" : "provided.al2"
+  handler = "bootstrap"
+  runtime = "provided.al2"
 
   memory_size = local.memory_size[var.app]
 
