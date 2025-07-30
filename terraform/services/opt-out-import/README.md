@@ -13,4 +13,4 @@ terraform apply
 
 ## Automated deploy
 
-This terraform is automatically applied on merge to main by the tf-opt-out-import-cluster.yml workflow.
+This terraform is automatically applied on merge to main by the tf-opt-out-import.yml workflow.
