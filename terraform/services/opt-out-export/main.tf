@@ -18,17 +18,41 @@ locals {
     bcda = null
     dpc  = 2048
   }
+  policies = {
+    bcda = data.aws_iam_policy_document.bcda_policies.json
+    dpc  = data.aws_iam_policy_document.dpc_policies.json
+  }
 }
 
 data "aws_ssm_parameter" "bfd_account" {
   name = "/bfd/account-id"
 }
 
-data "aws_iam_policy_document" "assume_bucket_role" {
+data "aws_iam_policy_document" "bcda_policies" {
   statement {
     actions = ["sts:AssumeRole"]
     resources = [
       "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
+    ]
+  }
+}
+
+data "aws_caller_identity" "current" {}
+data "aws_iam_policy_document" "dpc_policies" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    resources = [
+      "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
+    ]
+  }
+
+  statement {
+    actions = [
+      "rds-db:connect"
+    ]
+    resources = [
+      "arn:aws:rds-db:us-east-1:${data.aws_caller_identity.current.account_id}:dbuser:${data.aws_rds_cluster.this.cluster_resource_id}/${var.env}-dpc_attribution-role",
+      "arn:aws:rds-db:us-east-1:${data.aws_caller_identity.current.account_id}:dbuser:${data.aws_rds_cluster.this.cluster_resource_id}/${var.env}-dpc_consent-role"
     ]
   }
 }
@@ -61,7 +85,7 @@ module "opt_out_export_function" {
   memory_size = local.memory_size[var.app]
 
   function_role_inline_policies = {
-    assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
+    assume-bucket-role = local.policies[var.app]
   }
 
   schedule_expression = local.cron[var.app][var.env]

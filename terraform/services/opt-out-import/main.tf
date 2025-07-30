@@ -2,19 +2,41 @@ locals {
   full_name  = "${var.app}-${var.env}-opt-out-import"
   bfd_env    = var.env == "prod" ? "prod" : "test"
   db_sg_name = "${var.app}-${var.env}-db"
+  policies = {
+    bcda = data.aws_iam_policy_document.bcda_policies.json
+    dpc  = data.aws_iam_policy_document.dpc_policies.json
+  }
 }
 
 data "aws_ssm_parameter" "bfd_account" {
   name = "/bfd/account-id"
 }
 
-data "aws_iam_policy_document" "assume_bucket_role" {
+data "aws_iam_policy_document" "bcda_policies" {
   statement {
     actions = ["sts:AssumeRole"]
     resources = [
       "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
     ]
   }
+}
+
+data "aws_caller_identity" "current" {}
+data "aws_iam_policy_document" "dpc_policies" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    resources = [
+      "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
+    ]
+  }
+
+  statement {
+    actions = [
+      "rds-db:connect"
+    ]
+    resources = ["arn:aws:rds-db:us-east-1:${data.aws_caller_identity.current.account_id}:dbuser:${data.aws_rds_cluster.this.cluster_resource_id}/${var.env}-dpc_consent-role"]
+  }
+
 }
 
 data "aws_rds_cluster" "this" {
@@ -43,7 +65,7 @@ module "opt_out_import_function" {
   runtime = "provided.al2"
 
   function_role_inline_policies = {
-    assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
+    assume-bucket-role = local.policies[var.app]
   }
 
   environment_variables = {
