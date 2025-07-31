@@ -26,7 +26,7 @@ jobs:
       - uses: ./actions/setup-tfenv-terraform
       - run: terraform fmt -check -diff -recursive terraform/services/opt-out-import
 
-  plan-apply:
+  plan-apply-dpc:
     needs: check-fmt
     permissions:
       contents: read
@@ -38,8 +38,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [dpc]
+        app: [bcda, dpc]
         env: [test]
+        include:
+          - env: dev
+            app: bcda
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
