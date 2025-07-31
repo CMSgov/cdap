@@ -14,6 +14,37 @@ The distributed `sopsw` wrapper script requires the following to be installed fo
 * yq
 * envsubst
 
+## Example Usage
+
+``` hcl
+# Ensure `ref` in the following line is pinned to something static
+# e.g. a known branch, commit hash, or tag from **this repository**
+module "platform" {
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=<hash|tag|branch>"
+  providers = { aws = aws, aws.secondary = aws.secondary }
+
+  app         = var.app
+  env         = var.env
+  root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-config"
+  service     = var.service
+}
+
+# Ensure `ref` in the following line is pinned to something static
+# e.g. a known branch, commit hash, or tag from **this repository**
+module "sops" {
+  source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=<hash|tag|branch>"
+
+  platform = module.platform
+}
+
+
+output "edit" {
+  value = module.sops.sopsw
+}
+```
+
+
+
 <!-- TODO: Write standards, examples, etc for usage of this module -->
 
 <!-- BEGIN_TF_DOCS -->
