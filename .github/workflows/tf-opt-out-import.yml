@@ -38,8 +38,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [dpc]
+        app: [bcda, dpc]
         env: [test]
+        include:
+          - env: dev
+            app: bcda
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
