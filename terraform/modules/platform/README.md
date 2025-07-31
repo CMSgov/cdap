@@ -85,7 +85,7 @@ provider "aws" {
 | <a name="input_root_module"></a> [root\_module](#input\_root\_module) | The full URL to the terraform module root at issue for this infrastructure | `string` | n/a | yes |
 | <a name="input_service"></a> [service](#input\_service) | Service _or_ terraservice name. | `string` | n/a | yes |
 | <a name="input_additional_tags"></a> [additional\_tags](#input\_additional\_tags) | Additional tags to merge into final default\_tags output | `map(string)` | `{}` | no |
-| <a name="input_ssm_root_map"></a> [ssm\_root\_map](#input\_ssm\_root\_map) | Map of SSM paramter hierarchy roots or path prefixes for use in an [SSM Parameters By Path data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameters_by_path) | `map(any)` | `{}` | no |
+| <a name="input_ssm_root_map"></a> [ssm\_root\_map](#input\_ssm\_root\_map) | Map of SSM parameter hierarchy roots or path prefixes for use in an [SSM Parameters By Path data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameters_by_path) | `map(any)` | `{}` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
