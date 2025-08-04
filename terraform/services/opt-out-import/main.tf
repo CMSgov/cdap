@@ -1,7 +1,7 @@
 locals {
-  full_name  = "${var.app}-${var.env}-opt-out-import"
-  bfd_env    = var.env == "prod" ? "prod" : "test"
-  db_sg_name = "${var.app}-${var.env}-db"
+  full_name              = "${var.app}-${var.env}-opt-out-import"
+  bfd_env                = var.env == "prod" ? "prod" : "test"
+  db_sg_name             = "${var.app}-${var.env}-db"
   bfd_bucket_access_role = "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
   policies = {
     bcda = data.aws_iam_policy_document.bcda_policies.json
@@ -17,7 +17,7 @@ data "aws_iam_policy_document" "bcda_policies" {
   statement {
     actions = ["sts:AssumeRole"]
     resources = [
-     local.bfd_bucket_access_role
+      local.bfd_bucket_access_role
     ]
   }
 }
@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "dpc_policies" {
   statement {
     actions = ["sts:AssumeRole"]
     resources = [
-     local.bfd_bucket_access_role
+      local.bfd_bucket_access_role
     ]
   }
 
