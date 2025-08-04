@@ -1,6 +1,7 @@
 formatter: markdown table
 sections:
   show:
+    - providers
     - requirements
     - inputs
     - resources
@@ -18,6 +19,9 @@ content: |-
     -->`}}
 
     {{- $warning }}
+    {{ .Providers }}
+
+    {{ $warning }}
     {{ .Requirements }}
 
     {{ $warning }}
