@@ -1,9 +1,6 @@
 locals {
   provider_domain = "token.actions.githubusercontent.com"
   repos = {
-    ab2d = [
-      "repo:CMSgov/ab2d-lambdas:*",
-    ]
     bcda = [
       "repo:CMSgov/bcda-app:*",
     ]
