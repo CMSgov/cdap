@@ -26,7 +26,7 @@ jobs:
       - uses: ./actions/setup-tfenv-terraform
       - run: terraform fmt -check -diff -recursive terraform/services/opt-out-import
 
-  plan-apply-dpc:
+  plan-apply:
     needs: check-fmt
     permissions:
       contents: read

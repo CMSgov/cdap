@@ -1,6 +1,7 @@
 locals {
   full_name = "${var.app}-${var.env}-opt-out-export"
   bfd_env   = var.env == "prod" ? "prod" : "test"
+  bfd_bucket_access_role = "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
   cron = {
     bcda = {
       prod = "cron(0 1 ? * * *)"
@@ -32,7 +33,7 @@ data "aws_iam_policy_document" "bcda_policies" {
   statement {
     actions = ["sts:AssumeRole"]
     resources = [
-      "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
+     local.bfd_bucket_access_role
     ]
   }
 }
@@ -42,7 +43,7 @@ data "aws_iam_policy_document" "dpc_policies" {
   statement {
     actions = ["sts:AssumeRole"]
     resources = [
-      "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
+     local.bfd_bucket_access_role
     ]
   }
 
