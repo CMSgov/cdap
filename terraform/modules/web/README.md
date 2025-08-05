@@ -1,31 +1,73 @@
 # CDAP Web Module
 
-This module creates a CloudFront distribution and associated resources intended for use with the AB2D, BCDA and DPC static websites. This module is semi-opinionated in that it (1) provides default values where those values are currently shared across the three static websites, (2) allows for a single origin only, and (3) limits cache behaviors to a single, default set.
-
-A sample minimal calling configuration is as follows:
+This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. A sample minimal calling configuration is as follows:
 
 ```
 module "cloudfront_test" {
   source = "../modules/web"
 
-  aws_cloudfront_origin_access_control = {
-    name                              = "example"
-    origin_access_control_origin_type = "s3"
-    signing_behavior                  = "always"
-    signing_protocol                  = "sigv4"
-  }
-
-  enabled = false
-
-  origin = {
-    s3_bucket_name = "stage.bcda.cms.gov2025??????????????00000001"
-    origin_id      = "s3_origin"
-  }
-
-  viewer_certificate = {
-    acm_certificate_arn      = "arn:aws:acm:us-east-1:????????????:certificate/????????-????-????-????-????????????"
-    minimum_protocol_version = "TLSv1.2_2021"
-    ssl_support_method       = "sni-only"
-  }
+  app                   = "bcda"
+  origin_s3_bucket_name = "stage.bcda.cms.gov2025??????????????00000001"
+  staging               = true
 }
 ```
+
+<!-- BEGIN_TF_DOCS -->
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Requirements
+
+No requirements.
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_app"></a> [app](#input\_app) | Name of the associated DASG application. | `string` | n/a | yes |
+| <a name="input_origin_s3_bucket_name"></a> [origin\_s3\_bucket\_name](#input\_origin\_s3\_bucket\_name) | The name of the S3 origin bucket. Ex.: '<app>.cms.gov2025??????????????00000001'. | `string` | n/a | yes |
+| <a name="input_enabled"></a> [enabled](#input\_enabled) | (Required) - Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
+| <a name="input_staging"></a> [staging](#input\_staging) | A Boolean that indicates whether this is a staging distribution. Defaults to false. | `bool` | `false` | no |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Modules
+
+No modules.
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Resources
+
+| Name | Type |
+|------|------|
+| [aws_cloudfront_distribution.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution) | resource |
+| [aws_cloudfront_origin_access_control.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_origin_access_control) | resource |
+| [aws_acm_certificate.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/acm_certificate) | data source |
+| [aws_wafv2_web_acl.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/wafv2_web_acl) | data source |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_distribution_arn"></a> [distribution\_arn](#output\_distribution\_arn) | n/a |
+| <a name="output_distribution_domain_name"></a> [distribution\_domain\_name](#output\_distribution\_domain\_name) | n/a |
+<!-- END_TF_DOCS -->
