@@ -1,5 +1,5 @@
 locals {
-  full_name = "larm-to-slack"
+  full_name = "${var.app}-${var.env}-alarm-to-slack"
 
   ignore_ok = {
     "dpc"  = "true"
