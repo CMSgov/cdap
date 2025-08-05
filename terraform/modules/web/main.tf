@@ -1,105 +1,85 @@
+locals {
+  domain_prefix = var.staging ? "stage.${var.app}" : "${var.app}"
+}
+
+data "aws_acm_certificate" "this" {
+  domain   = "${local.domain_prefix}.cms.gov"
+  statuses = ["ISSUED"]
+}
+
 data "aws_wafv2_web_acl" "this" {
-  name  = var.aws_wafv2_web_acl.name
-  scope = var.aws_wafv2_web_acl.scope
+  name  = "SamQuickACLEnforcingV2"
+  scope = "CLOUDFRONT"
 }
 
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = var.aws_cloudfront_origin_access_control.name
-  description                       = var.aws_cloudfront_origin_access_control.description
-  origin_access_control_origin_type = var.aws_cloudfront_origin_access_control.origin_access_control_origin_type
-  signing_behavior                  = var.aws_cloudfront_origin_access_control.signing_behavior
-  signing_protocol                  = var.aws_cloudfront_origin_access_control.signing_protocol
+  name                              = "${local.domain_prefix}-s3-origin"
+  description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
 
 resource "aws_cloudfront_distribution" "this" {
-  aliases             = var.aliases
-  anycast_ip_list_id  = var.anycast_ip_list_id
-  comment             = var.comment
-  default_root_object = var.default_root_object
-  enabled             = var.enabled
-  http_version        = var.http_version
-  is_ipv6_enabled     = var.is_ipv6_enabled
-  price_class         = var.price_class
-  retain_on_delete    = var.retain_on_delete
-  staging             = var.staging
-  tags                = var.tags
-  wait_for_deployment = var.wait_for_deployment
-  web_acl_id          = data.aws_wafv2_web_acl.this.arn    
+  aliases             = ["${data.aws_acm_certificate.this.domain}"]
+  comment             = "Distribution for the ${local.domain_prefix} website"
+  default_root_object = "index.html"
+  enabled             = true
+  http_version        = "http2and3"
+  is_ipv6_enabled     = true
+  price_class         = "PriceClass_100"
+  web_acl_id          = data.aws_wafv2_web_acl.this.arn
 
-  dynamic "custom_error_response" {
-    for_each = var.custom_error_responses
-    content {
-      error_caching_min_ttl = custom_error_response.value.error_caching_min_ttl
-      error_code            = custom_error_response.value.error_code
-      response_code         = custom_error_response.value.response_code
-      response_page_path    = custom_error_response.value.response_page_path
-    }
+  custom_error_response {
+    error_caching_min_ttl = 10
+    error_code            = 403
+    response_code         = 404
+    response_page_path    = "/404.html"
+  }
+
+  custom_error_response {
+    error_caching_min_ttl = 10
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/404.html"
   }
 
   default_cache_behavior {
-    allowed_methods             = var.default_cache_behavior.allowed_methods
-    cached_methods              = var.default_cache_behavior.cached_methods
-    cache_policy_id             = var.default_cache_behavior.cache_policy_id
-    compress                    = var.default_cache_behavior.compress
-    default_ttl                 = var.default_cache_behavior.default_ttl
-    field_level_encryption_id   = var.default_cache_behavior.field_level_encryption_id
-    max_ttl                     = var.default_cache_behavior.max_ttl
-    min_ttl                     = var.default_cache_behavior.min_ttl
-    origin_request_policy_id    = var.default_cache_behavior.origin_request_policy_id
-    realtime_log_config_arn     = var.default_cache_behavior.realtime_log_config_arn
-    response_headers_policy_id  = var.default_cache_behavior.response_headers_policy_id
-    smooth_streaming            = var.default_cache_behavior.smooth_streaming
-    target_origin_id            = var.origin.origin_id
-    trusted_key_groups          = var.default_cache_behavior.trusted_key_groups
-    trusted_signers             = var.default_cache_behavior.trusted_signers
-    viewer_protocol_policy      = var.default_cache_behavior.viewer_protocol_policy
+    allowed_methods             = ["GET", "HEAD"]
+    cached_methods              = ["GET", "HEAD"]
+    cache_policy_id             = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    compress                    = true
+    default_ttl                 = 3600
+    max_ttl                     = 86400
+    min_ttl                     = 0
+    target_origin_id            = "s3_origin"
+    viewer_protocol_policy      = "redirect-to-https"
   
-    dynamic function_association {
-      for_each =  var.default_cache_behavior.function_association
-      content {
-        event_type    = function_association["event_type"]
-        function_arn  = function_association["function_arn"]
-      }
-    }
+    forwarded_values {
+      query_string = false
 
-    dynamic lambda_function_association {
-      for_each = var.default_cache_behavior.lambda_function_association
-      content {
-        event_type    = lambda_function_association["event_type"]
-        lambda_arn    = lambda_function_association["lambda_arn"]
-        include_body  = lambda_function_association["include_body"]
+      cookies {
+        forward = "none"
       }
-    }
-  }
-
-  dynamic logging_config {
-    for_each = var.logging_config
-    content {
-      bucket          = var.logging_config.bucket
-      include_cookies = var.logging_config.include_cookies
-      prefix          = var.logging_config.prefix
     }
   }
 
   origin {
-    connection_attempts       = var.origin.connection_attempts
-    connection_timeout        = var.origin.connection_timeout
-    domain_name               = "${var.origin.s3_bucket_name}.s3.us-east-1.amazonaws.com"
+    domain_name               = "${var.origin_s3_bucket_name}.s3.us-east-1.amazonaws.com"
     origin_access_control_id  = aws_cloudfront_origin_access_control.this.id
-    origin_id                 = var.origin.origin_id
-    origin_path               = var.origin.origin_path
+    origin_id                 = "s3_origin"
   }
 
   restrictions {
     geo_restriction {
-      restriction_type  = var.restrictions.restriction_type
-      locations         = var.restrictions.locations
+      restriction_type  = "whitelist"
+      locations         = ["US"]
     }
   }
 
   viewer_certificate {
-    acm_certificate_arn      = var.viewer_certificate.acm_certificate_arn
-    minimum_protocol_version = var.viewer_certificate.minimum_protocol_version
-    ssl_support_method       = var.viewer_certificate.ssl_support_method
+    acm_certificate_arn      = data.aws_acm_certificate.this.arn
+    minimum_protocol_version = "TLSv1.2_2021"
+    ssl_support_method       = "sni-only"
   }
 }
