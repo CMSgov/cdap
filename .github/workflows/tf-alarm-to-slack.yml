@@ -38,8 +38,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [dpc]
-        env: [dev, test, sandbox, prod]
+        app: [bcda]
+        env: [dev, prod]
     steps:
       - uses: actions/checkout@v4
       - run: |
@@ -54,12 +54,12 @@ jobs:
       - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}-gf.s3.tfbackend
       - run: terraform plan -out=tf.plan
         env:
+          TF_VAR_app_envs: ${{ contains(fromJSON('["dev", "test"]'), matrix.env) && '["dpc-dev", "dpc-test", "ab2d-dev", "ab2d-test", "bcda-dev", "bcda-test"]' || '["dpc-prod", "dpc-sandbox", "ab2d-prod", "ab2d-sandbox", "bcda-prod", "bcda-sandbox"]' }}
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
-          TF_VAR_legacy: "false"
       - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: |
           terraform apply -auto-approve tf.plan
           cd lambda_src
           zip deploy.zip lambda_function.py
-          aws lambda update-function-code --function-name "${{ matrix.app }}-${{ matrix.env }}-alarm-to-slack" --zip-file fileb://deploy.zip
+          aws lambda update-function-code --function-name "larm-to-slack" --zip-file fileb://deploy.zip

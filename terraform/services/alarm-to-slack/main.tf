@@ -1,13 +1,11 @@
 locals {
-  full_name = "${var.app}-${var.env}-alarm-to-slack"
-  # Whether to send messages when state returns to OK
-  ignore_ok = {
-    "dpc" = "true"
-  }
-}
+  full_name = "larm-to-slack"
 
-data "aws_ssm_parameter" "slack_webhook_url" {
-  name = "/${var.app}/lambda/slack_webhook_url"
+  ignore_ok = {
+    "dpc"  = "true"
+    "ab2d" = "true"
+    "bcda" = "true"
+  }
 }
 
 module "sns_to_slack_function" {
@@ -23,16 +21,14 @@ module "sns_to_slack_function" {
   runtime = "python3.13"
 
   environment_variables = {
-    ENV               = var.env
-    APP_NAME          = "${var.app}-${var.env}-alarm-to-slack"
-    SLACK_WEBHOOK_URL = data.aws_ssm_parameter.slack_webhook_url.value
-    IGNORE_OK         = local.ignore_ok[var.app]
+
+    IGNORE_OK_APPS = join(",", keys(local.ignore_ok))
   }
 }
 
-# Set up queue for receiving messages when a cloudwatch alert is sent
-data "aws_sns_topic" "cloudwatch" {
-  name = "${var.app}-${var.env}-cloudwatch-alarms"
+data "aws_sns_topic" "cloudwatch_alarms" {
+  for_each = toset(var.app_envs)
+  name     = "${each.key}-cloudwatch-alarms"
 }
 
 module "sns_to_slack_queue" {
@@ -41,5 +37,12 @@ module "sns_to_slack_queue" {
   name = local.full_name
 
   function_name = module.sns_to_slack_function.name
-  sns_topic_arn = data.aws_sns_topic.cloudwatch.arn
+}
+
+resource "aws_sns_topic_subscription" "cloudwatch_alarms_to_queue" {
+  for_each   = data.aws_sns_topic.cloudwatch_alarms
+  topic_arn  = each.value.arn
+  protocol   = "sqs"
+  endpoint   = module.sns_to_slack_queue.arn
+  depends_on = [module.sns_to_slack_queue]
 }
