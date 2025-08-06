@@ -23,10 +23,11 @@ NON_CLOUDWATCH_RECORDS = (
 )
 
 
-@patch('lambda_function.boto3.client')
-def setup_module(mock_boto_client):
-    """Setup mock boto3 client for tests."""
-    # No specific setup needed here currently
+@pytest.fixture(autouse=True)
+def mock_boto3_client():
+    """Automatically mock boto3.client for all tests."""
+    with patch('lambda_function.boto3.client') as mock_client:
+        yield mock_client
 
 
 def reload_lambda():
