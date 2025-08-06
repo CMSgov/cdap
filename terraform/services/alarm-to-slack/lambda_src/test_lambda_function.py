@@ -22,14 +22,19 @@ NON_CLOUDWATCH_RECORDS = (
 )
 
 @patch('lambda_function.boto3.client')
-@patch('lambda_function.ssm_client')
-def setup_module(mock_ssm_client, mock_boto_client):
-    """Module-level setup to patch boto3 and SSM clients for tests."""
-    _ = mock_ssm_client
-    _ = mock_boto_client
+def setup_module(mock_boto_client):
+    pass
+
+def reload_lambda():
+    import importlib
+    import sys
+    if 'lambda_function' in sys.modules:
+        importlib.reload(sys.modules['lambda_function'])
+    else:
+        import lambda_function
+    return sys.modules['lambda_function']
 
 def test_cloudwatch_message_sqs_record():
-    """Test happy path of retrieving CloudWatch Message from SQS record."""
     cloudwatch_message = {'OldStateValue': 'ALARM',
                         'NewStateValue': 'OK',
                         'AlarmName': 'app-dev-alarm'}
@@ -41,12 +46,10 @@ def test_cloudwatch_message_sqs_record():
 
 @pytest.mark.parametrize("non_cloudwatch_records", NON_CLOUDWATCH_RECORDS)
 def test_cloudwatch_message_non_cloudwatch_records(non_cloudwatch_records):
-    """Test cloudwatch message when SQS record is not from CloudWatch Alarm."""
     message = lambda_function.cloudwatch_message(non_cloudwatch_records)
     assert message is None
 
 def test_enriched_cloudwatch_message_alarm_record():
-    """Test enriching CloudWatch Alarm Message from SQS record (happy path)."""
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'OK',
@@ -68,8 +71,7 @@ def test_enriched_cloudwatch_message_alarm_record():
 
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
-    """Test enrichment when IGNORE_OK is false, alarm state ALARM."""
-    reload(lambda_function)
+    reload_lambda()
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'OK',
@@ -90,7 +92,6 @@ def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
     assert message == enriched_cloudwatch_message
 
 def test_enriched_cloudwatch_message_ok_record():
-    """Test enrichment when alarm state transitions to OK."""
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'ALARM',
@@ -112,8 +113,7 @@ def test_enriched_cloudwatch_message_ok_record():
 
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_ok_record_ignore_false():
-    """Test enrichment when IGNORE_OK is false, alarm state OK."""
-    reload(lambda_function)
+    reload_lambda()
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'ALARM',
@@ -135,8 +135,7 @@ def test_enriched_cloudwatch_message_ok_record_ignore_false():
 
 @patch.dict(os.environ, {'IGNORE_OK': 'true'}, clear=True)
 def test_enriched_cloudwatch_message_ok_record_ok_ignored():
-    """Test enrichment ignores OK state when IGNORE_OK is globally true."""
-    reload(lambda_function)
+    reload_lambda()
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'ALARM',
@@ -150,13 +149,11 @@ def test_enriched_cloudwatch_message_ok_record_ok_ignored():
 
 @pytest.mark.parametrize("non_cloudwatch_records", NON_CLOUDWATCH_RECORDS)
 def test_enriched_cloudwatch_message_non_cloudwatch_records(non_cloudwatch_records):
-    """Test enrichment returns None for non-cloudwatch records."""
     message = lambda_function.enriched_cloudwatch_message(non_cloudwatch_records)
     assert message is None
 
 @patch('lambda_function.log')
 def test_enriched_cloudwatch_message_alarmname_does_not_match(mock_log):
-    """Test enrichment when AlarmName does not match expected format."""
     cloudwatch_message = {
         'AlarmName': 'invalidformat',
         'OldStateValue': 'ALARM',
@@ -175,7 +172,6 @@ def test_enriched_cloudwatch_message_alarmname_does_not_match(mock_log):
 
 @patch('lambda_function.log')
 def test_enriched_cloudwatch_message_alarmname_not_found(mock_log):
-    """Test enrichment when AlarmName is missing from the message."""
     cloudwatch_message = {
         'OldStateValue': 'ALARM',
         'NewStateValue': 'OK'
@@ -193,7 +189,6 @@ def test_enriched_cloudwatch_message_alarmname_not_found(mock_log):
 
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_happy_path(mock_urlopen):
-    """Test sending message to Slack with a 200 response."""
     cm = MagicMock()
     cm.status = 200
     cm.__enter__.return_value = cm
@@ -203,7 +198,6 @@ def test_send_message_to_slack_happy_path(mock_urlopen):
 
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_bad_resp(mock_urlopen):
-    """Test sending message to Slack with a non-200 response."""
     cm = MagicMock()
     cm.status = 404
     cm.__enter__.return_value = cm
@@ -213,19 +207,16 @@ def test_send_message_to_slack_bad_resp(mock_urlopen):
 
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_url_error(mock_urlopen):
-    """Test sending message to Slack raises URLError."""
     mock_urlopen.side_effect = URLError('forced error')
     assert lambda_function.send_message_to_slack(
         'https://dpc.cms.gov', {'foo': 'bar'}, 'url error') is False
 
 def test_send_message_to_slack_no_webhook():
-    """Test sending message to Slack with no webhook URL."""
     assert lambda_function.send_message_to_slack(None, {'foo': 'bar'}, 'no webhook') is False
 
 @patch('lambda_function.get_ssm_parameter')
 @patch('urllib.request.urlopen')
 def test_handler(mock_urlopen, mock_get_ssm_parameter):
-    """Test the lambda_handler processes one SQS record correctly."""
     mock_get_ssm_parameter.return_value = 'https://dpc.cms.gov'
     cm = MagicMock()
     cm.status = 200
@@ -245,7 +236,6 @@ def test_handler(mock_urlopen, mock_get_ssm_parameter):
     assert response['body'] == 'Processed 1 messages successfully'
 
 def test_logger(capsys):
-    """Test that logger outputs JSON-formatted logs."""
     lambda_function.log({'test': 'log'})
     captured = capsys.readouterr()
     log_output = json.loads(captured.out)

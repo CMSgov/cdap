@@ -11,15 +11,12 @@ from urllib.error import URLError
 import boto3
 from botocore.exceptions import ClientError
 
+def get_ssm_client():
+    return boto3.client('ssm')
+
 ssm_parameter_cache = {}
 
 IGNORE_OK = os.environ.get('IGNORE_OK', 'false').lower() == 'true'
-
-def get_ssm_client():
-    """
-    Lazily initializes and returns a boto3 SSM client.
-    """
-    return boto3.client('ssm')
 
 def get_ssm_parameter(name):
     """
