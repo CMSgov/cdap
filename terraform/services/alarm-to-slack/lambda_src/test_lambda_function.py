@@ -21,11 +21,6 @@ NON_CLOUDWATCH_RECORDS = (
      })})},
 )
 
-@patch('lambda_function.boto3.client')
-@patch('lambda_function.ssm_client')
-def setup_mock_boto3(mock_ssm_client, mock_boto_client):
-    pass
-
 def test_cloudwatch_message_sqs_record():
     """Test happy path of retrieving CloudWatch Message from SQS record."""
     cloudwatch_message = {'OldStateValue': 'ALARM',
