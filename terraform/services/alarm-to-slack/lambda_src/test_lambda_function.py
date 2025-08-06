@@ -1,5 +1,5 @@
 """
-pytest of lambda_function.py
+Unit tests for lambda_function.py that handle CloudWatch Alarm messages and Slack notifications.
 """
 
 import json
@@ -24,7 +24,9 @@ NON_CLOUDWATCH_RECORDS = (
 @patch('lambda_function.boto3.client')
 @patch('lambda_function.ssm_client')
 def setup_module(mock_ssm_client, mock_boto_client):
-    pass
+    """Module-level setup to patch boto3 and SSM clients for tests."""
+    _ = mock_ssm_client
+    _ = mock_boto_client
 
 def test_cloudwatch_message_sqs_record():
     """Test happy path of retrieving CloudWatch Message from SQS record."""
