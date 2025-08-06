@@ -11,10 +11,15 @@ from urllib.error import URLError
 import boto3
 from botocore.exceptions import ClientError
 
-ssm_client = boto3.client('ssm')
 ssm_parameter_cache = {}
 
 IGNORE_OK = os.environ.get('IGNORE_OK', 'false').lower() == 'true'
+
+def get_ssm_client():
+    """
+    Lazily initializes and returns a boto3 SSM client.
+    """
+    return boto3.client('ssm')
 
 def get_ssm_parameter(name):
     """
@@ -25,7 +30,7 @@ def get_ssm_parameter(name):
         return ssm_parameter_cache[name]
 
     try:
-        response = ssm_client.get_parameter(Name=name, WithDecryption=True)
+        response = get_ssm_client().get_parameter(Name=name, WithDecryption=True)
         value = response['Parameter']['Value']
         ssm_parameter_cache[name] = value
         return value
