@@ -75,7 +75,7 @@ def cloudwatch_message(record):
                  'messageId': record.get('messageId')})
             return None
 
-        return message 
+        return message
     except json.JSONDecodeError:
         log({'msg': 'Did not receive an SNS CloudWatch payload',
              'messageId': record.get('messageId')})
@@ -150,7 +150,7 @@ def send_message_to_slack(webhook, message, message_id):
         log({'msg': f'Unsuccessful attempt to send message to Slack ({e.reason})',
              'messageId': message_id})
         return False
-
+    
 def log(data):
     """
     Enriches the log message with the current time and prints it to standard out.

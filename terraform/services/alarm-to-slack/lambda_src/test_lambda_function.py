@@ -7,8 +7,9 @@ import os
 from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
-import pytest
 from importlib import reload
+
+import pytest
 
 import lambda_function
 
@@ -60,7 +61,7 @@ def test_enriched_cloudwatch_message_alarm_record():
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
     """Test enrichment when IGNORE_OK is false, alarm state ALARM."""
-    reload(lambda_function) 
+    reload(lambda_function)
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'OK',
@@ -167,7 +168,6 @@ def test_enriched_cloudwatch_message_alarmname_does_not_match(mock_log):
 @patch('lambda_function.log')
 def test_enriched_cloudwatch_message_alarmname_not_found(mock_log):
     """Test enrichment when AlarmName is missing from the message."""
-
     cloudwatch_message = {
         'OldStateValue': 'ALARM',
         'NewStateValue': 'OK'
