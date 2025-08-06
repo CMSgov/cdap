@@ -20,7 +20,6 @@ def get_ssm_client():
     """
     return boto3.client('ssm')
 
-
 def get_ssm_parameter(name):
     """
     Retrieves an SSM parameter and caches the value to prevent duplicate API calls.
@@ -40,14 +39,12 @@ def get_ssm_parameter(name):
         ssm_parameter_cache[name] = None
         return None
 
-
 def is_ignore_ok():
     """
     Returns the current value of the IGNORE_OK environment variable.
     This allows tests to patch the environment dynamically.
     """
     return os.environ.get('IGNORE_OK', 'false').lower() == 'true'
-
 
 def lambda_handler(event, _):
     """
@@ -73,7 +70,6 @@ def lambda_handler(event, _):
         'body': f'Processed {processed_count} messages successfully'
     }
 
-
 def cloudwatch_message(record):
     """
     Parses the SQS record for the CloudWatch Alarm JSON payload.
@@ -93,7 +89,6 @@ def cloudwatch_message(record):
         log({'msg': 'Did not receive an SNS CloudWatch payload',
              'messageId': record.get('messageId')})
     return None
-
 
 def enriched_cloudwatch_message(record):
     """
@@ -136,7 +131,6 @@ def enriched_cloudwatch_message(record):
 
     message['Emoji'] = ':checked:' if message['NewStateValue'] == 'OK' else ':anger:'
     return message
-
 
 def send_message_to_slack(webhook, message, message_id):
     """
