@@ -6,46 +6,32 @@ Forwards the alarms to Slack, with an emoji that says good or bad.
 from datetime import datetime, timezone
 import json
 import os
-import re
 from urllib import request
 from urllib.error import URLError
 import boto3
 from botocore.exceptions import ClientError
 
 ssm_client = boto3.client('ssm')
-
 ssm_parameter_cache = {}
 
-ignore_ok_apps = []
-
-def initialize_ignore_ok_list(target_list):
-    """Initializes the target_list from the environment variable."""
-    ignore_ok_string = os.environ.get('IGNORE_OK_APPS', '')
-    target_list.clear()
-    target_list.extend(
-        app.strip() for app in ignore_ok_string.split(',') if app.strip()
-    )
-
-initialize_ignore_ok_list(ignore_ok_apps)
+IGNORE_OK = os.environ.get('IGNORE_OK', 'false').lower() == 'true'
 
 def get_ssm_parameter(name):
     """
     Retrieves an SSM parameter and caches the value to prevent duplicate API calls.
-    Returns None if the parameter is not found or an error occurs.
+    Caches None if the parameter is not found or an error occurs.
     """
     if name in ssm_parameter_cache:
         return ssm_parameter_cache[name]
 
     try:
-        response = ssm_client.get_parameter(
-            Name=name,
-            WithDecryption=True
-        )
+        response = ssm_client.get_parameter(Name=name, WithDecryption=True)
         value = response['Parameter']['Value']
         ssm_parameter_cache[name] = value
         return value
     except ClientError as e:
         log({'msg': f'Error getting SSM parameter {name}: {e}'})
+        ssm_parameter_cache[name] = None
         return None
 
 def lambda_handler(event, _):
@@ -75,7 +61,8 @@ def lambda_handler(event, _):
 def cloudwatch_message(record):
     """
     Parses the SQS record for the CloudWatch Alarm JSON payload.
-    Returns the parsed message dictionary or None if parsing fails.
+    Validates it has AlarmName. Returns the parsed message or None.
+    Added logging when AlarmName is missing to support test assertions.
     """
     try:
         body_s = record['body']
@@ -83,56 +70,58 @@ def cloudwatch_message(record):
         message_s = body['Message']
         message = json.loads(message_s)
 
-        if message.get('OldStateValue'):
-            return message
+        if 'AlarmName' not in message:
+            log({'msg': 'AlarmName not found in message',
+                 'messageId': record.get('messageId')})
+            return None
+
+        return message 
     except json.JSONDecodeError:
-        log({'msg': 'Did not receive an SNS Cloudwatch payload',
+        log({'msg': 'Did not receive an SNS CloudWatch payload',
              'messageId': record.get('messageId')})
     return None
 
 def enriched_cloudwatch_message(record):
     """
     Parses the CloudWatch message, extracts the app and env from the alarm name,
-    and enriches it with an emoji for display.
+    validates env is in dev|test|sandbox|prod, and enriches it with an emoji.
+
+    **NOTE:** Removed AlarmName missing check here because it's handled in cloudwatch_message.
     """
     message = cloudwatch_message(record)
-    if message:
-        alarm_name = message.get('AlarmName')
-        if alarm_name:
-            match = re.match(r'^(?P<app>[a-zA-Z0-9]+)-.*', alarm_name)
-            if match:
-                app_name = match.group('app')
-                message['App'] = app_name
+    if not message:
+        return None
 
-                env_match = re.match(
-                    r'^[a-zA-Z0-9]+-(?P<env>[a-zA-Z0-9]+)-.*',
-                    alarm_name)
-                if env_match:
-                    message['Env'] = env_match.group('env')
+    alarm_name = message['AlarmName']
+    parts = alarm_name.split('-')
+    if len(parts) < 2:
+        log({'msg': f'AlarmName "{alarm_name}" does not match expected format',
+             'messageId': record.get('messageId')})
+        return None
 
-                log({'App': app_name,
-                     'AlarmName': alarm_name,
-                     'NewStateValue': message.get('NewStateValue'),
-                     'OldStateValue': message.get('OldStateValue'),
-                     'StateChangeTime': message.get('StateChangeTime'),
-                     'msg': 'Received CloudWatch Alarm',
-                     'messageId': record.get('messageId')})
+    message['App'] = parts[0]
+    env = parts[1]
 
-                if message['NewStateValue'] == 'OK' and app_name in ignore_ok_apps:
-                    return None
+    if env not in ["dev", "test", "sandbox", "prod"]:
+        log({'msg': f'Environment "{env}" in AlarmName "{alarm_name}" is not valid',
+             'messageId': record.get('messageId')})
+        return None
 
-                if message['NewStateValue'] == 'OK':
-                    message['Emoji'] = ':checked:'
-                else:
-                    message['Emoji'] = ':anger:'
-            else:
-                log({'msg': f'AlarmName "{alarm_name}" does not match expected format',
-                     'messageId': record.get('messageId')})
-                return None
-        else:
-            log({'msg': 'AlarmName not found in message',
-                 'messageId': record.get('messageId')})
-            return None
+    message['Env'] = env
+
+    log({'App': message['App'],
+         'Env': message['Env'],
+         'AlarmName': alarm_name,
+         'NewStateValue': message.get('NewStateValue'),
+         'OldStateValue': message.get('OldStateValue'),
+         'StateChangeTime': message.get('StateChangeTime'),
+         'msg': 'Received CloudWatch Alarm',
+         'messageId': record.get('messageId')})
+
+    if message['NewStateValue'] == 'OK' and IGNORE_OK:
+        return None
+
+    message['Emoji'] = ':checked:' if message['NewStateValue'] == 'OK' else ':anger:'
     return message
 
 def send_message_to_slack(webhook, message, message_id):

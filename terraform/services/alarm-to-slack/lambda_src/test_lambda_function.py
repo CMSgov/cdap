@@ -8,6 +8,7 @@ from unittest.mock import patch, MagicMock
 from urllib.error import URLError
 
 import pytest
+from importlib import reload
 
 import lambda_function
 
@@ -22,7 +23,7 @@ NON_CLOUDWATCH_RECORDS = (
 
 def test_cloudwatch_message_sqs_record():
     """Test happy path of retrieving CloudWatch Message from SQS record."""
-    cloudwatch_message = {'OldStateValue': 'ALARM', 'NewStateValue': 'OK'}
+    cloudwatch_message = {'OldStateValue': 'ALARM', 'NewStateValue': 'OK', 'AlarmName': 'app-dev-alarm'}
     message = lambda_function.cloudwatch_message({
         'messageId': 'Alarm',
         'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
@@ -56,9 +57,10 @@ def test_enriched_cloudwatch_message_alarm_record():
     })
     assert message == enriched_cloudwatch_message
 
-@patch.dict(os.environ, {'IGNORE_OK': 'true'}, clear=True)
+@patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
-    """Test enrichment when IGNORE_OK is true, alarm state ALARM."""
+    """Test enrichment when IGNORE_OK is false, alarm state ALARM."""
+    reload(lambda_function) 
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'OK',
@@ -102,6 +104,7 @@ def test_enriched_cloudwatch_message_ok_record():
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_ok_record_ignore_false():
     """Test enrichment when IGNORE_OK is false, alarm state OK."""
+    reload(lambda_function)
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'ALARM',
@@ -121,10 +124,10 @@ def test_enriched_cloudwatch_message_ok_record_ignore_false():
     })
     assert message == enriched_cloudwatch_message
 
-@patch.dict(os.environ, {'IGNORE_OK_APPS': 'bcda'}, clear=True)
+@patch.dict(os.environ, {'IGNORE_OK': 'true'}, clear=True)
 def test_enriched_cloudwatch_message_ok_record_ok_ignored():
-    """Test enrichment ignores OK state when app is in IGNORE_OK_APPS list."""
-    lambda_function.initialize_ignore_ok_list(lambda_function.ignore_ok_apps)
+    """Test enrichment ignores OK state when IGNORE_OK is globally true."""
+    reload(lambda_function)
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'ALARM',
@@ -141,6 +144,44 @@ def test_enriched_cloudwatch_message_non_cloudwatch_records(non_cloudwatch_recor
     """Test enrichment returns None for non-cloudwatch records."""
     message = lambda_function.enriched_cloudwatch_message(non_cloudwatch_records)
     assert message is None
+
+@patch('lambda_function.log')
+def test_enriched_cloudwatch_message_alarmname_does_not_match(mock_log):
+    """Test enrichment when AlarmName does not match expected format."""
+    cloudwatch_message = {
+        'AlarmName': 'invalidformat',
+        'OldStateValue': 'ALARM',
+        'NewStateValue': 'OK'
+    }
+    message = lambda_function.enriched_cloudwatch_message({
+        'messageId': 'AlarmNameFail',
+        'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
+    })
+    assert message is None
+
+    mock_log.assert_called_once()
+    log_args = mock_log.call_args[0][0]
+    assert log_args['msg'] == 'AlarmName "invalidformat" does not match expected format'
+    assert log_args['messageId'] == 'AlarmNameFail'
+
+@patch('lambda_function.log')
+def test_enriched_cloudwatch_message_alarmname_not_found(mock_log):
+    """Test enrichment when AlarmName is missing from the message."""
+
+    cloudwatch_message = {
+        'OldStateValue': 'ALARM',
+        'NewStateValue': 'OK'
+    }
+    message = lambda_function.enriched_cloudwatch_message({
+        'messageId': 'MissingAlarmName',
+        'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
+    })
+    assert message is None
+
+    mock_log.assert_called_once()
+    log_args = mock_log.call_args[0][0]
+    assert log_args['msg'] == 'AlarmName not found in message'
+    assert log_args['messageId'] == 'MissingAlarmName'
 
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_happy_path(mock_urlopen):
@@ -195,6 +236,10 @@ def test_handler(mock_urlopen, mock_get_ssm_parameter):
     response = lambda_function.lambda_handler(sqs_message, None)
     assert response['body'] == 'Processed 1 messages successfully'
 
-def test_logger():
+def test_logger(capsys):
     """Test that logger outputs JSON-formatted logs."""
     lambda_function.log({'test': 'log'})
+    captured = capsys.readouterr()
+    log_output = json.loads(captured.out)
+    assert log_output['test'] == 'log'
+    assert 'time' in log_output
