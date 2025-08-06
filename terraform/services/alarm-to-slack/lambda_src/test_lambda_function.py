@@ -22,20 +22,17 @@ NON_CLOUDWATCH_RECORDS = (
      })})},
 )
 
-
 @pytest.fixture(autouse=True)
 def mock_boto3_client():
     """Automatically mock boto3.client for all tests."""
     with patch('lambda_function.boto3.client') as mock_client:
         yield mock_client
 
-
 def reload_lambda():
     """Reload the lambda_function module to pick up environment variable changes."""
     if 'lambda_function' in sys.modules:
         importlib.reload(sys.modules['lambda_function'])
     return sys.modules['lambda_function']
-
 
 def test_cloudwatch_message_sqs_record():
     """Test parsing a valid CloudWatch message from an SQS record."""
@@ -50,13 +47,11 @@ def test_cloudwatch_message_sqs_record():
     })
     assert message == cloudwatch_message
 
-
 @pytest.mark.parametrize("non_cloudwatch_records", NON_CLOUDWATCH_RECORDS)
 def test_cloudwatch_message_non_cloudwatch_records(non_cloudwatch_records):
     """Test that non-CloudWatch messages return None."""
     message = lambda_function.cloudwatch_message(non_cloudwatch_records)
     assert message is None
-
 
 def test_enriched_cloudwatch_message_alarm_record():
     """Test enrichment of a CloudWatch alarm message."""
@@ -78,7 +73,6 @@ def test_enriched_cloudwatch_message_alarm_record():
         'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
     })
     assert message == enriched_cloudwatch_message
-
 
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
@@ -103,7 +97,6 @@ def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
     })
     assert message == enriched_cloudwatch_message
 
-
 def test_enriched_cloudwatch_message_ok_record():
     """Test enrichment of OK state message when IGNORE_OK is false."""
     cloudwatch_message = {
@@ -124,7 +117,6 @@ def test_enriched_cloudwatch_message_ok_record():
         'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
     })
     assert message == enriched_cloudwatch_message
-
 
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_ok_record_ignore_false():
@@ -149,7 +141,6 @@ def test_enriched_cloudwatch_message_ok_record_ignore_false():
     })
     assert message == enriched_cloudwatch_message
 
-
 @patch.dict(os.environ, {'IGNORE_OK': 'true'}, clear=True)
 def test_enriched_cloudwatch_message_ok_record_ok_ignored():
     """Test that OK state message is ignored when IGNORE_OK is true."""
@@ -165,13 +156,11 @@ def test_enriched_cloudwatch_message_ok_record_ok_ignored():
     })
     assert message is None
 
-
 @pytest.mark.parametrize("non_cloudwatch_records", NON_CLOUDWATCH_RECORDS)
 def test_enriched_cloudwatch_message_non_cloudwatch_records(non_cloudwatch_records):
     """Test enrichment returns None for non-cloudwatch messages."""
     message = lambda_function.enriched_cloudwatch_message(non_cloudwatch_records)
     assert message is None
-
 
 @patch('lambda_function.log')
 def test_enriched_cloudwatch_message_alarmname_does_not_match(mock_log):
@@ -192,7 +181,6 @@ def test_enriched_cloudwatch_message_alarmname_does_not_match(mock_log):
     assert log_args['msg'] == 'AlarmName "invalidformat" does not match expected format'
     assert log_args['messageId'] == 'AlarmNameFail'
 
-
 @patch('lambda_function.log')
 def test_enriched_cloudwatch_message_alarmname_not_found(mock_log):
     """Test handling of missing AlarmName in the message."""
@@ -211,7 +199,6 @@ def test_enriched_cloudwatch_message_alarmname_not_found(mock_log):
     assert log_args['msg'] == 'AlarmName not found in message'
     assert log_args['messageId'] == 'MissingAlarmName'
 
-
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_happy_path(mock_urlopen):
     """Test successful sending of message to Slack."""
@@ -221,7 +208,6 @@ def test_send_message_to_slack_happy_path(mock_urlopen):
     mock_urlopen.return_value = cm
     assert lambda_function.send_message_to_slack(
         'https://dpc.cms.gov', {'foo': 'bar'}, 'happy path') is True
-
 
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_bad_resp(mock_urlopen):
@@ -233,7 +219,6 @@ def test_send_message_to_slack_bad_resp(mock_urlopen):
     assert lambda_function.send_message_to_slack(
         'https://dpc.cms.gov', {'foo': 'bar'}, '404 error') is False
 
-
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_url_error(mock_urlopen):
     """Test Slack sending failure due to URL error."""
@@ -241,11 +226,9 @@ def test_send_message_to_slack_url_error(mock_urlopen):
     assert lambda_function.send_message_to_slack(
         'https://dpc.cms.gov', {'foo': 'bar'}, 'url error') is False
 
-
 def test_send_message_to_slack_no_webhook():
     """Test sending Slack message with no webhook URL provided."""
     assert lambda_function.send_message_to_slack(None, {'foo': 'bar'}, 'no webhook') is False
-
 
 @patch('lambda_function.get_ssm_parameter')
 @patch('urllib.request.urlopen')
@@ -268,7 +251,6 @@ def test_handler(mock_urlopen, mock_get_ssm_parameter):
 
     response = lambda_function.lambda_handler(sqs_message, None)
     assert response['body'] == 'Processed 1 messages successfully'
-
 
 def test_logger(capsys):
     """Test that logging outputs JSON with a time field."""
