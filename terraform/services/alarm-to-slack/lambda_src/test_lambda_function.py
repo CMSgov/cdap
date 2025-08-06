@@ -23,7 +23,9 @@ NON_CLOUDWATCH_RECORDS = (
 
 def test_cloudwatch_message_sqs_record():
     """Test happy path of retrieving CloudWatch Message from SQS record."""
-    cloudwatch_message = {'OldStateValue': 'ALARM', 'NewStateValue': 'OK', 'AlarmName': 'app-dev-alarm'}
+    cloudwatch_message = {'OldStateValue': 'ALARM',
+                        'NewStateValue': 'OK',
+                        'AlarmName': 'app-dev-alarm'}
     message = lambda_function.cloudwatch_message({
         'messageId': 'Alarm',
         'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
@@ -60,7 +62,7 @@ def test_enriched_cloudwatch_message_alarm_record():
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
     """Test enrichment when IGNORE_OK is false, alarm state ALARM."""
-    reload(lambda_function) 
+    reload(lambda_function)
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'OK',
