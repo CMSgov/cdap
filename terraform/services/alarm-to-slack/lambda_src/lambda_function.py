@@ -10,6 +10,7 @@ import re
 from urllib import request
 from urllib.error import URLError
 import boto3
+from botocore.exceptions import ClientError
 
 ssm_client = boto3.client('ssm')
 
@@ -17,16 +18,15 @@ ssm_parameter_cache = {}
 
 ignore_ok_apps = []
 
-def initialize_ignore_ok_list():
-    """
-    Initializes the ignore_ok_apps list from the environment variable.
-    """
-    global ignore_ok_apps
+def initialize_ignore_ok_list(target_list):
+    """Initializes the target_list from the environment variable."""
     ignore_ok_string = os.environ.get('IGNORE_OK_APPS', '')
-    ignore_ok_apps = [app.strip() for app in ignore_ok_string.split(',') if app.strip()]
+    target_list.clear()
+    target_list.extend(
+        app.strip() for app in ignore_ok_string.split(',') if app.strip()
+    )
 
-# Call the initialization function outside the handler to do it only once per cold start.
-initialize_ignore_ok_list()
+initialize_ignore_ok_list(ignore_ok_apps)
 
 def get_ssm_parameter(name):
     """
@@ -44,10 +44,7 @@ def get_ssm_parameter(name):
         value = response['Parameter']['Value']
         ssm_parameter_cache[name] = value
         return value
-    except ssm_client.exceptions.ParameterNotFound:
-        log({'msg': f'SSM parameter not found: {name}'})
-        return None
-    except Exception as e:
+    except ClientError as e:
         log({'msg': f'Error getting SSM parameter {name}: {e}'})
         return None
 
@@ -88,9 +85,9 @@ def cloudwatch_message(record):
 
         if message.get('OldStateValue'):
             return message
-    except json.decoder.JSONDecodeError:
-        log({'messageId': record.get('messageId'),
-             'msg': 'Did not receive an SNS Cloudwatch payload'})
+    except json.JSONDecodeError:
+        log({'msg': 'Did not receive an SNS Cloudwatch payload',
+             'messageId': record.get('messageId')})
     return None
 
 def enriched_cloudwatch_message(record):
@@ -107,32 +104,34 @@ def enriched_cloudwatch_message(record):
                 app_name = match.group('app')
                 message['App'] = app_name
 
-                env_match = re.match(r'^[a-zA-Z0-9]+-(?P<env>[a-zA-Z0-9]+)-.*', alarm_name)
+                env_match = re.match(
+                    r'^[a-zA-Z0-9]+-(?P<env>[a-zA-Z0-9]+)-.*',
+                    alarm_name)
                 if env_match:
                     message['Env'] = env_match.group('env')
 
-                log({'messageId': record.get('messageId'),
-                     'App': app_name,
+                log({'App': app_name,
                      'AlarmName': alarm_name,
                      'NewStateValue': message.get('NewStateValue'),
                      'OldStateValue': message.get('OldStateValue'),
                      'StateChangeTime': message.get('StateChangeTime'),
                      'msg': 'Received CloudWatch Alarm',
-                    })
+                     'messageId': record.get('messageId')})
 
-                global ignore_ok_apps
                 if message['NewStateValue'] == 'OK' and app_name in ignore_ok_apps:
                     return None
-                
+
                 if message['NewStateValue'] == 'OK':
                     message['Emoji'] = ':checked:'
                 else:
                     message['Emoji'] = ':anger:'
             else:
-                log({'messageId': record.get('messageId'), 'msg': f'AlarmName "{alarm_name}" does not match expected format'})
+                log({'msg': f'AlarmName "{alarm_name}" does not match expected format',
+                     'messageId': record.get('messageId')})
                 return None
         else:
-            log({'messageId': record.get('messageId'), 'msg': 'AlarmName not found in message'})
+            log({'msg': 'AlarmName not found in message',
+                 'messageId': record.get('messageId')})
             return None
     return message
 
@@ -141,26 +140,26 @@ def send_message_to_slack(webhook, message, message_id):
     Calls the Slack webhook with the formatted message. Returns success status.
     """
     if not webhook:
-        log({'messageId': message_id,
-             'msg': 'Unable to send to Slack as webhook URL is not set'})
+        log({'msg': 'Unable to send to Slack as webhook URL is not set',
+             'messageId': message_id})
         return False
     jsondata = json.dumps(message)
     jsondataasbytes = jsondata.encode('utf-8')
     req = request.Request(webhook)
     req.add_header('Content-Type', 'application/json; charset=utf-8')
-    req.add_header('Content-Length', len(jsondataasbytes))
+    req.add_header('Content-Length', str(len(jsondataasbytes)))
     try:
         with request.urlopen(req, jsondataasbytes) as resp:
             if resp.status == 200:
-                log({'messageId': message_id,
-                     'msg': 'Successfully sent message to Slack'})
+                log({'msg': 'Successfully sent message to Slack',
+                     'messageId': message_id})
                 return True
-            log({'messageId': message_id,
-                 'msg': f'Unsuccessful attempt to send message to slack ({resp.status})'})
+            log({'msg': f'Unsuccessful attempt to send message to Slack ({resp.status})',
+                 'messageId': message_id})
             return False
     except URLError as e:
-        log({'messageId': message_id,
-             'msg': f'Unsuccessful attempt to send message to slack ({e.reason})'})
+        log({'msg': f'Unsuccessful attempt to send message to Slack ({e.reason})',
+             'messageId': message_id})
         return False
 
 def log(data):
