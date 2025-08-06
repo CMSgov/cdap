@@ -21,6 +21,11 @@ NON_CLOUDWATCH_RECORDS = (
      })})},
 )
 
+@patch('lambda_function.boto3.client')
+@patch('lambda_function.ssm_client')
+def setup_mock_boto3(mock_ssm_client, mock_boto_client):
+    pass
+
 def test_cloudwatch_message_sqs_record():
     """Test happy path of retrieving CloudWatch Message from SQS record."""
     cloudwatch_message = {'OldStateValue': 'ALARM',
@@ -60,8 +65,10 @@ def test_enriched_cloudwatch_message_alarm_record():
     assert message == enriched_cloudwatch_message
 
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
-def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
+@patch('lambda_function.boto3')
+def test_enriched_cloudwatch_message_alarm_record_ok_ignored(mock_boto3):
     """Test enrichment when IGNORE_OK is false, alarm state ALARM."""
+    mock_boto3.client.return_value = MagicMock()
     reload(lambda_function)
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
@@ -104,8 +111,10 @@ def test_enriched_cloudwatch_message_ok_record():
     assert message == enriched_cloudwatch_message
 
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
-def test_enriched_cloudwatch_message_ok_record_ignore_false():
+@patch('lambda_function.boto3')
+def test_enriched_cloudwatch_message_ok_record_ignore_false(mock_boto3):
     """Test enrichment when IGNORE_OK is false, alarm state OK."""
+    mock_boto3.client.return_value = MagicMock()
     reload(lambda_function)
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
@@ -127,8 +136,10 @@ def test_enriched_cloudwatch_message_ok_record_ignore_false():
     assert message == enriched_cloudwatch_message
 
 @patch.dict(os.environ, {'IGNORE_OK': 'true'}, clear=True)
-def test_enriched_cloudwatch_message_ok_record_ok_ignored():
+@patch('lambda_function.boto3')
+def test_enriched_cloudwatch_message_ok_record_ok_ignored(mock_boto3):
     """Test enrichment ignores OK state when IGNORE_OK is globally true."""
+    mock_boto3.client.return_value = MagicMock()
     reload(lambda_function)
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',

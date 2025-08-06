@@ -2,7 +2,7 @@ locals {
   full_name = "${var.app}-${var.env}-alarm-to-slack"
 
   ignore_ok = true
-} 
+}
 
 module "sns_to_slack_function" {
   source = "../../modules/function"
