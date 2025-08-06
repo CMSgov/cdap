@@ -66,3 +66,18 @@ resource "aws_backup_vault_policy" "cdap" {
 }
 POLICY
 }
+
+resource "aws_backup_plan" "aurora_backup_plan" {
+  name = "aurora-daily-backup-plan"
+
+  rule {
+    rule_name         = "aurora-daily-rule"
+    target_vault_name = aws_backup_vault.cdap.name
+    schedule          = "cron(0 5 ? * * *)" # Daily at 5 AM UTC
+    lifecycle {
+      cold_storage_after = 30 # Transition to cold storage after 30 days
+      delete_after       = 90 # Delete after 90 days
+    }
+    enable_continuous_backup = true # Enables continuous backup for point-in-time recovery
+  }
+}
