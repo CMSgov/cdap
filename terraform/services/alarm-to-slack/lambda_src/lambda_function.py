@@ -11,12 +11,15 @@ from urllib.error import URLError
 import boto3
 from botocore.exceptions import ClientError
 
-def get_ssm_client():
-    return boto3.client('ssm')
-
 ssm_parameter_cache = {}
 
-IGNORE_OK = os.environ.get('IGNORE_OK', 'false').lower() == 'true'
+def get_ssm_client():
+    """
+    Lazy initialization of boto3 SSM client.
+    Prevents global instantiation to avoid NoRegionError during tests.
+    """
+    return boto3.client('ssm')
+
 
 def get_ssm_parameter(name):
     """
@@ -27,7 +30,8 @@ def get_ssm_parameter(name):
         return ssm_parameter_cache[name]
 
     try:
-        response = get_ssm_client().get_parameter(Name=name, WithDecryption=True)
+        ssm_client = get_ssm_client()
+        response = ssm_client.get_parameter(Name=name, WithDecryption=True)
         value = response['Parameter']['Value']
         ssm_parameter_cache[name] = value
         return value
@@ -35,6 +39,15 @@ def get_ssm_parameter(name):
         log({'msg': f'Error getting SSM parameter {name}: {e}'})
         ssm_parameter_cache[name] = None
         return None
+
+
+def is_ignore_ok():
+    """
+    Returns the current value of the IGNORE_OK environment variable.
+    This allows tests to patch the environment dynamically.
+    """
+    return os.environ.get('IGNORE_OK', 'false').lower() == 'true'
+
 
 def lambda_handler(event, _):
     """
@@ -60,17 +73,15 @@ def lambda_handler(event, _):
         'body': f'Processed {processed_count} messages successfully'
     }
 
+
 def cloudwatch_message(record):
     """
     Parses the SQS record for the CloudWatch Alarm JSON payload.
     Validates it has AlarmName. Returns the parsed message or None.
-    Added logging when AlarmName is missing to support test assertions.
     """
     try:
-        body_s = record['body']
-        body = json.loads(body_s)
-        message_s = body['Message']
-        message = json.loads(message_s)
+        body = json.loads(record['body'])
+        message = json.loads(body['Message'])
 
         if 'AlarmName' not in message:
             log({'msg': 'AlarmName not found in message',
@@ -83,12 +94,11 @@ def cloudwatch_message(record):
              'messageId': record.get('messageId')})
     return None
 
+
 def enriched_cloudwatch_message(record):
     """
     Parses the CloudWatch message, extracts the app and env from the alarm name,
     validates env is in dev|test|sandbox|prod, and enriches it with an emoji.
-
-    **NOTE:** Removed AlarmName missing check here because it's handled in cloudwatch_message.
     """
     message = cloudwatch_message(record)
     if not message:
@@ -120,11 +130,13 @@ def enriched_cloudwatch_message(record):
          'msg': 'Received CloudWatch Alarm',
          'messageId': record.get('messageId')})
 
-    if message['NewStateValue'] == 'OK' and IGNORE_OK:
+    # >>> FIX: Use dynamic check instead of static global
+    if message['NewStateValue'] == 'OK' and is_ignore_ok():
         return None
 
     message['Emoji'] = ':checked:' if message['NewStateValue'] == 'OK' else ':anger:'
     return message
+
 
 def send_message_to_slack(webhook, message, message_id):
     """
@@ -152,6 +164,7 @@ def send_message_to_slack(webhook, message, message_id):
         log({'msg': f'Unsuccessful attempt to send message to Slack ({e.reason})',
              'messageId': message_id})
         return False
+
 
 def log(data):
     """
