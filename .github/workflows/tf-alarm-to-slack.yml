@@ -42,24 +42,43 @@ jobs:
         env: [dev, prod]
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          pip install pylint pytest moto boto3
+
+      - name: Install Python dependencies & Run Lint and Unit Tests
+        run: |
+          pip install pylint pytest
           pylint lambda_src
           pytest lambda_src
+
       - uses: ./actions/setup-tfenv-terraform
+
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
+
       - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}-gf.s3.tfbackend
-      - run: terraform plan -out=tf.plan
+
+      - name: Terraform Plan - Dev/Test
+        if: contains(fromJSON('["dev", "test"]'), matrix.env)
+        run: terraform plan -out=tf.plan
         env:
-          TF_VAR_app_envs: ${{ contains(fromJSON('["dev", "test"]'), matrix.env) && '["dpc-dev", "dpc-test", "ab2d-dev", "ab2d-test", "bcda-dev", "bcda-test"]' || '["dpc-prod", "dpc-sandbox", "ab2d-prod", "ab2d-sandbox", "bcda-prod", "bcda-sandbox"]' }}
+          TF_VAR_app_envs: '["dpc-dev", "dpc-test", "ab2d-dev", "ab2d-test", "bcda-dev", "bcda-test"]'
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
+          TF_VAR_legacy: "false"
+
+      - name: Terraform Plan - Prod/Sandbox
+        if: contains(fromJSON('["prod", "sandbox"]'), matrix.env)
+        run: terraform plan -out=tf.plan
+        env:
+          TF_VAR_app_envs: '["dpc-prod", "dpc-sandbox", "ab2d-prod", "ab2d-sandbox", "bcda-prod", "bcda-sandbox"]'
+          TF_VAR_app: ${{ matrix.app }}
+          TF_VAR_env: ${{ matrix.env }}
+          TF_VAR_legacy: "false"
+
       - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: |
           terraform apply -auto-approve tf.plan
           cd lambda_src
           zip deploy.zip lambda_function.py
-          aws lambda update-function-code --function-name "larm-to-slack" --zip-file fileb://deploy.zip
+          aws lambda update-function-code --function-name "${{ matrix.app }}-${{ matrix.env }}-alarm-to-slack" --zip-file fileb://deploy.zip

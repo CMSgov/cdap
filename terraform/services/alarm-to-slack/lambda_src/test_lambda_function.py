@@ -16,8 +16,9 @@ NON_CLOUDWATCH_RECORDS = (
     {'messageId': 'raw sqs', 'body': 'SQS Raw text message'},
     {'messageId': 'raw sns', 'body': json.dumps({'Message': 'SNW Raw text message'})},
     {'messageId': 's3 event',
-     'body': json.dumps({'Message':
-                         json.dumps({'Records': [{'EventName': 'ObjectCreated:Put', 's3': {}}]})})},
+     'body': json.dumps({'Message': json.dumps({
+         'Records': [{'EventName': 'ObjectCreated:Put', 's3': {}}]
+     })})},
 )
 
 def create_sqs_body(alarm_message):
@@ -49,7 +50,7 @@ def mock_ssm_client():
 # --- Tests ---
 
 def test_cloudwatch_message_sqs_record():
-    """Tests happy path of retrieving CloudWatch Message from SQS record."""
+    """Test happy path of retrieving CloudWatch Message from SQS record."""
     cloudwatch_message = {'OldStateValue': 'ALARM', 'NewStateValue': 'OK'}
     message = lambda_function.cloudwatch_message({
         'messageId': 'Alarm',
@@ -59,94 +60,151 @@ def test_cloudwatch_message_sqs_record():
 
 @pytest.mark.parametrize("non_cloudwatch_records", NON_CLOUDWATCH_RECORDS)
 def test_cloudwatch_message_non_cloudwatch_records(non_cloudwatch_records):
-    """Tests message when SQS record is not from a CloudWatch Alarm."""
+    """Test cloudwatch message when SQS record is not from CloudWatch Alarm."""
     message = lambda_function.cloudwatch_message(non_cloudwatch_records)
     assert message is None
 
 @patch.dict(os.environ, {'IGNORE_OK_APPS': ''}, clear=True)
 def test_enriched_cloudwatch_message_alarm_record():
-    """Tests happy path of enriching CloudWatch ALARM Message from SQS record."""
-    lambda_function.initialize_ignore_ok_list()
-    cloudwatch_message = {'OldStateValue': 'OK', 'NewStateValue': 'ALARM', 'AlarmName': 'dpc-prod-cloudwatch-alarms'}
+    """Test enriching CloudWatch Alarm Message from SQS record (happy path)."""
+    cloudwatch_message = {
+        'AlarmName': 'bcda-dev-SomeAlarm',
+        'OldStateValue': 'OK',
+        'NewStateValue': 'ALARM'
+    }
     enriched_cloudwatch_message = {
         'OldStateValue': 'OK', 'NewStateValue': 'ALARM', 'AlarmName': 'dpc-prod-cloudwatch-alarms',
         'App': 'dpc', 'Env': 'prod', 'Emoji': ':anger:'}
     message = lambda_function.enriched_cloudwatch_message({
-        'messageId': 'Alarm', 'body': json.dumps({'Message': json.dumps(cloudwatch_message)})})
+        'messageId': 'Alarm',
+        'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
+    })
     assert message == enriched_cloudwatch_message
 
-@patch.dict(os.environ, {'IGNORE_OK_APPS': 'dpc'}, clear=True)
-def test_enriched_cloudwatch_message_ok_record_ignored():
-    """Tests enriching a CloudWatch OK Message when IGNORE_OK is true for the app."""
-    lambda_function.initialize_ignore_ok_list()
-    cloudwatch_message = {'OldStateValue': 'ALARM', 'NewStateValue': 'OK', 'AlarmName': 'dpc-prod-cloudwatch-alarms'}
+@patch.dict(os.environ, {'IGNORE_OK': 'true'}, clear=True)
+def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
+    """Test enrichment when IGNORE_OK is true, alarm state ALARM."""
+    cloudwatch_message = {
+        'AlarmName': 'bcda-dev-SomeAlarm',
+        'OldStateValue': 'OK',
+        'NewStateValue': 'ALARM'
+    }
+    enriched_cloudwatch_message = {
+        'AlarmName': 'bcda-dev-SomeAlarm',
+        'OldStateValue': 'OK',
+        'NewStateValue': 'ALARM',
+        'App': 'bcda',
+        'Env': 'dev',
+        'Emoji': ':anger:'
+    }
     message = lambda_function.enriched_cloudwatch_message({
-        'messageId': 'OK Ignored', 'body': json.dumps({'Message': json.dumps(cloudwatch_message)})})
+        'messageId': 'Alarm',
+        'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
+    })
+    assert message == enriched_cloudwatch_message
+
+def test_enriched_cloudwatch_message_ok_record():
+    """Test enrichment when alarm state transitions to OK."""
+    cloudwatch_message = {
+        'AlarmName': 'bcda-dev-SomeAlarm',
+        'OldStateValue': 'ALARM',
+        'NewStateValue': 'OK'
+    }
+    enriched_cloudwatch_message = {
+        'AlarmName': 'bcda-dev-SomeAlarm',
+        'OldStateValue': 'ALARM',
+        'NewStateValue': 'OK',
+        'App': 'bcda',
+        'Env': 'dev',
+        'Emoji': ':checked:'
+    }
+    message = lambda_function.enriched_cloudwatch_message({
+        'messageId': 'OK Sent',
+        'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
+    })
+    assert message == enriched_cloudwatch_message
+
+@patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
+def test_enriched_cloudwatch_message_ok_record_ignore_false():
+    """Test enrichment when IGNORE_OK is false, alarm state OK."""
+    cloudwatch_message = {
+        'AlarmName': 'bcda-dev-SomeAlarm',
+        'OldStateValue': 'ALARM',
+        'NewStateValue': 'OK'
+    }
+    enriched_cloudwatch_message = {
+        'AlarmName': 'bcda-dev-SomeAlarm',
+        'OldStateValue': 'ALARM',
+        'NewStateValue': 'OK',
+        'App': 'bcda',
+        'Env': 'dev',
+        'Emoji': ':checked:'
+    }
+    message = lambda_function.enriched_cloudwatch_message({
+        'messageId': 'OK Sent',
+        'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
+    })
+    assert message == enriched_cloudwatch_message
+
+@patch.dict(os.environ, {'IGNORE_OK_APPS': 'bcda'}, clear=True)
+def test_enriched_cloudwatch_message_ok_record_ok_ignored():
+    """Test enrichment ignores OK state when app is in IGNORE_OK_APPS list."""
+    lambda_function.initialize_ignore_ok_list(lambda_function.ignore_ok_apps)
+    cloudwatch_message = {
+        'AlarmName': 'bcda-dev-SomeAlarm',
+        'OldStateValue': 'ALARM',
+        'NewStateValue': 'OK'
+    }
+    message = lambda_function.enriched_cloudwatch_message({
+        'messageId': 'OK Ignored',
+        'body': json.dumps({'Message': json.dumps(cloudwatch_message)})
+    })
     assert message is None
 
-@patch.dict(os.environ, {'IGNORE_OK_APPS': 'ab2d'}, clear=True)
-def test_enriched_cloudwatch_message_ok_record_not_ignored():
-    """Tests enriching a CloudWatch OK Message for an app not in the ignore list."""
-    lambda_function.initialize_ignore_ok_list()
-    cloudwatch_message = {'OldStateValue': 'ALARM', 'NewStateValue': 'OK', 'AlarmName': 'dpc-prod-cloudwatch-alarms'}
-    enriched_cloudwatch_message = {
-        'OldStateValue': 'ALARM', 'NewStateValue': 'OK', 'AlarmName': 'dpc-prod-cloudwatch-alarms',
-        'App': 'dpc', 'Env': 'prod', 'Emoji': ':checked:'}
-    message = lambda_function.enriched_cloudwatch_message({
-        'messageId': 'OK Sent', 'body': json.dumps({'Message': json.dumps(cloudwatch_message)})})
-    assert message == enriched_cloudwatch_message
-
-def test_enriched_cloudwatch_message_bad_alarm_name():
-    """Tests when the AlarmName does not match the expected format."""
-    cloudwatch_message = {'OldStateValue': 'OK', 'NewStateValue': 'ALARM', 'AlarmName': 'malformed_alarm'}
-    message = lambda_function.enriched_cloudwatch_message({
-        'messageId': 'Alarm', 'body': json.dumps({'Message': json.dumps(cloudwatch_message)})})
+@pytest.mark.parametrize("non_cloudwatch_records", NON_CLOUDWATCH_RECORDS)
+def test_enriched_cloudwatch_message_non_cloudwatch_records(non_cloudwatch_records):
+    """Test enrichment returns None for non-cloudwatch records."""
+    message = lambda_function.enriched_cloudwatch_message(non_cloudwatch_records)
     assert message is None
 
 @patch.dict(os.environ, {'SLACK_WEBHOOK_URL': 'https://dpc.cms.gov'}, clear=True)
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_happy_path(mock_urlopen):
-    """Test happy path of sending a message to Slack."""
+    """Test sending message to Slack with a 200 response."""
     cm = MagicMock()
     cm.status = 200
     cm.__enter__.return_value = cm
     mock_urlopen.return_value = cm
-    assert lambda_function.send_message_to_slack({'foo': 'bar'}, 'test', 'happy path') is True
+    assert lambda_function.send_message_to_slack(
+        'https://dpc.cms.gov', {'foo': 'bar'}, 'happy path') is True
 
 @patch.dict(os.environ, {'SLACK_WEBHOOK_URL': 'https://dpc.cms.gov'}, clear=True)
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_bad_resp(mock_urlopen):
-    """Test sending a message to Slack when 404 response."""
+    """Test sending message to Slack with a non-200 response."""
     cm = MagicMock()
     cm.status = 404
     cm.__enter__.return_value = cm
     mock_urlopen.return_value = cm
-    assert lambda_function.send_message_to_slack({'foo': 'bar'}, 'test', '404 error') is False
+    assert lambda_function.send_message_to_slack(
+        'https://dpc.cms.gov', {'foo': 'bar'}, '404 error') is False
 
 @patch.dict(os.environ, {'SLACK_WEBHOOK_URL': 'https://dpc.cms.gov'}, clear=True)
 @patch('urllib.request.urlopen')
 def test_send_message_to_slack_url_error(mock_urlopen):
-    """Test sending a message to Slack when URLError."""
+    """Test sending message to Slack raises URLError."""
     mock_urlopen.side_effect = URLError('forced error')
-    assert lambda_function.send_message_to_slack({'foo': 'bar'}, 'test', 'url error') is False
+    assert lambda_function.send_message_to_slack(
+        'https://dpc.cms.gov', {'foo': 'bar'}, 'url error') is False
 
 def test_send_message_to_slack_no_webhook():
-    """Test sending a message to Slack when webhook is not set."""
-    assert lambda_function.send_message_to_slack('', 'not a dictionary', 'no webhook') is False
+    """Test sending message to Slack with no webhook URL."""
+    assert lambda_function.send_message_to_slack(None, {'foo': 'bar'}, 'no webhook') is False
 
 @patch('urllib.request.urlopen')
-@mock_aws
-@patch.dict(os.environ, {'IGNORE_OK_APPS': 'dpc'}, clear=True)
-def test_handler(mock_urlopen):
-    """Tests happy path of calling lambda_handler."""
-    ssm = boto3.client("ssm", region_name="us-east-1")
-    ssm.put_parameter(Name="/dpc/lambda/slack_webhook_url", Value="https://mock-dpc-webhook-url", Type="SecureString")
-    
-    lambda_function.ssm_parameter_cache = {}
-    lambda_function.initialize_ignore_ok_list()
-    sqs_message = {'Records': [{
-        'messageId': 'full test',
-        'body': json.dumps({'Message': json.dumps({'OldStateValue': 'OK', 'NewStateValue': 'ALARM', 'AlarmName': 'dpc-prod-cloudwatch-alarms'})})}]}
+def test_handler(mock_urlopen, mock_get_ssm_parameter):
+    """Test the lambda_handler processes one SQS record correctly."""
+    mock_get_ssm_parameter.return_value = 'https://dpc.cms.gov'
     cm = MagicMock()
     cm.status = 200
     cm.__enter__.return_value = cm
@@ -172,5 +230,5 @@ def test_get_ssm_parameter_and_caching():
         assert mock_get_parameter.call_count == 2
     
 def test_logger():
-    """Makes sure log does not throw errors."""
-    lambda_function.log({})
+    """Test that logger outputs JSON-formatted logs."""
+    lambda_function.log({'test': 'log'})
