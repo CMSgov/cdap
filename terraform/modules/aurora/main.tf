@@ -76,7 +76,7 @@ resource "aws_rds_cluster" "this" {
   preferred_backup_window             = var.backup_window
   preferred_maintenance_window        = var.maintenance_window
   apply_immediately                   = false
-  skip_final_snapshot                 = var.platform.is_ephemeral_env ? true : false
+  skip_final_snapshot                 = true
   deletion_protection                 = var.deletion_protection
   db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.this.name
   iam_database_authentication_enabled = true
