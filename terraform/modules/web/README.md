@@ -6,13 +6,23 @@ This module creates a CloudFront distribution and origin access control intended
 module "cloudfront_test" {
   source = "../modules/web"
 
-  app                   = "bcda"
-  origin_s3_bucket_name = "stage.bcda.cms.gov2025??????????????00000001"
-  staging               = true
+  app     = "bcda"
+  staging = true
 }
 ```
 
 <!-- BEGIN_TF_DOCS -->
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
      Manually updating sections between TF_DOCS tags may be overwritten.
@@ -32,7 +42,6 @@ No requirements.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_app"></a> [app](#input\_app) | Name of the associated DASG application. | `string` | n/a | yes |
-| <a name="input_origin_s3_bucket_name"></a> [origin\_s3\_bucket\_name](#input\_origin\_s3\_bucket\_name) | The name of the S3 origin bucket. Ex.: '<app>.cms.gov2025??????????????00000001'. | `string` | n/a | yes |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | (Required) - Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
 | <a name="input_staging"></a> [staging](#input\_staging) | A Boolean that indicates whether this is a staging distribution. Defaults to false. | `bool` | `false` | no |
 
@@ -43,7 +52,10 @@ No requirements.
 -->
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_origin_bucket"></a> [origin\_bucket](#module\_origin\_bucket) | ../bucket | n/a |
+| <a name="module_web_acl"></a> [web\_acl](#module\_web\_acl) | ../firewall | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -57,7 +69,6 @@ No modules.
 | [aws_cloudfront_distribution.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution) | resource |
 | [aws_cloudfront_origin_access_control.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_origin_access_control) | resource |
 | [aws_acm_certificate.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/acm_certificate) | data source |
-| [aws_wafv2_web_acl.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/wafv2_web_acl) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
