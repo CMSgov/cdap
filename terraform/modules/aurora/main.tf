@@ -1,8 +1,9 @@
 locals {
-  service_prefix = "${var.platform.app}-${var.platform.env}"
-  major_version  = split(".", var.engine_version)[0]
-  aurora_engine  = "aurora-postgresql"
-  aurora_family  = "${local.aurora_engine}${local.major_version}"
+  service_prefix      = "${var.platform.app}-${var.platform.env}"
+  major_version       = split(".", var.engine_version)[0]
+  aurora_engine       = "aurora-postgresql"
+  aurora_family       = "${local.aurora_engine}${local.major_version}"
+  security_group_name = coalesce(var.security_group_override, "${local.service_prefix}-db")
 }
 
 resource "aws_db_subnet_group" "this" {
@@ -13,10 +14,10 @@ resource "aws_db_subnet_group" "this" {
 
 resource "aws_security_group" "this" {
   description            = "${local.service_prefix} database security group"
-  name                   = coalesce(var.security_group_override, "${local.service_prefix}-db")
+  name                   = local.security_group_name
   revoke_rules_on_delete = false
   tags = {
-    Name = "${local.service_prefix}-db"
+    Name = local.security_group_name
   }
   vpc_id = var.platform.vpc_id
 }
