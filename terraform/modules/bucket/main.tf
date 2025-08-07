@@ -1,6 +1,6 @@
 module "bucket_key" {
   source      = "../key"
-  name        = "${var.name}-bucket"
+  name        = "${replace(var.name, ".", "-")}-bucket"
   description = "For ${var.name} S3 bucket and its access logs"
   user_roles  = var.cross_account_read_roles
 }
