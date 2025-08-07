@@ -14,8 +14,7 @@ Pass in a backend file when running terraform init. See variables.tf for variabl
 
 ```bash
 AWS_REGION=us-east-1 terraform init -backend-config=../../backends/dpc-dev-gf.s3.tfbackend
-AWS_REGION=us-east-1 terraform plan -var='app_envs=["bcda-sandbox"]' -var='app=bcda' -var='env=sandbox'
-AWS_REGION=us-east-1 terraform apply -var='app_envs=["bcda-sandbox"]' -var='app=bcda' -var='env=sandbox'
+AWS_REGION=us-east-1 terraform apply 
 ```
 
 ## Automated deploy
