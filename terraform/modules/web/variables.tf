@@ -13,11 +13,6 @@ variable "enabled" {
   type        = bool
 }
 
-variable "origin_s3_bucket_name" {
-  description = "The name of the S3 origin bucket. Ex.: '<app>.cms.gov2025??????????????00000001'."
-  type        = string
-}
-
 variable "staging" {
   default     = false
   description = "A Boolean that indicates whether this is a staging distribution. Defaults to false."
