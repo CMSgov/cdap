@@ -1,28 +1,23 @@
-locals {
-  domain = "${var.staging ? "stage." : ""}${var.app}.cms.gov"
-}
-
 data "aws_acm_certificate" "this" {
-  domain   = local.domain
+  domain   = var.domain
   statuses = ["ISSUED"]
 }
 
 module "web_acl" {
   source = "../firewall"
 
-  app           = var.app
   content_type  = "TEXT_HTML" 
-  name          = "${var.staging ? "stage-" : ""}${var.app}-website"
+  name          = replace(var.domain, ".", "-")
   scope         = "CLOUDFRONT"
 }
 
 module "origin_bucket" {
   source  = "../bucket"
-  name    = local.domain
+  name    = var.domain
 }
 
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = local.domain
+  name                              = var.domain
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -30,8 +25,8 @@ resource "aws_cloudfront_origin_access_control" "this" {
 }
 
 resource "aws_cloudfront_distribution" "this" {
-  aliases             = [local.domain]
-  comment             = "Distribution for the ${local.domain} website"
+  aliases             = [var.domain]
+  comment             = "Distribution for the ${var.domain} website"
   default_root_object = "index.html"
   enabled             = var.enabled
   http_version        = "http2and3"
