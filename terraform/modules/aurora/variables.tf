@@ -132,6 +132,12 @@ variable "aws_backup_tag" {
 
 variable "subnet_group_override" {
   default     = null
-  description = "Override for subnet group name"
+  description = "Override for the subnet group name"
+  type        = string
+}
+
+variable "security_group_override" {
+  default     = null
+  description = "Override for the security group name"
   type        = string
 }
