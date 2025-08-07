@@ -7,7 +7,7 @@ locals {
 
 resource "aws_db_subnet_group" "this" {
   description = "${local.service_prefix} database subnet group"
-  name        = local.service_prefix
+  name        = coalesce(var.subnet_group_override, local.service_prefix)
   subnet_ids  = keys(var.platform.private_subnets)
 }
 
