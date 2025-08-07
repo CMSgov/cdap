@@ -1,10 +1,6 @@
-variable "app" {
-  description = "Name of the associated DASG application."
+variable "domain" {
+  description = "FQDN of the website. Ex.: 'stage.bcda.cms.gov'."
   type        = string
-  validation {
-    condition     = contains(["ab2d", "bcda", "dpc"], var.app)
-    error_message = "Invalid app. Allowed values are 'ab2d', 'bcda', or 'dpc'."
-  }
 }
 
 variable "enabled" {
