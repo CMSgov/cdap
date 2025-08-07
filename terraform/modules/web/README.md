@@ -5,9 +5,7 @@ This module creates a CloudFront distribution and origin access control intended
 ```
 module "cloudfront_test" {
   source = "../modules/web"
-
-  app     = "bcda"
-  staging = true
+  domain = "stage.bcda.cms.gov"
 }
 ```
 
@@ -41,9 +39,8 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_app"></a> [app](#input\_app) | Name of the associated DASG application. | `string` | n/a | yes |
+| <a name="input_domain"></a> [domain](#input\_domain) | FQDN of the website. Ex.: 'stage.bcda.cms.gov'. | `string` | n/a | yes |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | (Required) - Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
-| <a name="input_staging"></a> [staging](#input\_staging) | A Boolean that indicates whether this is a staging distribution. Defaults to false. | `bool` | `false` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
