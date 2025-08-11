@@ -137,12 +137,12 @@ resource "aws_backup_vault_policy" "primary_backup_vault_policy" {
 }
 
 resource "aws_backup_plan" "aws_backup_plan" {
-  name = "backup_plan"
+  name = "cdap_managed_backup_plan"
   #TODO only the 4hr rule should be copied to secondary
   rule {
-    rule_name         = "backup_rule"
+    rule_name         = "test_every_5_mins"
     target_vault_name = aws_backup_vault.primary_backup_vault.name
-    schedule          = "cron(0 5 ? * * *)"
+    schedule          = "cron(*/5 * * * *)"
     start_window      = 480
     completion_window = 10080
     copy_action {
@@ -158,10 +158,9 @@ resource "aws_backup_plan" "aws_backup_plan" {
   ]
 }
 
-# resource "aws_backup_selection" "aws_backup_selection" {
-#   iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/AWSBackupDefaultServiceRole"
-#   name         = "backup_selection"
-#   plan_id      = aws_backup_plan.aws_backup_plan.id
-#   #TODO how to identify resources to be backed up.  Cluster or individual databases?
-#   resources    = ""
-# }
+resource "aws_backup_selection" "aws_backup_selection" {
+  iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/AWSBackupDefaultServiceRole"
+  name         = "backup_selection"
+  plan_id      = aws_backup_plan.aws_backup_plan.id
+  resources    = ["arn:aws:rds:us-east-1:539247469933:cluster:dpc-test"]
+}
