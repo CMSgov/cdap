@@ -1,24 +1,22 @@
 # Secondary Region Resources
 data "aws_caller_identity" "current" {}
 
+resource "aws_iam_role" "primary_kms_admin_role" {
+  name = "KMSAdminRole"
 
-
-# resource "aws_iam_role" "primary_kms_admin_role" {
-#   name = "KMSAdminRole"
-#
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = "sts:AssumeRole"
-#         Effect = "Allow"
-#         Principal = {
-#           Service = "backup.amazonaws.com"
-#         }
-#       },
-#     ]
-#   })
-# }
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "backup.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
 
 resource "aws_kms_key_policy" "primary_backup_key_policy" {
   key_id = data.aws_kms_key.primary_kms_key.key_id
