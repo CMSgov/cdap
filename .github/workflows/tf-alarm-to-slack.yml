@@ -19,7 +19,18 @@ on:
         type: boolean
 
 jobs:
+  python-lint-test:
+    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python dependencies & Run Lint and Unit Tests
+        run: |
+          pip install pylint pytest
+          pylint terraform/services/alarm-to-slack/lambda_src
+          pytest terraform/services/alarm-to-slack/lambda_src
+
   check-fmt:
+    needs: python-lint-test
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     steps:
       - uses: actions/checkout@v4
@@ -38,15 +49,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [dpc]
-        env: [dev, test, sandbox, prod]
+        app: [bcda]
+        env: [test, prod]
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          pip install pylint pytest
-          pylint lambda_src
-          pytest lambda_src
+
       - uses: ./actions/setup-tfenv-terraform
+
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
