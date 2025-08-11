@@ -169,7 +169,7 @@ resource "aws_backup_plan" "aws_backup_plan" {
   rule {
     rule_name         = "Weekly_35"
     target_vault_name = aws_backup_vault.primary_backup_vault.name
-    schedule          = "cron(0 0 * * 6)"
+    schedule          = "cron(0 0 ? * SAT *)"
     start_window      = 60
     completion_window = 180
 
@@ -181,7 +181,7 @@ resource "aws_backup_plan" "aws_backup_plan" {
   rule {
     rule_name         = "Monthly_90"
     target_vault_name = aws_backup_vault.primary_backup_vault.name
-    schedule          = "cron(0 0 1 * *)"
+    schedule          = "cron(0 0 1 * ? *)"
     start_window      = 60
     completion_window = 180
 
