@@ -201,8 +201,10 @@ resource "aws_backup_plan" "aws_backup_plan" {
 }
 
 resource "aws_backup_selection" "aws_backup_selection" {
+  # This iam role is the one CMS is using for their backup plan.
   iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
   name         = "cdap_managed_backup_selection"
   plan_id      = aws_backup_plan.aws_backup_plan.id
-  resources    = ["arn:aws:rds:us-east-1:539247469933:cluster:dpc-test"]
+  # This database is the only entry for now until testing is complete.
+  resources    = ["arn:aws:rds:us-east-1:539247469933:cluster:dpc-${var.env}"]
 }
