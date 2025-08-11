@@ -38,7 +38,19 @@ locals {
   ]
 }
 
-data "aws_region" "this" {}
+data "aws_ssm_parameters_by_path" "ssm" {
+  for_each = var.ssm_root_map
+
+  recursive       = true
+  path            = each.value
+  with_decryption = true
+}
+
+data "aws_region" "primary" {}
+data "aws_region" "secondary" {
+  provider = aws.secondary
+}
+
 data "aws_caller_identity" "this" {}
 
 data "aws_iam_policy" "permissions_boundary" {
@@ -130,4 +142,14 @@ data "aws_ssm_parameter" "platform_cidr" {
 data "aws_iam_role" "this" {
   for_each = toset(local.aws_iam_role_names)
   name     = each.key
+}
+
+data "aws_kms_alias" "primary" {
+  name = "alias/${local.app}-${local.parent_env}"
+}
+
+data "aws_kms_alias" "secondary" {
+  provider = aws.secondary
+
+  name = "alias/${local.app}-${local.parent_env}"
 }

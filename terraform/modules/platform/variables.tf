@@ -31,3 +31,9 @@ variable "root_module" {
   description = "The full URL to the terraform module root at issue for this infrastructure"
   type        = string
 }
+
+variable "ssm_root_map" {
+  default     = {}
+  description = "Map of SSM parameter hierarchy roots or path prefixes for use in an [SSM Parameters By Path data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameters_by_path)"
+  type        = map(any)
+}

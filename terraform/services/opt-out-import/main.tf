@@ -1,21 +1,11 @@
 locals {
-  full_name = "${var.app}-${var.env}-opt-out-import"
-  bfd_env   = var.env == "prod" ? "prod" : "test"
-  ab2d_db_envs = {
-    dev  = "dev"
-    test = "east-impl"
-    prod = "east-prod"
-  }
-  db_sg_name = "${var.app}-${var.env}-db"
-  memory_size = {
-    ab2d = 1024
-    bcda = null
-    dpc  = null
-  }
-  handler_name = {
-    ab2d = "gov.cms.ab2d.optout.OptOutHandler"
-    bcda = "bootstrap"
-    dpc  = "bootstrap"
+  full_name              = "${var.app}-${var.env}-opt-out-import"
+  bfd_env                = var.env == "prod" ? "prod" : "test"
+  db_sg_name             = "${var.app}-${var.env}-db"
+  bfd_bucket_access_role = "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
+  policies = {
+    bcda = data.aws_iam_policy_document.bcda_policies.json
+    dpc  = data.aws_iam_policy_document.dpc_policies.json
   }
 }
 
@@ -23,25 +13,42 @@ data "aws_ssm_parameter" "bfd_account" {
   name = "/bfd/account-id"
 }
 
-data "aws_iam_policy_document" "assume_bucket_role" {
+data "aws_iam_policy_document" "bcda_policies" {
   statement {
     actions = ["sts:AssumeRole"]
     resources = [
-      "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
+      local.bfd_bucket_access_role
     ]
   }
 }
 
-data "aws_db_instance" "this" {
-  db_instance_identifier = "${var.app}-${var.env}"
+data "aws_caller_identity" "current" {}
+data "aws_iam_policy_document" "dpc_policies" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    resources = [
+      local.bfd_bucket_access_role
+    ]
+  }
+
+  statement {
+    actions = [
+      "rds-db:connect"
+    ]
+    resources = ["arn:aws:rds-db:us-east-1:${data.aws_caller_identity.current.account_id}:dbuser:${data.aws_rds_cluster.this.cluster_resource_id}/${var.env}-dpc_consent-role"]
+  }
+
+}
+
+data "aws_rds_cluster" "this" {
+  cluster_identifier = "${var.app}-${var.env}-aurora"
 }
 
 locals {
   #FIXME: database host parameters should be standardized
   db_hosts = sensitive({
-    ab2d = data.aws_db_instance.this.address
-    bcda = "postgres://${data.aws_db_instance.this.address}:5432/bcda"
-    dpc  = data.aws_db_instance.this.address
+    bcda = "postgres://${data.aws_rds_cluster.this.endpoint}:5432/bcda"
+    dpc  = data.aws_rds_cluster.this.endpoint
   })
   opt_out_db_host = local.db_hosts[var.app]
 }
@@ -55,13 +62,11 @@ module "opt_out_import_function" {
   name        = local.full_name
   description = "Ingests the most recent beneficiary opt-out list from BFD"
 
-  handler = local.handler_name[var.app]
-  runtime = var.app == "ab2d" ? "java11" : "provided.al2"
-
-  memory_size = local.memory_size[var.app]
+  handler = "bootstrap"
+  runtime = "provided.al2"
 
   function_role_inline_policies = {
-    assume-bucket-role = data.aws_iam_policy_document.assume_bucket_role.json
+    assume-bucket-role = local.policies[var.app]
   }
 
   environment_variables = {

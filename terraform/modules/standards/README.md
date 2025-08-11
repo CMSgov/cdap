@@ -52,11 +52,22 @@ locals {
      Manually updating sections between TF_DOCS tags may be overwritten.
      See https://terraform-docs.io/user-guide/configuration/ for more information.
 -->
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~>5 |
+| <a name="provider_aws.secondary"></a> [aws.secondary](#provider\_aws.secondary) | ~>5 |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Requirements
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | 1.10.5 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~>5 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -94,6 +105,7 @@ No modules.
 |------|------|
 | [aws_caller_identity.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy.permissions_boundary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy) | data source |
+| [aws_region.secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_region.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -110,6 +122,8 @@ No modules.
 | <a name="output_default_permissions_boundary"></a> [default\_permissions\_boundary](#output\_default\_permissions\_boundary) | Default permissions boundary [aws\_iam\_policy data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy#attribute-reference) |
 | <a name="output_default_tags"></a> [default\_tags](#output\_default\_tags) | Map of tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags` |
 | <a name="output_env"></a> [env](#output\_env) | The solution's application environment name. |
-| <a name="output_region_name"></a> [region\_name](#output\_region\_name) | The region name associated with the current caller identity |
+| <a name="output_primary_region"></a> [primary\_region](#output\_primary\_region) | The primary data.aws\_region object from the current caller identity |
+| <a name="output_region_name"></a> [region\_name](#output\_region\_name) | **Deprecated**. Use `primary_region.name`. The region name associated with the current caller identity |
+| <a name="output_secondary_region"></a> [secondary\_region](#output\_secondary\_region) | The secondary data.aws\_region object associated with the secondary region. |
 | <a name="output_service"></a> [service](#output\_service) | The name of the current service or terraservice. |
 <!-- END_TF_DOCS -->

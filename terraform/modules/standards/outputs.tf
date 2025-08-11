@@ -11,9 +11,21 @@ output "service" {
 }
 
 output "region_name" {
-  description = "The region name associated with the current caller identity"
+  description = "**Deprecated**. Use `primary_region.name`. The region name associated with the current caller identity"
   sensitive   = false
   value       = data.aws_region.this.name
+}
+
+output "primary_region" {
+  description = "The primary data.aws_region object from the current caller identity"
+  sensitive   = false
+  value       = data.aws_region.this
+}
+
+output "secondary_region" {
+  description = "The secondary data.aws_region object associated with the secondary region."
+  sensitive   = false
+  value       = data.aws_region.secondary
 }
 
 output "account_id" {

@@ -5,7 +5,6 @@ locals {
       "repo:CMSgov/cdap:*",
       "repo:CMSgov/ab2d-contracts:*",
       "repo:CMSgov/ab2d-events:*",
-      "repo:CMSgov/ab2d-lambdas:*",
       "repo:CMSgov/ab2d-properties:*",
       "repo:CMSgov/ab2d-website:*",
       "repo:CMSgov/ab2d:*",

@@ -11,15 +11,33 @@ output "service" {
 }
 
 output "region_name" {
-  description = "The region name associated with the current caller identity"
+  description = "**Deprecated**. Use `primary_region.name`. The region name associated with the current caller identity"
   sensitive   = false
-  value       = data.aws_region.this.name
+  value       = data.aws_region.primary.name
+}
+
+output "primary_region" {
+  description = "The primary data.aws_region object from the current caller identity"
+  sensitive   = false
+  value       = data.aws_region.primary
+}
+
+output "secondary_region" {
+  description = "The secondary data.aws_region object associated with the secondary region."
+  sensitive   = false
+  value       = data.aws_region.secondary
 }
 
 output "account_id" {
-  description = "The AWS account ID associated with the current caller identity"
+  description = "Deprecated. Use `aws_caller_identity.account_id`. The AWS account ID associated with the current caller identity"
   sensitive   = true
   value       = data.aws_caller_identity.this.account_id
+}
+
+output "aws_caller_identity" {
+  description = "The current data.aws_caller_identity object."
+  sensitive   = true
+  value       = data.aws_caller_identity.this
 }
 
 output "env" {
@@ -98,4 +116,35 @@ output "nat_gateways" {
   description = "Map of current VPC **available** [aws_nat_gateway data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `id`."
   sensitive   = true
   value       = data.aws_nat_gateway.this
+}
+
+output "kms_alias_primary" {
+  description = "Primary [KMS Key Alias Data Source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias#attribute-reference)"
+  sensitive   = true
+  value       = data.aws_kms_alias.primary
+}
+
+output "kms_alias_secondary" {
+  description = "Secondary [KMS Key Alias Data Source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias#attribute-reference)"
+  sensitive   = true
+  value       = data.aws_kms_alias.secondary
+}
+
+output "iam_defaults" {
+  description = "Map of default permissions `boundary` and IAM resources `path`."
+  sensitive   = false
+  value = {
+    boundary = data.aws_iam_policy.permissions_boundary.arn
+    path     = "/delegatedadmin/developer/"
+  }
+}
+
+output "ssm" {
+  description = "SSM parameter resources available based on the `var.ssm_root_map` input variable."
+  value       = { for named_root, data in data.aws_ssm_parameters_by_path.ssm : named_root => { for each in [for arn, value in zipmap(data.arns, data.values) : { "value" = value, "arn" = arn }] : reverse(split("/", each.arn))[0] => each } }
+}
+
+output "network_access_logs_bucket" {
+  description = "Standardized CMS Hybrid Cloud Providued Network Access Logs bucket Name"
+  value       = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}"
 }
