@@ -81,7 +81,7 @@ resource "aws_kms_key_policy" "primary_backup_key_policy" {
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : [
-           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KMSAdminRole"
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KMSAdminRole"
           ]
         },
         "Action" : [
@@ -138,21 +138,58 @@ resource "aws_backup_vault_policy" "primary_backup_vault_policy" {
 
 resource "aws_backup_plan" "aws_backup_plan" {
   name = "cdap_managed_backup_plan"
-  #TODO only the 4hr rule should be copied to secondary
+  #only the 4hr rule should be copied to secondary
   rule {
-    rule_name         = "test_every_5_mins"
+    rule_name         = "4Hourly_1"
     target_vault_name = aws_backup_vault.primary_backup_vault.name
-    schedule          = "cron(*/5 * * * *)"
-    start_window      = 480
-    completion_window = 10080
+    schedule          = "cron(0 */4 * * ? *)"
+    start_window      = 60
+    completion_window = 180
     copy_action {
       destination_vault_arn = aws_backup_vault.secondary_backup_vault.arn
     }
 
     lifecycle {
+      delete_after = 1
+    }
+  }
+
+  rule {
+    rule_name         = "Daily_7"
+    target_vault_name = aws_backup_vault.primary_backup_vault.name
+    schedule          = "cron(0 4 * * ? *)"
+    start_window      = 60
+    completion_window = 180
+
+    lifecycle {
+      delete_after = 7
+    }
+  }
+
+  rule {
+    rule_name         = "Weekly_35"
+    target_vault_name = aws_backup_vault.primary_backup_vault.name
+    schedule          = "cron(0 0 ? * SAT *)"
+    start_window      = 60
+    completion_window = 180
+
+    lifecycle {
+      delete_after = 35
+    }
+  }
+
+  rule {
+    rule_name         = "Monthly_90"
+    target_vault_name = aws_backup_vault.primary_backup_vault.name
+    schedule          = "cron(0 0 1 * *)"
+    start_window      = 60
+    completion_window = 180
+
+    lifecycle {
       delete_after = 90
     }
   }
+
   depends_on = [
     aws_backup_vault.secondary_backup_vault
   ]
@@ -160,7 +197,7 @@ resource "aws_backup_plan" "aws_backup_plan" {
 
 resource "aws_backup_selection" "aws_backup_selection" {
   iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/AWSBackupDefaultServiceRole"
-  name         = "backup_selection"
+  name         = "cdap_managed_backup_selection"
   plan_id      = aws_backup_plan.aws_backup_plan.id
   resources    = ["arn:aws:rds:us-east-1:539247469933:cluster:dpc-test"]
 }
