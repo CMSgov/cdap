@@ -7,7 +7,6 @@ The default plans for AWS Backup managed by CMS Cloud do not suit our backup nee
 
 CDAP has created this AWS Backup Plan for our Aurora Cluster.  
 
-Resources should be created in the secondary account first because the secondary vault will be used in the primary account’s backup rule.
 
 ## Architecture
 
