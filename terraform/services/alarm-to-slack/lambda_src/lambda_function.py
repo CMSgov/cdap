@@ -25,19 +25,17 @@ def get_ssm_parameter(name):
     Retrieves an SSM parameter and caches the value to prevent duplicate API calls.
     Caches None if the parameter is not found or an error occurs.
     """
-    if name in ssm_parameter_cache:
-        return ssm_parameter_cache[name]
+    if name not in ssm_parameter_cache:
+        try:
+            ssm_client = get_ssm_client()
+            response = ssm_client.get_parameter(Name=name, WithDecryption=True)
+            value = response['Parameter']['Value']
+            ssm_parameter_cache[name] = value
+        except ClientError as e:
+            log({'msg': f'Error getting SSM parameter {name}: {e}'})
+            ssm_parameter_cache[name] = None
 
-    try:
-        ssm_client = get_ssm_client()
-        response = ssm_client.get_parameter(Name=name, WithDecryption=True)
-        value = response['Parameter']['Value']
-        ssm_parameter_cache[name] = value
-        return value
-    except ClientError as e:
-        log({'msg': f'Error getting SSM parameter {name}: {e}'})
-        ssm_parameter_cache[name] = None
-        return None
+    return ssm_parameter_cache[name]
 
 def is_ignore_ok():
     """
@@ -125,7 +123,6 @@ def enriched_cloudwatch_message(record):
          'msg': 'Received CloudWatch Alarm',
          'messageId': record.get('messageId')})
 
-    # >>> FIX: Use dynamic check instead of static global
     if message['NewStateValue'] == 'OK' and is_ignore_ok():
         return None
 
