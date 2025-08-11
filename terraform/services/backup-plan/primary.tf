@@ -196,7 +196,7 @@ resource "aws_backup_plan" "aws_backup_plan" {
 }
 
 resource "aws_backup_selection" "aws_backup_selection" {
-  iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/service-role/AWSBackupDefaultServiceRole"
+  iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
   name         = "cdap_managed_backup_selection"
   plan_id      = aws_backup_plan.aws_backup_plan.id
   resources    = ["arn:aws:rds:us-east-1:539247469933:cluster:dpc-test"]
