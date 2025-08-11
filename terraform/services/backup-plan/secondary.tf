@@ -73,7 +73,7 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ],
-        "Resource" : "*"
+        "Resource" : data.aws_kms_alias.secondary_kms_alias.arn
       },
       {
         "Sid" : "Allow attachment of persistent resources",
