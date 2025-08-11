@@ -57,7 +57,7 @@ resource "aws_kms_key_policy" "primary_backup_key_policy" {
           "kms:ScheduleKeyDeletion",
           "kms:CancelKeyDeletion"
         ],
-        "Resource" : "*"
+        "Resource" : data.aws_kms_alias.primary_kms_alias.arn
       },
       {
         "Sid" : "Allow use of the key",
@@ -193,6 +193,11 @@ resource "aws_backup_plan" "aws_backup_plan" {
   depends_on = [
     aws_backup_vault.secondary_backup_vault
   ]
+
+  tags = {
+    cms-cloud-service = "AWS Backup"
+    Backup_Schedule = "4hr1_d7_w35_m90"
+  }
 }
 
 resource "aws_backup_selection" "aws_backup_selection" {
