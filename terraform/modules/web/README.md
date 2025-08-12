@@ -3,9 +3,23 @@
 This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. A sample minimal calling configuration is as follows:
 
 ```
+locals {
+  bucket_name   = "stage.bcda.cms.gov2025??????????????00000001"
+  domain        = "stage.bcda.cms.gov"
+  web_acl_name  = "SamQuickACLEnforcingV2"
+}
+
+data "aws_wafv2_web_acl" "bcda_web_acl" {
+  name  = local.web_acl_name
+  scope = "CLOUDFRONT"
+}
+
 module "cloudfront_test" {
   source = "../modules/web"
-  domain = "stage.bcda.cms.gov"
+
+  bucket_name     = local.bucket_name
+  domain          = local.domain
+  web_acl_arn     = data.aws_wafv2_web_acl.bcda_web_acl.arn
 }
 ```
 
@@ -39,8 +53,10 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_bucket_name"></a> [bucket\_name](#input\_bucket\_name) | Origin bucket name; ex: 'bcda.cms.gov2025????????????000000001'. | `string` | n/a | yes |
 | <a name="input_domain"></a> [domain](#input\_domain) | FQDN of the website. Ex.: 'stage.bcda.cms.gov'. | `string` | n/a | yes |
-| <a name="input_enabled"></a> [enabled](#input\_enabled) | (Required) - Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
+| <a name="input_web_acl_arn"></a> [web\_acl\_arn](#input\_web\_acl\_arn) | ARN of the WAF web acl associated with the distribution. | `string` | n/a | yes |
+| <a name="input_enabled"></a> [enabled](#input\_enabled) | Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -49,10 +65,7 @@ No requirements.
 -->
 ## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_origin_bucket"></a> [origin\_bucket](#module\_origin\_bucket) | ../bucket | n/a |
-| <a name="module_web_acl"></a> [web\_acl](#module\_web\_acl) | ../firewall | n/a |
+No modules.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -74,8 +87,5 @@ No requirements.
 -->
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_distribution_arn"></a> [distribution\_arn](#output\_distribution\_arn) | n/a |
-| <a name="output_distribution_domain_name"></a> [distribution\_domain\_name](#output\_distribution\_domain\_name) | n/a |
+No outputs.
 <!-- END_TF_DOCS -->
