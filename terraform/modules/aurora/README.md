@@ -116,6 +116,17 @@ resource "aws_ssm_parameter" "writer_endpoint" {
      Manually updating sections between TF_DOCS tags may be overwritten.
      See https://terraform-docs.io/user-guide/configuration/ for more information.
 -->
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Requirements
 
 No requirements.
@@ -146,8 +157,10 @@ No requirements.
 | <a name="input_kms_key_override"></a> [kms\_key\_override](#input\_kms\_key\_override) | Override to the platform-managed KMS key | `string` | `null` | no |
 | <a name="input_monitoring_interval"></a> [monitoring\_interval](#input\_monitoring\_interval) | The [monitoring\_interval](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#monitoring_interval-1) in seconds determines the time between sampling enhanced monitoring metrics for the cluster. | `number` | `15` | no |
 | <a name="input_monitoring_role_arn"></a> [monitoring\_role\_arn](#input\_monitoring\_role\_arn) | ARN for the IAM role that permits RDS to send enhanced monitoring metrics to CloudWatch Logs. | `string` | `null` | no |
+| <a name="input_security_group_override"></a> [security\_group\_override](#input\_security\_group\_override) | Override for the security group name | `string` | `null` | no |
 | <a name="input_snapshot_identifier"></a> [snapshot\_identifier](#input\_snapshot\_identifier) | When provided, cluster is provisioned using the specified cluster snapshot identifier. | `string` | `null` | no |
 | <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | Aurora cluster [storage\_type](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#storage_type-1) | `string` | `""` | no |
+| <a name="input_subnet_group_override"></a> [subnet\_group\_override](#input\_subnet\_group\_override) | Override for the subnet group name | `string` | `null` | no |
 | <a name="input_vpc_security_group_ids"></a> [vpc\_security\_group\_ids](#input\_vpc\_security\_group\_ids) | Additional security group ids for attachment to the database security group. | `list(string)` | `[]` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.

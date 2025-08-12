@@ -15,7 +15,6 @@ variable "platform" {
   type        = any
 }
 
-
 variable "kms_key_override" { #TODO: Consider removing this all together.
   default     = null
   description = "Override to the platform-managed KMS key"
@@ -128,5 +127,17 @@ variable "cluster_identifier" {
 variable "aws_backup_tag" {
   default     = "4hr7_w90"
   description = "Override for a standard, CDAP-managed backup tag for AWS Backups"
+  type        = string
+}
+
+variable "subnet_group_override" {
+  default     = null
+  description = "Override for the subnet group name"
+  type        = string
+}
+
+variable "security_group_override" {
+  default     = null
+  description = "Override for the security group name"
   type        = string
 }
