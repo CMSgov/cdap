@@ -24,13 +24,3 @@ variable "backup_resources" {
     "arn:aws:elasticfilesystem:*:*:file-system/*"
   ]
 }
-
-variable "tags" {
-  description = "A map of tags to assign to resources"
-  type        = map(string)
-  default = {
-    Terraform   = "true"
-    Environment = "example"
-    Purpose     = "CrossRegionBackup"
-  }
-}
