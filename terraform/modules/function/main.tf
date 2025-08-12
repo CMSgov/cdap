@@ -86,22 +86,28 @@ data "aws_caller_identity" "current" {}
 data "aws_iam_policy_document" "function_inline" {
   statement {
     actions = [
-      "ec2:CreateNetworkInterface",
-      "ec2:DeleteNetworkInterface",
-      "ec2:DescribeAccountAttributes",
-      "ec2:DescribeNetworkInterfaces",
-      "kms:Decrypt",
-      "kms:Encrypt",
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "sqs:DeleteMessage",
-      "sqs:GetQueueAttributes",
-      "sqs:ReceiveMessage",
-      "ssm:GetParameter",
       "ssm:GetParameters",
+      "ssm:GetParameter",
+      "sqs:ReceiveMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:DeleteMessage",
+      "logs:PutLogEvents",
+      "logs:CreateLogStream",
+      "logs:CreateLogGroup",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:DescribeAccountAttributes",
+      "ec2:DeleteNetworkInterface",
+      "ec2:CreateNetworkInterface"
     ]
     resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+    ]
+    resources = [aws_kms_key.env_vars.arn]
   }
 }
 
@@ -170,8 +176,8 @@ resource "aws_s3_object" "empty_function_zip" {
 module "vpc" {
   source = "../vpc"
 
-  app    = var.app
-  env    = var.env
+  app = var.app
+  env = var.env
 }
 
 module "subnets" {
