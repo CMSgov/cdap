@@ -1,4 +1,3 @@
-
 resource "aws_iam_role" "secondary_kms_admin_role" {
   name     = "KMSAdminRole"
   provider = aws.secondary
