@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 module "bucket_key" {
   source      = "../key"
-  name        = "${replace(var.name, ".", "-")}-bucket"
+  name        = "${var.name}-bucket"
   description = "For ${var.name} S3 bucket and its access logs"
   user_roles  = var.cross_account_read_roles
 }
