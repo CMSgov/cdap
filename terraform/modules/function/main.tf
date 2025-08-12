@@ -86,18 +86,18 @@ data "aws_caller_identity" "current" {}
 data "aws_iam_policy_document" "function_inline" {
   statement {
     actions = [
-      "ssm:GetParameters",
-      "ssm:GetParameter",
-      "sqs:ReceiveMessage",
-      "sqs:GetQueueAttributes",
-      "sqs:DeleteMessage",
-      "logs:PutLogEvents",
-      "logs:CreateLogStream",
-      "logs:CreateLogGroup",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DescribeAccountAttributes",
+      "ec2:CreateNetworkInterface",
       "ec2:DeleteNetworkInterface",
-      "ec2:CreateNetworkInterface"
+      "ec2:DescribeAccountAttributes",
+      "ec2:DescribeNetworkInterfaces",
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes",
+      "sqs:ReceiveMessage",
+      "ssm:GetParameter",
+      "ssm:GetParameters",
     ]
     resources = ["*"]
   }
