@@ -1,4 +1,3 @@
-# Secondary Region Resources
 data "aws_caller_identity" "current" {}
 
 resource "aws_iam_role" "primary_kms_admin_role" {
