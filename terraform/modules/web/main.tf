@@ -3,19 +3,6 @@ data "aws_acm_certificate" "this" {
   statuses = ["ISSUED"]
 }
 
-module "web_acl" {
-  source = "../firewall"
-
-  content_type  = "TEXT_HTML" 
-  name          = replace(var.domain, ".", "-")
-  scope         = "CLOUDFRONT"
-}
-
-module "origin_bucket" {
-  source  = "../bucket"
-  name    = var.domain
-}
-
 resource "aws_cloudfront_origin_access_control" "this" {
   name                              = var.domain
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
@@ -32,7 +19,7 @@ resource "aws_cloudfront_distribution" "this" {
   http_version        = "http2and3"
   is_ipv6_enabled     = true
   price_class         = "PriceClass_100"
-  web_acl_id          = module.web_acl.aws_wafv2_web_acl_arn
+  web_acl_id          = var.web_acl_arn
   
   custom_error_response {
     error_caching_min_ttl = 10
@@ -69,7 +56,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   origin {
-    domain_name               = "${module.origin_bucket.id}.s3.us-east-1.amazonaws.com"
+    domain_name               = "${var.bucket_name}.s3.us-east-1.amazonaws.com"
     origin_access_control_id  = aws_cloudfront_origin_access_control.this.id
     origin_id                 = "s3_origin"
   }
