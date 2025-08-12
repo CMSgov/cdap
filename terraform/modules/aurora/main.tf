@@ -1,22 +1,23 @@
 locals {
-  service_prefix = "${var.platform.app}-${var.platform.env}"
-  major_version  = split(".", var.engine_version)[0]
-  aurora_engine  = "aurora-postgresql"
-  aurora_family  = "${local.aurora_engine}${local.major_version}"
+  service_prefix      = "${var.platform.app}-${var.platform.env}"
+  major_version       = split(".", var.engine_version)[0]
+  aurora_engine       = "aurora-postgresql"
+  aurora_family       = "${local.aurora_engine}${local.major_version}"
+  security_group_name = coalesce(var.security_group_override, "${local.service_prefix}-db")
 }
 
 resource "aws_db_subnet_group" "this" {
   description = "${local.service_prefix} database subnet group"
-  name        = local.service_prefix
+  name        = coalesce(var.subnet_group_override, local.service_prefix)
   subnet_ids  = keys(var.platform.private_subnets)
 }
 
 resource "aws_security_group" "this" {
   description            = "${local.service_prefix} database security group"
-  name                   = "${local.service_prefix}-db"
+  name                   = local.security_group_name
   revoke_rules_on_delete = false
   tags = {
-    Name = "${local.service_prefix}-db"
+    Name = local.security_group_name
   }
   vpc_id = var.platform.vpc_id
 }
@@ -61,23 +62,25 @@ resource "aws_db_parameter_group" "this" {
 }
 
 resource "aws_rds_cluster" "this" {
-  cluster_identifier              = coalesce(var.cluster_identifier, local.service_prefix)
-  engine                          = local.aurora_engine
-  engine_version                  = var.engine_version
-  master_username                 = var.username
-  master_password                 = var.password
-  snapshot_identifier             = var.snapshot_identifier
-  db_subnet_group_name            = aws_db_subnet_group.this.name
-  storage_type                    = var.storage_type
-  storage_encrypted               = true
-  kms_key_id                      = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
-  backup_retention_period         = var.backup_retention_period
-  preferred_backup_window         = var.backup_window
-  preferred_maintenance_window    = var.maintenance_window
-  apply_immediately               = false
-  skip_final_snapshot             = var.platform.is_ephemeral_env ? true : false
-  deletion_protection             = var.deletion_protection
-  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.this.name
+  cluster_identifier                  = coalesce(var.cluster_identifier, local.service_prefix)
+  engine                              = local.aurora_engine
+  engine_version                      = var.engine_version
+  master_username                     = var.username
+  master_password                     = var.password
+  snapshot_identifier                 = var.snapshot_identifier
+  db_subnet_group_name                = aws_db_subnet_group.this.name
+  storage_type                        = var.storage_type
+  storage_encrypted                   = true
+  kms_key_id                          = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
+  backup_retention_period             = var.backup_retention_period
+  preferred_backup_window             = var.backup_window
+  preferred_maintenance_window        = var.maintenance_window
+  apply_immediately                   = false
+  skip_final_snapshot                 = true
+  deletion_protection                 = var.deletion_protection
+  db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.this.name
+  iam_database_authentication_enabled = true
+  copy_tags_to_snapshot               = true
   vpc_security_group_ids = flatten([
     aws_security_group.this.id,
     var.platform.security_groups.cmscloud-security-tools.id,
