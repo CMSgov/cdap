@@ -7,6 +7,7 @@ locals {
     bcda = data.aws_iam_policy_document.bcda_policies.json
     dpc  = data.aws_iam_policy_document.dpc_policies.json
   }
+  cluster_identifier = var.app == "dpc" && var.env == "test" ? "dpc-test" : "${var.app}-${var.env}-aurora"
 }
 
 data "aws_ssm_parameter" "bfd_account" {
@@ -41,7 +42,7 @@ data "aws_iam_policy_document" "dpc_policies" {
 }
 
 data "aws_rds_cluster" "this" {
-  cluster_identifier = "${var.app}-${var.env}-aurora"
+  cluster_identifier = local.cluster_identifier
 }
 
 locals {
