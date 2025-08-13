@@ -35,21 +35,25 @@ data "aws_iam_policy_document" "dpc_policies" {
     actions = [
       "rds-db:connect"
     ]
-    resources = ["arn:aws:rds-db:us-east-1:${data.aws_caller_identity.current.account_id}:dbuser:${data.aws_rds_cluster.this.cluster_resource_id}/${var.env}-dpc_consent-role"]
+    resources = var.app == "dpc" && var.env == "test" ? [
+      "arn:aws:rds-db:us-east-1:${data.aws_caller_identity.current.account_id}:dbuser:${data.aws_rds_cluster.this[0].cluster_resource_id}/${var.env}-dpc_consent-role"
+    ] : []
   }
 
 }
 
 data "aws_rds_cluster" "this" {
-  cluster_identifier = "${var.app}-${var.env}-aurora"
+  count              = var.app == "dpc" && var.env == "test" ? 1 : 0
+  cluster_identifier = "dpc-${var.env}"
 }
 
 locals {
-  #FIXME: database host parameters should be standardized
+  # FIXME: database host parameters should be standardized
   db_hosts = sensitive({
-    bcda = "postgres://${data.aws_rds_cluster.this.endpoint}:5432/bcda"
-    dpc  = data.aws_rds_cluster.this.endpoint
+    bcda = "postgres://${data.aws_rds_cluster.this[0].endpoint}:5432/bcda"
+    dpc  = var.app == "dpc" && var.env == "test" ? data.aws_rds_cluster.this[0].endpoint : null
   })
+
   opt_out_db_host = local.db_hosts[var.app]
 }
 
