@@ -46,9 +46,9 @@ runs:
           fi
 
           if shasum -a 256 -c "tenv_${VERSION}_checksums.txt" --ignore-missing; then
-            tar xvf tenv_${VERSION}_Linux_x86_64.tar.gz
+            tar xf tenv_${VERSION}_Linux_x86_64.tar.gz
             rm tenv_${VERSION}_Linux_x86_64.tar.gz
-            cd -
+            cd - > /dev/null
             mv $TMPDIR $HOME/.tenv
             echo "PATH=$HOME/.tenv:$PATH" >> "$GITHUB_ENV"
             echo "TENV_AUTO_INSTALL=true" >> "$GITHUB_ENV"
