@@ -5,7 +5,7 @@ runs:
   steps:
     - shell: bash
       run: |
-        if tenv version; then
+        if 2>&1 tenv version > /dev/null; then
           echo "tenv already installed, skipping"
         else
           VERSION=v4.7.6
@@ -14,26 +14,26 @@ runs:
           curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_checksums.txt
           curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_Linux_x86_64.tar.gz
 
-          if cosign version; then
+          if 2>&1 cosign version > /dev/null; then
             curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_checksums.txt.sig
             curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_checksums.txt.pem
             curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_Linux_x86_64.tar.gz.sig
             curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_Linux_x86_64.tar.gz.pem
             cosign \
-                verify-blob \
-                --certificate-identity "https://github.com/tofuutils/tenv/.github/workflows/release.yml@refs/tags/${VERSION}" \
-                --signature "tenv_${VERSION}_checksums.txt.sig" \
-                --certificate "tenv_${VERSION}_checksums.txt.pem" \
-                --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-                "tenv_${VERSION}_checksums.txt"
+              verify-blob \
+              --certificate-identity "https://github.com/tofuutils/tenv/.github/workflows/release.yml@refs/tags/${VERSION}" \
+              --signature "tenv_${VERSION}_checksums.txt.sig" \
+              --certificate "tenv_${VERSION}_checksums.txt.pem" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "tenv_${VERSION}_checksums.txt"
             TENV_SIG_CHECK=$?
             cosign \
-                verify-blob \
-                --certificate-identity "https://github.com/tofuutils/tenv/.github/workflows/release.yml@refs/tags/${VERSION}" \
-                --signature "tenv_${VERSION}_Linux_x86_64.tar.gz.sig" \
-                --certificate "tenv_${VERSION}_Linux_x86_64.tar.gz.pem" \
-                --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-                "tenv_${VERSION}_Linux_x86_64.tar.gz"
+              verify-blob \
+              --certificate-identity "https://github.com/tofuutils/tenv/.github/workflows/release.yml@refs/tags/${VERSION}" \
+              --signature "tenv_${VERSION}_Linux_x86_64.tar.gz.sig" \
+              --certificate "tenv_${VERSION}_Linux_x86_64.tar.gz.pem" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              "tenv_${VERSION}_Linux_x86_64.tar.gz"
             TENV_ASSET_CHECK=$?
             if [ "$TENV_SIG_CHECK" -eq "0" ] && [ "$TENV_ASSET_CHECK" -eq "0" ]; then
               echo "signatures verified"
