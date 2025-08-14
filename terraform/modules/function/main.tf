@@ -83,7 +83,7 @@ resource "aws_kms_alias" "env_vars" {
 
 data "aws_caller_identity" "current" {}
 
-data "aws_iam_policy_document" "function_inline" {
+data "aws_iam_policy_document" "function_policy_document" {
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
@@ -118,19 +118,20 @@ resource "aws_iam_role" "function" {
   permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
   assume_role_policy = data.aws_iam_policy_document.function_assume_role.json
+}
 
-  inline_policy {
-    name   = "default-function"
-    policy = data.aws_iam_policy_document.function_inline.json
-  }
+resource "aws_iam_role_policy" "default_function" {
+  name   = "default-function"
+  role   = aws_iam_role.function.id
+  policy = data.aws_iam_policy_document.function_policy_document.json
+}
 
-  dynamic "inline_policy" {
-    for_each = var.function_role_inline_policies
-    content {
-      name   = inline_policy.key
-      policy = inline_policy.value
-    }
-  }
+resource "aws_iam_role_policy" "extra_policies" {
+  for_each = var.function_role_inline_policies
+
+  name   = each.key
+  role   = aws_iam_role.function.id
+  policy = each.value
 }
 
 # Get prod and sbx account IDs in the test environment for cross-account roles
