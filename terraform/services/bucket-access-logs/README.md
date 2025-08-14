@@ -7,6 +7,6 @@ This terraform code manages an s3 bucket in each target account (prod and non-pr
 Pass in a backend file when running terraform init. Example:
 
 ```bash
-terraform init -reconfigure -backend-config=../../backends/bcda-test-gf.s3.tfbackend
+terraform init -reconfigure -backend-config=../../backends/bcda-test.s3.tfbackend
 terraform plan
 ```

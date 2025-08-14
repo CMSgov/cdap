@@ -7,7 +7,7 @@ This service sets up the infrastructure for the Admin Create Group lambda functi
 Pass in a backend file when running terraform init. See variables.tf for variables to include. Example:
 
 ```bash
-terraform init -backend-config=../../backends/bcda-dev-gf.s3.tfbackend
+terraform init -backend-config=../../backends/bcda-dev.s3.tfbackend
 terraform apply
 ```
 

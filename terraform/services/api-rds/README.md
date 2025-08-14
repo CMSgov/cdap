@@ -7,6 +7,6 @@ This terraform code sets up the RDS for the APIs.
 Pass in a backend file when running terraform init. Example:
 
 ```bash
-terraform init -reconfigure -backend-config=../../backends/ab2d-dev-gf.s3.tfbackend
+terraform init -reconfigure -backend-config=../../backends/ab2d-dev.s3.tfbackend
 terraform plan
 ```

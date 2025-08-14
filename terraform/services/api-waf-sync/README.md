@@ -8,7 +8,7 @@ Pass in a backend file when running terraform init. See variables.tf for variabl
 
 ```bash
 export TF_VAR_env=dev
-terraform init -backend-config=../../backends/dpc-dev-gf.s3.tfbackend
+terraform init -backend-config=../../backends/dpc-dev.s3.tfbackend
 terraform apply
 ```
 
