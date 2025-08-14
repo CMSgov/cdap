@@ -83,7 +83,7 @@ resource "aws_kms_alias" "env_vars" {
 
 data "aws_caller_identity" "current" {}
 
-data "aws_iam_policy_document" "function_policy_document" {
+data "aws_iam_policy_document" "default_function" {
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
@@ -123,7 +123,7 @@ resource "aws_iam_role" "function" {
 resource "aws_iam_role_policy" "default_function" {
   name   = "default-function"
   role   = aws_iam_role.function.id
-  policy = data.aws_iam_policy_document.function_policy_document.json
+  policy = data.aws_iam_policy_document.default_function.json
 }
 
 resource "aws_iam_role_policy" "extra_policies" {
