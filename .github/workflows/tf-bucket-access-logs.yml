@@ -17,6 +17,7 @@ jobs:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     steps:
       - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: ./actions/setup-tenv
       - run: tofu fmt -check -diff -recursive terraform/services/bucket-access-logs
 
@@ -36,6 +37,7 @@ jobs:
         env: [test, prod]
     steps:
       - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: ./actions/setup-tenv
       - uses: aws-actions/configure-aws-credentials@v4
         with:
