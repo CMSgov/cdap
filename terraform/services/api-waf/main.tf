@@ -24,8 +24,7 @@ data "aws_wafv2_ip_set" "external_services" {
 }
 
 resource "aws_wafv2_ip_set" "api_customers" {
-  count = local.is_sandbox || var.app == "ab2d" ? 0 : 1
-
+  count              = local.is_sandbox ? 0 : 1
   name               = "${var.app}-${var.env}-api-customers"
   description        = "IP ranges for customers of this API"
   scope              = "REGIONAL"
@@ -70,9 +69,9 @@ module "aws_waf" {
 
   associated_resource_arn = data.aws_lb.api.arn
   rate_limit              = var.app == "bcda" ? 1000 : 3000
-  ip_sets = compact([
-    local.is_sandbox ? null : one(data.aws_wafv2_ip_set.external_services).arn,
-    local.is_sandbox || var.app == "ab2d" ? null : one(aws_wafv2_ip_set.api_customers).arn,
-    local.is_sandbox ? null : one(aws_wafv2_ip_set.ipv6_api_customers).arn,
-  ])
+  ip_sets = local.is_sandbox ? [] : [
+    one(data.aws_wafv2_ip_set.external_services).arn,
+    one(aws_wafv2_ip_set.api_customers).arn,
+    one(aws_wafv2_ip_set.ipv6_api_customers).arn,
+  ]
 }
