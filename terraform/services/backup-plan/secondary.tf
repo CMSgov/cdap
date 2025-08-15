@@ -1,23 +1,7 @@
-resource "aws_iam_role" "secondary_kms_admin_role" {
-  name     = "KMSAdminRole"
-  provider = aws.secondary
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "backup.amazonaws.com"
-        }
-      },
-    ]
-  })
-}
-
 resource "aws_kms_key_policy" "secondary_backup_key_policy" {
   provider = aws.secondary
-  key_id   = data.aws_kms_key.secondary_kms_key.key_id
+  for_each = toset(local.apps)
+  key_id   = data.aws_kms_key.secondary_kms_key[each.value].key_id
 
   policy = jsonencode({
     Id = "secondary_backup_key_policy"
@@ -37,7 +21,7 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
         "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KMSAdminRole"
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
         },
         "Action" : [
           "kms:Create*",
@@ -62,7 +46,7 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : [
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KMSAdminRole"
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
           ]
         },
         "Action" : [
@@ -72,14 +56,14 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
           "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ],
-        "Resource" : data.aws_kms_alias.secondary_kms_alias.arn
+        "Resource" : data.aws_kms_alias.secondary_kms_alias[each.value].arn
       },
       {
         "Sid" : "Allow attachment of persistent resources",
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : [
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KMSAdminRole"
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
           ]
         },
         "Action" : [
@@ -100,20 +84,22 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
 }
 
 data "aws_kms_alias" "secondary_kms_alias" {
+  for_each = toset(local.apps)
   provider = aws.secondary
-  name     = "alias/bcda-${var.env}"
+  name     = lower("alias/${each.value}-${var.env}")
 }
 
 data "aws_kms_key" "secondary_kms_key" {
+  for_each = toset(local.apps)
   provider = aws.secondary
-  key_id   = data.aws_kms_alias.secondary_kms_alias.target_key_id
+  key_id   = data.aws_kms_alias.secondary_kms_alias[each.value].target_key_id
 }
 
 resource "aws_backup_vault" "secondary_backup_vault" {
   provider    = aws.secondary
-  for_each = toset(local.apps)
+  for_each    = toset(local.apps)
   name        = "${var.vault_name}_${each.value}"
-  kms_key_arn = data.aws_kms_key.secondary_kms_key.arn
+  kms_key_arn = data.aws_kms_key.secondary_kms_key[each.value].arn
 }
 
 data "aws_iam_policy_document" "secondary_backup_policy" {
@@ -135,7 +121,12 @@ data "aws_iam_policy_document" "secondary_backup_policy" {
 }
 
 resource "aws_backup_vault_policy" "secondary_backup_vault_policy" {
-  for_each = toset(local.apps)
+  for_each          = toset(local.apps)
   backup_vault_name = aws_backup_vault.secondary_backup_vault[each.value].name
-  policy            = data.aws_iam_policy_document.secondary_backup_policy.json
+  policy            = data.aws_iam_policy_document.secondary_backup_policy[each.value].json
+}
+
+resource "aws_backup_vault_lock_configuration" "secondary_vault_lock" {
+  for_each          = toset(local.apps)
+  backup_vault_name = aws_backup_vault.secondary_backup_vault[each.value].name
 }
