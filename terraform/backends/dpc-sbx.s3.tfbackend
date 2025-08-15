@@ -1,2 +1,0 @@
-bucket         = "dpc-sbx-tfstate"
-dynamodb_table = "dpc-sbx-tfstate"

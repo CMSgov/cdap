@@ -1,2 +1,0 @@
-bucket         = "ab2d-mgmt-tfstate"
-dynamodb_table = "ab2d-mgmt-tfstate"
