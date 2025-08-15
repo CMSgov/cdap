@@ -72,7 +72,7 @@ module "aws_waf" {
   rate_limit              = var.app == "bcda" ? 1000 : 3000
   ip_sets = compact([
     local.is_sandbox ? null : one(data.aws_wafv2_ip_set.external_services).arn,
-    var.app != "ab2d" ? one(aws_wafv2_ip_set.api_customers).arn : null,
-    one(aws_wafv2_ip_set.ipv6_api_customers).arn,
+    local.is_sandbox || var.app == "ab2d" ? null : one(aws_wafv2_ip_set.api_customers).arn,
+    local.is_sandbox ? null : one(aws_wafv2_ip_set.ipv6_api_customers).arn,
   ])
 }
