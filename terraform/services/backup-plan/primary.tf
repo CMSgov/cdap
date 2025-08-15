@@ -147,7 +147,7 @@ resource "aws_backup_plan" "aws_backup_plan" {
     start_window      = 60
     completion_window = 180
     copy_action {
-      destination_vault_arn = aws_backup_vault.secondary_backup_vault.arn
+      destination_vault_arn = aws_backup_vault.secondary_backup_vault[each.value].arn
     }
 
     lifecycle {
