@@ -111,11 +111,13 @@ data "aws_kms_key" "secondary_kms_key" {
 
 resource "aws_backup_vault" "secondary_backup_vault" {
   provider    = aws.secondary
-  name        = var.vault_name
+  for_each = toset(local.apps)
+  name        = "${var.vault_name}_${each.value}"
   kms_key_arn = data.aws_kms_key.secondary_kms_key.arn
 }
 
 data "aws_iam_policy_document" "secondary_backup_policy" {
+  for_each = toset(local.apps)
   statement {
     effect = "Allow"
 
@@ -128,11 +130,12 @@ data "aws_iam_policy_document" "secondary_backup_policy" {
       "backup:CopyIntoBackupVault",
     ]
 
-    resources = [aws_backup_vault.secondary_backup_vault.arn]
+    resources = [aws_backup_vault.secondary_backup_vault[each.value].arn]
   }
 }
 
 resource "aws_backup_vault_policy" "secondary_backup_vault_policy" {
-  backup_vault_name = aws_backup_vault.secondary_backup_vault.name
+  for_each = toset(local.apps)
+  backup_vault_name = aws_backup_vault.secondary_backup_vault[each.value].name
   policy            = data.aws_iam_policy_document.secondary_backup_policy.json
 }
