@@ -1,22 +1,6 @@
-resource "aws_iam_role" "primary_kms_admin_role" {
-  name = "KMSAdminRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "backup.amazonaws.com"
-        }
-      },
-    ]
-  })
-}
-
 resource "aws_kms_key_policy" "primary_backup_key_policy" {
-  key_id = data.aws_kms_key.primary_kms_key.key_id
+  for_each = toset(local.apps)
+  key_id   = data.aws_kms_key.primary_kms_key[each.value].key_id
 
   policy = jsonencode({
     Id = "primary_backup_key_policy"
@@ -36,7 +20,7 @@ resource "aws_kms_key_policy" "primary_backup_key_policy" {
         "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KMSAdminRole"
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
         },
         "Action" : [
           "kms:Create*",
@@ -54,14 +38,14 @@ resource "aws_kms_key_policy" "primary_backup_key_policy" {
           "kms:ScheduleKeyDeletion",
           "kms:CancelKeyDeletion"
         ],
-        "Resource" : data.aws_kms_alias.primary_kms_alias.arn
+        "Resource" : data.aws_kms_alias.primary_kms_alias[each.value].arn
       },
       {
         "Sid" : "Allow use of the key",
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : [
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KMSAdminRole"
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
           ]
         },
         "Action" : [
@@ -78,7 +62,7 @@ resource "aws_kms_key_policy" "primary_backup_key_policy" {
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : [
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/KMSAdminRole"
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
           ]
         },
         "Action" : [
@@ -99,17 +83,19 @@ resource "aws_kms_key_policy" "primary_backup_key_policy" {
 }
 
 data "aws_kms_alias" "primary_kms_alias" {
-  name = "alias/bcda-${var.env}"
+  for_each = toset(local.apps)
+  name     = lower("alias/${each.value}-${var.env}")
 }
 
 data "aws_kms_key" "primary_kms_key" {
-  key_id = data.aws_kms_alias.primary_kms_alias.target_key_id
+  for_each = toset(local.apps)
+  key_id   = data.aws_kms_alias.primary_kms_alias[each.value].target_key_id
 }
 
 resource "aws_backup_vault" "primary_backup_vault" {
-  for_each = toset(local.apps)
+  for_each    = toset(local.apps)
   name        = "${var.vault_name}_${each.value}"
-  kms_key_arn = data.aws_kms_key.primary_kms_key.arn
+  kms_key_arn = data.aws_kms_key.primary_kms_key[each.value].arn
 }
 
 data "aws_iam_policy_document" "primary_backup_policy" {
@@ -131,14 +117,14 @@ data "aws_iam_policy_document" "primary_backup_policy" {
 }
 
 resource "aws_backup_vault_policy" "primary_backup_vault_policy" {
-  for_each = toset(local.apps)
+  for_each          = toset(local.apps)
   backup_vault_name = aws_backup_vault.primary_backup_vault[each.value].name
   policy            = data.aws_iam_policy_document.primary_backup_policy[each.value].json
 }
 
 resource "aws_backup_plan" "aws_backup_plan" {
   for_each = toset(local.apps)
-  name = "cdap_managed_backup_plan_${each.value}"
+  name     = "cdap_managed_backup_plan_${each.value}"
   #only the 4hr rule should be copied to secondary
   rule {
     rule_name         = "4Hourly_1"
@@ -197,7 +183,7 @@ resource "aws_backup_plan" "aws_backup_plan" {
 
   tags = {
     cms-cloud-service = "AWS Backup"
-    Backup_Schedule = "4hr1_d7_w35_m90"
+    Backup_Schedule   = "4hr1_d7_w35_m90"
   }
 }
 
@@ -207,6 +193,10 @@ resource "aws_backup_selection" "aws_backup_selection" {
   iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
   name         = "cdap_managed_backup_selection_${each.value}"
   plan_id      = aws_backup_plan.aws_backup_plan[each.value].id
-  # This database is the only entry for now until testing is complete.
-  resources    = [lower("arn:aws:rds:us-east-1:539247469933:cluster:${each.value}-${var.env}")]
+  resources = [lower("arn:aws:rds:us-east-1:539247469933:cluster:${each.value}-${var.env}")]
+}
+
+resource "aws_backup_vault_lock_configuration" "primary_vault_lock" {
+  for_each          = toset(local.apps)
+  backup_vault_name = aws_backup_vault.primary_backup_vault[each.value].name
 }
