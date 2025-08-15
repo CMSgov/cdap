@@ -83,15 +83,13 @@ resource "aws_kms_alias" "env_vars" {
 
 data "aws_caller_identity" "current" {}
 
-data "aws_iam_policy_document" "function_inline" {
+data "aws_iam_policy_document" "default_function" {
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
       "ec2:DeleteNetworkInterface",
       "ec2:DescribeAccountAttributes",
       "ec2:DescribeNetworkInterfaces",
-      "kms:Decrypt",
-      "kms:Encrypt",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
@@ -103,6 +101,14 @@ data "aws_iam_policy_document" "function_inline" {
     ]
     resources = ["*"]
   }
+
+  statement {
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+    ]
+    resources = [aws_kms_key.env_vars.arn]
+  }
 }
 
 resource "aws_iam_role" "function" {
@@ -112,19 +118,20 @@ resource "aws_iam_role" "function" {
   permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
 
   assume_role_policy = data.aws_iam_policy_document.function_assume_role.json
+}
 
-  inline_policy {
-    name   = "default-function"
-    policy = data.aws_iam_policy_document.function_inline.json
-  }
+resource "aws_iam_role_policy" "default_function" {
+  name   = "default-function"
+  role   = aws_iam_role.function.id
+  policy = data.aws_iam_policy_document.default_function.json
+}
 
-  dynamic "inline_policy" {
-    for_each = var.function_role_inline_policies
-    content {
-      name   = inline_policy.key
-      policy = inline_policy.value
-    }
-  }
+resource "aws_iam_role_policy" "extra_policies" {
+  for_each = var.function_role_inline_policies
+
+  name   = each.key
+  role   = aws_iam_role.function.id
+  policy = each.value
 }
 
 # Get prod and sbx account IDs in the test environment for cross-account roles
@@ -170,8 +177,8 @@ resource "aws_s3_object" "empty_function_zip" {
 module "vpc" {
   source = "../vpc"
 
-  app    = var.app
-  env    = var.env
+  app = var.app
+  env = var.env
 }
 
 module "subnets" {
