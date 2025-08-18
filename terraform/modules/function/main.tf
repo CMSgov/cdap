@@ -107,7 +107,7 @@ data "aws_iam_policy_document" "default_function" {
       "kms:Encrypt",
       "kms:Decrypt",
     ]
-    resources = [aws_kms_key.env_vars.arn]
+    resources = ["*"]
   }
 }
 
