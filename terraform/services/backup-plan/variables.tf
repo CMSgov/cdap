@@ -12,15 +12,3 @@ variable "env" {
     error_message = "Valid value for env is test or prod."
   }
 }
-
-variable "backup_resources" {
-  description = "List of resource ARNs to backup"
-  type        = list(string)
-  default = [
-    "arn:aws:ec2:*:*:instance/*",
-    "arn:aws:rds:*:*:db:*",
-    "arn:aws:rds:*:*:cluster:*",
-    "arn:aws:dynamodb:*:*:table/*",
-    "arn:aws:elasticfilesystem:*:*:file-system/*"
-  ]
-}
