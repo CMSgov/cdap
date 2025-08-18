@@ -193,7 +193,13 @@ resource "aws_backup_selection" "aws_backup_selection" {
   iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
   name         = "cdap_managed_backup_selection_${each.value}"
   plan_id      = aws_backup_plan.aws_backup_plan[each.value].id
-  resources = [lower("arn:aws:rds:us-east-1:539247469933:cluster:${each.value}-${var.env}")]
+  resources = [lower("arn:aws:rds:us-east-1:${data.aws_caller_identity.current.account_id}:cluster:${each.value}-${var.env}")]
+
+  selection_tag {
+    type  = "STRINGEQUALS"
+    key   = "Backup"
+    value = "cdap-managed"
+  }
 }
 
 resource "aws_backup_vault_lock_configuration" "primary_vault_lock" {
