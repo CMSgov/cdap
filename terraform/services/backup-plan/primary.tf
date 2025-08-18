@@ -199,4 +199,7 @@ resource "aws_backup_selection" "aws_backup_selection" {
 resource "aws_backup_vault_lock_configuration" "primary_vault_lock" {
   for_each          = toset(local.apps)
   backup_vault_name = aws_backup_vault.primary_backup_vault[each.value].name
+  changeable_for_days = 3
+  max_retention_days  = 90
+  min_retention_days  = 1
 }

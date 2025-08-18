@@ -84,14 +84,14 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
 }
 
 data "aws_kms_alias" "secondary_kms_alias" {
-  for_each = toset(local.apps)
   provider = aws.secondary
+  for_each = toset(local.apps)
   name     = lower("alias/${each.value}-${var.env}")
 }
 
 data "aws_kms_key" "secondary_kms_key" {
-  for_each = toset(local.apps)
   provider = aws.secondary
+  for_each = toset(local.apps)
   key_id   = data.aws_kms_alias.secondary_kms_alias[each.value].target_key_id
 }
 
@@ -103,6 +103,7 @@ resource "aws_backup_vault" "secondary_backup_vault" {
 }
 
 data "aws_iam_policy_document" "secondary_backup_policy" {
+  provider = aws.secondary
   for_each = toset(local.apps)
   statement {
     effect = "Allow"
@@ -121,12 +122,17 @@ data "aws_iam_policy_document" "secondary_backup_policy" {
 }
 
 resource "aws_backup_vault_policy" "secondary_backup_vault_policy" {
+  provider          = aws.secondary
   for_each          = toset(local.apps)
   backup_vault_name = aws_backup_vault.secondary_backup_vault[each.value].name
   policy            = data.aws_iam_policy_document.secondary_backup_policy[each.value].json
 }
 
 resource "aws_backup_vault_lock_configuration" "secondary_vault_lock" {
-  for_each          = toset(local.apps)
-  backup_vault_name = aws_backup_vault.secondary_backup_vault[each.value].name
+  provider            = aws.secondary
+  for_each            = toset(local.apps)
+  backup_vault_name   = aws_backup_vault.secondary_backup_vault[each.value].name
+  changeable_for_days = 3
+  max_retention_days  = 90
+  min_retention_days  = 1
 }
