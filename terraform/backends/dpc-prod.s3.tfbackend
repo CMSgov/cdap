@@ -1,2 +1,2 @@
-bucket         = "dpc-prod-tfstate"
-dynamodb_table = "dpc-prod-tfstate"
+bucket       = "dpc-prod-tfstate-20250411204900543700000001"
+use_lockfile = true
