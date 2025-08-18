@@ -98,7 +98,7 @@ data "aws_kms_key" "secondary_kms_key" {
 resource "aws_backup_vault" "secondary_backup_vault" {
   provider    = aws.secondary
   for_each    = toset(local.apps)
-  name        = "${var.vault_name}_${each.value}"
+  name        = "${var.vault_name}_${each.value}_cr"
   kms_key_arn = data.aws_kms_key.secondary_kms_key[each.value].arn
 }
 
