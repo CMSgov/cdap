@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
-      - uses: ./actions/setup-tenv
+      - uses: ./actions/setup-tenv # TODO Use cmsgov/cdap/actions/setup-tenv@<hash> after this lands in main
       - run: tofu fmt -check -diff -recursive .
 
   plan-apply:
