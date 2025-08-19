@@ -12,6 +12,10 @@ on:
         required: false
         type: boolean
 
+defaults:
+  run:
+    working-directory: ./terraform/services/bucket-access-logs
+
 jobs:
   check-fmt:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
@@ -19,8 +23,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: ./actions/setup-tenv
-      - working-directory: ./terraform/services/bucket-access-logs
-        run: tofu fmt -check -diff -recursive .
+      - run: tofu fmt -check -diff -recursive .
 
   plan-apply:
     needs: check-fmt
@@ -28,9 +31,6 @@ jobs:
       contents: read
       id-token: write
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
-    defaults:
-      run:
-        working-directory: ./terraform/services/bucket-access-logs
     strategy:
       fail-fast: false
       matrix: # Only one per account
