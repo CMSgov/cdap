@@ -39,17 +39,14 @@ resource "aws_iam_role" "aurora_export" {
   })
 }
 
-resource "aws_rds_export_task" "aurora_to_s3_export" {
-  export_task_identifier = "aurora-export-task"
-  source_arn             = "arn:aws:rds:us-east-1:${data.aws_caller_identity.current.account_id}:cluster:bcda-${var.env}-aurora"
-  s3_bucket_name         = module.export_bucket.id
-  iam_role_arn           = aws_iam_role.aurora_export.arn
-  kms_key_id             = data.aws_kms_key.aurora_export.id
-  # You can specify databases, schemas, or tables to export
-  # s3_prefix              = "exports/my_data/"
-  # export_only_databases  = ["my_database"]
-  # export_only_tables     = ["my_database.my_table"]
-}
+# resource "aws_rds_export_task" "aurora_to_s3_export" {
+#   export_task_identifier = "aurora-export-task0"
+#   source_arn             = "arn:aws:rds:us-east-1:${data.aws_caller_identity.current.account_id}:cluster:bcda-${var.env}-aurora"
+#   s3_bucket_name         = module.export_bucket.id
+#   iam_role_arn           = aws_iam_role.aurora_export.arn
+#   kms_key_id             = data.aws_kms_key.aurora_export.id
+#   export_only            = ["public.suppressions"]
+# }
 
 resource "aws_s3_object" "aurora_export_manifest" {
   bucket = module.export_bucket.id
