@@ -4,6 +4,10 @@ locals {
   ignore_ok = true
 }
 
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
+
 module "sns_to_slack_function" {
   source = "../../modules/function"
 
@@ -20,6 +24,8 @@ module "sns_to_slack_function" {
 
     IGNORE_OK = true
   }
+
+  kms_key_arn = "arn:aws:kms:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:alias/${var.app}-${var.env}"
 }
 
 module "sns_to_slack_queue" {
