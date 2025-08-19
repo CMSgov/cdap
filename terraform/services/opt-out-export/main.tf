@@ -39,7 +39,10 @@ data "aws_iam_policy_document" "bcda_policies" {
   }
 }
 
+data "aws_region" "current" {}
+
 data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "dpc_policies" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -99,6 +102,7 @@ module "opt_out_export_function" {
     S3_UPLOAD_PATH   = "bfdeft01/${var.app}/out"
     DB_HOST          = local.opt_out_db_host
   }
+  kms_key_arn = "arn:aws:kms:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:alias/${var.app}-${var.env}"
 }
 
 # Add a rule to the database security group to allow access from the function

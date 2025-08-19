@@ -23,7 +23,10 @@ data "aws_iam_policy_document" "bcda_policies" {
   }
 }
 
+data "aws_region" "current" {}
+
 data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "dpc_policies" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -75,6 +78,7 @@ module "opt_out_import_function" {
     APP_NAME = "${var.app}-${var.env}-opt-out-import"
     DB_HOST  = local.opt_out_db_host
   }
+  kms_key_arn = "arn:aws:kms:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:alias/${var.app}-${var.env}"
 }
 
 # Set up queue for receiving messages when a file is added to the bucket

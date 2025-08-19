@@ -73,3 +73,8 @@ variable "schedule_expression" {
   type        = string
   default     = ""
 }
+
+variable "kms_key_arn" {
+  type        = string
+  description = "KMS key ARN to encrypt/decrypt Lambda environment variables"
+}
