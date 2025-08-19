@@ -41,7 +41,7 @@ resource "aws_iam_role" "aurora_export" {
 
 resource "aws_rds_export_task" "aurora_to_s3_export" {
   export_task_identifier = "aurora-export-task"
-  source_arn             = "arn:aws:rds:us-east-1:${data.aws_caller_identity.current.account_id}:cluster:bcda-${var.env}"
+  source_arn             = "arn:aws:rds:us-east-1:${data.aws_caller_identity.current.account_id}:cluster:bcda-${var.env}-aurora"
   s3_bucket_name         = module.export_bucket.id
   iam_role_arn           = aws_iam_role.aurora_export.arn
   kms_key_id             = data.aws_kms_key.aurora_export.id
@@ -71,19 +71,3 @@ resource "aws_s3_object" "aurora_export_manifest" {
   })
 }
 
-resource "aws_quicksight_data_source" "aurora_export" {
-  data_source_id = "aurora_export-id"
-  name           = "manifest in S3"
-
-  parameters {
-    s3 {
-      manifest_file_location {
-        bucket = module.export_bucket.id
-        key    = local.export_bucket_name
-      }
-      role_arn = aws_iam_role.aurora_export.arn
-    }
-  }
-
-  type = "S3"
-}
