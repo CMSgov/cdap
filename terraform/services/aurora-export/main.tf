@@ -50,3 +50,40 @@ resource "aws_rds_export_task" "aurora_to_s3_export" {
   # export_only_databases  = ["my_database"]
   # export_only_tables     = ["my_database.my_table"]
 }
+
+resource "aws_s3_object" "aurora_export_manifest" {
+  bucket = module.export_bucket.id
+  key    = "manifest.json"
+  content = jsonencode({
+    fileLocations = [
+      {
+        URIPrefixes = [
+          "https://${module.export_bucket.id}.s3-${data.aws_region.current.region}.${data.aws_partition.current.dns_suffix}"
+        ]
+      }
+    ]
+    globalUploadSettings = {
+      format         = "CSV"
+      delimiter      = ","
+      textqualifier  = "\""
+      containsHeader = true
+    }
+  })
+}
+
+resource "aws_quicksight_data_source" "aurora_export" {
+  data_source_id = "aurora_export-id"
+  name           = "manifest in S3"
+
+  parameters {
+    s3 {
+      manifest_file_location {
+        bucket = module.export_bucket.id
+        key    = local.export_bucket_name
+      }
+      role_arn = aws_iam_role.aurora_export.arn
+    }
+  }
+
+  type = "S3"
+}
