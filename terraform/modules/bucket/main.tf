@@ -1,4 +1,5 @@
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 module "bucket_key" {
   source      = "../key"
@@ -111,4 +112,38 @@ resource "aws_s3_bucket_logging" "this" {
 
   target_bucket = data.aws_s3_bucket.bucket_access_logs.id
   target_prefix = "${aws_s3_bucket.this.id}/"
+}
+
+data "aws_iam_policy_document" "topic" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+
+    actions   = ["SNS:Publish"]
+    resources = ["arn:aws:sns:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:s3-event-notification-topic"]
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = [aws_s3_bucket.this.arn]
+    }
+  }
+}
+resource "aws_sns_topic" "topic" {
+  name   = "s3-event-notification-topic"
+  policy = data.aws_iam_policy_document.topic.json
+}
+
+resource "aws_s3_bucket_notification" "bucket_notification" {
+  bucket =aws_s3_bucket.this.id
+
+  topic {
+    topic_arn     = aws_sns_topic.topic.arn
+    events        = ["s3:ObjectCreated:*"]
+    filter_suffix = ".log"
+  }
 }
