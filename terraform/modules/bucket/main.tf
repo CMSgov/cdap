@@ -124,7 +124,7 @@ data "aws_iam_policy_document" "topic" {
     }
 
     actions   = ["SNS:Publish"]
-    resources = ["arn:aws:sns:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:s3-event-notification-topic"]
+    resources = ["arn:aws:sns:*:${data.aws_caller_identity.current.account_id}:s3-event-notification-topic"]
 
     condition {
       test     = "ArnLike"
