@@ -6,6 +6,15 @@ resource "aws_cloudfront_origin_access_control" "this" {
   signing_protocol                  = "sigv4"
 }
 
+resource "aws_cloudfront_function" "viewer_request" {
+  count   = length(var.viewer_request_function_list)
+
+  code    = var.viewer_request_function_list[count.index].code
+  comment = var.viewer_request_function_list[count.index].comment
+  name    = var.viewer_request_function_list[count.index].name
+  runtime = var.viewer_request_function_list[count.index].runtime
+}
+
 resource "aws_cloudfront_distribution" "this" {
   aliases             = [var.certificate.domain_name]
   comment             = "Distribution for the ${var.certificate.domain_name} website"
@@ -33,7 +42,7 @@ resource "aws_cloudfront_distribution" "this" {
   default_cache_behavior {
     allowed_methods         = ["GET", "HEAD"]
     cached_methods          = ["GET", "HEAD"]
-    cache_policy_id         = var.default_cache_behavior["cache_policy_id"]
+    cache_policy_id         = var.cache_policy_id
     compress                = true
     default_ttl             = 3600
     max_ttl                 = 86400
@@ -50,10 +59,10 @@ resource "aws_cloudfront_distribution" "this" {
     }
 
     dynamic function_association {
-      for_each =  var.default_cache_behavior["function_association"]
+      for_each =  aws_cloudfront_function.viewer_request
       content {
-        event_type    = function_association["event_type"]
-        function_arn  = function_association["function_arn"]
+        event_type    = "viewer_request"
+        function_arn  = function_association.value.arn
       }
     }
   }
