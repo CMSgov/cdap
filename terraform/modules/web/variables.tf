@@ -3,6 +3,12 @@ variable "bucket" {
   type        = map
 }
 
+variable "cache_policy_id" {
+  default     = null
+  description = "Default cache behavior for this distribution."
+  type        = string
+}
+
 variable "certificate" {
   description = "Object representing the website certificate."
   type = object({
@@ -11,25 +17,21 @@ variable "certificate" {
   })
 }
 
-variable "default_cache_behavior" {
-  default     = {
-    cache_policy_id       = null
-    function_association  = []
-  }
-  description = "Default cache behavior for this distribution."
-  type        = object({
-    cache_policy_id       = optional(string)
-    function_association  = list(object({
-      event_type    = string
-      function_arn  = string
-    }))
-  })
-}
-
 variable "enabled" {
   default     = true
   description = "Whether the distribution is enabled to accept end user requests for content."
   type        = bool
+}
+
+variable "viewer_request_function_list" {
+  default     = []
+  description = "Optional list of viewer request function definitions to associate with the distribution."
+  type          = list(object({
+    code        = string
+    comment     = string
+    name        = string
+    runtime     = string
+  }))
 }
 
 variable "web_acl" {
