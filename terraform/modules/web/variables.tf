@@ -1,11 +1,29 @@
-variable "bucket_name" {
-  description = "Origin bucket name; ex: 'bcda.cms.gov2025????????????000000001'."
-  type        = string
+variable "bucket" {
+  description = "Object representing the origin S3 bucket."
+  type        = map
 }
 
-variable "domain" {
-  description = "FQDN of the website. Ex.: 'stage.bcda.cms.gov'."
-  type        = string
+variable "certificate" {
+  description = "Object representing the website certificate."
+  type = object({
+    arn         = string
+    domain_name = string
+  })
+}
+
+variable "default_cache_behavior" {
+  default     = {
+    cache_policy_id       = null
+    function_association  = []
+  }
+  description = "Default cache behavior for this distribution."
+  type        = object({
+    cache_policy_id       = optional(string)
+    function_association  = list(object({
+      event_type    = string
+      function_arn  = string
+    }))
+  })
 }
 
 variable "enabled" {
@@ -14,7 +32,7 @@ variable "enabled" {
   type        = bool
 }
 
-variable "web_acl_arn" {
-  description = "ARN of the WAF web acl associated with the distribution."
-  type        = string
+variable "web_acl" {
+  description = "Object representing the associated WAF acl."
+  type        = map
 }
