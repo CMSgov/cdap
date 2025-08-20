@@ -37,6 +37,21 @@ module "web" {
   bucket      = module.bucket
   certificate = aws_acm_certificate.cert
   web_acl     = module.web_acl
+  
+  viewer_request_function_list = [
+    {
+      code    = "test_code1"
+      comment = "test_comment1"
+      name    = "test_name1"
+      runtime = "cloudfront-js-2.0"
+    },
+    {
+      code    = "test_code2"
+      comment = "test_comment2"
+      name    = "test_name2"
+      runtime = "cloudfront-js-2.0"
+    }
+  ]
 }
 ```
 
@@ -73,8 +88,9 @@ No requirements.
 | <a name="input_bucket"></a> [bucket](#input\_bucket) | Object representing the origin S3 bucket. | `map` | n/a | yes |
 | <a name="input_certificate"></a> [certificate](#input\_certificate) | Object representing the website certificate. | <pre>object({<br/>    arn         = string<br/>    domain_name = string<br/>  })</pre> | n/a | yes |
 | <a name="input_web_acl"></a> [web\_acl](#input\_web\_acl) | Object representing the associated WAF acl. | `map` | n/a | yes |
-| <a name="input_default_cache_behavior"></a> [default\_cache\_behavior](#input\_default\_cache\_behavior) | Default cache behavior for this distribution. | <pre>object({<br/>    cache_policy_id       = optional(string)<br/>    function_association  = list(object({<br/>      event_type    = string<br/>      function_arn  = string<br/>    }))<br/>  })</pre> | <pre>{<br/>  "cache_policy_id": null,<br/>  "function_association": []<br/>}</pre> | no |
+| <a name="input_cache_policy_id"></a> [cache\_policy\_id](#input\_cache\_policy\_id) | Default cache behavior for this distribution. | `string` | `null` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
+| <a name="input_viewer_request_function_list"></a> [viewer\_request\_function\_list](#input\_viewer\_request\_function\_list) | Optional list of viewer request function definitions to associate with the distribution. | <pre>list(object({<br/>    code        = string<br/>    comment     = string<br/>    name        = string<br/>    runtime     = string<br/>  }))</pre> | `[]` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -95,6 +111,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_cloudfront_distribution.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution) | resource |
+| [aws_cloudfront_function.viewer_request](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_function) | resource |
 | [aws_cloudfront_origin_access_control.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_origin_access_control) | resource |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
