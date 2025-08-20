@@ -1,10 +1,5 @@
-data "aws_acm_certificate" "this" {
-  domain   = var.domain
-  statuses = ["ISSUED"]
-}
-
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = var.domain
+  name                              = var.bucket.bucket_regional_domain_name
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -12,14 +7,14 @@ resource "aws_cloudfront_origin_access_control" "this" {
 }
 
 resource "aws_cloudfront_distribution" "this" {
-  aliases             = [var.domain]
-  comment             = "Distribution for the ${var.domain} website"
+  aliases             = [var.certificate.domain_name]
+  comment             = "Distribution for the ${var.certificate.domain_name} website"
   default_root_object = "index.html"
   enabled             = var.enabled
   http_version        = "http2and3"
   is_ipv6_enabled     = true
   price_class         = "PriceClass_100"
-  web_acl_id          = var.web_acl_arn
+  web_acl_id          = var.web_acl.arn
   
   custom_error_response {
     error_caching_min_ttl = 10
@@ -36,15 +31,15 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   default_cache_behavior {
-    allowed_methods             = ["GET", "HEAD"]
-    cached_methods              = ["GET", "HEAD"]
-    cache_policy_id             = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-    compress                    = true
-    default_ttl                 = 3600
-    max_ttl                     = 86400
-    min_ttl                     = 0
-    target_origin_id            = "s3_origin"
-    viewer_protocol_policy      = "redirect-to-https"
+    allowed_methods         = ["GET", "HEAD"]
+    cached_methods          = ["GET", "HEAD"]
+    cache_policy_id         = var.default_cache_behavior[cache_policy_id]
+    compress                = true
+    default_ttl             = 3600
+    max_ttl                 = 86400
+    min_ttl                 = 0
+    target_origin_id        = "s3_origin"
+    viewer_protocol_policy  = "redirect-to-https"
   
     forwarded_values {
       query_string = false
@@ -53,10 +48,18 @@ resource "aws_cloudfront_distribution" "this" {
         forward = "none"
       }
     }
+
+    dynamic function_association {
+      for_each =  var.default_cache_behavior[function_association]
+      content {
+        event_type    = function_association["event_type"]
+        function_arn  = function_association["function_arn"]
+      }
+    }
   }
 
   origin {
-    domain_name               = "${var.bucket_name}.s3.us-east-1.amazonaws.com"
+    domain_name               = var.bucket.bucket_regional_domain_name
     origin_access_control_id  = aws_cloudfront_origin_access_control.this.id
     origin_id                 = "s3_origin"
   }
@@ -69,7 +72,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = data.aws_acm_certificate.this.arn
+    acm_certificate_arn      = var.certificate.arn
     minimum_protocol_version = "TLSv1.2_2021"
     ssl_support_method       = "sni-only"
   }
