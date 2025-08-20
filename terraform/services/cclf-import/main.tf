@@ -20,10 +20,6 @@ data "aws_iam_policy_document" "assume_bucket_role" {
   }
 }
 
-data "aws_caller_identity" "current" {}
-
-data "aws_region" "current" {}
-
 module "cclf_import_function" {
   source = "../../modules/function"
 
@@ -46,7 +42,6 @@ module "cclf_import_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-cclf-import"
   }
-  kms_key_arn = "arn:aws:kms:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:alias/${var.app}-${var.env}"
 }
 
 # Set up queue for receiving messages when a file is added to the bucket

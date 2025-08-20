@@ -4,10 +4,6 @@ locals {
   memory_size = 2048
 }
 
-data "aws_caller_identity" "current" {}
-
-data "aws_region" "current" {}
-
 module "admin_create_group_function" {
   source = "../../modules/function"
 
@@ -26,7 +22,6 @@ module "admin_create_group_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-admin-create-group"
   }
-  kms_key_arn = "arn:aws:kms:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:alias/${var.app}-${var.env}"
 }
 
 # Add a rule to the database security group to allow access from the function

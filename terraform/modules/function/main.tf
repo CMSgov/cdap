@@ -10,6 +10,10 @@ locals {
   }
 }
 
+data "aws_kms_alias" "kms_key" {
+  name = "alias/${var.app}-${var.env}"
+}
+
 data "aws_iam_openid_connect_provider" "github" {
   url = "https://${local.provider_domain}"
 }
@@ -97,7 +101,7 @@ data "aws_iam_policy_document" "default_function" {
       "kms:Encrypt",
       "kms:Decrypt",
     ]
-    resources = [var.kms_key_arn]
+    resources = ["*"]
   }
 }
 
@@ -196,7 +200,7 @@ resource "aws_lambda_function" "this" {
   function_name = var.name
   s3_key        = "function.zip"
   s3_bucket     = module.zip_bucket.id
-  kms_key_arn   = var.kms_key_arn
+  kms_key_arn   = data.aws_kms_alias.kms_key.target_key_arn
   role          = aws_iam_role.function.arn
   handler       = var.handler
   runtime       = var.runtime

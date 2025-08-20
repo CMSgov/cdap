@@ -5,10 +5,6 @@ locals {
   creds_bucket_name = "bcda-${var.env}-aco-creds-*"
 }
 
-data "aws_caller_identity" "current" {}
-
-data "aws_region" "current" {}
-
 data "aws_iam_policy_document" "creds_bucket" {
   statement {
     actions   = ["s3:PutObject"]
@@ -44,7 +40,6 @@ module "admin_create_aco_creds_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-admin-create-aco-creds"
   }
-  kms_key_arn = "arn:aws:kms:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:alias/${var.app}-${var.env}"
 }
 
 # Add a rule to the database security group to allow access from the function
