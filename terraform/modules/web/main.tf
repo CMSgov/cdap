@@ -33,7 +33,7 @@ resource "aws_cloudfront_distribution" "this" {
   default_cache_behavior {
     allowed_methods         = ["GET", "HEAD"]
     cached_methods          = ["GET", "HEAD"]
-    cache_policy_id         = var.default_cache_behavior[cache_policy_id]
+    cache_policy_id         = var.default_cache_behavior["cache_policy_id"]
     compress                = true
     default_ttl             = 3600
     max_ttl                 = 86400
@@ -50,7 +50,7 @@ resource "aws_cloudfront_distribution" "this" {
     }
 
     dynamic function_association {
-      for_each =  var.default_cache_behavior[function_association]
+      for_each =  var.default_cache_behavior["function_association"]
       content {
         event_type    = function_association["event_type"]
         function_arn  = function_association["function_arn"]
