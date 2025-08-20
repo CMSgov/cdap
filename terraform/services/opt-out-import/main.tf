@@ -24,7 +24,6 @@ data "aws_iam_policy_document" "bcda_policies" {
 }
 
 data "aws_caller_identity" "current" {}
-
 data "aws_iam_policy_document" "dpc_policies" {
   statement {
     actions = ["sts:AssumeRole"]
