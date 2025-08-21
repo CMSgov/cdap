@@ -1,0 +1,11 @@
+terraform {
+  backend "s3" {
+    key = "cost-anomaly/terraform.tfstate"
+  }
+}
+
+provider "aws" {
+  default_tags {
+    tags = module.standards.default_tags
+  }
+}
