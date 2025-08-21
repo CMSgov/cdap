@@ -122,7 +122,7 @@ resource "aws_backup_vault_policy" "primary_backup_vault_policy" {
   policy            = data.aws_iam_policy_document.primary_backup_policy[each.value].json
 }
 
-resource "aws_backup_plan" "aws_backup_plan" {
+resource "aws_backup_plan" "this" {
   for_each = toset(local.apps)
   name     = "cdap_managed_backup_plan_${each.value}"
   #only the 4hr rule should be copied to secondary
