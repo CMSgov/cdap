@@ -177,14 +177,6 @@ resource "aws_backup_plan" "aws_backup_plan" {
     }
   }
 
-  depends_on = [
-    aws_backup_vault.secondary_backup_vault
-  ]
-
-  tags = {
-    cms-cloud-service = "AWS Backup"
-    Backup_Schedule   = "4hr1_d7_w35_m90"
-  }
 }
 
 resource "aws_backup_selection" "aws_backup_selection" {
@@ -193,19 +185,17 @@ resource "aws_backup_selection" "aws_backup_selection" {
   iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
   name         = "cdap_managed_backup_selection_${each.value}"
   plan_id      = aws_backup_plan.aws_backup_plan[each.value].id
-  resources = [lower("arn:aws:rds:us-east-1:${data.aws_caller_identity.current.account_id}:cluster:${each.value}-${var.env}")]
 
   selection_tag {
     type  = "STRINGEQUALS"
-    key   = "Backup"
-    value = "cdap-managed"
+    key   = "AWS_Backup"
+    value = "4Hours1_Daily7_Weekly35_Monthly90"
   }
 }
 
 resource "aws_backup_vault_lock_configuration" "primary_vault_lock" {
   for_each          = toset(local.apps)
   backup_vault_name = aws_backup_vault.primary_backup_vault[each.value].name
-  changeable_for_days = 3
   max_retention_days  = 90
   min_retention_days  = 1
 }
