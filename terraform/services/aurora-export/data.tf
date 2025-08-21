@@ -15,7 +15,7 @@ data "aws_iam_policy_document" "aurora_export" {
     ]
     effect = "Allow"
     resources = [
-      "${module.export_bucket.arn}/*",
+      "${module.export_bucket.arn}/*","arn:aws:rds:us-east-1:${data.aws_caller_identity.current.account_id}:db:bcda-${var.env}-aurora-0","arn:aws:rds:us-east-1:${data.aws_caller_identity.current.account_id}:cluster:bcda-${var.env}-aurora"
     ]
   }
   statement {
