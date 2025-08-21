@@ -7,8 +7,6 @@ data "aws_iam_policy_document" "aurora_export" {
   statement {
     actions = [
       "s3:PutObject",
-      "s3:GetObject",
-      "s3:GetBucketLocation",
       "s3:AbortMultipartUpload",
     ]
     effect = "Allow"
@@ -19,8 +17,6 @@ data "aws_iam_policy_document" "aurora_export" {
   statement {
     actions = [
       "s3:PutObject",
-      "s3:GetObject",
-      "s3:GetBucketLocation",
       "s3:AbortMultipartUpload",
     ]
     effect = "Allow"
@@ -28,12 +24,4 @@ data "aws_iam_policy_document" "aurora_export" {
       module.export_bucket.arn,
     ]
   }
-}
-
-data "aws_kms_alias" "aurora_export_kms_alias" {
-  name = lower("alias/bcda-${var.env}")
-}
-
-data "aws_kms_key" "aurora_export" {
-  key_id = data.aws_kms_alias.aurora_export_kms_alias.target_key_id
 }
