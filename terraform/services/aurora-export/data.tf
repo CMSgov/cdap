@@ -7,6 +7,8 @@ data "aws_iam_policy_document" "aurora_export" {
   statement {
     actions = [
       "s3:PutObject",
+      "s3:GetObject",
+      "s3:GetBucketLocation",
       "s3:AbortMultipartUpload",
     ]
     effect = "Allow"
@@ -17,6 +19,8 @@ data "aws_iam_policy_document" "aurora_export" {
   statement {
     actions = [
       "s3:PutObject",
+      "s3:GetObject",
+      "s3:GetBucketLocation",
       "s3:AbortMultipartUpload",
     ]
     effect = "Allow"
