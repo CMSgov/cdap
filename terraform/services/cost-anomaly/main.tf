@@ -1,34 +1,36 @@
-resource "aws_sns_topic" "cost_anomaly_alerts"{
+resource "aws_sns_topic" "cost_anomaly_alerts" {
   name = "cost-anomaly-alerts-topic"
 }
 
-resource "aws_sns_topic_policy" "cost_anomaly_topic_policy"{
-  arn = aws_sns_topic.cost_anomaly_alerts.arn
-  policy = data.aws_iam_policy_document.cost_anomaly_topic_access.json }
+resource "aws_sns_topic_policy" "cost_anomaly_topic_policy" {
+  arn    = aws_sns_topic.cost_anomaly_alerts.arn
+  policy = data.aws_iam_policy_document.cost_anomaly_topic_access.json
+}
 
 data "aws_iam_policy_document" "cost_anomaly_topic_access" {
   statement {
     effect = "Allow"
-    principals
-
-    { type = "Service" identifiers = ["ce.amazonaws.com"] }
-    actions = ["sns:Publish"]
+    principals {
+      type        = "Service"
+      identifiers = ["ce.amazonaws.com"]
+    }
+    actions   = ["sns:Publish"]
     resources = [aws_sns_topic.cost_anomaly_alerts.arn]
   }
 }
 
-resource "aws_ce_anomaly_monitor" "all_services_monitor"{
-  name = "all-services-cost-monitor"
-  monitor_type = "DIMENSIONAL"
+resource "aws_ce_anomaly_monitor" "all_services_monitor" {
+  name              = "all-services-cost-monitor"
+  monitor_type      = "DIMENSIONAL"
   monitor_dimension = "SERVICE"
 }
 
 resource "aws_ce_anomaly_subscription" "cost_anomaly_subscription" {
-  name = "cost-anomaly-alerts-subscription"
-  frequency = "DAILY"
+  name             = "cost-anomaly-alerts-subscription"
+  frequency        = "DAILY"
   monitor_arn_list = [aws_ce_anomaly_monitor.all_services_monitor.arn]
-  subscriber{
-    type = "SNS"
+  subscriber {
+    type    = "SNS"
     address = aws_sns_topic.cost_anomaly_alerts.arn
   }
   threshold_expression {
