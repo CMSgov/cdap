@@ -17,7 +17,7 @@ resource "aws_kms_key_policy" "primary_backup_key_policy" {
         "Resource" : "*"
       },
       {
-        "Sid" : "Allow access for Key Administrators",
+        "Sid" : "Grant backup role access to kms actions.",
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
@@ -179,7 +179,7 @@ resource "aws_backup_plan" "aws_backup_plan" {
 
 }
 
-resource "aws_backup_selection" "aws_backup_selection" {
+resource "aws_backup_selection" "this" {
   for_each = toset(local.apps)
   # This iam role is the one CMS is using for their backup plan.
   iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
