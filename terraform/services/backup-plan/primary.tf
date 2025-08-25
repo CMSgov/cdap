@@ -105,7 +105,7 @@ data "aws_iam_policy_document" "primary_backup_policy" {
 
     principals {
       type        = "AWS"
-      identifiers = [data.aws_caller_identity.current.account_id]
+      identifiers = [module.standards.account_id]
     }
 
     actions = [
@@ -182,7 +182,7 @@ resource "aws_backup_plan" "aws_backup_plan" {
 resource "aws_backup_selection" "this" {
   for_each = toset(local.apps)
   # This iam role is the one CMS is using for their backup plan.
-  iam_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
+  iam_role_arn = "arn:aws:iam::${module.standards.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
   name         = "cdap_managed_backup_selection_${each.value}"
   plan_id      = aws_backup_plan.aws_backup_plan[each.value].id
 
