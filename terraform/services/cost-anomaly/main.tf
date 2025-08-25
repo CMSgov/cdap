@@ -110,3 +110,31 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
     }
   }
 }
+
+
+module "sns_to_slack_function" {
+  source = "../../modules/function"
+
+  app = "cdap"
+  env = var.env
+
+  name        = "Cost Anomaly Alert"
+  description = "Listens for Cost Anomaly Alerts and forwards to Slack"
+
+  handler = "lambda_function.lambda_handler"
+  runtime = "python3.13"
+
+  environment_variables = {
+
+    IGNORE_OK = true
+  }
+}
+
+module "sns_to_slack_queue" {
+  source = "../../modules/queue"
+
+  name = "cost-anomaly-alert-queue"
+  sns_topic_arn = "aws_sns_topic.cost_anomaly_updates.arn"
+
+  function_name = module.sns_to_slack_function.name
+}
