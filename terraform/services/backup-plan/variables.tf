@@ -5,7 +5,7 @@ variable "vault_name" {
 }
 
 variable "env" {
-  description = "The application environment (test, prod)"
+  description = "The application environment (dev, test, prod)"
   type        = string
   validation {
     condition     = contains(["dev", "test", "prod"], var.env)
