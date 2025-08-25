@@ -1,13 +1,13 @@
 data "aws_caller_identity" "current" {}
 
 resource "aws_ce_anomaly_monitor" "BCDA_Account_Monitor" {
-  name         = "BCDA Account Monitor"
+  name              = "BCDA Account Monitor"
   monitor_type      = "DIMENSIONAL"
   monitor_dimension = "SERVICE"
 }
 
 resource "aws_sns_topic" "cost_anomaly_updates" {
-  name = "cost-anomaly-updates"
+  name              = "cost-anomaly-updates"
   kms_master_key_id = "alias/bcda-${var.env}"
 }
 
