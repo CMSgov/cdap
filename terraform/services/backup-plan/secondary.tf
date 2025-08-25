@@ -11,7 +11,7 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : [
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
+            "arn:aws:iam::${module.standards.account_id}:root",
           ]
         },
         "Action" : "kms:*",
@@ -21,7 +21,7 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
         "Sid" : "Allow access for Key Administrators",
         "Effect" : "Allow",
         "Principal" : {
-          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
+          "AWS" : "arn:aws:iam::${module.standards.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
         },
         "Action" : [
           "kms:Create*",
@@ -46,7 +46,7 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : [
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
+            "arn:aws:iam::${module.standards.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
           ]
         },
         "Action" : [
@@ -63,7 +63,7 @@ resource "aws_kms_key_policy" "secondary_backup_key_policy" {
         "Effect" : "Allow",
         "Principal" : {
           "AWS" : [
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
+            "arn:aws:iam::${module.standards.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
           ]
         },
         "Action" : [
@@ -110,7 +110,7 @@ data "aws_iam_policy_document" "secondary_backup_policy" {
 
     principals {
       type        = "AWS"
-      identifiers = [data.aws_caller_identity.current.account_id]
+      identifiers = [module.standards.account_id]
     }
 
     actions = [
