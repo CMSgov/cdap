@@ -133,7 +133,7 @@ module "sns_to_slack_function" {
 module "sns_to_slack_queue" {
   source = "../../modules/queue"
 
-  name = "cost-anomaly-alert-queue"
+  name          = "cost-anomaly-alert-queue"
   sns_topic_arn = "aws_sns_topic.cost_anomaly_updates.arn"
 
   function_name = module.sns_to_slack_function.name
