@@ -5,13 +5,13 @@ on:
   push:
     paths:
       - .github/workflows/tf-cost-anomaly.yml
-      - terraform.tf/services/cost-anomaly/**
+      - terraform/services/cost-anomaly/**
   workflow_dispatch:
     inputs:
       apply:
         required: false
         type: boolean
-        description: "Apply the terraform.tf?"
+        description: "Apply the terraform?"
 
 jobs:
   check-fmt:
@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./actions/setup-tfenv-terraform
-      - run: terraform.tf fmt -check -diff -recursive terraform.tf/services/cost-anomaly
+      - run: terraform fmt -check -diff -recursive terraform/services/cost-anomaly
 
   plan-apply:
     needs: check-fmt
