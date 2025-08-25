@@ -18,7 +18,7 @@ jobs:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     steps:
       - uses: actions/checkout@v4
-      - uses: ./actions/setup-tfenv-terraform.tf
+      - uses: ./actions/setup-tfenv-terraform
       - run: terraform.tf fmt -check -diff -recursive terraform.tf/services/cost-anomaly
 
   plan-apply:
@@ -29,7 +29,7 @@ jobs:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     defaults:
       run:
-        working-directory: ./terraform.tf/services/cost-anomaly
+        working-directory: ./terraform/services/cost-anomaly
     strategy:
       fail-fast: false
       matrix:
@@ -40,15 +40,15 @@ jobs:
             env: mgmt
     steps:
       - uses: actions/checkout@v4
-      - uses: ./actions/setup-tfenv-terraform.tf
+      - uses: ./actions/setup-tfenv-terraform
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform.tf init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
-      - run: terraform.tf plan -out=tf.plan
+      - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: terraform plan -out=tf.plan
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
       - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-        run: terraform.tf apply -auto-approve tf.plan
+        run: terraform apply -auto-approve tf.plan
