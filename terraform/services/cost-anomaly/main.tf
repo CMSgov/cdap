@@ -98,14 +98,14 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
       dimension {
         key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
         match_options = ["GREATER_THAN_OR_EQUAL"]
-        values        = ["150"]
+        values        = ["100"]
       }
     }
     or {
       dimension {
         key           = "ANOMALY_TOTAL_IMPACT_PERCENTAGE"
         match_options = ["GREATER_THAN_OR_EQUAL"]
-        values        = ["30"]
+        values        = ["20"]
       }
     }
   }
