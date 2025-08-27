@@ -176,6 +176,23 @@ data "aws_iam_policy_document" "data" {
     actions   = ["kms:CreateGrant"]
     resources = ["*"]
   }
+
+   statement {
+    sid    = "AllowLambdaKeyUsage"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = ["*"]
+  }
 }
 
 
