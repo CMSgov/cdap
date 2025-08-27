@@ -177,7 +177,7 @@ data "aws_iam_policy_document" "data" {
     resources = ["*"]
   }
 
-   statement {
+  statement {
     sid    = "AllowLambdaKeyUsage"
     effect = "Allow"
     principals {
