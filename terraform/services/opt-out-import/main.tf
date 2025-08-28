@@ -86,6 +86,9 @@ data "aws_ssm_parameter" "bfd_sns_topic_arn" {
 module "opt_out_import_queue" {
   source = "../../modules/queue"
 
+  app = var.app
+  env = var.env
+
   name = local.full_name
 
   function_name = module.opt_out_import_function.name
