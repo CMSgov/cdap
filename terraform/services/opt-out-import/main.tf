@@ -95,7 +95,6 @@ module "opt_out_import_queue" {
   sns_topic_arn = data.aws_ssm_parameter.bfd_sns_topic_arn.value
 }
 
-
 # Add a rule to the database security group to allow access from the function
 
 data "aws_security_group" "db" {
