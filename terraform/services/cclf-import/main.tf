@@ -53,6 +53,9 @@ data "aws_ssm_parameter" "bfd_sns_topic_arn" {
 module "cclf_import_queue" {
   source = "../../modules/queue"
 
+  app = var.app
+  env = var.env
+
   name = local.full_name
 
   function_name = module.cclf_import_function.name

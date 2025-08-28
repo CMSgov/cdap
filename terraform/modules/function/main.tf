@@ -10,6 +10,10 @@ locals {
   }
 }
 
+data "aws_kms_alias" "app_config_kms_key" {
+  name = "alias/bcda-${var.env}-app-config-kms"
+}
+
 data "aws_kms_alias" "kms_key" {
   name = "alias/${var.app}-${var.env}"
 }
@@ -102,7 +106,10 @@ data "aws_iam_policy_document" "default_function" {
       "kms:Decrypt",
       "kms:GenerateDataKey"
     ]
-    resources = [data.aws_kms_alias.kms_key.target_key_arn]
+    resources = concat(
+      [data.aws_kms_alias.kms_key.target_key_arn],
+      var.app == "bcda" ? [data.aws_kms_alias.app_config_kms_key.target_key_arn] : []
+    )
   }
 }
 
