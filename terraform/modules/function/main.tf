@@ -10,10 +10,6 @@ locals {
   }
 }
 
-data "aws_kms_alias" "bcda_app_config_kms_key" {
-  name = "alias/bcda-${var.env}-app-config-kms"
-}
-
 data "aws_kms_alias" "kms_key" {
   name = "alias/${var.app}-${var.env}"
 }
