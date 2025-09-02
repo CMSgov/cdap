@@ -108,7 +108,7 @@ data "aws_iam_policy_document" "default_function" {
     ]
     resources = concat(
       [data.aws_kms_alias.kms_key.target_key_arn],
-      var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn] : []
+      var.extra_kms_key_arns
     )
   }
 }

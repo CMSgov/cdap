@@ -73,3 +73,9 @@ variable "schedule_expression" {
   type        = string
   default     = ""
 }
+
+variable "extra_kms_key_arns" {
+  type        = list(string)
+  default     = []
+  description = "Optional list of additional KMS key ARNs the Lambda can use"
+}
