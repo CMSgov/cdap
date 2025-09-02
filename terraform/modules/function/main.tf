@@ -10,7 +10,7 @@ locals {
   }
 }
 
-data "aws_kms_alias" "app_config_kms_key" {
+data "aws_kms_alias" "bcda_app_config_kms_key" {
   name = "alias/bcda-${var.env}-app-config-kms"
 }
 
@@ -108,7 +108,7 @@ data "aws_iam_policy_document" "default_function" {
     ]
     resources = concat(
       [data.aws_kms_alias.kms_key.target_key_arn],
-      var.app == "bcda" ? [data.aws_kms_alias.app_config_kms_key.target_key_arn] : []
+      var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn] : []
     )
   }
 }
