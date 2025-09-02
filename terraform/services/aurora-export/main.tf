@@ -1,5 +1,5 @@
 locals {
-  export_bucket_name = "bcda-${var.env}-aurora-export"
+  export_bucket_name = "${var.app}-${var.env}-aurora-export"
 }
 
 module "export_bucket" {
