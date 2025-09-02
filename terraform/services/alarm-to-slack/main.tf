@@ -25,6 +25,9 @@ module "sns_to_slack_function" {
 module "sns_to_slack_queue" {
   source = "../../modules/queue"
 
+  app = var.app
+  env = var.env
+
   name = local.full_name
 
   function_name = module.sns_to_slack_function.name
