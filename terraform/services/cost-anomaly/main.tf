@@ -8,7 +8,7 @@ resource "aws_ce_anomaly_monitor" "BCDA_Account_Monitor" {
 
 resource "aws_sns_topic" "cost_anomaly_updates" {
   name              = "cost-anomaly-updates"
-  kms_master_key_id = "alias/bcda-${var.env}"
+  kms_master_key_id = "alias/${var.app}-${var.env}"
 }
 
 data "aws_iam_policy_document" "sns_topic_policy" {
