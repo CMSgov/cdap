@@ -20,6 +20,12 @@ resource "aws_security_group" "this" {
     Name = local.security_group_name
   }
   vpc_id = var.platform.vpc_id
+
+  lifecycle {
+    ignore_changes = [
+      description
+    ]
+  }
 }
 
 resource "aws_vpc_security_group_egress_rule" "this" {
