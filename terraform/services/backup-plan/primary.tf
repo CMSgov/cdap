@@ -6,17 +6,6 @@ resource "aws_kms_key_policy" "primary_backup_key_policy" {
     Id = "primary_backup_key_policy"
     Statement = [
       {
-        "Sid" : "Enable IAM User Permissions",
-        "Effect" : "Allow",
-        "Principal" : {
-          "AWS" : [
-            "arn:aws:iam::${module.standards.account_id}:root",
-          ]
-        },
-        "Action" : "kms:*",
-        "Resource" : "*"
-      },
-      {
         "Sid" : "Grant backup role access to kms actions.",
         "Effect" : "Allow",
         "Principal" : {
