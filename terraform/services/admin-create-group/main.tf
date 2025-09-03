@@ -1,7 +1,7 @@
 locals {
-  full_name   = "${var.app}-${var.env}-admin-create-group"
-  db_sg_name  = "bcda-${var.env}-db"
-  memory_size = 2048
+  full_name          = "${var.app}-${var.env}-admin-create-group"
+  db_sg_name         = "bcda-${var.env}-db"
+  memory_size        = 2048
   extra_kms_key_arns = var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key[0].target_key_arn] : []
 }
 

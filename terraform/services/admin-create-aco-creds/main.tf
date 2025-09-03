@@ -1,8 +1,8 @@
 locals {
-  full_name         = "${var.app}-${var.env}-admin-create-aco-creds"
-  db_sg_name        = "bcda-${var.env}-db"
-  memory_size       = 256
-  creds_bucket_name = "bcda-${var.env}-aco-creds-*"
+  full_name          = "${var.app}-${var.env}-admin-create-aco-creds"
+  db_sg_name         = "bcda-${var.env}-db"
+  memory_size        = 256
+  creds_bucket_name  = "bcda-${var.env}-aco-creds-*"
   extra_kms_key_arns = var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key[0].target_key_arn] : []
 }
 
