@@ -8,11 +8,11 @@ variable "app" {
 }
 
 variable "env" {
-  description = "The application environment (dev, test, sbx, sandbox, prod)"
+  description = "The application environment (dev, test, sandbox, prod)"
   type        = string
   validation {
-    condition     = contains(["dev", "test", "sbx", "sandbox", "prod"], var.env)
-    error_message = "Valid value for env is dev, test, sbx, sandbox, or prod."
+    condition     = contains(["dev", "test", "sandbox", "prod"], var.env)
+    error_message = "Valid value for env is dev, test,sandbox, or prod."
   }
 }
 
@@ -72,4 +72,10 @@ variable "schedule_expression" {
   description = "Cron or rate expression for a scheduled function"
   type        = string
   default     = ""
+}
+
+variable "extra_kms_key_arns" {
+  type        = list(string)
+  default     = []
+  description = "Optional list of additional KMS key ARNs the Lambda can use"
 }

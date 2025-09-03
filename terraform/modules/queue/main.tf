@@ -1,18 +1,15 @@
-module "queue_key" {
-  source      = "../key"
-  name        = "${var.name}-queue"
-  description = "For ${var.name} SQS queue"
-  sns_topics  = var.sns_topic_arn != "None" ? [var.sns_topic_arn] : []
+data "aws_kms_alias" "kms_key" {
+  name = "alias/${var.app}-${var.env}"
 }
 
 resource "aws_sqs_queue" "dead_letter" {
   name              = "${var.name}-dead-letter"
-  kms_master_key_id = module.queue_key.id
+  kms_master_key_id = data.aws_kms_alias.kms_key.arn
 }
 
 resource "aws_sqs_queue" "this" {
   name              = var.name
-  kms_master_key_id = module.queue_key.id
+  kms_master_key_id = data.aws_kms_alias.kms_key.arn
 
   visibility_timeout_seconds = var.visibility_timeout_seconds
 

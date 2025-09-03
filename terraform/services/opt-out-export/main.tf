@@ -24,6 +24,12 @@ locals {
     dpc  = data.aws_iam_policy_document.dpc_policies.json
   }
   cluster_identifier = var.app == "dpc" ? "dpc-${var.env}" : "${var.app}-${var.env}-aurora"
+  extra_kms_key_arns = var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key[0].target_key_arn] : []
+}
+
+data "aws_kms_alias" "bcda_app_config_kms_key" {
+  count = var.app == "bcda" ? 1 : 0
+  name  = "alias/bcda-${var.env}-app-config-kms"
 }
 
 data "aws_ssm_parameter" "bfd_account" {
@@ -99,6 +105,7 @@ module "opt_out_export_function" {
     S3_UPLOAD_PATH   = "bfdeft01/${var.app}/out"
     DB_HOST          = local.opt_out_db_host
   }
+  extra_kms_key_arns = local.extra_kms_key_arns
 }
 
 # Add a rule to the database security group to allow access from the function
