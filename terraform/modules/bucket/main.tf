@@ -133,6 +133,7 @@ data "aws_iam_policy_document" "topic" {
     }
   }
 }
+
 resource "aws_sns_topic" "topic" {
   name   = "s3-event-notification-topic"
   policy = data.aws_iam_policy_document.topic.json

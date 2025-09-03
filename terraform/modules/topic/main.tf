@@ -2,7 +2,7 @@ module "topic_key" {
   source      = "../key"
   name        = "${var.name}-topic"
   description = "For ${var.name} SNS topic"
-  buckets     = var.buckets
+  buckets     = var.publisher_arns
 }
 
 resource "aws_sns_topic" "this" {
@@ -12,11 +12,11 @@ resource "aws_sns_topic" "this" {
 }
 
 data "aws_iam_policy_document" "topic" {
-  count = length(var.buckets) > 0 ? 1 : 0
+  count = length(var.publisher_arns) > 0 ? 1 : 0
   statement {
     principals {
       type        = "Service"
-      identifiers = ["s3.amazonaws.com"]
+      identifiers = var.policy_service_identifiers
     }
 
     actions   = ["SNS:Publish"]
@@ -25,7 +25,7 @@ data "aws_iam_policy_document" "topic" {
     condition {
       test     = "ArnLike"
       variable = "aws:SourceArn"
-      values   = var.buckets
+      values   = var.publisher_arns
     }
   }
 }
