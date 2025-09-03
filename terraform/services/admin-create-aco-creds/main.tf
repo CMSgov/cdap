@@ -3,12 +3,11 @@ locals {
   db_sg_name         = "bcda-${var.env}-db"
   memory_size        = 256
   creds_bucket_name  = "bcda-${var.env}-aco-creds-*"
-  extra_kms_key_arns = var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key[0].target_key_arn] : []
+  extra_kms_key_arns = [data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn]
 }
 
 data "aws_kms_alias" "bcda_app_config_kms_key" {
-  count = var.app == "bcda" ? 1 : 0
-  name  = "alias/bcda-${var.env}-app-config-kms"
+  name = "alias/bcda-${var.env}-app-config-kms"
 }
 
 data "aws_caller_identity" "current" {}
