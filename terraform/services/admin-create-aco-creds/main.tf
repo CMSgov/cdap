@@ -5,6 +5,10 @@ locals {
   creds_bucket_name = "bcda-${var.env}-aco-creds-*"
 }
 
+data "aws_kms_alias" "bcda_app_config_kms_key" {
+  name = "alias/bcda-${var.env}-app-config-kms"
+}
+
 data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
@@ -44,6 +48,8 @@ module "admin_create_aco_creds_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-admin-create-aco-creds"
   }
+
+  extra_kms_key_arns = [data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn]
 }
 
 # Add a rule to the database security group to allow access from the function
