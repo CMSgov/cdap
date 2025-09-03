@@ -10,10 +10,6 @@ locals {
   }
 }
 
-data "aws_kms_alias" "kms_key" {
-  name = "alias/${var.app}-${var.env}"
-}
-
 data "aws_iam_openid_connect_provider" "github" {
   url = "https://${local.provider_domain}"
 }
@@ -75,6 +71,16 @@ data "aws_iam_policy_document" "function_assume_role" {
   }
 }
 
+resource "aws_kms_key" "env_vars" {
+  description         = "For ${var.name} function to decrypt and encrypt environment variables"
+  enable_key_rotation = true
+}
+
+resource "aws_kms_alias" "env_vars" {
+  name          = "alias/${var.name}-env-vars"
+  target_key_id = aws_kms_key.env_vars.key_id
+}
+
 data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "default_function" {
@@ -100,12 +106,8 @@ data "aws_iam_policy_document" "default_function" {
     actions = [
       "kms:Encrypt",
       "kms:Decrypt",
-      "kms:GenerateDataKey"
     ]
-    resources = concat(
-      [data.aws_kms_alias.kms_key.target_key_arn],
-      var.extra_kms_key_arns
-    )
+    resources = ["*"]
   }
 }
 
@@ -204,7 +206,7 @@ resource "aws_lambda_function" "this" {
   function_name = var.name
   s3_key        = "function.zip"
   s3_bucket     = module.zip_bucket.id
-  kms_key_arn   = data.aws_kms_alias.kms_key.target_key_arn
+  kms_key_arn   = aws_kms_key.env_vars.arn
   role          = aws_iam_role.function.arn
   handler       = var.handler
   runtime       = var.runtime
