@@ -6,75 +6,12 @@ resource "aws_ce_anomaly_monitor" "BCDA_Account_Monitor" {
   monitor_dimension = "SERVICE"
 }
 
-resource "aws_sns_topic" "cost_anomaly_updates" {
-  name              = "cost-anomaly-updates"
-  kms_master_key_id = "alias/${var.app}-${var.env}"
+module "cost_anomaly_sns" {
+  source      = "../../modules/topic"
+  name        = "cost-anomaly-updates"
+  policy_service_identifiers = ["costalerts.amazonaws.com"]
 }
 
-data "aws_iam_policy_document" "sns_topic_policy" {
-  policy_id = "__cost_anomaly_sns_topic_policy"
-
-  statement {
-    sid = "AWSAnomalyDetectionSNSPublishingPermissions"
-
-    actions = [
-      "SNS:Publish"
-    ]
-
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["costalerts.amazonaws.com"]
-    }
-
-    resources = [
-      aws_sns_topic.cost_anomaly_updates.arn
-    ]
-  }
-
-  statement {
-    sid = "__cost_anomaly_sns"
-
-    actions = [
-      "SNS:Subscribe",
-      "SNS:SetTopicAttributes",
-      "SNS:RemovePermission",
-      "SNS:Receive",
-      "SNS:Publish",
-      "SNS:ListSubscriptionsByTopic",
-      "SNS:GetTopicAttributes",
-      "SNS:DeleteTopic",
-      "SNS:AddPermission"
-    ]
-
-    condition {
-      test     = "StringEquals"
-      variable = "AWS:SourceOwner"
-
-      values = [
-        data.aws_caller_identity.current.account_id
-      ]
-    }
-
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = ["*"]
-    }
-
-    resources = [
-      aws_sns_topic.cost_anomaly_updates.arn
-    ]
-  }
-}
-
-resource "aws_sns_topic_policy" "default" {
-  arn = aws_sns_topic.cost_anomaly_updates.arn
-
-  policy = data.aws_iam_policy_document.sns_topic_policy.json
-}
 
 resource "aws_ce_anomaly_subscription" "realtime_subscription" {
   name      = "realtime_cost_anomaly_subscription"
@@ -86,12 +23,8 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
 
   subscriber {
     type    = "SNS"
-    address = aws_sns_topic.cost_anomaly_updates.arn
+    address = module.cost_anomaly_sns.arn
   }
-
-  depends_on = [
-    aws_sns_topic_policy.default
-  ]
 
   threshold_expression {
     or {
@@ -134,7 +67,7 @@ module "sns_to_slack_queue" {
   source = "../../modules/queue"
 
   name          = "cost-anomaly-alert-queue"
-  sns_topic_arn = "aws_sns_topic.cost_anomaly_updates.arn"
+  sns_topic_arn = module.cost_anomaly_sns.arn
 
   function_name = module.sns_to_slack_function.name
 }
