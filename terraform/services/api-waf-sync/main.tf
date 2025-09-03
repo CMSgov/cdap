@@ -1,6 +1,6 @@
 locals {
-  full_name          = "${var.app}-${var.env}-api-waf-sync"
-  db_sg_name         = "${var.app}-${var.env}-db"
+  full_name  = "${var.app}-${var.env}-api-waf-sync"
+  db_sg_name = "${var.app}-${var.env}-db"
 
   extra_kms_key_arns = [data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn]
 }
