@@ -2,6 +2,12 @@ locals {
   full_name   = "${var.app}-${var.env}-admin-aco-deny"
   db_sg_name  = "bcda-${var.env}-db"
   memory_size = 256
+  extra_kms_key_arns = var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key[0].target_key_arn] : []
+}
+
+data "aws_kms_alias" "bcda_app_config_kms_key" {
+  count = var.app == "bcda" ? 1 : 0
+  name  = "alias/bcda-${var.env}-app-config-kms"
 }
 
 module "admin_aco_deny_function" {
@@ -22,6 +28,7 @@ module "admin_aco_deny_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-admin-aco-deny"
   }
+  extra_kms_key_arns = local.extra_kms_key_arns
 }
 
 # Add a rule to the database security group to allow access from the function

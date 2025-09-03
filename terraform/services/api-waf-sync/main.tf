@@ -1,6 +1,12 @@
 locals {
   full_name  = "${var.app}-${var.env}-api-waf-sync"
   db_sg_name = "${var.app}-${var.env}-db"
+   extra_kms_key_arns = var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key[0].target_key_arn] : []
+}
+
+data "aws_kms_alias" "bcda_app_config_kms_key" {
+  count = var.app == "bcda" ? 1 : 0
+  name  = "alias/bcda-${var.env}-app-config-kms"
 }
 
 module "api_waf_sync_function" {
@@ -26,6 +32,7 @@ module "api_waf_sync_function" {
     APP_NAME = "${var.app}-${var.env}-api-waf-sync"
     DB_HOST  = data.aws_ssm_parameter.dpc_db_host.value
   }
+  extra_kms_key_arns = local.extra_kms_key_arns
 }
 
 # Add a rule to the database security group to allow access from the function
