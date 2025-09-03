@@ -3,6 +3,7 @@ locals {
   db_sg_name         = "bcda-${var.env}-db"
   memory_size        = 256
   creds_bucket_name  = "bcda-${var.env}-aco-creds-*"
+  
   extra_kms_key_arns = [data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn]
 }
 

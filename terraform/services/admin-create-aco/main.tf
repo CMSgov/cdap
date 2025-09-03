@@ -2,6 +2,7 @@ locals {
   full_name          = "${var.app}-${var.env}-admin-create-aco"
   db_sg_name         = "bcda-${var.env}-db"
   memory_size        = 256
+  
   extra_kms_key_arns = [data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn]
 }
 
