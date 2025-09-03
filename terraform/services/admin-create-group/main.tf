@@ -3,7 +3,7 @@ locals {
   db_sg_name  = "bcda-${var.env}-db"
   memory_size = 2048
 
-  extra_kms_key_arns = data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn
+  extra_kms_key_arns = [data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn]
 }
 
 data "aws_kms_alias" "bcda_app_config_kms_key" {
