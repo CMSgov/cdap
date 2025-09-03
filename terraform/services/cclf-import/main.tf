@@ -5,6 +5,12 @@ locals {
   memory_size = {
     bcda = 2048
   }
+  extra_kms_key_arns = var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key[0].target_key_arn] : []
+}
+
+data "aws_kms_alias" "bcda_app_config_kms_key" {
+  count = var.app == "bcda" ? 1 : 0
+  name  = "alias/bcda-${var.env}-app-config-kms"
 }
 
 data "aws_ssm_parameter" "bfd_account" {
@@ -42,6 +48,7 @@ module "cclf_import_function" {
     ENV      = var.env
     APP_NAME = "${var.app}-${var.env}-cclf-import"
   }
+  extra_kms_key_arns = local.extra_kms_key_arns
 }
 
 # Set up queue for receiving messages when a file is added to the bucket
@@ -52,6 +59,9 @@ data "aws_ssm_parameter" "bfd_sns_topic_arn" {
 
 module "cclf_import_queue" {
   source = "../../modules/queue"
+
+  app = var.app
+  env = var.env
 
   name = local.full_name
 
