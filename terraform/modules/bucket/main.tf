@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-
 module "bucket_key" {
   source      = "../key"
   name        = "${var.name}-bucket"
