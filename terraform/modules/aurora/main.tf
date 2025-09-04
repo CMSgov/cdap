@@ -65,6 +65,12 @@ resource "aws_db_parameter_group" "this" {
       value        = parameter.value.value
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      description
+    ]
+  }
 }
 
 resource "aws_rds_cluster" "this" {
