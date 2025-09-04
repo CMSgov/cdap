@@ -43,17 +43,11 @@ data "aws_region" "current" {}
 module "dpc_insights_data" {
   source = "../../modules/bucket"
   name   = local.dpc_glue_s3_name
-
-  app = var.app
-  env = var.env
 }
 
 module "dpc_insights_athena" {
   source = "../../modules/bucket"
   name   = local.dpc_athena_s3_name
-
-  app = var.app
-  env = var.env
 }
 
 resource "aws_s3_object" "folder" {
