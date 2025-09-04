@@ -1,10 +1,10 @@
 resource "aws_backup_vault" "primary_backup_vault" {
-  name = "CMS_OIT_Backups_Vault"
+  name     = "CMS_OIT_Backups_Vault"
   provider = aws.primary
 }
 
 resource "aws_backup_vault" "secondary_backup_vault" {
-  name = "CMS_OIT_Backups_Vault"
+  name     = "CMS_OIT_Backups_Vault"
   provider = aws.secondary
 }
 
@@ -67,7 +67,7 @@ resource "aws_backup_plan" "aws_backup_plan" {
 
 resource "aws_backup_selection" "this" {
   # This iam role is the one CMS is using for their backup plan.
-  provider = aws.primary
+  provider     = aws.primary
   iam_role_arn = "arn:aws:iam::${module.standards.account_id}:role/delegatedadmin/developer/cms-oit-aws-backup-service-role"
   name         = "cdap_managed_backup_selection"
   plan_id      = aws_backup_plan.aws_backup_plan.id
