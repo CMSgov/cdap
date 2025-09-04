@@ -1,6 +1,5 @@
 module "platform" {
   source      = "github.com/CMSgov/cdap//terraform/modules/platform"
-  providers   = { aws = aws, aws.secondary = aws.secondary }
   app         = var.app
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/modules/ecs"
