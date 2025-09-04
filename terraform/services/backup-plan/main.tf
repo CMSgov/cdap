@@ -5,7 +5,3 @@ module "standards" {
   service     = "backup-plan"
   app         = "cdap"
 }
-
-locals {
-  apps = ["AB2D", "BCDA", "DPC"]
-}
