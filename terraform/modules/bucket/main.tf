@@ -26,6 +26,10 @@ resource "aws_s3_bucket_versioning" "this" {
   }
 }
 
+data "aws_kms_alias" "kms_key" {
+  name = "alias/${var.app}-${var.env}"
+}
+
 data "aws_iam_policy_document" "this" {
   statement {
     sid = "AllowSSLRequestsOnly"
@@ -88,7 +92,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 
   rule {
     apply_server_side_encryption_by_default {
-      kms_master_key_id = module.bucket_key.id
+      kms_master_key_id = data.aws_kms_alias.kms_key.target_key_arn
       sse_algorithm     = "aws:kms"
     }
     bucket_key_enabled = true
