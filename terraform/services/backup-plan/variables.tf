@@ -1,9 +1,3 @@
-variable "vault_name" {
-  description = "Name of the primary backup vault"
-  type        = string
-  default     = "CMS-CDAP-MANAGED_VAULT"
-}
-
 variable "env" {
   description = "The application environment (dev, test, prod)"
   type        = string
