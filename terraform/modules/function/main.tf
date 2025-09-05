@@ -151,6 +151,9 @@ data "aws_ssm_parameter" "prod_account_id" {
 module "zip_bucket" {
   source = "../bucket"
 
+  app = var.app
+  env = var.env
+
   name = "${var.name}-function"
   cross_account_read_roles = var.env == "test" ? [
     "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
