@@ -14,14 +14,13 @@ provider "aws" {
   }
 }
 
-
 module "platform" {
   source      = "github.com/CMSgov/cdap//terraform/modules/platform"
   app         = var.app
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/modules/ecs"
   service     = "fargate"
-  providers = { aws = aws, aws.secondary = aws.secondary }
+  providers   = { aws = aws, aws.secondary = aws.secondary }
 }
 
 resource "aws_ecs_cluster" "ecs_cluster" {
