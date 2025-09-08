@@ -6,11 +6,11 @@ module "standards" {
   app         = "cdap"
 }
 
-resource "aws_backup_vault" "primary" {
+data "aws_backup_vault" "primary" {
   name = "CMS_OIT_Backups_Vault"
 }
 
-resource "aws_backup_vault" "secondary" {
+data "aws_backup_vault" "secondary" {
   name     = "CMS_OIT_Backups_Vault"
   provider = aws.secondary
 }
@@ -20,11 +20,11 @@ resource "aws_backup_plan" "this" {
   #only the 4hr rule should be copied to secondary
   rule {
     rule_name         = "4Hourly_1CA"
-    target_vault_name = aws_backup_vault.primary.name
+    target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 */4 * * ? *)"
 
     copy_action {
-      destination_vault_arn = aws_backup_vault.secondary.arn
+      destination_vault_arn = data.aws_backup_vault.secondary.arn
     }
 
     lifecycle {
@@ -34,7 +34,7 @@ resource "aws_backup_plan" "this" {
 
   rule {
     rule_name         = "Daily_7"
-    target_vault_name = aws_backup_vault.primary.name
+    target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 4 * * ? *)"
 
     lifecycle {
@@ -44,7 +44,7 @@ resource "aws_backup_plan" "this" {
 
   rule {
     rule_name         = "Weekly_35"
-    target_vault_name = aws_backup_vault.primary.name
+    target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 0 ? * SAT *)"
 
     lifecycle {
@@ -54,7 +54,7 @@ resource "aws_backup_plan" "this" {
 
   rule {
     rule_name         = "Monthly_90"
-    target_vault_name = aws_backup_vault.primary.name
+    target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 0 1 * ? *)"
 
     lifecycle {
