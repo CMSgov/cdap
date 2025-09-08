@@ -1,15 +1,10 @@
 variable "bucket" {
   description = "Object representing the origin S3 bucket."
-  type        = map
-}
-
-variable "cache_policy_id" {
-  default     = null
-  description = "Default cache behavior for this distribution."
-  type        = string
+  type        = any
 }
 
 variable "certificate" {
+  default     = null
   description = "Object representing the website certificate."
   type = object({
     arn         = string
@@ -21,6 +16,11 @@ variable "enabled" {
   default     = true
   description = "Whether the distribution is enabled to accept end user requests for content."
   type        = bool
+}
+
+variable "platform" {
+  description = "Object representing the CDAP plaform module."
+  type        = any
 }
 
 variable "viewer_request_function_list" {
@@ -36,5 +36,5 @@ variable "viewer_request_function_list" {
 
 variable "web_acl" {
   description = "Object representing the associated WAF acl."
-  type        = map
+  type        = any
 }
