@@ -8,8 +8,8 @@ resource "aws_ecs_cluster" "this" {
 
   configuration {
     managed_storage_configuration {
-      fargate_ephemeral_storage_kms_key_id = var.platform.cluster_kms_master_key_id
-      kms_key_id                           = var.platform.cluster_kms_master_key_id
+      fargate_ephemeral_storage_kms_key_id = var.platform.kms_alias_primary.target_key_id
+      kms_key_id                           = var.platform.kms_alias_primary.target_key_id
     }
   }
 }
