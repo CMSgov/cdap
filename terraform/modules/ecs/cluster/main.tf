@@ -1,5 +1,5 @@
 resource "aws_ecs_cluster" "this" {
-  name = "${var.platform.app}-${var.platform.env}-${var.platform.service}"
+  name = var.cluster_name_override != null ? var.cluster_name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}"
 
   setting {
     name  = "containerInsights"
