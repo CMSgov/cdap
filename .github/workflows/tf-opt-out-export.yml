@@ -39,9 +39,9 @@ jobs:
       fail-fast: false
       matrix:
         app: [bcda, dpc]
-        env: [test]
+        env: [test, dev]
         include:
-          - env: dev
+          - env: prod
             app: bcda
     steps:
       - uses: actions/checkout@v4
