@@ -1,3 +1,8 @@
+variable "platform" {
+  description = "Object that describes standardized platform values."
+  type        = any
+}
+
 variable "app" {
   description = "The application name (ab2d, bcda, dpc)"
   type        = string
@@ -21,7 +26,3 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "cluster_kms_master_key_id" {
-  description = "kms_master_key_id to be used by the ecs cluster and fargate_ephemeral_storage_kms_key_id."
-  type        = string
-}
