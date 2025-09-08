@@ -16,8 +16,8 @@ resource "aws_cloudfront_function" "viewer_request" {
 }
 
 resource "aws_cloudfront_distribution" "this" {
-  aliases             = [var.certificate.domain_name]
-  comment             = "Distribution for the ${var.certificate.domain_name} website"
+  aliases             = var.certificate == null ? [] : [var.certificate.domain_name]
+  comment             = "Distribution for the ${var.platform.app}-${var.platform.env} website"
   default_root_object = "index.html"
   enabled             = var.enabled
   http_version        = "http2and3"
@@ -42,24 +42,18 @@ resource "aws_cloudfront_distribution" "this" {
   default_cache_behavior {
     allowed_methods         = ["GET", "HEAD"]
     cached_methods          = ["GET", "HEAD"]
-    cache_policy_id         = var.cache_policy_id
     compress                = true
-    default_ttl             = 3600
-    max_ttl                 = 86400
-    min_ttl                 = 0
     target_origin_id        = "s3_origin"
     viewer_protocol_policy  = "redirect-to-https"
   
-    forwarded_values {
-      query_string = false
-
-      cookies {
-        forward = "none"
-      }
-    }
+    cache_policy_id = (
+      var.platform.env == "prod" ?
+      "658327ea-f89d-4fab-a63d-7e88639e58f6" : # CachingOptimized managed policy
+      "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"   # CachingDisabled managed policy
+    )
 
     dynamic function_association {
-      for_each =  aws_cloudfront_function.viewer_request
+      for_each = aws_cloudfront_function.viewer_request
       content {
         event_type    = "viewer_request"
         function_arn  = function_association.value.arn
@@ -81,8 +75,9 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = var.certificate.arn
-    minimum_protocol_version = "TLSv1.2_2021"
-    ssl_support_method       = "sni-only"
+    cloudfront_default_certificate = var.certificate == null ? true : false
+    acm_certificate_arn      = var.certificate == null ? null : var.certificate.arn
+    minimum_protocol_version = var.certificate == null ? null : "TLSv1.2_2021"
+    ssl_support_method       = var.certificate == null ? null : "sni-only"
   }
 }
