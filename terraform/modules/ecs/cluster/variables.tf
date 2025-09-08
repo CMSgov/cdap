@@ -20,9 +20,3 @@ variable "env" {
     error_message = "Valid value for env is dev, test,sandbox, or prod."
   }
 }
-
-variable "cluster_name" {
-  description = "Name of the ecs cluster."
-  type        = string
-}
-
