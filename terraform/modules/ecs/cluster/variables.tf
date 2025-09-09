@@ -24,4 +24,5 @@ variable "env" {
 variable "cluster_name_override" {
   description = "Name of the ecs cluster."
   type        = string
+  default     = null
 }
