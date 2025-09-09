@@ -16,7 +16,7 @@ data "aws_backup_vault" "secondary" {
 }
 
 resource "aws_backup_plan" "this" {
-  name = "4hr1dr_d7_w35_m90"
+  name = "4Hours1DR_Daily7_Weekly35_Monthly90"
   #only the 4hr rule should be copied to secondary
   rule {
     rule_name         = "4hr1dr"
