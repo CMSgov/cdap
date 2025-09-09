@@ -1,4 +1,4 @@
-## CMS ECS Module
+## CDAP ECS Cluster Module 
 
 ## Usage
 ```hcl
@@ -17,7 +17,7 @@ module "platform" {
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/ecs/cluster?ref=<hash>"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=<hash>"
   platform = module.platform
 }
 
