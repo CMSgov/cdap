@@ -23,6 +23,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: ./actions/setup-tenv # TODO Use cmsgov/cdap/actions/setup-tenv@<hash> after this lands in main
+        env:
+          TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: tofu fmt -check -diff -recursive .
 
   plan-apply:
@@ -40,6 +42,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: ./actions/setup-tenv # TODO Use cmsgov/cdap/actions/setup-tenv@<hash> after this lands in main
+        env:
+          TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
