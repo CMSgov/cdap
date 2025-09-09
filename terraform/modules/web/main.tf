@@ -1,5 +1,5 @@
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = var.bucket.bucket_regional_domain_name
+  name                              = var.origin_bucket.bucket_regional_domain_name
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -62,7 +62,7 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   origin {
-    domain_name               = var.bucket.bucket_regional_domain_name
+    domain_name               = var.origin_bucket.bucket_regional_domain_name
     origin_access_control_id  = aws_cloudfront_origin_access_control.this.id
     origin_id                 = "s3_origin"
   }
@@ -75,9 +75,29 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = var.certificate == null ? true : false
-    acm_certificate_arn      = var.certificate == null ? null : var.certificate.arn
-    minimum_protocol_version = var.certificate == null ? null : "TLSv1.2_2021"
-    ssl_support_method       = var.certificate == null ? null : "sni-only"
+    cloudfront_default_certificate  = var.certificate == null ? true : false
+    acm_certificate_arn             = var.certificate == null ? null : var.certificate.arn
+    minimum_protocol_version        = var.certificate == null ? null : "TLSv1.2_2021"
+    ssl_support_method              = var.certificate == null ? null : "sni-only"
   }
+}
+
+resource "aws_cloudwatch_log_delivery_source" "this" {
+  name         = "${var.platform.app}-${var.platform.env}"
+  log_type     = "ACCESS_LOGS"
+  resource_arn = aws_cloudfront_distribution.this.arn
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "this" {
+  name          = "${var.platform.app}-${var.platform.env}"
+  output_format = "parquet"
+
+  delivery_destination_configuration {
+    destination_resource_arn = "${var.logging_bucket.arn}/${var.origin_bucket.bucket_regional_domain_name}"
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "this" {
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.this.name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.this.arn
 }

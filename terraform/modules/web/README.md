@@ -85,10 +85,11 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_bucket"></a> [bucket](#input\_bucket) | Object representing the origin S3 bucket. | `map` | n/a | yes |
-| <a name="input_certificate"></a> [certificate](#input\_certificate) | Object representing the website certificate. | <pre>object({<br/>    arn         = string<br/>    domain_name = string<br/>  })</pre> | n/a | yes |
-| <a name="input_web_acl"></a> [web\_acl](#input\_web\_acl) | Object representing the associated WAF acl. | `map` | n/a | yes |
-| <a name="input_cache_policy_id"></a> [cache\_policy\_id](#input\_cache\_policy\_id) | Default cache behavior for this distribution. | `string` | `null` | no |
+| <a name="input_logging_bucket"></a> [logging\_bucket](#input\_logging\_bucket) | Object representing the logging S3 bucket. | `any` | n/a | yes |
+| <a name="input_origin_bucket"></a> [origin\_bucket](#input\_origin\_bucket) | Object representing the origin S3 bucket. | `any` | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | `any` | n/a | yes |
+| <a name="input_web_acl"></a> [web\_acl](#input\_web\_acl) | Object representing the associated WAF acl. | `any` | n/a | yes |
+| <a name="input_certificate"></a> [certificate](#input\_certificate) | Object representing the website certificate. | <pre>object({<br/>    arn         = string<br/>    domain_name = string<br/>  })</pre> | `null` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
 | <a name="input_viewer_request_function_list"></a> [viewer\_request\_function\_list](#input\_viewer\_request\_function\_list) | Optional list of viewer request function definitions to associate with the distribution. | <pre>list(object({<br/>    code        = string<br/>    comment     = string<br/>    name        = string<br/>    runtime     = string<br/>  }))</pre> | `[]` | no |
 
@@ -113,6 +114,9 @@ No modules.
 | [aws_cloudfront_distribution.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution) | resource |
 | [aws_cloudfront_function.viewer_request](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_function) | resource |
 | [aws_cloudfront_origin_access_control.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_origin_access_control) | resource |
+| [aws_cloudwatch_log_delivery.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery) | resource |
+| [aws_cloudwatch_log_delivery_destination.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery_destination) | resource |
+| [aws_cloudwatch_log_delivery_source.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery_source) | resource |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -123,6 +127,5 @@ No modules.
 
 | Name | Description |
 |------|-------------|
-| <a name="output_distribution_arn"></a> [distribution\_arn](#output\_distribution\_arn) | n/a |
-| <a name="output_distribution_domain_name"></a> [distribution\_domain\_name](#output\_distribution\_domain\_name) | n/a |
+| <a name="output_distribution"></a> [distribution](#output\_distribution) | n/a |
 <!-- END_TF_DOCS -->
