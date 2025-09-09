@@ -3,23 +3,44 @@
 This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. A sample minimal calling configuration is as follows:
 
 ```
+module "platform" {
+  source    = "../modules/platform"
+  providers = { aws = aws, aws.secondary = aws.secondary }
+
+  app         = "bcda"
+  env         = "prod"
+  root_module = ""
+  service     = "bcda"
+}
+
 module web_acl {
   source  = "../modules/firewall"
 
-  app           = "bcda"
+  app           = module.platform.app
   content_type  = "APPLICATION_JSON"
-  env           = "test"
+  env           = module.platform.env
   name          = "samplewebacl"
   scope         = "CLOUDFRONT"
 }
 
-module bucket {
+module origin_bucket {
   source  = "../modules/bucket"
-  name    = "test"
+  
+  app   = module.platform.app
+  env   = module.platform.env
+  name  = "origin"
+}
+
+module logging_bucket {
+  source  = "../modules/bucket"
+  
+  app   = module.platform.app
+  env   = module.platform.env
+  name  = "logging"
 }
 
 resource "aws_acm_certificate" "cert" {
-  domain_name       = "stage.bcda.cms.gov"
+  domain_name       = "bcda.cms.gov"
   validation_method = "DNS"
 
   tags = {
@@ -34,9 +55,11 @@ resource "aws_acm_certificate" "cert" {
 module "web" {
   source = "../modules/web"
 
-  bucket      = module.bucket
-  certificate = aws_acm_certificate.cert
-  web_acl     = module.web_acl
+  certificate     = aws_acm_certificate.cert
+  logging_bucket  = module.logging_bucket
+  origin_bucket   = module.origin_bucket
+  platform        = module.platform
+  web_acl         = module.web_acl
   
   viewer_request_function_list = [
     {
