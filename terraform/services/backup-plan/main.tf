@@ -73,6 +73,6 @@ resource "aws_backup_selection" "this" {
   selection_tag {
     type  = "STRINGEQUALS"
     key   = "AWS_Backup"
-    value = "4Hours1DR_Daily7_Weekly35_Monthly90"
+    value = "4hr1dr_d7_w35_m90"
   }
 }
