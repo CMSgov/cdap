@@ -10,6 +10,7 @@ data "aws_backup_vault" "primary" {
   name = "CMS_OIT_Backups_Vault"
 }
 
+
 data "aws_backup_vault" "secondary" {
   name     = "CMS_OIT_Backups_Vault"
   provider = aws.secondary
