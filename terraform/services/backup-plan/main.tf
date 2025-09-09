@@ -1,9 +1,9 @@
 module "standards" {
   source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=0bd3eeae6b03cc8883b7dbdee5f04deb33468260"
+  app         = "cdap"
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/backup-plan"
   service     = "backup-plan"
-  app         = "cdap"
 }
 
 data "aws_backup_vault" "primary" {
@@ -19,7 +19,7 @@ resource "aws_backup_plan" "this" {
   name = "4Hours1CA_Daily7_Weekly35_Monthly90"
   #only the 4hr rule should be copied to secondary
   rule {
-    rule_name         = "4Hourly_1CA"
+    rule_name         = "4Hours1CA"
     target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 */4 * * ? *)"
 
