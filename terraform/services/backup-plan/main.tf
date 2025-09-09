@@ -10,17 +10,16 @@ data "aws_backup_vault" "primary" {
   name = "CMS_OIT_Backups_Vault"
 }
 
-
 data "aws_backup_vault" "secondary" {
   name     = "CMS_OIT_Backups_Vault"
   provider = aws.secondary
 }
 
 resource "aws_backup_plan" "this" {
-  name = "4Hours1CA_Daily7_Weekly35_Monthly90"
+  name = "4Hours1DR_Daily7_Weekly35_Monthly90"
   #only the 4hr rule should be copied to secondary
   rule {
-    rule_name         = "4Hours1CA"
+    rule_name         = "4Hours1DR"
     target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 */4 * * ? *)"
 
@@ -74,6 +73,6 @@ resource "aws_backup_selection" "this" {
   selection_tag {
     type  = "STRINGEQUALS"
     key   = "AWS_Backup"
-    value = "4Hours1CA_Daily7_Weekly35_Monthly90"
+    value = "4Hours1DR_Daily7_Weekly35_Monthly90"
   }
 }
