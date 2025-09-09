@@ -12,11 +12,11 @@ CDAP has created this AWS Backup Plan for our Aurora Cluster.
 
 ```
 Primary Region (us-east-1)           Secondary Region (us-west-2)
-┌────────────────────────────┐          ┌──────────────────────────┐
-│ Primary Backup Vault       │          │ Secondary Backup Vault   │
-│ ├─ 4hr1dr_d7_w35_m90 Backup│──────────│ ├─ Replicated 4hr x 6    │
-│ └─ Retention as noted      │ Copy Job | └─ Retention 1 day       │
-└────────────────────────────┘          └──────────────────────────┘
+┌────────────────────────────────────────────────┐          ┌──────────────────────────┐
+│ Primary Backup Vault                           │          │ Secondary Backup Vault   │
+│ ├─ 4Hours1DR_Daily7_Weekly35_Monthly90 Backup  │──────────│ ├─ Replicated 4hr x 6    │
+│ └─ Retention as noted                          │ Copy Job | └─ Retention 1 day       │
+└────────────────────────────────────────────────┘          └──────────────────────────┘
 ```
 
 <!-- BEGIN_TF_DOCS -->
