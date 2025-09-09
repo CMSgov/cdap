@@ -50,6 +50,10 @@ runs:
           mv $TMPDIR $HOME/.tenv
           echo "PATH=$HOME/.tenv:$PATH" >> "$GITHUB_ENV"
           echo "TENV_AUTO_INSTALL=true" >> "$GITHUB_ENV"
+          if [ -n "${GITHUB_TOKEN}" ]; then
+            echo "TENV_GITHUB_TOKEN=${GITHUB_TOKEN}" >> "$GITHUB_ENV"
+          fi
+
           echo "tenv installed"
         else
           echo "checksum check failed"
