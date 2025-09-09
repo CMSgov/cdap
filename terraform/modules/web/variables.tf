@@ -1,8 +1,3 @@
-variable "bucket" {
-  description = "Object representing the origin S3 bucket."
-  type        = any
-}
-
 variable "certificate" {
   default     = null
   description = "Object representing the website certificate."
@@ -16,6 +11,16 @@ variable "enabled" {
   default     = true
   description = "Whether the distribution is enabled to accept end user requests for content."
   type        = bool
+}
+
+variable "logging_bucket" {
+  description = "Object representing the logging S3 bucket."
+  type        = any
+}
+
+variable "origin_bucket" {
+  description = "Object representing the origin S3 bucket."
+  type        = any
 }
 
 variable "platform" {
