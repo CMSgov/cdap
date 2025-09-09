@@ -1,6 +1,7 @@
 ## CMS ECS Module
 
 ## Usage
+```hcl
     module "platform" {
         source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
         providers = { aws = aws, aws.secondary = aws.secondary }
@@ -16,7 +17,7 @@
     }
 
     module "cluster" {
-        source    = "github.com/CMSgov/cdap//terraform/modules/ecs/cluster?ref=plt-1298_fargate_cluster"
+        source    = "github.com/CMSgov/cdap//terraform/modules/ecs/cluster?ref=<hash>"
         platform  =  module.platform
     }
     
@@ -29,6 +30,7 @@
         platform_version     = "1.4.0"
         propagate_tags       = "SERVICE"
     }
+   ```
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
