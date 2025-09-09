@@ -1,4 +1,33 @@
 <!-- BEGIN_TF_DOCS -->
+## Usage
+    module "platform" {
+        source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+        providers = { aws = aws, aws.secondary = aws.secondary }
+    
+        app          = "ab2d"
+        env          = "dev"
+        root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
+        service      = "contracts"
+        ssm_root_map = {
+            common = "/ab2d/${local.env}/common"
+            core   = "/ab2d/${local.env}/core"
+        }
+    }
+
+    module "cluster" {
+        source    = "github.com/CMSgov/cdap//terraform/modules/ecs/cluster?ref=plt-1298_fargate_cluster"
+        platform  =  module.platform
+    }
+    
+    resource "aws_ecs_service" "contracts" {
+        name                 = "${local.service_prefix}-contracts"
+        cluster              = module.cluster.this.id
+        task_definition      = aws_ecs_task_definition.contracts.arn
+        desired_count        = 1
+        launch_type          = "FARGATE"
+        platform_version     = "1.4.0"
+        propagate_tags       = "SERVICE"
+    }
 
 ## Requirements
 
