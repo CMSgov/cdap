@@ -33,8 +33,8 @@ jobs:
       - name: Install Python dependencies & Run Lint and Unit Tests
         run: |
           pip install pylint pytest
-          pylint terraform/services/alarm-to-slack/lambda_src
-          pytest terraform/services/alarm-to-slack/lambda_src
+          pylint lambda_src
+          pytest lambda_src
 
   check-fmt:
     needs: python-lint-test
