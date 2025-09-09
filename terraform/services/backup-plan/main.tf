@@ -19,7 +19,7 @@ resource "aws_backup_plan" "this" {
   name = "4Hours1DR_Daily7_Weekly35_Monthly90"
   #only the 4hr rule should be copied to secondary
   rule {
-    rule_name         = "4hr1dr"
+    rule_name         = "4Hours1DR"
     target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 */4 * * ? *)"
 
@@ -33,7 +33,7 @@ resource "aws_backup_plan" "this" {
   }
 
   rule {
-    rule_name         = "d7"
+    rule_name         = "Daily7"
     target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 4 * * ? *)"
 
@@ -43,7 +43,7 @@ resource "aws_backup_plan" "this" {
   }
 
   rule {
-    rule_name         = "w35"
+    rule_name         = "Weekly35"
     target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 0 ? * SAT *)"
 
@@ -53,7 +53,7 @@ resource "aws_backup_plan" "this" {
   }
 
   rule {
-    rule_name         = "m90"
+    rule_name         = "Monthly90"
     target_vault_name = data.aws_backup_vault.primary.name
     schedule          = "cron(0 0 1 * ? *)"
 
