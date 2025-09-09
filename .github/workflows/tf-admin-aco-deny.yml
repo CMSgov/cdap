@@ -18,6 +18,9 @@ on:
         required: false
         type: boolean
 
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 defaults:
   run:
     working-directory: ./terraform/services/admin-aco-deny
