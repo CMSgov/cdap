@@ -1,4 +1,4 @@
-## CDAP ECS Cluster Module 
+# CDAP ECS Cluster Module 
 
 ## Usage
 ```hcl
@@ -21,15 +21,37 @@ module "cluster" {
   platform = module.platform
 }
 
-resource "aws_ecs_service" "contracts" {
-  name             = "${local.service_prefix}-contracts"
-  cluster          = module.cluster.this.id
-  task_definition  = aws_ecs_task_definition.contracts.arn
-  desired_count    = 1
-  launch_type      = "FARGATE"
-  platform_version = "1.4.0"
-  propagate_tags   = "SERVICE"
-}
+module "service" {
+  cluster = module.cluster.this.id
+  container_definitions_filename = "container_definitions.json" # See file description above.
+  cpu = 1048
+  desired_count = 1  # Optional - how many instances to keep running after task is complete.  Default is 0.
+  family_name_override = "microservice" # Optional - The family name for the ECS task definition.  If null will default to: {var.platform.env}-{var.platform.app}-{var.platform.service}
+  force_new_deployment = true #Optional - Set to true to delete a service even if it wasn't scaled down to zero tasks. Default is false.
+  load_balancers = [{
+    target_group_arn = "this is an arn"
+    container_name = "this is the container name"
+    container_port = 3000
+  },
+    {
+      target_group_arn = "this is another arn"
+      container_name = "this is the other container name"
+      container_port = 3001
+    }]
+  memory = 2048
+  network_configurations = [{
+    subnets = ["subnet-a", "subnet-b"]
+    assign_public_ip = false
+    security_groups = ["sg-a", "sg-b"]
+  }]
+  propagate_tags = "SERVICE"
+  # SERVICE: Tags defined on the aws_ecs_service resource itself will be propagated to the tasks. Default value.
+  # TASK_DEFINITION: Tags defined on the aws_ecs_task_definition resource will be propagated to the tasks.
+  service_name_override = "my_test_service" # Optional - Desired service name for the service tag on the aws ecs service.  Defaults to platform.service.
+  task_execution_role_arn = "this_is_an_iam_role_arn" #Optional - ARN of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.  Defaults to creation of a new role.
+  task_app_role_arn = "this_is_an_iam_role_arn"  # ARN of IAM role that allows your Amazon ECS container task to make calls to other AWS services.
+  volumes = ["/tmp", "/log"] # List of EBS volume names to create for the ecs task definition.
+} 
 ```
 
 <!-- BEGIN_TF_DOCS -->
