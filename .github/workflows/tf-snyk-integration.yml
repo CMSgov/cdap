@@ -13,13 +13,21 @@ on:
         type: boolean
         description: "Apply the terraform?"
 
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+defaults:
+  run:
+    working-directory: ./terraform/services/snyk-integration
+
 jobs:
   check-fmt:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     steps:
       - uses: actions/checkout@v4
-      - uses: ./actions/setup-tfenv-terraform
-      - run: terraform fmt -check -diff -recursive terraform/services/snyk-integration
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+      - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
+      - run: tofu fmt -check -diff -recursive . 
 
   plan-apply:
     needs: check-fmt
@@ -27,9 +35,6 @@ jobs:
       contents: read
       id-token: write
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
-    defaults:
-      run:
-        working-directory: ./terraform/services/snyk-integration
     strategy:
       fail-fast: false
       matrix:
@@ -37,12 +42,13 @@ jobs:
         env: [test, prod]
     steps:
       - uses: actions/checkout@v4
-      - uses: ./actions/setup-tfenv-terraform
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+      - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
-      - run: terraform init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
-      - run: terraform plan -out=tf.plan
+      - run: tofu init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
+      - run: tofu plan -out=tf.plan
       - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-        run: terraform apply -auto-approve tf.plan
+        run: tofu apply -auto-approve tf.plan
