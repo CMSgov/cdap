@@ -25,8 +25,8 @@ variable "family_name_override" {
 }
 
 variable "force_new_deployment" {
-  default     = null
-  description = "Enable to delete a service even if it wasn't scaled down to zero tasks."
+  default     = false
+  description = "Enable to delete a service even if it wasn't scaled down to zero tasks. Default is false."
   type        = bool
 }
 
@@ -62,6 +62,10 @@ variable "propagate_tags" {
   default     = "SERVICE"
   description = "Determines whether to propagate the tags from the task definition to the Amazon EBS volume."
   type        = string
+  validation {
+    condition     = contains(["SERVICE", "TASK_DEFINITION"], var.propagate_tags)
+    error_message = "Invalid propagate_tags setting. Must be 'SERVICE' or 'TASK_DEFINITION'"
+  }
 }
 
 variable "service_name_override" {
