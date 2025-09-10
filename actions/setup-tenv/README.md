@@ -4,6 +4,13 @@ This GitHub action installs [tenv](https://github.com/tofuutils/tenv) for the ma
 
 ## Usage
 
+In calling workflows, set TENV_GITHUB_TOKEN to avoid rate limiting by the GitHub API. This environment variable must be available to all steps running tofu commands.
+
+```yaml
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
 Install cosign in a prior step to enable signature verification on tenv and tofu downloads.
 
 ```yaml
