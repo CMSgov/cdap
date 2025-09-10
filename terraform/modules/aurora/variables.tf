@@ -125,7 +125,7 @@ variable "cluster_identifier" {
 }
 
 variable "aws_backup_tag" {
-  default     = "4Hours1_Daily7_Weekly35_Monthly90"
+  default     = "4hr1dr_d7_w35_m90"
   description = "Override for a standard, CDAP-managed backup tag for AWS Backups"
   type        = string
 }
