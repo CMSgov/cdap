@@ -1,14 +1,14 @@
-# Terraform for Admin Create Group function and associated infra
+# OpenTofu for Admin Create Group function and associated infra
 
 This service sets up the infrastructure for the Admin Create Group lambda function in upper and lower environments for BCDA.
 
 ## Manual deploy
 
-Pass in a backend file when running terraform init. See variables.tf for variables to include. Example:
+Pass in a backend file when running tofu init. See variables.tf for variables to include. Example:
 
 ```bash
-terraform init -backend-config=../../backends/bcda-dev.s3.tfbackend
-terraform apply
+tofu init -backend-config=../../backends/bcda-dev.s3.tfbackend
+tofu apply
 ```
 
 ## Automated deploy

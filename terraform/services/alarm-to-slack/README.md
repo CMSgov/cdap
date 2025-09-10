@@ -1,4 +1,4 @@
-# Terraform for alarm-to-slack function and associated infra
+# OpenTofu for alarm-to-slack function and associated infra
 
 This service sets up the infrastructure for the alarm-to-slack lambda function in upper and lower environments for DPC
 
@@ -13,8 +13,8 @@ If you want to see the log messages, you can run pytest with the -s flag.
 Pass in a backend file when running terraform init. See variables.tf for variables to include. Example:
 
 ```bash
-AWS_REGION=us-east-1 terraform init -backend-config=../../backends/dpc-dev.s3.tfbackend
-AWS_REGION=us-east-1 terraform apply
+AWS_REGION=us-east-1 tofu init -backend-config=../../backends/dpc-dev.s3.tfbackend
+AWS_REGION=us-east-1 tofu apply
 ```
 
 ## Automated deploy

@@ -1,18 +1,18 @@
-# Terraform for KMS Key Service
+# OpenTofu for KMS Key Service
 
 This service provisions a **pair of AWS KMS Customer Managed Keys (CMKs)** — one in each of two different AWS regions — to support secure encryption for application environments and enable disaster recovery. A shared key model is used to reduce cost and simplify configuration across services.
 
 ## Purpose
 
-Creates and manages standard KMS keys and aliases per environment (e.g., dev, test, prod) across primary and secondary AWS regions using Terraform.
+Creates and manages standard KMS keys and aliases per environment (e.g., dev, test, prod) across primary and secondary AWS regions using OpenTofu.
 
 ## Manual Deploy
 
-To deploy manually, pass in a backend config file during `terraform init`. Example:
+To deploy manually, pass in a backend config file during `tofu init`. Example:
 
 ```bash
-terraform init -backend-config=../../backends/ab2d-dev.s3.tfbackend
-terraform plan
+tofu init -backend-config=../../backends/ab2d-dev.s3.tfbackend
+tofu plan
 ```
 
 <!-- BEGIN_TF_DOCS -->

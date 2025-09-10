@@ -1,6 +1,6 @@
-# Terraform for the AWS WAF configuration for APIs in target accounts
+# OpenTofu for the AWS WAF configuration for APIs in target accounts
 
-This terraform code sets up the WAF for the APIs.
+This OpenTofu code sets up the WAF for the APIs.
 
 ## What is AWS WAF?
 
@@ -11,8 +11,8 @@ This terraform code sets up the WAF for the APIs.
 Pass in a backend file when running terraform init. Example:
 
 ```bash
-terraform init -reconfigure -backend-config=../../backends/ab2d-dev.s3.tfbackend
-terraform plan
+tofu init -reconfigure -backend-config=../../backends/ab2d-dev.s3.tfbackend
+tofu plan
 ```
 
 ## How to manage IP allowlists:
