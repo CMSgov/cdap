@@ -10,4 +10,4 @@ In **services** we have terraform split into functional units. For background on
 
 ## Version
 
-Note that the tofu version is set in [.opentofu-version](.opentofu-version). If you use [tfenv](https://github.com/tfutils/tfenv) then the correct version of opentofu will be installed and used automatically.
+Note that the tofu version is set in [.opentofu-version](.opentofu-version). If you use [tenv](https://github.com/tofuutils/tenv) then the correct version of opentofu will be installed and used automatically.
