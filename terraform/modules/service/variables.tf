@@ -26,7 +26,7 @@ variable "family_name_override" {
 
 variable "force_new_deployment" {
   default     = false
-  description = "Enable to delete a service even if it wasn't scaled down to zero tasks. Default is false."
+  description = "When *changed* to `true`, trigger a new deployment of the ECS Service even when a deployment wouldn't otherwise be triggered by other changes. **Note**: This has no effect when the value is `false`, changed to `false`, or set to `true` between consecutive applies."
   type        = bool
 }
 
