@@ -3,8 +3,8 @@ variable "cluster" {
   type        = any
 }
 
-variable "container_definitions_filename" {
-  description = "Valid container definitions provided as a single valid JSON document."
+variable "container_definitions" {
+  description = "Container definitions provided as a JSON-encodable string that yields a single, valid, JSON document."
   type        = string
 }
 
