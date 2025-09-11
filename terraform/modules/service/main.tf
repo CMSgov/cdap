@@ -6,7 +6,7 @@ resource "aws_ecs_task_definition" "this" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.cpu
   memory                   = var.memory
-  container_definitions    = jsonencode(var.container_definitions_filename)
+  container_definitions    = jsonencode(var.container_definitions)
 
   dynamic "volume" {
     for_each = var.volumes

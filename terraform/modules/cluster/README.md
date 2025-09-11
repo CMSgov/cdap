@@ -23,7 +23,7 @@ module "cluster" {
 
 module "service" {
   cluster = module.cluster.this.id
-  container_definitions_filename = "container_definitions.json" # See file description above.
+  container_definitions = "[{  "name": "first",  "image": "service-first",  "cpu": 10,  "memory": 512,  "essential": true,  ortMappings": [    {      "containerPort": 80,      "hostPort": 80    }  ]},{"name": "second","image": "service-second","cpu": 10,"memory": 256,"essential": true,"portMappings": [{"containerPort": 443,"hostPort": 443}]}]"
   cpu = 1048
   desired_count = 1  # Optional - how many instances to keep running after task is complete.  Default is 0.
   family_name_override = "microservice" # Optional - The family name for the ECS task definition.  If null will default to: {var.platform.env}-{var.platform.app}-{var.platform.service}

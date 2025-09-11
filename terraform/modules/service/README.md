@@ -2,39 +2,6 @@
 
 ## Usage
 ```hcl
-container_definitions_example_file:
-container_definitions.json
-[
-{
-  "name": "first",
-  "image": "service-first",
-  "cpu": 10,
-  "memory": 512,
-  "essential": true,
-  "portMappings": [
-    {
-      "containerPort": 80,
-      "hostPort": 80
-    }
-  ]
-},
-{
-"name": "second",
-"image": "service-second",
-"cpu": 10,
-"memory": 256,
-"essential": true,
-"portMappings": [
-{
-"containerPort": 443,
-"hostPort": 443
-}
-]
-}
-]
-
-
-
 module "platform" {
     source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
     providers = { aws = aws, aws.secondary = aws.secondary }
@@ -56,7 +23,7 @@ module "cluster" {
 
 module "service" {
     cluster = module.cluster.this.id
-    container_definitions_filename = "container_definitions.json" # See file description above.
+    container_definitions = "[{  "name": "first",  "image": "service-first",  "cpu": 10,  "memory": 512,  "essential": true,  ortMappings": [    {      "containerPort": 80,      "hostPort": 80    }  ]},{"name": "second","image": "service-second","cpu": 10,"memory": 256,"essential": true,"portMappings": [{"containerPort": 443,"hostPort": 443}]}]"
     cpu = 1048
     desired_count = 1  # Optional - how many instances to keep running after task is complete.  Default is 0.
     family_name_override = "microservice" # Optional - The family name for the ECS task definition.  If null will default to: {var.platform.env}-{var.platform.app}-{var.platform.service}
