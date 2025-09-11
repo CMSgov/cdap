@@ -1,10 +1,10 @@
 # CDAP Web Module
 
-This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. A sample minimal calling configuration is as follows:
+This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. A sample usage is as follows:
 
 ```
 module "platform" {
-  source    = "../modules/platform"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef53"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = "bcda"
@@ -14,7 +14,7 @@ module "platform" {
 }
 
 module web_acl {
-  source  = "../modules/firewall"
+  source  = "github.com/CMSgov/cdap//terraform/modules/firewall?ref=jscott/PLT-1108"
 
   app           = module.platform.app
   content_type  = "APPLICATION_JSON"
@@ -24,7 +24,7 @@ module web_acl {
 }
 
 module origin_bucket {
-  source  = "../modules/bucket"
+  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=jscott/PLT-1108"
   
   app   = module.platform.app
   env   = module.platform.env
@@ -32,7 +32,7 @@ module origin_bucket {
 }
 
 module logging_bucket {
-  source  = "../modules/bucket"
+  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=jscott/PLT-1108"
   
   app   = module.platform.app
   env   = module.platform.env
@@ -61,20 +61,10 @@ module "web" {
   platform        = module.platform
   web_acl         = module.web_acl
   
-  viewer_request_function_list = [
-    {
-      code    = "test_code1"
-      comment = "test_comment1"
-      name    = "test_name1"
-      runtime = "cloudfront-js-2.0"
-    },
-    {
-      code    = "test_code2"
-      comment = "test_comment2"
-      name    = "test_name2"
-      runtime = "cloudfront-js-2.0"
-    }
-  ]
+  redirects = {
+    "/value1": "/redirect1",
+    "/value2": "/redirect2"
+  }
 }
 ```
 
@@ -108,11 +98,11 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_logging_bucket"></a> [logging\_bucket](#input\_logging\_bucket) | Object representing the logging S3 bucket. | `any` | n/a | yes |
-| <a name="input_origin_bucket"></a> [origin\_bucket](#input\_origin\_bucket) | Object representing the origin S3 bucket. | `any` | n/a | yes |
-| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | `any` | n/a | yes |
-| <a name="input_redirects"></a> [redirects](#input\_redirects) | Map of redirects to be passed to the CloudFront redirects function. | `map` | n/a | yes |
-| <a name="input_web_acl"></a> [web\_acl](#input\_web\_acl) | Object representing the associated WAF acl. | `any` | n/a | yes |
+| <a name="input_logging_bucket"></a> [logging\_bucket](#input\_logging\_bucket) | Object representing the logging S3 bucket. | <pre>object({<br/>    arn = string <br/>  })</pre> | n/a | yes |
+| <a name="input_origin_bucket"></a> [origin\_bucket](#input\_origin\_bucket) | Object representing the origin S3 bucket. | <pre>object({<br/>    bucket_regional_domain_name = string,<br/>  })</pre> | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | <pre>object({<br/>    app = string,<br/>    env = string <br/>  })</pre> | n/a | yes |
+| <a name="input_redirects"></a> [redirects](#input\_redirects) | Map of redirects to be passed to the CloudFront redirects function. | `map(string)` | n/a | yes |
+| <a name="input_web_acl"></a> [web\_acl](#input\_web\_acl) | Object representing the associated WAF acl. | <pre>object({<br/>    arn = string <br/>  })</pre> | n/a | yes |
 | <a name="input_certificate"></a> [certificate](#input\_certificate) | Object representing the website certificate. | <pre>object({<br/>    arn         = string<br/>    domain_name = string<br/>  })</pre> | `null` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
 
