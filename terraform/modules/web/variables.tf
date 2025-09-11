@@ -28,15 +28,9 @@ variable "platform" {
   type        = any
 }
 
-variable "viewer_request_function_list" {
-  default     = []
-  description = "Optional list of viewer request function definitions to associate with the distribution."
-  type          = list(object({
-    code        = string
-    comment     = string
-    name        = string
-    runtime     = string
-  }))
+variable "redirects" {
+  description = "Map of redirects to be passed to the CloudFront redirects function."
+  type        = map
 }
 
 variable "web_acl" {

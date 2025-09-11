@@ -1,18 +1,16 @@
+resource "aws_cloudfront_function" "redirects" {
+  name    = "redesign-redirects"
+  runtime = "cloudfront-js-2.0"
+  comment = "Function that handles cool URIs and redirects."
+  code    = templatefile("${path.module}/redirects-function.tftpl", { redirects = var.redirects })
+}
+
 resource "aws_cloudfront_origin_access_control" "this" {
   name                              = var.origin_bucket.bucket_regional_domain_name
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
-}
-
-resource "aws_cloudfront_function" "viewer_request" {
-  count   = length(var.viewer_request_function_list)
-
-  code    = var.viewer_request_function_list[count.index].code
-  comment = var.viewer_request_function_list[count.index].comment
-  name    = var.viewer_request_function_list[count.index].name
-  runtime = var.viewer_request_function_list[count.index].runtime
 }
 
 resource "aws_cloudfront_distribution" "this" {
@@ -52,12 +50,9 @@ resource "aws_cloudfront_distribution" "this" {
       "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"   # CachingDisabled managed policy
     )
 
-    dynamic function_association {
-      for_each = aws_cloudfront_function.viewer_request
-      content {
+    function_association {
         event_type    = "viewer_request"
-        function_arn  = function_association.value.arn
-      }
+        function_arn  = aws_cloudfront_function.redirects.arn
     }
   }
 
