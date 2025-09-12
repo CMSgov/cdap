@@ -62,8 +62,8 @@ module "web" {
   web_acl         = module.web_acl
   
   redirects = {
-    "/value1": "/redirect1",
-    "/value2": "/redirect2"
+    "/value1" = "/redirect1",
+    "/value2" = "/redirect2"
   }
 }
 ```
