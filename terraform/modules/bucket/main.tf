@@ -114,3 +114,31 @@ resource "aws_s3_bucket_logging" "this" {
   target_bucket = data.aws_s3_bucket.bucket_access_logs.id
   target_prefix = "${aws_s3_bucket.this.id}/"
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  rule {
+    id     = "lambda_deployment_lifecycle"
+    status = "Enabled"
+
+    # Filter to only apply to objects with the lifecycle-transition:ia tag
+    filter {
+      tag {
+        key   = "lifecycle-transition"
+        value = "ia"
+      }
+    }
+
+    # Transition noncurrent versions to Standard-IA after 3 days
+    noncurrent_version_transition {
+      noncurrent_days = 3
+      storage_class   = "STANDARD_IA"
+    }
+
+    # Clean up incomplete multipart uploads
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
