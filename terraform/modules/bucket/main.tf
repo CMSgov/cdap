@@ -119,7 +119,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
   rule {
-    id     = "lambda_deployment_lifecycle"
+    id     = "noncurrent-ia"
     status = "Enabled"
 
     # Filter to only apply to objects with the lifecycle-transition:ia tag
