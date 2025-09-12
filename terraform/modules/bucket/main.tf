@@ -119,10 +119,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
   rule {
-    id     = "noncurrent-ia"
+    id     = "noncurrent-ia-tagged"
     status = "Enabled"
 
-    # Filter to only apply to objects with the lifecycle-transition:ia tag
     filter {
       tag {
         key   = "lifecycle-transition"
@@ -130,13 +129,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
       }
     }
 
-    # Transition noncurrent versions to Standard-IA after 3 days
     noncurrent_version_transition {
       noncurrent_days = 3
       storage_class   = "STANDARD_IA"
     }
+  }
 
-    # Clean up incomplete multipart uploads
+  rule {
+    id     = "cleanup-multipart"
+    status = "Enabled"
+
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
