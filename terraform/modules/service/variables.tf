@@ -3,9 +3,22 @@ variable "cluster" {
   type        = any
 }
 
-variable "container_definitions" {
-  description = "Container definitions provided as a JSON-encodable string that yields a single, valid, JSON document."
-  type        = string
+variable "container_environment" {
+  description = "The environment variables to pass to the container"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = null
+}
+
+variable "container_secrets" {
+  description = "The secrets to pass to the container. For more information, see [Specifying Sensitive Data](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data.html) in the Amazon Elastic Container Service Developer Guide"
+  type = list(object({
+    name      = string
+    valueFrom = string
+  }))
+  default = null
 }
 
 variable "cpu" {
@@ -30,6 +43,13 @@ variable "force_new_deployment" {
   type        = bool
 }
 
+
+variable "image" {
+  description = "The image used to start a container. This string is passed directly to the Docker daemon. By default, images in the Docker Hub registry are available. Other repositories are specified with either `repository-url/image:tag` or `repository-url/image@digest`"
+  type        = string
+  default     = null
+}
+
 variable "load_balancers" {
   description = "Load balancer(s) for use by the AWS ECS service."
   type = list(object({
@@ -44,6 +64,17 @@ variable "memory" {
   type        = number
 }
 
+variable "mount_points" {
+  description = "The mount points for data volumes in your container"
+  type = list(object({
+    containerPath = optional(string)
+    readOnly      = optional(bool)
+    sourceVolume  = optional(string)
+  }))
+  default = null
+}
+
+
 variable "network_configurations" {
   description = "Network configuration for the aws ecs service."
   type = list(object({
@@ -56,6 +87,19 @@ variable "network_configurations" {
 variable "platform" {
   description = "Object that describes standardized platform values."
   type        = any
+}
+
+variable "port_mappings" {
+  description = "The list of port mappings for the container. Port mappings allow containers to access ports on the host container instance to send or receive traffic. For task definitions that use the awsvpc network mode, only specify the containerPort. The hostPort can be left blank or it must be the same value as the containerPort"
+  type = list(object({
+    appProtocol        = optional(string)
+    containerPort      = optional(number)
+    containerPortRange = optional(string)
+    hostPort           = optional(number)
+    name               = optional(string)
+    protocol           = optional(string)
+  }))
+  default = null
 }
 
 variable "propagate_tags" {
@@ -84,7 +128,79 @@ variable "task_app_role_arn" {
   description = "ARN of IAM role that allows your Amazon ECS container task to make calls to other AWS services."
 }
 
-variable "volumes" {
-  description = "EBS volumes to create for the ecs task definition."
-  type = list(string)
+variable "volume" {
+  description = "Configuration block for volumes that containers in your task may use"
+  type = map(object({
+    configure_at_launch = optional(bool)
+    docker_volume_configuration = optional(object({
+      autoprovision = optional(bool)
+      driver        = optional(string)
+      driver_opts   = optional(map(string))
+      labels        = optional(map(string))
+      scope         = optional(string)
+    }))
+    efs_volume_configuration = optional(object({
+      authorization_config = optional(object({
+        access_point_id = optional(string)
+        iam             = optional(string)
+      }))
+      file_system_id          = string
+      root_directory          = optional(string)
+      transit_encryption      = optional(string)
+      transit_encryption_port = optional(number)
+    }))
+    host_path = optional(string)
+    name      = optional(string)
+  }))
+  default = null
+}
+
+################################################################################
+# CloudWatch Log Group
+################################################################################
+
+variable "enable_cloudwatch_logging" {
+  description = "Determines whether CloudWatch logging is configured for this container definition. Set to `false` to use other logging drivers"
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
+variable "create_cloudwatch_log_group" {
+  description = "Determines whether a log group is created by this module. If not, AWS will automatically create one if logging is enabled"
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
+variable "cloudwatch_log_group_name" {
+  description = "Custom name of CloudWatch log group for a service associated with the container definition"
+  type        = string
+  default     = null
+}
+
+variable "cloudwatch_log_group_use_name_prefix" {
+  description = "Determines whether the log group name should be used as a prefix"
+  type        = bool
+  default     = false
+  nullable    = false
+}
+
+variable "cloudwatch_log_group_class" {
+  description = "Specified the log class of the log group. Possible values are: `STANDARD` or `INFREQUENT_ACCESS`"
+  type        = string
+  default     = null
+}
+
+variable "cloudwatch_log_group_retention_in_days" {
+  description = "Number of days to retain log events. Set to `0` to keep logs indefinitely"
+  type        = number
+  default     = 14
+  nullable    = false
+}
+
+variable "cloudwatch_log_group_kms_key_id" {
+  description = "If a KMS Key ARN is set, this key will be used to encrypt the corresponding log group. Please be sure that the KMS Key has an appropriate key policy (https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/encrypt-log-data-kms.html)"
+  type        = string
+  default     = null
 }
