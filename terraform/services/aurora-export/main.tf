@@ -58,3 +58,33 @@ resource "aws_s3_object" "aurora_export_manifest" {
     }
   })
 }
+
+resource "aws_s3_bucket_lifecycle_configuration" "this" {
+  bucket = module.export_bucket.id
+
+  rule {
+    id     = "noncurrent-ia-tagged"
+    status = "Enabled"
+
+    filter {
+      tag {
+        key   = "lifecycle-transition"
+        value = "ia"
+      }
+    }
+
+    noncurrent_version_transition {
+      noncurrent_days = 30
+      storage_class   = "STANDARD_IA"
+    }
+  }
+
+  rule {
+    id     = "cleanup-multipart"
+    status = "Enabled"
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
