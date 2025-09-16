@@ -130,7 +130,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
     }
 
     noncurrent_version_transition {
-      noncurrent_days = 3
+      noncurrent_days = 30
       storage_class   = "STANDARD_IA"
     }
   }
