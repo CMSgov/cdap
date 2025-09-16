@@ -141,3 +141,9 @@ variable "security_group_override" {
   description = "Override for the security group name"
   type        = string
 }
+
+variable "port_override" {
+  default     = 5432
+  description = "Override for non-default port"
+  type        = string
+}

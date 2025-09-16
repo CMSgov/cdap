@@ -77,6 +77,7 @@ resource "aws_rds_cluster" "this" {
   cluster_identifier                  = coalesce(var.cluster_identifier, local.service_prefix)
   engine                              = local.aurora_engine
   engine_version                      = var.engine_version
+  port                                = var.port_override
   master_username                     = var.username
   master_password                     = var.password
   snapshot_identifier                 = var.snapshot_identifier
