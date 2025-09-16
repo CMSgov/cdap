@@ -1,6 +1,10 @@
 locals {
   full_name              = "${var.app}-${var.env}-opt-out-import"
   bfd_env                = var.env == "prod" ? "prod" : "test"
+  db_port = {
+    bcda = 5432
+    dpc  = 5431
+  }
   db_sg_name             = "${var.app}-${var.env}-db"
   bfd_bucket_access_role = "arn:aws:iam::${data.aws_ssm_parameter.bfd_account.value}:role/delegatedadmin/developer/bfd-${local.bfd_env}-eft-${var.app}-ct-bucket-role"
   policies = {
@@ -110,8 +114,8 @@ data "aws_security_group" "db" {
 
 resource "aws_security_group_rule" "function_access" {
   type        = "ingress"
-  from_port   = 5432
-  to_port     = 5432
+  from_port   = local.db_port[var.app]
+  to_port     = local.db_port[var.app]
   protocol    = "tcp"
   description = "opt-out-import function access"
 

@@ -1,5 +1,9 @@
 locals {
   full_name  = "${var.app}-${var.env}-api-waf-sync"
+  db_port = {
+    bcda = 5432
+    dpc  = 5431
+  }
   db_sg_name = "${var.app}-${var.env}-db"
 }
 
@@ -41,8 +45,8 @@ data "aws_security_group" "db" {
 
 resource "aws_security_group_rule" "function_access" {
   type        = "ingress"
-  from_port   = 5432
-  to_port     = 5432
+  from_port   = local.db_port[var.app]
+  to_port     = local.db_port[var.app]
   protocol    = "tcp"
   description = "api-waf-sync function access"
 

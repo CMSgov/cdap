@@ -14,6 +14,10 @@ locals {
       dev  = "cron(0 15 ? * * *)"
     }
   }
+  db_port = {
+    bcda = 5432
+    dpc  = 5431
+  }
   db_sg_name = "${var.app}-${var.env}-db"
   memory_size = {
     bcda = null
@@ -115,8 +119,8 @@ data "aws_security_group" "db" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "function_access" {
-  from_port   = 5432
-  to_port     = 5432
+  from_port   = local.db_port[var.app]
+  to_port     = local.db_port[var.app]
   ip_protocol = "tcp"
   description = "opt-out-export function access"
 
