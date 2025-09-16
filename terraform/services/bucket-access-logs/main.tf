@@ -76,8 +76,8 @@ resource "aws_s3_bucket_policy" "bucket_access_logs" {
 }
 
 resource "aws_ssm_parameter" "bucket_access_logs" {
-  name  = "/cdap/bucket-access-logs-bucket"
-  value = aws_s3_bucket.bucket_access_logs.id
-  type  = "String"
+  name        = "/cdap/bucket-access-logs-bucket"
+  value       = aws_s3_bucket.bucket_access_logs.id
+  type        = "String"
   description = "S3 bucket for storing access logs from other buckets"
 }
