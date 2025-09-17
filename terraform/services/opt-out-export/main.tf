@@ -120,7 +120,7 @@ data "aws_security_group" "db" {
 
 resource "aws_vpc_security_group_ingress_rule" "function_access" {
   from_port   = local.db_port[var.app]
-  to_port     = local.db_port[var.app]
+  to_port     = 5432
   ip_protocol = "tcp"
   description = "opt-out-export function access"
 

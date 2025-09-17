@@ -46,7 +46,7 @@ data "aws_security_group" "db" {
 resource "aws_security_group_rule" "function_access" {
   type        = "ingress"
   from_port   = local.db_port[var.app]
-  to_port     = local.db_port[var.app]
+  to_port     = 5432
   protocol    = "tcp"
   description = "api-waf-sync function access"
 
