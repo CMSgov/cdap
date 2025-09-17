@@ -1,5 +1,5 @@
 locals {
-  full_name  = "${var.app}-${var.env}-api-waf-sync"
+  full_name = "${var.app}-${var.env}-api-waf-sync"
   db_port = {
     bcda = 5432
     dpc  = 5431
