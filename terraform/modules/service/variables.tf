@@ -3,13 +3,32 @@ variable "cluster" {
   type        = any
 }
 
-variable "container_definitions_filename" {
-  description = "Valid container definitions provided as a single valid JSON document."
-  type        = string
+variable "container_environment" {
+  description = "The environment variables to pass to the container"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = null
+}
+
+variable "container_secrets" {
+  description = "The secrets to pass to the container. For more information, see [Specifying Sensitive Data](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data.html) in the Amazon Elastic Container Service Developer Guide"
+  type = list(object({
+    name      = string
+    valueFrom = string
+  }))
+  default = null
 }
 
 variable "cpu" {
   description = "Number of cpu units used by the task."
+  type        = number
+}
+
+# reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
+variable "memory" {
+  description = "Amount (in MiB) of memory used by the task."
   type        = number
 }
 
@@ -19,6 +38,12 @@ variable "desired_count" {
   default     = 0
 }
 
+variable "execution_role_arn" {
+  description = "ARN of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.  Defaults to creation of a new role."
+  type        = string
+  default     = null
+}
+
 variable "family_name_override" {
   default     = null
   description = "The desired family name for the ECS task definition.  If null will default to: {var.platform.env}-{var.platform.app}-{var.platform.service}"
@@ -26,8 +51,13 @@ variable "family_name_override" {
 
 variable "force_new_deployment" {
   default     = false
-  description = "Enable to delete a service even if it wasn't scaled down to zero tasks. Default is false."
+  description = "When *changed* to `true`, trigger a new deployment of the ECS Service even when a deployment wouldn't otherwise be triggered by other changes. **Note**: This has no effect when the value is `false`, changed to `false`, or set to `true` between consecutive applies."
   type        = bool
+}
+
+variable "image" {
+  description = "The image used to start a container. This string is passed directly to the Docker daemon. By default, images in the Docker Hub registry are available. Other repositories are specified with either `repository-url/image:tag` or `repository-url/image@digest`"
+  type        = string
 }
 
 variable "load_balancers" {
@@ -39,52 +69,64 @@ variable "load_balancers" {
   }))
 }
 
-variable "memory" {
-  description = "Amount (in MiB) of memory used by the task."
-  type        = number
-}
-
-variable "network_configurations" {
-  description = "Network configuration for the aws ecs service."
+variable "mount_points" {
+  description = "The mount points for data volumes in your container"
   type = list(object({
-    subnets          = list(string)
-    assign_public_ip = string
-    security_groups  = list(string)
+    containerPath = optional(string)
+    readOnly      = optional(bool)
+    sourceVolume  = optional(string)
   }))
+  default = null
 }
 
 variable "platform" {
-  description = "Object that describes standardized platform values."
-  type        = any
+  description = "Object representing the CDAP plaform module."
+  type = object({
+    app = string,
+    env = string,
+    kms_alias_primary = string,
+    service = string
+  })
 }
 
-variable "propagate_tags" {
-  default     = "SERVICE"
-  description = "Determines whether to propagate the tags from the task definition to the Amazon EBS volume."
-  type        = string
-  validation {
-    condition     = contains(["SERVICE", "TASK_DEFINITION"], var.propagate_tags)
-    error_message = "Invalid propagate_tags setting. Must be 'SERVICE' or 'TASK_DEFINITION'"
-  }
+variable "port_mappings" {
+  description = "The list of port mappings for the container. Port mappings allow containers to access ports on the host container instance to send or receive traffic. For task definitions that use the awsvpc network mode, only specify the containerPort. The hostPort can be left blank or it must be the same value as the containerPort"
+  type = list(object({
+    appProtocol        = optional(string)
+    containerPort      = optional(number)
+    containerPortRange = optional(string)
+    hostPort           = optional(number)
+    name               = optional(string)
+    protocol           = optional(string)
+  }))
+  default = null
 }
 
 variable "service_name_override" {
-  default     = null
   description = "Desired service name for the service tag on the aws ecs service.  Defaults to platform.service."
   type        = string
+  default     = null
 }
 
-variable "task_execution_role_arn" {
-  default     = null
-  description = "ARN of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.  Defaults to creation of a new role."
+variable "task_role_arn" {
+  description = "ARN of IAM role that allows your Amazon ECS container task to make calls to other AWS services."
   type        = string
 }
 
-variable "task_app_role_arn" {
-  description = "ARN of IAM role that allows your Amazon ECS container task to make calls to other AWS services."
-}
-
-variable "volumes" {
-  description = "EBS volumes to create for the ecs task definition."
-  type = list(string)
+variable "volume" {
+  description = "Configuration block for volumes that containers in your task may use"
+  type = map(object({
+    configure_at_launch = optional(bool)
+    efs_volume_configuration = optional(object({
+      authorization_config = optional(object({
+        access_point_id = optional(string)
+        iam             = optional(string)
+      }))
+      file_system_id = string
+      root_directory = optional(string)
+    }))
+    host_path = optional(string)
+    name      = optional(string)
+  }))
+  default = null
 }
