@@ -15,23 +15,23 @@ variable "enabled" {
 
 variable "logging_bucket" {
   description = "Object representing the logging S3 bucket."
-  type        = object({
-    arn = string 
+  type = object({
+    arn = string
   })
 }
 
 variable "origin_bucket" {
   description = "Object representing the origin S3 bucket."
-  type        = object({
+  type = object({
     bucket_regional_domain_name = string,
   })
 }
 
 variable "platform" {
   description = "Object representing the CDAP plaform module."
-  type        = object({
+  type = object({
     app = string,
-    env = string 
+    env = string
   })
 }
 
@@ -42,7 +42,7 @@ variable "redirects" {
 
 variable "web_acl" {
   description = "Object representing the associated WAF acl."
-  type        = object({
-    arn = string 
+  type = object({
+    arn = string
   })
 }

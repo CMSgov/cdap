@@ -22,7 +22,7 @@ resource "aws_cloudfront_distribution" "this" {
   is_ipv6_enabled     = true
   price_class         = "PriceClass_100"
   web_acl_id          = var.web_acl.arn
-  
+
   custom_error_response {
     error_caching_min_ttl = 10
     error_code            = 403
@@ -38,12 +38,12 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   default_cache_behavior {
-    allowed_methods         = ["GET", "HEAD"]
-    cached_methods          = ["GET", "HEAD"]
-    compress                = true
-    target_origin_id        = "s3_origin"
-    viewer_protocol_policy  = "redirect-to-https"
-  
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    target_origin_id       = "s3_origin"
+    viewer_protocol_policy = "redirect-to-https"
+
     cache_policy_id = (
       var.platform.env == "prod" ?
       "658327ea-f89d-4fab-a63d-7e88639e58f6" : # CachingOptimized managed policy
@@ -51,29 +51,29 @@ resource "aws_cloudfront_distribution" "this" {
     )
 
     function_association {
-        event_type    = "viewer_request"
-        function_arn  = aws_cloudfront_function.redirects.arn
+      event_type   = "viewer_request"
+      function_arn = aws_cloudfront_function.redirects.arn
     }
   }
 
   origin {
-    domain_name               = var.origin_bucket.bucket_regional_domain_name
-    origin_access_control_id  = aws_cloudfront_origin_access_control.this.id
-    origin_id                 = "s3_origin"
+    domain_name              = var.origin_bucket.bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.this.id
+    origin_id                = "s3_origin"
   }
 
   restrictions {
     geo_restriction {
-      restriction_type  = "whitelist"
-      locations         = ["US"]
+      restriction_type = "whitelist"
+      locations        = ["US"]
     }
   }
 
   viewer_certificate {
-    cloudfront_default_certificate  = var.certificate == null ? true : false
-    acm_certificate_arn             = var.certificate == null ? null : var.certificate.arn
-    minimum_protocol_version        = var.certificate == null ? null : "TLSv1.2_2021"
-    ssl_support_method              = var.certificate == null ? null : "sni-only"
+    cloudfront_default_certificate = var.certificate == null ? true : false
+    acm_certificate_arn            = var.certificate == null ? null : var.certificate.arn
+    minimum_protocol_version       = var.certificate == null ? null : "TLSv1.2_2021"
+    ssl_support_method             = var.certificate == null ? null : "sni-only"
   }
 }
 
