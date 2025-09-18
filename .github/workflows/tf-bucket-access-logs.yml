@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/tf-bucket-access-logs.yml
       - terraform/services/bucket-access-logs/**
+  schedule:
+    - cron: "12 14 * * 1-5"
   workflow_dispatch:
     inputs:
       apply:

@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/tf-github-actions-oidc-provider.yml
       - terraform/services/github-actions-oidc-provider/**
+  schedule:
+    - cron: "12 14 * * 1-5"
   workflow_dispatch:
     inputs:
       apply:

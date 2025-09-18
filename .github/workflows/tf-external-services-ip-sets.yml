@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/tf-external-services-ip-sets.yml
       - terraform/services/external-services-ip-sets/**
+  schedule:
+    - cron: "12 14 * * 1-5"
   workflow_dispatch:
     inputs:
       apply:

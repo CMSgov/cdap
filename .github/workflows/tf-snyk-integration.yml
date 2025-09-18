@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/tf-snyk-integration-integration.yml
       - terraform/services/snyk-integration/**
+  schedule:
+    - cron: "12 14 * * 1-5"
   workflow_dispatch:
     inputs:
       apply:

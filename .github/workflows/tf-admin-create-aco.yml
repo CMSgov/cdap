@@ -12,6 +12,8 @@ on:
       - terraform/modules/subnets/**
       - terraform/modules/vpc/**
       - terraform/services/admin-create-aco/**
+  schedule:
+    - cron: "12 14 * * 1-5"
   workflow_dispatch:
     inputs:
       apply:
