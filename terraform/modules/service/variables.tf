@@ -50,9 +50,9 @@ variable "family_name_override" {
 }
 
 variable "force_new_deployment" {
-  default     = false
   description = "When *changed* to `true`, trigger a new deployment of the ECS Service even when a deployment wouldn't otherwise be triggered by other changes. **Note**: This has no effect when the value is `false`, changed to `false`, or set to `true` between consecutive applies."
   type        = bool
+  default     = false
 }
 
 variable "image" {

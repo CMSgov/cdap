@@ -1,5 +1,9 @@
 locals {
-  family = "${var.platform.app}-${var.platform.env}-${var.platform.service}"
+  # family = "${var.platform.app}-${var.platform.env}-${var.platform.service}"
+  family = "bcda-bcda-dev"
+  env_test = "dev"
+  app_test = "bcda"
+  service_test = "bcda"
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -12,7 +16,8 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
   container_definitions = nonsensitive(jsonencode([
     {
-      name                   = var.service_name_override != null ? var.service_name_override : var.platform.service
+      # name                   = var.service_name_override != null ? var.service_name_override : var.platform.service
+      name                   = var.service_name_override != null ? var.service_name_override : local.service_test
       image                  = var.image
       readonlyRootFilesystem = true
       essential              = true
@@ -23,10 +28,10 @@ resource "aws_ecs_task_definition" "this" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = "/aws/ecs/fargate/${var.platform.env}-${var.platform.app}/${var.service_name_override != null ? var.service_name_override : var.platform.service}"
+          awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${var.service_name_override != null ? var.service_name_override : var.platform.service}"
           awslogs-create-group  = "true"
           awslogs-region        = var.platform.primary_region.name
-          awslogs-stream-prefix = "${var.platform.env}-${var.platform.app}"
+          awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
         }
       }
       healthCheck = null
@@ -45,7 +50,7 @@ resource "aws_ecs_task_definition" "this" {
 
         content {
           dynamic "authorization_config" {
-            for_each = var.volume.efs_volume_configuration.authorization_config != null ? [var.volume.efs_volume_configuration.authorization_config] : []
+            for_each = var.volume.value.efs_volume_configuration.authorization_config != null ? [var.volume.value.efs_volume_configuration.authorization_config] : []
 
             content {
               access_point_id = var.volume.authorization_config.value.access_point_id
@@ -89,7 +94,7 @@ resource "aws_ecs_service" "this" {
 
 data "aws_kms_alias" "master_key_alias" {
   name = "alias/${var.platform.kms_alias_primary}"
-}
+ }
 
 data "aws_iam_policy_document" "execution" {
   statement {
