@@ -146,7 +146,7 @@ No requirements.
 | <a name="input_password"></a> [password](#input\_password) | The database's primary/master credentials password | `string` | n/a | yes |
 | <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | `any` | n/a | yes |
 | <a name="input_username"></a> [username](#input\_username) | The database's primary/master credentials username | `string` | n/a | yes |
-| <a name="input_aws_backup_tag"></a> [aws\_backup\_tag](#input\_aws\_backup\_tag) | Override for a standard, CDAP-managed backup tag for AWS Backups | `string` | `"4hr7_w90"` | no |
+| <a name="input_aws_backup_tag"></a> [aws\_backup\_tag](#input\_aws\_backup\_tag) | Override for a standard, CDAP-managed backup tag for AWS Backups | `string` | `"4hr1dr_d7_w35_m90"` | no |
 | <a name="input_backup_retention_period"></a> [backup\_retention\_period](#input\_backup\_retention\_period) | Days to retain backups for. | `number` | `1` | no |
 | <a name="input_cluster_identifier"></a> [cluster\_identifier](#input\_cluster\_identifier) | Override for the aurora cluster identifier | `string` | `null` | no |
 | <a name="input_cluster_instance_parameters"></a> [cluster\_instance\_parameters](#input\_cluster\_instance\_parameters) | A list of objects containing the values for apply\_method, name, and value that corresponds to the instance-level prameters. | <pre>list(object({<br/>    apply_method = string<br/>    name         = string<br/>    value        = any<br/>  }))</pre> | `[]` | no |
@@ -157,6 +157,7 @@ No requirements.
 | <a name="input_kms_key_override"></a> [kms\_key\_override](#input\_kms\_key\_override) | Override to the platform-managed KMS key | `string` | `null` | no |
 | <a name="input_monitoring_interval"></a> [monitoring\_interval](#input\_monitoring\_interval) | The [monitoring\_interval](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#monitoring_interval-1) in seconds determines the time between sampling enhanced monitoring metrics for the cluster. | `number` | `15` | no |
 | <a name="input_monitoring_role_arn"></a> [monitoring\_role\_arn](#input\_monitoring\_role\_arn) | ARN for the IAM role that permits RDS to send enhanced monitoring metrics to CloudWatch Logs. | `string` | `null` | no |
+| <a name="input_port_override"></a> [port\_override](#input\_port\_override) | Override for non-default port | `string` | `5432` | no |
 | <a name="input_security_group_override"></a> [security\_group\_override](#input\_security\_group\_override) | Override for the security group name | `string` | `null` | no |
 | <a name="input_snapshot_identifier"></a> [snapshot\_identifier](#input\_snapshot\_identifier) | When provided, cluster is provisioned using the specified cluster snapshot identifier. | `string` | `null` | no |
 | <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | Aurora cluster [storage\_type](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#storage_type-1) | `string` | `""` | no |
