@@ -122,13 +122,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
     id     = "noncurrent-ia-tagged"
     status = "Enabled"
 
-    filter {
-      tag {
-        key   = "lifecycle-transition"
-        value = "ia"
-      }
-    }
-
     noncurrent_version_transition {
       noncurrent_days = 30
       storage_class   = "STANDARD_IA"
