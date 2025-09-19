@@ -1,5 +1,5 @@
 name: tf-admin-aco-deny
-run-name: tf-admin-aco-deny ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
+run-name: tf-admin-aco-deny ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
   push:
@@ -12,6 +12,8 @@ on:
       - terraform/modules/subnets/**
       - terraform/modules/vpc/**
       - terraform/services/admin-aco-deny/**
+  schedule:
+    - cron: "12 14 * * 1-5"
   workflow_dispatch:
     inputs:
       apply:
@@ -58,5 +60,5 @@ jobs:
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
-      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule'
         run: tofu apply -auto-approve tf.plan

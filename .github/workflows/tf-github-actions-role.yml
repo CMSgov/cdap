@@ -1,11 +1,13 @@
 name: tf-github-actions-role
-run-name: tf-github-actions-role ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
+run-name: tf-github-actions-role ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
   push:
     paths:
       - .github/workflows/tf-github-actions-role.yml
       - terraform/services/github-actions-role/**
+  schedule:
+    - cron: "12 14 * * 1-5"
   workflow_dispatch:
     inputs:
       apply:
@@ -55,5 +57,5 @@ jobs:
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
-      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule'
         run: tofu apply -auto-approve tf.plan
