@@ -1,9 +1,5 @@
 locals {
-  # family = "${var.platform.app}-${var.platform.env}-${var.platform.service}"
-  family = "bcda-bcda-dev"
-  env_test = "dev"
-  app_test = "bcda"
-  service_test = "bcda"
+  family = "${var.platform.app}-${var.platform.env}-${var.platform.service}"
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -115,6 +111,7 @@ data "aws_iam_policy_document" "execution" {
       "kms:Decrypt"
     ]
     resources = [data.aws_kms_alias.master_key_alias.target_key_arn]
+    effect = "Allow"
   }
 }
 
