@@ -11,31 +11,36 @@ from urllib.error import URLError
 import boto3
 from botocore.exceptions import ClientError
 
-ssm_parameter_cache = {}
+class Field:
+	def __init__(self,  type, text, emoji):
+		#type: plain_text
+		self.type = type
+		#text: text to be displayed
+		self.text = text
+		#emoji: boolean
+		self.emoji = emoji
 
-def get_ssm_client():
-    """
-    Lazy initialization of boto3 SSM client.
-    Prevents global instantiation to avoid NoRegionError during tests.
-    """
-    return boto3.client('ssm')
+class Block:
+	#def __init__(self, type,  text=None, fields=None):
+	def __init__(self, type, **kwargs):
+		#type: section
+		self.type = type
+		#fields: an array of fields in the section
+		if kwargs.get("fields"):
+			self.fields = kwargs.get("fields")
+		if kwargs.get("text"):
+			self.text = kwargs.get("text")
 
-def get_ssm_parameter(name):
-    """
-    Retrieves an SSM parameter and caches the value to prevent duplicate API calls.
-    Caches None if the parameter is not found or an error occurs.
-    """
-    if name not in ssm_parameter_cache:
-        try:
-            ssm_client = get_ssm_client()
-            response = ssm_client.get_parameter(Name=name, WithDecryption=True)
-            value = response['Parameter']['Value']
-            ssm_parameter_cache[name] = value
-        except ClientError as e:
-            log({'msg': f'Error getting SSM parameter {name}: {e}'})
-            ssm_parameter_cache[name] = None
-
-    return ssm_parameter_cache[name]
+class Text:
+	#def __init__(self, type, text, emoji):
+	def __init__(self, type, text, **kwargs):
+		#type: plain_text
+		self.type = type
+		#text: text to be displayed
+		self.text = text
+		#emoji: boolean
+		if kwargs.get("emoji"):
+			self.emoji = kwargs.get("emoji")
 
 def is_ignore_ok():
     """
@@ -44,92 +49,55 @@ def is_ignore_ok():
     """
     return os.environ.get('IGNORE_OK', 'false').lower() == 'true'
 
-def lambda_handler(event, _):
-    """
-    Main entry point for the Lambda function.
-    It iterates through the SQS records, processes each Cost Anomaly alarm,
-    and forwards it to the appropriate Slack channel.
-    """
-    processed_count = 0
-    for record in event['Records']:
-        message = enriched_Cost_Anomaly_message(record)
-        if message:
-            app = message.get('App')
-            if app:
-                webhook = 'https://hooks.slack.com/services/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'
-                if webhook:
-                    send_message_to_slack(webhook, message, record.get('messageId'))
-                    processed_count += 1
-                else:
-                    log({'messageId': record.get('messageId'),
-                         'msg': f'Could not find Slack webhook for app: {app}'})
-    return {
-        'statusCode': 200,
-        'body': f'Processed {processed_count} messages successfully'
-    }
+def lambda_handler(event, context):
 
-def Cost_Anomaly_message(record):
-    """
-    Parses the SQS record for the Cost Anomaly Alarm JSON payload.
-    Validates it has AlarmName. Returns the parsed message or None.
-    """
-    try:
-        body = json.loads(record['body'])
-        message = json.loads(body['Message'])
+    anomalyEvent = json.loads(event["Records"][0]["Sns"]["Message"])
+    message_id = anomalyEvent["messageId"]
 
-        if 'AlarmName' not in message:
-            log({'msg': 'AlarmName not found in message',
-                 'messageId': record.get('messageId')})
-            return None
+    #Total Cost of the Anomaly
+    totalcostImpact = anomalyEvent["impact"]["totalImpact"]
 
-        return message
-    except json.JSONDecodeError:
-        log({'msg': 'Did not receive an SNS Cost Anomaly payload',
-             'messageId': record.get('messageId')})
-    return None
+    #Anomaly Detection Interval
+    anomalyStartDate =  anomalyEvent["anomalyStartDate"]
+    anomalyEndDate = anomalyEvent["anomalyEndDate"]
 
-def enriched_Cost_Anomaly_message(record):
-    """
-    Parses the Cost Anomaly message, extracts the app and env from the alarm name,
-    validates env is in dev|test|sandbox|prod, and enriches it with an emoji.
-    """
-    message = Cost_Anomaly_message(record)
-    if not message:
-        return None
+    #anomalyDetailsLink
+    anomalyDetailsLink = anomalyEvent["anomalyDetailsLink"]
 
-    alarm_name = message['AlarmName']
-    parts = alarm_name.split('-')
-    if len(parts) < 2:
-        log({'msg': f'AlarmName "{alarm_name}" does not match expected format',
-             'messageId': record.get('messageId')})
-        return None
+    #Blocks is the main array that holds the full message.
+    blocks = []
 
-    message['App'] = parts[0]
-    env = parts[1]
+    headerText = Text("plain_text", ":warning: Cost Anomaly Detected ", emoji = True)
+    totalAnomalyCostText = Text("mrkdwn", "*Total Anomaly Cost*: $" + str(totalcostImpact))
+    rootCausesHeaderText = Text("mrkdwn", "*Root Causes* :mag:")
+    anomalyStartDateText = Text("mrkdwn", "*Anomaly Start Date*: " + str(anomalyStartDate))
+    anomalyEndDateText = Text("mrkdwn", "*Anomaly End Date*: " + str(anomalyEndDate))
+    anomalyDetailsLinkText = Text("mrkdwn", "*Anomaly Details Link*: " + str(anomalyDetailsLink))
 
-    if env not in ["dev", "test", "sandbox", "prod"]:
-        log({'msg': f'Environment "{env}" in AlarmName "{alarm_name}" is not valid',
-             'messageId': record.get('messageId')})
-        return None
+    blocks.append(Block("header", text=headerText.__dict__))
+    blocks.append(Block("section", text=totalAnomalyCostText.__dict__))
+    blocks.append(Block("section", text=anomalyStartDateText.__dict__))
+    blocks.append(Block("section", text=anomalyEndDateText.__dict__))
+    blocks.append(Block("section", text=anomalyDetailsLinkText.__dict__))
+    blocks.append(Block("section", text=rootCausesHeaderText.__dict__))
 
-    message['Env'] = env
+    for rootCause in anomalyEvent["rootCauses"]:
+    	fields = []
+    	for rootCauseAttribute in rootCause:
+    	    if feature_flag_displayAccountName == True:
+    	        if rootCauseAttribute == "linkedAccount":
+    	            accountName = get_aws_account_name(rootCause[rootCauseAttribute])
+    	            fields.append(Field("plain_text", "accountName"  + " : " + accountName, False))
+    	    fields.append(Field("plain_text", rootCauseAttribute  + " : " + rootCause[rootCauseAttribute], False))
+    	blocks.append(Block("section", fields = [ob.__dict__ for ob in fields]))
 
-    log({'App': message['App'],
-         'Env': message['Env'],
-         'AlarmName': alarm_name,
-         'NewStateValue': message.get('NewStateValue'),
-         'OldStateValue': message.get('OldStateValue'),
-         'StateChangeTime': message.get('StateChangeTime'),
-         'msg': 'Received Cost Anomaly Alarm',
-         'messageId': record.get('messageId')})
+    message_json = blocks= json.dumps([ob.__dict__ for ob in blocks])
 
-    if message['NewStateValue'] == 'OK' and is_ignore_ok():
-        return None
+    webhook = 'https://hooks.slack.com/services/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'
 
-    message['Emoji'] = ':checked:' if message['NewStateValue'] == 'OK' else ':anger:'
-    return message
+    send_message_to_slack(webhook, message_json, message_id)
 
-def send_message_to_slack(webhook, message, message_id):
+def send_message_to_slack(webhook, message_json, message_id):
     """
     Calls the Slack webhook with the formatted message. Returns success status.
     """
@@ -137,7 +105,7 @@ def send_message_to_slack(webhook, message, message_id):
         log({'msg': 'Unable to send to Slack as webhook URL is not set',
              'messageId': message_id})
         return False
-    jsondata = json.dumps(message)
+    jsondata = message_json
     jsondataasbytes = jsondata.encode('utf-8')
     req = request.Request(webhook)
     req.add_header('Content-Type', 'application/json; charset=utf-8')
@@ -155,11 +123,3 @@ def send_message_to_slack(webhook, message, message_id):
         log({'msg': f'Unsuccessful attempt to send message to Slack ({e.reason})',
              'messageId': message_id})
         return False
-
-
-def log(data):
-    """
-    Enriches the log message with the current time and prints it to standard out.
-    """
-    data['time'] = datetime.now().astimezone(tz=timezone.utc).isoformat()
-    print(json.dumps(data))
