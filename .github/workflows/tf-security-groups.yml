@@ -1,5 +1,5 @@
 name: tf-security-groups
-run-name: tf-security-groups ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
+run-name: tf-security-groups ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
   push:
@@ -58,5 +58,5 @@ jobs:
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
-      - if: inputs.apply || ((github.event_name == 'push' || github.event_name == 'schedule') && github.ref == 'refs/heads/main')
+      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule'
         run: tofu apply -auto-approve tf.plan
