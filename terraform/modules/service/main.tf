@@ -13,7 +13,7 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = nonsensitive(jsonencode([
     {
       # name                   = var.service_name_override != null ? var.service_name_override : var.platform.service
-      name                   = var.service_name_override != null ? var.service_name_override : local.service_test
+      name                   = var.service_name_override != null ? var.service_name_override : local.family
       image                  = var.image
       readonlyRootFilesystem = true
       essential              = true
