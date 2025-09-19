@@ -82,10 +82,10 @@ variable "mount_points" {
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
-    app = string,
-    env = string,
+    app               = string,
+    env               = string,
     kms_alias_primary = string,
-    service = string
+    service           = string
   })
 }
 

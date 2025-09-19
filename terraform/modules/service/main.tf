@@ -90,7 +90,7 @@ resource "aws_ecs_service" "this" {
 
 data "aws_kms_alias" "master_key_alias" {
   name = "alias/${var.platform.kms_alias_primary}"
- }
+}
 
 data "aws_iam_policy_document" "execution" {
   statement {
@@ -111,12 +111,12 @@ data "aws_iam_policy_document" "execution" {
       "kms:Decrypt"
     ]
     resources = [data.aws_kms_alias.master_key_alias.target_key_arn]
-    effect = "Allow"
+    effect    = "Allow"
   }
 }
 
 resource "aws_iam_role" "execution" {
-  name  = "${local.family}-execution"
+  name = "${local.family}-execution"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
