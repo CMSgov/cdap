@@ -1,4 +1,4 @@
-name: tf-admin-aco-deny
+name: tf-admin-aco-deny-plt-1332
 run-name: tf-admin-aco-deny ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
 
 on:
