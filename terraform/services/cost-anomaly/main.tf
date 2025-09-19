@@ -1,6 +1,6 @@
 data "aws_caller_identity" "current" {}
 locals {
-  function_name = "cost_anomaly_alert"
+  function_name = "cost-anomaly-alert"
 }
 resource "aws_ce_anomaly_monitor" "BCDA_Account_Monitor" {
   name              = "BCDA Account Monitor"
@@ -53,6 +53,8 @@ module "sns_to_slack_queue" {
   app           = "bcda"
   env           = var.env
   function_name = local.function_name
+
+  depends_on = ["module.cost_anomaly_function"]
 }
 
 module "cost_anomaly_function" {
