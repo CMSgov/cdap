@@ -31,6 +31,7 @@ data "aws_iam_policy_document" "topic" {
 }
 
 resource "aws_sns_topic_policy" "this" {
+  count = length(var.publisher_arns) > 0 ? 1 : 0
   arn = aws_sns_topic.this.arn
 
   policy = data.aws_iam_policy_document.topic[0].json

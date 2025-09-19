@@ -48,10 +48,10 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
 module "sns_to_slack_function" {
   source = "../../modules/function"
 
-  app = "cdap"
+  app = "bcda"
   env = var.env
 
-  name        = "Cost Anomaly Alert"
+  name        = "cost-anomaly-${var.env}"
   description = "Listens for Cost Anomaly Alerts and forwards to Slack"
 
   handler = "lambda_function.lambda_handler"
@@ -70,4 +70,6 @@ module "sns_to_slack_queue" {
   sns_topic_arn = module.cost_anomaly_sns.arn
 
   function_name = module.sns_to_slack_function.name
+  app           = "bcda"
+  env           = var.env
 }
