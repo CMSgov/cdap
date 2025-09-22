@@ -52,7 +52,9 @@ def is_ignore_ok():
 def lambda_handler(event, context):
 
     anomalyEvent = json.loads(event["Records"][0]["Sns"]["Message"])
-    message_id = anomalyEvent["messageId"]
+    print(anomalyEvent)
+
+    message_id = 4
 
     #Total Cost of the Anomaly
     totalcostImpact = anomalyEvent["impact"]["totalImpact"]
@@ -84,7 +86,6 @@ def lambda_handler(event, context):
     for rootCause in anomalyEvent["rootCauses"]:
     	fields = []
     	for rootCauseAttribute in rootCause:
-    	    if feature_flag_displayAccountName == True:
     	        if rootCauseAttribute == "linkedAccount":
     	            accountName = get_aws_account_name(rootCause[rootCauseAttribute])
     	            fields.append(Field("plain_text", "accountName"  + " : " + accountName, False))
@@ -123,3 +124,18 @@ def send_message_to_slack(webhook, message_json, message_id):
         log({'msg': f'Unsuccessful attempt to send message to Slack ({e.reason})',
              'messageId': message_id})
         return False
+def get_aws_account_name(account_id):
+    #Function is used to fetch account name corresponding to an account number. The account name is used to display a meaningful name in the Slack notification. For this function to operate, proper IAM permission should be granted to the Lambda function role.
+    print("Fetching Account Name corresponding to accountId:" + account_id)
+
+    #Initialise Organisations
+    client = boto3.client('organizations')
+
+    #Call describe_account in order to return the account_id corresponding to the account_number.
+    response = client.describe_account(AccountId=account_id)
+
+    accountName = response["Account"]["Name"]
+    print("Fetching Account Name complete. Account Name:" + accountName)
+
+    #Return the Account Name corresponding the Input Account ID.
+    return response["Account"]["Name"]

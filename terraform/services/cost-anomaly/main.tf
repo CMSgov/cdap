@@ -54,25 +54,54 @@ module "sns_to_slack_queue" {
   env           = var.env
   function_name = local.function_name
 
-  depends_on = ["module.cost_anomaly_function"]
 }
 
-module "cost_anomaly_function" {
-  source = "../../modules/function"
+# IAM role for Lambda execution
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
 
-  app = "bcda"
-  env = var.env
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
 
-  name        = local.function_name
-  description = "Forwards cost anomaly alerts to Slack channel #dasg-metrics-and-insights."
+    actions = ["sts:AssumeRole"]
+  }
+}
 
-  handler = "lambda_function.lambda_handler"
+resource "aws_iam_role" "cost_anomaly_alert" {
+  name               = "lambda_execution_role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+# Package the Lambda function code
+data "archive_file" "cost_anomaly_alert" {
+  type        = "zip"
+  source_file = "lambda_src/lambda_function.py"
+  output_path = "lambda/cost_anomaly_function.zip"
+}
+
+# Lambda function
+resource "aws_lambda_function" "cost_anomaly_alert" {
+  filename         = data.archive_file.cost_anomaly_alert.output_path
+  function_name    = "cost_anomaly_alert_lambda_function"
+  role             = aws_iam_role.cost_anomaly_alert.arn
+  handler          = "lambda_function.lambda_handler"
+  source_code_hash = data.archive_file.cost_anomaly_alert.output_base64sha256
+
   runtime = "python3.13"
 
-  memory_size = 2048
+  environment {
+    variables = {
+      ENVIRONMENT = var.env
+      IGNORE_OK   = "false"
 
-  environment_variables = {
-    ENV      = var.env
-    IGNORE_OK = true
+    }
+  }
+
+  tags = {
+    Environment = var.env
+    Application = "cost_anomaly_alert"
   }
 }
