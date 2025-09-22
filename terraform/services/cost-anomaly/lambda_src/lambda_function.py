@@ -51,9 +51,13 @@ def is_ignore_ok():
 
 def lambda_handler(event, context):
 
-    print("event:" + event)
-    anomalyEvent = json.loads(event["Records"][0]["Sns"]["Message"])
-    print(anomalyEvent)
+    print(f"Received event: {json.dumps(event)}")
+    print(f"Function name: {context.function_name}")
+    print(f"Remaining time: {context.get_remaining_time_in_millis()} ms")
+    # print("event:" + event)
+    # anomalyEvent = json.loads(event["Records"][0]["Sns"]["Message"])
+    anomalyEvent = json.dumps(event)
+    # print(anomalyEvent)
 
     message_id = 4
 
