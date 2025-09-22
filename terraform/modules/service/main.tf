@@ -110,7 +110,7 @@ data "aws_iam_policy_document" "execution" {
     actions = [
       "kms:Decrypt"
     ]
-    resources = [data.aws_kms_alias.master_key_alias.target_key_arn]
+    resources = [var.platform.kms_alias_primary.target_key_arn]
     effect    = "Allow"
   }
 }
