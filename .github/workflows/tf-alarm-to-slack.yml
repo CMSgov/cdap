@@ -1,5 +1,5 @@
 name: tf-alarm-to-slack
-run-name: tf-alarm-to-slack ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
+run-name: tf-alarm-to-slack ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
   push:
@@ -12,6 +12,8 @@ on:
       - terraform/modules/subnets/**
       - terraform/modules/vpc/**
       - terraform/services/alarm-to-slack/**
+  schedule:
+    - cron: "12 14 * * 1-5"
   workflow_dispatch:
     inputs:
       apply:
@@ -72,7 +74,7 @@ jobs:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
           TF_VAR_legacy: "false"
-      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule'
         run: |
           tofu apply -auto-approve tf.plan
           BUCKET_NAME=$(tofu output -raw zip_bucket_id)
