@@ -46,7 +46,7 @@ variable "execution_role_arn" {
 
 variable "family_name_override" {
   default     = null
-  description = "The desired family name for the ECS task definition.  If null will default to: {var.platform.env}-{var.platform.app}-{var.platform.service}"
+  description = "The desired family name for the ECS task definition.  If null will default to service name."
 }
 
 variable "force_new_deployment" {
