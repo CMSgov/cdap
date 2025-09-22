@@ -70,7 +70,7 @@ resource "aws_ecs_service" "this" {
   desired_count        = var.desired_count
   launch_type          = "FARGATE"
   platform_version     = "1.4.0"
-  force_new_deployment = var.force_new_deployment #anytrue([var.force_contracts_deployment, var.contracts_service_image_tag != null])
+  force_new_deployment = var.force_new_deployment
   propagate_tags       = "SERVICE"
   network_configuration {
     subnets          = var.platform.subnets
