@@ -12,35 +12,35 @@ import boto3
 from botocore.exceptions import ClientError
 
 class Field:
-	def __init__(self,  type, text, emoji):
-		#type: plain_text
-		self.type = type
-		#text: text to be displayed
-		self.text = text
-		#emoji: boolean
-		self.emoji = emoji
+    def __init__(self,  type, text, emoji):
+        #type: plain_text
+        self.type = type
+        #text: text to be displayed
+        self.text = text
+        #emoji: boolean
+        self.emoji = emoji
 
 class Block:
-	#def __init__(self, type,  text=None, fields=None):
-	def __init__(self, type, **kwargs):
-		#type: section
-		self.type = type
-		#fields: an array of fields in the section
-		if kwargs.get("fields"):
-			self.fields = kwargs.get("fields")
-		if kwargs.get("text"):
-			self.text = kwargs.get("text")
+    #def __init__(self, type,  text=None, fields=None):
+    def __init__(self, type, **kwargs):
+        #type: section
+        self.type = type
+        #fields: an array of fields in the section
+        if kwargs.get("fields"):
+            self.fields = kwargs.get("fields")
+        if kwargs.get("text"):
+            self.text = kwargs.get("text")
 
 class Text:
-	#def __init__(self, type, text, emoji):
-	def __init__(self, type, text, **kwargs):
-		#type: plain_text
-		self.type = type
-		#text: text to be displayed
-		self.text = text
-		#emoji: boolean
-		if kwargs.get("emoji"):
-			self.emoji = kwargs.get("emoji")
+    #def __init__(self, type, text, emoji):
+    def __init__(self, type, text, **kwargs):
+        #type: plain_text
+        self.type = type
+        #text: text to be displayed
+        self.text = text
+        #emoji: boolean
+        if kwargs.get("emoji"):
+            self.emoji = kwargs.get("emoji")
 
 def is_ignore_ok():
     """
@@ -84,13 +84,13 @@ def lambda_handler(event, context):
     blocks.append(Block("section", text=rootCausesHeaderText.__dict__))
 
     for rootCause in anomalyEvent["rootCauses"]:
-    	fields = []
-    	for rootCauseAttribute in rootCause:
-    	        if rootCauseAttribute == "linkedAccount":
-    	            accountName = get_aws_account_name(rootCause[rootCauseAttribute])
-    	            fields.append(Field("plain_text", "accountName"  + " : " + accountName, False))
-    	    fields.append(Field("plain_text", rootCauseAttribute  + " : " + rootCause[rootCauseAttribute], False))
-    	blocks.append(Block("section", fields = [ob.__dict__ for ob in fields]))
+        fields = []
+        for rootCauseAttribute in rootCause:
+            if rootCauseAttribute == "linkedAccount":
+                accountName = get_aws_account_name(rootCause[rootCauseAttribute])
+                fields.append(Field("plain_text", "accountName"  + " : " + accountName, False))
+            fields.append(Field("plain_text", rootCauseAttribute  + " : " + rootCause[rootCauseAttribute], False))
+        blocks.append(Block("section", fields = [ob.__dict__ for ob in fields]))
 
     message_json = blocks= json.dumps([ob.__dict__ for ob in blocks])
 
