@@ -103,7 +103,7 @@ variable "port_mappings" {
 }
 
 variable "service_name_override" {
-  description = "Desired service name for the service tag on the aws ecs service.  Defaults to platform.service."
+  description = "Desired service name for the service tag on the aws ecs service.  Defaults to var.platform.app-var.platform.env-var.platform.service."
   type        = string
   default     = null
 }
