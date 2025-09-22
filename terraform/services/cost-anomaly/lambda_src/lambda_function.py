@@ -51,6 +51,7 @@ def is_ignore_ok():
 
 def lambda_handler(event, context):
 
+    print("event:" + event)
     anomalyEvent = json.loads(event["Records"][0]["Sns"]["Message"])
     print(anomalyEvent)
 
