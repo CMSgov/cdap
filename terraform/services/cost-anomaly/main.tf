@@ -10,8 +10,8 @@ resource "aws_ce_anomaly_monitor" "BCDA_Account_Monitor" {
 }
 
 resource "aws_ssm_parameter" "webhook" {
-  name  = local.ssm_parameter
-  type  = "String"
+  name = local.ssm_parameter
+  type = "String"
 }
 
 resource "aws_sns_topic" "cost_anomaly_sns" {
@@ -100,8 +100,8 @@ resource "aws_lambda_function" "cost_anomaly_alert" {
 
   environment {
     variables = {
-      ENVIRONMENT = var.env
-      IGNORE_OK   = "false"
+      ENVIRONMENT   = var.env
+      IGNORE_OK     = "false"
       WEBHOOK_PARAM = local.ssm_parameter
     }
   }
