@@ -64,7 +64,7 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 resource "aws_ecs_service" "this" {
-  name                 = local.service_name
+  name                 = "${var.platform.app}-${var.platform.env}-${local.service_name}"
   cluster              = var.cluster
   task_definition      = aws_ecs_task_definition.this.arn
   desired_count        = var.desired_count
