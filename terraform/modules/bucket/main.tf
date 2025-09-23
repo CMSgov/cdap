@@ -119,15 +119,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
   rule {
-    id     = "noncurrent-ia-tagged"
+    id     = "noncurrent-ia"
     status = "Enabled"
 
-    filter {
-      tag {
-        key   = "lifecycle-transition"
-        value = "ia"
-      }
-    }
+    filter {}
 
     noncurrent_version_transition {
       noncurrent_days = 30
@@ -138,6 +133,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
   rule {
     id     = "cleanup-multipart"
     status = "Enabled"
+
+    filter {}
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
