@@ -24,7 +24,7 @@ resource "aws_ecs_task_definition" "this" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${var.service_name_override != null ? var.service_name_override : var.platform.service}"
+          awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
           awslogs-create-group  = "true"
           awslogs-region        = var.platform.primary_region.name
           awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
