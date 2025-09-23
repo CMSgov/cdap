@@ -44,11 +44,6 @@ variable "execution_role_arn" {
   default     = null
 }
 
-variable "family_name_override" {
-  default     = null
-  description = "The desired family name for the ECS task definition.  If null will default to service name."
-}
-
 variable "force_new_deployment" {
   description = "When *changed* to `true`, trigger a new deployment of the ECS Service even when a deployment wouldn't otherwise be triggered by other changes. **Note**: This has no effect when the value is `false`, changed to `false`, or set to `true` between consecutive applies."
   type        = bool

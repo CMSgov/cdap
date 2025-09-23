@@ -3,7 +3,7 @@ locals {
 }
 
 resource "aws_ecs_task_definition" "this" {
-  family                   = var.family_name_override != null ? var.family_name_override : local.service_name
+  family                   = local.service_name
   network_mode             = "awsvpc"
   execution_role_arn       = var.execution_role_arn != null ? var.execution_role_arn : aws_iam_role.execution.arn
   task_role_arn            = var.task_role_arn
