@@ -122,9 +122,9 @@ def lambda_handler(event, context):
             fields.append(Field("plain_text", rootCauseAttribute  + " : " + rootCause[rootCauseAttribute], False))
         blocks.append(Block("section", fields = [ob.__dict__ for ob in fields]))
 
-    message_json = blocks= json.dumps([ob.__dict__ for ob in blocks])
+    message_json = json.dumps([ob.__dict__ for ob in blocks])
 
-    webhook = get_ssm_parameter(f'/cost_anomaly/lambda/slack_webhook_url')
+    webhook = get_ssm_parameter(os.environ.get('WEBHOOK_PARAM'))
 
     send_message_to_slack(webhook, message_json, message_id)
 

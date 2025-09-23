@@ -102,7 +102,7 @@ resource "aws_lambda_function" "cost_anomaly_alert" {
     variables = {
       ENVIRONMENT = var.env
       IGNORE_OK   = "false"
-
+      WEBHOOK_PARAM = local.ssm_parameter
     }
   }
 
