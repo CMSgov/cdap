@@ -1,11 +1,17 @@
 data "aws_caller_identity" "current" {}
 locals {
   function_name = "cost-anomaly-alert"
+  ssm_parameter = "/cost_anomaly/lambda/slack_webhook_url"
 }
 resource "aws_ce_anomaly_monitor" "BCDA_Account_Monitor" {
   name              = "BCDA Account Monitor"
   monitor_type      = "DIMENSIONAL"
   monitor_dimension = "SERVICE"
+}
+
+resource "aws_ssm_parameter" "webhook" {
+  name  = local.ssm_parameter
+  type  = "String"
 }
 
 resource "aws_sns_topic" "cost_anomaly_sns" {
@@ -31,14 +37,14 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
       dimension {
         key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
         match_options = ["GREATER_THAN_OR_EQUAL"]
-        values        = ["100"]
+        values        = ["20"]
       }
     }
     or {
       dimension {
         key           = "ANOMALY_TOTAL_IMPACT_PERCENTAGE"
         match_options = ["GREATER_THAN_OR_EQUAL"]
-        values        = ["20"]
+        values        = ["5"]
       }
     }
   }

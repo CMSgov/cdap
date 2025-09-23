@@ -11,6 +11,8 @@ from urllib.error import URLError
 import boto3
 from botocore.exceptions import ClientError
 
+ssm_parameter_cache = {}
+
 class Field:
     def __init__(self,  type, text, emoji):
         #type: plain_text
@@ -41,6 +43,29 @@ class Text:
         #emoji: boolean
         if kwargs.get("emoji"):
             self.emoji = kwargs.get("emoji")
+def get_ssm_client():
+    """
+    Lazy initialization of boto3 SSM client.
+    Prevents global instantiation to avoid NoRegionError during tests.
+    """
+    return boto3.client('ssm')
+
+def get_ssm_parameter(name):
+    """
+    Retrieves an SSM parameter and caches the value to prevent duplicate API calls.
+    Caches None if the parameter is not found or an error occurs.
+    """
+    if name not in ssm_parameter_cache:
+        try:
+            ssm_client = get_ssm_client()
+            response = ssm_client.get_parameter(Name=name, WithDecryption=True)
+            value = response['Parameter']['Value']
+            ssm_parameter_cache[name] = value
+        except ClientError as e:
+            log({'msg': f'Error getting SSM parameter {name}: {e}'})
+            ssm_parameter_cache[name] = None
+
+    return ssm_parameter_cache[name]
 
 def is_ignore_ok():
     """
@@ -99,7 +124,7 @@ def lambda_handler(event, context):
 
     message_json = blocks= json.dumps([ob.__dict__ for ob in blocks])
 
-    webhook = 'https://hooks.slack.com/services/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'
+    webhook = get_ssm_parameter(f'/cost_anomaly/lambda/slack_webhook_url')
 
     send_message_to_slack(webhook, message_json, message_id)
 
@@ -144,3 +169,9 @@ def get_aws_account_name(account_id):
 
     #Return the Account Name corresponding the Input Account ID.
     return response["Account"]["Name"]
+def log(data):
+    """
+    Enriches the log message with the current time and prints it to standard out.
+    """
+    data['time'] = datetime.now().astimezone(tz=timezone.utc).isoformat()
+    print(json.dumps(data))
