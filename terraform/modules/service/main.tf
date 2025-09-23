@@ -1,5 +1,5 @@
 locals {
-  service_name = var.service_name_override != null ? var.service_name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}"
+  service_name = var.service_name_override != null ? var.service_name_override : var.platform.service
 }
 
 resource "aws_ecs_task_definition" "this" {
