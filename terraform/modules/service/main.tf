@@ -13,7 +13,7 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = nonsensitive(jsonencode([
     {
       # name                   = var.service_name_override != null ? var.service_name_override : var.platform.service
-      name                   = var.service_name_override != null ? var.service_name_override : local.family
+      name                   = var.service_name_override != null ? var.service_name_override : local.service_name
       image                  = var.image
       readonlyRootFilesystem = true
       essential              = true
@@ -116,7 +116,7 @@ data "aws_iam_policy_document" "execution" {
 }
 
 resource "aws_iam_role" "execution" {
-  name = "${local.family}-execution"
+  name = "${aws_ecs_task_definition.this.family}-execution"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -132,7 +132,7 @@ resource "aws_iam_role" "execution" {
 }
 
 resource "aws_iam_role_policy" "execution" {
-  name   = "${local.family}-execution"
+  name   = "${aws_ecs_task_definition.this.family}-execution"
   role   = aws_iam_role.execution.name
   policy = data.aws_iam_policy_document.execution.json
 }
