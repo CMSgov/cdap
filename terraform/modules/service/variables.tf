@@ -1,6 +1,7 @@
 variable "cluster" {
-  description = "The ecs cluster hosting the service and task."
-  type        = any
+  description = "The ecs cluster ARN hosting the service and task."
+  type        = optional(string)
+  default     = null
 }
 
 variable "container_environment" {
