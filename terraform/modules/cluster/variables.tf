@@ -1,6 +1,6 @@
 variable "platform" {
   description = "Object that describes standardized platform values."
-  type = any
+  type        = any
 }
 
 variable "cluster_name_override" {
