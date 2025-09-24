@@ -7,9 +7,6 @@ locals {
     dpc = [
       "repo:CMSgov/dpc-app:*",
     ]
-    cdap = [
-      "repo:CMSgov/cdap:*",
-    ]
   }
 }
 
