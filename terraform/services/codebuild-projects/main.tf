@@ -16,6 +16,16 @@ locals {
   ]
 }
 
+module "standards" {
+  source = "../../modules/standards"
+
+  app         = "cdap"
+  env         = "mgmt"
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/codebuild-projects"
+  service     = "codebuild-projects"
+  providers   = { aws = aws, aws.secondary = aws.secondary }
+}
+
 module "vpc" {
   source = "../../modules/vpc"
 
