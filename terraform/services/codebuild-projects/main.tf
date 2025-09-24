@@ -93,8 +93,7 @@ resource "aws_codebuild_project" "this" {
 
   logs_config {
     cloudwatch_logs {
-      status     = "ENABLED"
-      group_name = "/aws/codebuild/${each.key}"
+      status = "ENABLED"
     }
   }
 
