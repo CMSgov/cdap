@@ -77,11 +77,6 @@ jobs:
       - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule'
         run: |
           tofu apply -auto-approve tf.plan
-          BUCKET_NAME=$(tofu output -raw zip_bucket_id)
-          aws s3api put-object-tagging \
-            --bucket $BUCKET_NAME \
-            --key function.zip \
-            --tagging 'TagSet=[{Key=lifecycle-transition,Value=ia}]'
           cd lambda_src
           zip deploy.zip lambda_function.py
           aws lambda update-function-code --function-name "${{ matrix.app }}-${{ matrix.env }}-alarm-to-slack" --zip-file fileb://deploy.zip
