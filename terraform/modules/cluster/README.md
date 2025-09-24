@@ -21,6 +21,15 @@ module "cluster" {
   platform = module.platform
 }
 
+resource "aws_ecs_service" "contracts" {
+  name             = "${local.service_prefix}-contracts"
+  cluster          = module.cluster.this.id
+  task_definition  = aws_ecs_task_definition.contracts.arn
+  desired_count    = 1
+  launch_type      = "FARGATE"
+  platform_version = "1.4.0"
+  propagate_tags   = "SERVICE"
+}
 ```
 
 <!-- BEGIN_TF_DOCS -->

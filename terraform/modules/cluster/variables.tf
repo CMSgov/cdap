@@ -1,12 +1,6 @@
 variable "platform" {
   description = "Object that describes standardized platform values."
-  type = object({
-    app               = string,
-    env               = string,
-    kms_alias_primary = any,
-    service           = string,
-    is_ephemeral_env  = string
-  })
+  type = any
 }
 
 variable "cluster_name_override" {
