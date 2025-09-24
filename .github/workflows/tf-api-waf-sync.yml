@@ -63,11 +63,6 @@ jobs:
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
-      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule'
-        run: |
-          tofu apply -auto-approve tf.plan
-          BUCKET_NAME=$(tofu output -raw zip_bucket_id)
-          aws s3api put-object-tagging \
-            --bucket $BUCKET_NAME \
-            --key function.zip \
-            --tagging 'TagSet=[{Key=lifecycle-transition,Value=ia}]'
+      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        run: tofu apply -auto-approve tf.plan
+
