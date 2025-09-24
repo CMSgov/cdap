@@ -34,7 +34,6 @@ module "service" {
 
   cpu = 1048
   desired_count = 1  # Optional - how many instances to keep running after task is complete.  Default is 0.
-  family_name_override = "microservice" # Optional - The family name for the ECS task definition.  If null will default to: {var.platform.env}-{var.platform.app}-{var.platform.service}
   force_new_deployment = true #Optional - Set to true to delete a service even if it wasn't scaled down to zero tasks. Default is false.
   image = "image_name_from_ecr"
   load_balancers = [{
@@ -70,8 +69,8 @@ module "service" {
   # SERVICE: Tags defined on the aws_ecs_service resource itself will be propagated to the tasks. Default value.
   # TASK_DEFINITION: Tags defined on the aws_ecs_task_definition resource will be propagated to the tasks.
   service_name_override = "my_test_service" # Optional - Desired service name for the service tag on the aws ecs service.  Defaults to platform.service.
-  task_execution_role_arn = "this_is_an_iam_role_arn" #Optional - ARN of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.  Defaults to creation of a new role.
-  task_app_role_arn = "this_is_an_iam_role_arn"  # ARN of IAM role that allows your Amazon ECS container task to make calls to other AWS services.
+  execution_role_arn = "this_is_an_iam_role_arn" #Optional - ARN of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.  Defaults to creation of a new role.
+  app_role_arn = "this_is_an_iam_role_arn"  # ARN of IAM role that allows your Amazon ECS container task to make calls to other AWS services.
   volume = [{
     name      = "my-host-volume"
     host_path = "/var/lib/mydata"

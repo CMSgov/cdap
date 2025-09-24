@@ -1,6 +1,6 @@
 variable "cluster" {
   description = "The ecs cluster ARN hosting the service and task."
-  type        = optional(string)
+  type        = string
   default     = null
 }
 
