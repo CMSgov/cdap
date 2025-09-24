@@ -8,7 +8,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.14.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -37,6 +37,7 @@ No inputs.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_standards"></a> [standards](#module\_standards) | ../../modules/standards | n/a |
 | <a name="module_subnets"></a> [subnets](#module\_subnets) | ../../modules/subnets | n/a |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | ../../modules/vpc | n/a |
 
