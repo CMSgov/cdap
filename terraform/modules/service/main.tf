@@ -118,7 +118,7 @@ data "aws_iam_policy_document" "execution" {
 
 resource "aws_iam_role" "execution" {
   count = var.execution_role_arn != null ? 1 : 0
-  name = "${aws_ecs_task_definition.this.family}-execution"
+  name  = "${aws_ecs_task_definition.this.family}-execution"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -134,7 +134,7 @@ resource "aws_iam_role" "execution" {
 }
 
 resource "aws_iam_role_policy" "execution" {
-  count = var.execution_role_arn != null ? 1 : 0
+  count  = var.execution_role_arn != null ? 1 : 0
   name   = "${aws_ecs_task_definition.this.family}-execution"
   role   = aws_iam_role.execution.name
   policy = data.aws_iam_policy_document.execution.json
