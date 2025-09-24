@@ -64,11 +64,6 @@ variable "load_balancers" {
     container_name   = string
     container_port   = number
   }))
-  default = ([{
-    target_group_arn = "xyz"
-    container_name   = "foo"
-    container_port   = 3030
-  }])#
 }
 
 variable "mount_points" {
