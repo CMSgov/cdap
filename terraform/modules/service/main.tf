@@ -3,9 +3,10 @@ locals {
 }
 
 resource "aws_ecs_task_definition" "this" {
+  count = var.execution_role_arn != null ? 1 : 0
   family                   = local.service_name
   network_mode             = "awsvpc"
-  execution_role_arn       = var.execution_role_arn != null ? var.execution_role_arn : aws_iam_role.execution.arn
+  execution_role_arn       = var.execution_role_arn != null ? var.execution_role_arn :  aws_iam_role.execution[count.index].arn
   task_role_arn            = var.task_role_arn
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.cpu
@@ -64,9 +65,10 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 resource "aws_ecs_service" "this" {
+  count = var.execution_role_arn != null ? 1 : 0
   name                 = "${var.platform.app}-${var.platform.env}-${local.service_name}"
   cluster              = var.cluster
-  task_definition      = aws_ecs_task_definition.this.arn
+  task_definition      = aws_ecs_task_definition.this[count.index].arn
   desired_count        = var.desired_count
   launch_type          = "FARGATE"
   platform_version     = "1.4.0"
@@ -111,14 +113,14 @@ data "aws_iam_policy_document" "execution" {
     actions = [
       "kms:Decrypt"
     ]
-    resources = [var.platform.kms_alias_primary.target_key_arn]
+    resources = [data.aws_kms_alias.master_key_alias.arn]
     effect    = "Allow"
   }
 }
 
 resource "aws_iam_role" "execution" {
   count = var.execution_role_arn != null ? 1 : 0
-  name  = "${aws_ecs_task_definition.this.family}-execution"
+  name  = "${local.service_name}-execution"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -135,7 +137,7 @@ resource "aws_iam_role" "execution" {
 
 resource "aws_iam_role_policy" "execution" {
   count  = var.execution_role_arn != null ? 1 : 0
-  name   = "${aws_ecs_task_definition.this.family}-execution"
-  role   = aws_iam_role.execution.name
-  policy = data.aws_iam_policy_document.execution.json
+  name   = "${aws_ecs_task_definition.this[0].family}-execution"
+  role   = aws_iam_role.execution[0].name
+  policy = data.aws_iam_policy_document.execution[0].json
 }

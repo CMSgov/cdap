@@ -54,6 +54,7 @@ variable "force_new_deployment" {
 variable "image" {
   description = "The image used to start a container. This string is passed directly to the Docker daemon. By default, images in the Docker Hub registry are available. Other repositories are specified with either `repository-url/image:tag` or `repository-url/image@digest`"
   type        = string
+  default     = null
 }
 
 variable "load_balancers" {
@@ -63,6 +64,11 @@ variable "load_balancers" {
     container_name   = string
     container_port   = number
   }))
+  default = ([{
+    target_group_arn = "xyz"
+    container_name   = "foo"
+    container_port   = 3030
+  }])#
 }
 
 variable "mount_points" {
@@ -81,7 +87,12 @@ variable "platform" {
     app               = string,
     env               = string,
     kms_alias_primary = string,
-    service           = string
+    primary_region = object({
+      name = string
+    }),
+    security_groups = list(string)
+    subnets         = list(string)
+    service         = string
   })
 }
 
