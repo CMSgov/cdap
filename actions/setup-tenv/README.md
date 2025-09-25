@@ -21,4 +21,5 @@ steps:
     uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
   - name: Run OpenTofu plan
     run: tofu init && tofu plan
+```
 
