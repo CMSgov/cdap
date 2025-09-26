@@ -61,4 +61,5 @@ jobs:
           TF_VAR_env: ${{ matrix.env }}
       - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: tofu apply -exclude=module.sns_to_slack_queue.data.aws_iam_policy_document.sns_send_message -exclude=module.sns_to_slack_queue.aws_sns_topic_subscription.this -auto-approve tf.plan
-      - run: tofu apply -auto-approve tf.plan
+      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        run: tofu apply -auto-approve tf.plan
