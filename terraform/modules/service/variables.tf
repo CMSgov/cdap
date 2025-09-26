@@ -53,7 +53,6 @@ variable "force_new_deployment" {
 variable "image" {
   description = "The image used to start a container. This string is passed directly to the Docker daemon. By default, images in the Docker Hub registry are available. Other repositories are specified with either `repository-url/image:tag` or `repository-url/image@digest`"
   type        = string
-  default     = null
 }
 
 variable "load_balancers" {
