@@ -16,7 +16,6 @@ resource "aws_ecs_task_definition" "this" {
       name                   = local.service_name
       image                  = var.image
       readonlyRootFilesystem = true
-      essential              = true
       portMappings           = var.port_mappings
       mountPoints            = var.mount_points
       secrets                = var.container_secrets
