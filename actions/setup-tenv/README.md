@@ -18,7 +18,7 @@ steps:
   - name: Install Cosign to verify tenv and tofu installs
     uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
   - name: Install tenv
-    uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
+    uses: cmsgov/cdap/actions/setup-tenv@<hash>
   - name: Run OpenTofu plan
     run: tofu init && tofu plan
 ```
