@@ -3,7 +3,7 @@ locals {
 }
 
 resource "aws_ecs_task_definition" "this" {
-  count = var.execution_role_arn != null ? 1 : 0
+  count = var.execution_role_arn != null ? 0 : 1
   family                   = local.service_name
   network_mode             = "awsvpc"
   execution_role_arn       = var.execution_role_arn != null ? var.execution_role_arn :  aws_iam_role.execution[count.index].arn
@@ -13,8 +13,7 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
   container_definitions = nonsensitive(jsonencode([
     {
-      # name                   = var.service_name_override != null ? var.service_name_override : var.platform.service
-      name                   = var.service_name_override != null ? var.service_name_override : local.service_name
+      name                   = local.service_name
       image                  = var.image
       readonlyRootFilesystem = true
       essential              = true
@@ -65,7 +64,7 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 resource "aws_ecs_service" "this" {
-  count = var.execution_role_arn != null ? 1 : 0
+  count = var.execution_role_arn != null ? 0 : 1
   name                 = "${var.platform.app}-${var.platform.env}-${local.service_name}"
   cluster              = var.cluster
   task_definition      = aws_ecs_task_definition.this[count.index].arn
@@ -113,13 +112,13 @@ data "aws_iam_policy_document" "execution" {
     actions = [
       "kms:Decrypt"
     ]
-    resources = [data.aws_kms_alias.master_key_alias.arn]
+    resources = [var.platform.kms_alias_primary.target_key_arn]
     effect    = "Allow"
   }
 }
 
 resource "aws_iam_role" "execution" {
-  count = var.execution_role_arn != null ? 1 : 0
+  count = var.execution_role_arn != null ? 0 : 1
   name  = "${local.service_name}-execution"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -136,7 +135,7 @@ resource "aws_iam_role" "execution" {
 }
 
 resource "aws_iam_role_policy" "execution" {
-  count  = var.execution_role_arn != null ? 1 : 0
+  count  = var.execution_role_arn != null ? 0 : 1
   name   = "${aws_ecs_task_definition.this[0].family}-execution"
   role   = aws_iam_role.execution[0].name
   policy = data.aws_iam_policy_document.execution[0].json
