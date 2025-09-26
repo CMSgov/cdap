@@ -81,7 +81,7 @@ variable "platform" {
     env               = string
     kms_alias_primary = object({ target_key_arn = string })
     primary_region    = object({ name = string })
-    private_subnets   = list(object({ id = string }))
+    private_subnets   = object({ string = object })
     service           = string
   })
 }
