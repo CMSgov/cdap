@@ -3,7 +3,9 @@ variable "platform" {
   type = object({
     app               = string,
     env               = string,
-    kms_alias_primary = string,
+    kms_alias_primary = object({
+      target_key_arn  = string,
+    }),
     service           = string,
     is_ephemeral_env  = string
   })
