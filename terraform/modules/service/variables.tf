@@ -35,7 +35,7 @@ variable "memory" {
 variable "desired_count" {
   description = "Number of instances of the task definition to place and keep running."
   type        = number
-  default     = 0
+  default     = 1
 }
 
 variable "execution_role_arn" {
