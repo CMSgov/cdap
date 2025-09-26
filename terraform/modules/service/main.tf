@@ -34,27 +34,27 @@ resource "aws_ecs_task_definition" "this" {
   ]))
 
   dynamic "volume" {
-    for_each = var.volume != null ? var.volume : {}
+    for_each = var.volumes != null ? var.volumes : []
 
     content {
-      name                = var.volume.name
-      configure_at_launch = var.volume.value.configure_at_launch
+      name                = each.name
+      configure_at_launch = each.value.configure_at_launch
 
       dynamic "efs_volume_configuration" {
-        for_each = var.volume.value.efs_volume_configuration != null ? [var.volume.value.efs_volume_configuration] : []
+        for_each = each.value.efs_volume_configuration != null ? [each.value.efs_volume_configuration] : []
 
         content {
           dynamic "authorization_config" {
-            for_each = var.volume.value.efs_volume_configuration.authorization_config != null ? [var.volume.value.efs_volume_configuration.authorization_config] : []
+            for_each = each.value.efs_volume_configuration.authorization_config != null ? [each.value.efs_volume_configuration.authorization_config] : []
 
             content {
-              access_point_id = var.volume.authorization_config.value.access_point_id
-              iam             = var.volume.authorization_config.value.iam
+              access_point_id = each.authorization_config.value.access_point_id
+              iam             = each.authorization_config.value.iam
             }
           }
 
-          file_system_id     = var.volume.efs_volume_configuration.value.file_system_id
-          root_directory     = var.volume.efs_volume_configuration.value.root_directory
+          file_system_id     = each.efs_volume_configuration.value.file_system_id
+          root_directory     = each.efs_volume_configuration.value.root_directory
           transit_encryption = "ENABLED"
         }
       }

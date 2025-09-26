@@ -113,9 +113,9 @@ variable "task_role_arn" {
   type        = string
 }
 
-variable "volume" {
+variable "volumes" {
   description = "Configuration block for volumes that containers in your task may use"
-  type = map(object({
+  type = list(object({
     configure_at_launch = optional(bool)
     efs_volume_configuration = optional(object({
       authorization_config = optional(object({
