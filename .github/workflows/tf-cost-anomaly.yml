@@ -35,6 +35,9 @@ jobs:
       contents: read
       id-token: write
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
+    defaults:
+      run:
+        working-directory: ./terraform/services/cost-anomaly
     strategy:
       fail-fast: false
       matrix:
