@@ -37,24 +37,24 @@ resource "aws_ecs_task_definition" "this" {
     for_each = var.volumes != null ? var.volumes : []
 
     content {
-      name                = each.name
-      configure_at_launch = each.value.configure_at_launch
+      name                = volume.name
+      configure_at_launch = volume.value.configure_at_launch
 
       dynamic "efs_volume_configuration" {
-        for_each = each.value.efs_volume_configuration != null ? [each.value.efs_volume_configuration] : []
+        for_each = volume.value.efs_volume_configuration != null ? [volume.value.efs_volume_configuration] : []
 
         content {
           dynamic "authorization_config" {
-            for_each = each.value.efs_volume_configuration.authorization_config != null ? [each.value.efs_volume_configuration.authorization_config] : []
+            for_each = efs_volume_configuration.value.authorization_config != null ? [efs_volume_configuration.value.authorization_config] : []
 
             content {
-              access_point_id = each.authorization_config.value.access_point_id
-              iam             = each.authorization_config.value.iam
+              access_point_id = authorization_config.value.access_point_id
+              iam             = authorization_config.value.iam
             }
           }
 
-          file_system_id     = each.efs_volume_configuration.value.file_system_id
-          root_directory     = each.efs_volume_configuration.value.root_directory
+          file_system_id     = efs_volume_configuration.value.file_system_id
+          root_directory     = efs_volume_configuration.value.root_directory
           transit_encryption = "ENABLED"
         }
       }
