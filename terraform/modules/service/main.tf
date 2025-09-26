@@ -72,6 +72,7 @@ resource "aws_ecs_service" "this" {
   platform_version     = "1.4.0"
   force_new_deployment = var.force_new_deployment
   propagate_tags       = "SERVICE"
+
   network_configuration {
     subnets          = var.platform.subnets
     assign_public_ip = false
@@ -86,6 +87,9 @@ resource "aws_ecs_service" "this" {
       container_port   = load_balancer.value.container_port
     }
   }
+
+  deployment_minimum_healthy_percent = 100
+  health_check_grace_period_seconds  = 300
 }
 
 data "aws_kms_alias" "master_key_alias" {
