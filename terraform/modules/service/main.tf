@@ -76,7 +76,7 @@ resource "aws_ecs_service" "this" {
   network_configuration {
     subnets          = var.platform.subnets
     assign_public_ip = false
-    security_groups  = var.platform.security_groups
+    security_groups  = var.security_groups
   }
 
   dynamic "load_balancer" {
