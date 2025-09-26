@@ -74,7 +74,7 @@ resource "aws_ecs_service" "this" {
   propagate_tags       = "SERVICE"
 
   network_configuration {
-    subnets          = var.platform.subnets
+    subnets          = [for s in var.platform.private_subnets: s.id]
     assign_public_ip = false
     security_groups  = var.security_groups
   }

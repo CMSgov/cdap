@@ -77,15 +77,12 @@ variable "mount_points" {
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
-    app               = string,
-    env               = string,
-    kms_alias_primary = string,
-    primary_region = object({
-      name = string
-    }),
-    security_groups = list(string)
-    subnets         = list(string)
-    service         = string
+    app               = string
+    env               = string
+    kms_alias_primary = string
+    primary_region    = object({ name = string })
+    private_subnets   = list(object({ id = string }))
+    service           = string
   })
 }
 
