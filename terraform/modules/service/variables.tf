@@ -1,7 +1,6 @@
-variable "cluster" {
+variable "cluster_arn" {
   description = "The ecs cluster ARN hosting the service and task."
   type        = string
-  default     = null
 }
 
 variable "container_environment" {

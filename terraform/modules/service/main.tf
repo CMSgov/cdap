@@ -66,7 +66,7 @@ resource "aws_ecs_task_definition" "this" {
 resource "aws_ecs_service" "this" {
   count = var.execution_role_arn != null ? 0 : 1
   name                 = "${var.platform.app}-${var.platform.env}-${local.service_name}"
-  cluster              = var.cluster
+  cluster              = var.cluster_arn
   task_definition      = aws_ecs_task_definition.this[count.index].arn
   desired_count        = var.desired_count
   launch_type          = "FARGATE"
