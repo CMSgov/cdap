@@ -79,7 +79,7 @@ variable "platform" {
   type = object({
     app               = string
     env               = string
-    kms_alias_primary = string
+    kms_alias_primary = object({ target_key_arn = string })
     primary_region    = object({ name = string })
     private_subnets   = list(object({ id = string }))
     service           = string
