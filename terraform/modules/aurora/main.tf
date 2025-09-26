@@ -40,6 +40,12 @@ resource "aws_rds_cluster_parameter_group" "this" {
   family      = local.aurora_family
   description = "Aurora cluster parameter group for ${local.service_prefix}"
 
+  parameter {
+    apply_method = "immediate"
+    name         = "rds.force_ssl"
+    value        = "1"
+  }
+
   dynamic "parameter" {
     for_each = toset(var.cluster_parameters)
 
