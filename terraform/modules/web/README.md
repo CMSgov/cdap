@@ -14,7 +14,7 @@ module "platform" {
 }
 
 module web_acl {
-  source  = "github.com/CMSgov/cdap//terraform/modules/firewall?ref=jscott/PLT-1108"
+  source  = "github.com/CMSgov/cdap//terraform/modules/firewall?ref=af11708"
 
   app           = module.platform.app
   content_type  = "APPLICATION_JSON"
@@ -24,7 +24,7 @@ module web_acl {
 }
 
 module origin_bucket {
-  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=jscott/PLT-1108"
+  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=af11708"
   
   app   = module.platform.app
   env   = module.platform.env
@@ -32,7 +32,7 @@ module origin_bucket {
 }
 
 module logging_bucket {
-  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=jscott/PLT-1108"
+  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=af11708"
   
   app   = module.platform.app
   env   = module.platform.env
