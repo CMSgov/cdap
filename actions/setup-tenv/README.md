@@ -22,4 +22,3 @@ steps:
   - name: Run OpenTofu plan
     run: tofu init && tofu plan
 ```
-
