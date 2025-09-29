@@ -35,14 +35,11 @@ jobs:
       contents: read
       id-token: write
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
-    defaults:
-      run:
-        working-directory: ./terraform/services/cost-anomaly
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d, bcda, dpc]
-        env: [dev, test, sandbox, prod]
+        app: [bcda]
+        env: [test, prod]
     steps:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2

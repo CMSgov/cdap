@@ -4,8 +4,8 @@ locals {
   function_name = "cost-anomaly-alert"
 }
 
-resource "aws_ce_anomaly_monitor" "BCDA_Account_Monitor" {
-  name              = "BCDA Account Monitor"
+resource "aws_ce_anomaly_monitor" "account_alerts" {
+  name              = "AccountAlerts"
   monitor_type      = "DIMENSIONAL"
   monitor_dimension = "SERVICE"
 }
@@ -20,7 +20,7 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
   frequency = "IMMEDIATE"
 
   monitor_arn_list = [
-    aws_ce_anomaly_monitor.BCDA_Account_Monitor.arn
+    aws_ce_anomaly_monitor.account_alerts.arn
   ]
 
   subscriber {
