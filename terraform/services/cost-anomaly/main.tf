@@ -8,6 +8,7 @@ module "standards" {
   source      = "github.com/CMSgov/cdap//terraform/modules/standards"
   app         = "cdap"
   env         = var.env
+  providers = { aws = aws, aws.secondary = aws.secondary }
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/cost-anomaly"
   service     = "cost-anomaly"
 }
