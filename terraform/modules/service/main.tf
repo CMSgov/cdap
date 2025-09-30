@@ -34,7 +34,7 @@ resource "aws_ecs_task_definition" "this" {
   ]))
 
   dynamic "volume" {
-    for_each = var.volumes != null ? var.volumes : []
+    for_each = var.volumes != null ? toset(var.volumes) : toset([])
 
     content {
       name                = volume.name
