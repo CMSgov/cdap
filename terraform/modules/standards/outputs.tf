@@ -23,9 +23,15 @@ output "secondary_region" {
 }
 
 output "account_id" {
-  description = "The AWS account ID associated with the current caller identity"
+  description = "Deprecated. Use `aws_caller_identity.account_id`. The AWS account ID associated with the current caller identity"
   sensitive   = true
   value       = data.aws_caller_identity.this.account_id
+}
+
+output "aws_caller_identity" {
+  description = "The current data.aws_caller_identity object."
+  sensitive   = true
+  value       = data.aws_caller_identity.this
 }
 
 output "env" {
