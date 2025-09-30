@@ -124,7 +124,6 @@ No modules.
 | <a name="output_env"></a> [env](#output\_env) | The solution's application environment name. |
 | <a name="output_is_ephemeral_env"></a> [is\_ephemeral\_env](#output\_is\_ephemeral\_env) | Returns true when environment is \_ephemeral\_, false when \_established\_ |
 | <a name="output_primary_region"></a> [primary\_region](#output\_primary\_region) | The primary data.aws\_region object from the current caller identity |
-| <a name="output_region_name"></a> [region\_name](#output\_region\_name) | **Deprecated**. Use `primary_region.name`. The region name associated with the current caller identity |
 | <a name="output_secondary_region"></a> [secondary\_region](#output\_secondary\_region) | The secondary data.aws\_region object associated with the secondary region. |
 | <a name="output_service"></a> [service](#output\_service) | The name of the current service or terraservice. |
 <!-- END_TF_DOCS -->
