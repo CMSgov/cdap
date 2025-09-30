@@ -51,3 +51,9 @@ output "default_permissions_boundary" {
   sensitive   = false
   value       = data.aws_iam_policy.permissions_boundary
 }
+
+output "is_ephemeral_env" {
+  description = "Returns true when environment is _ephemeral_, false when _established_"
+  sensitive   = false
+  value       = local.env != local.parent_env
+}
