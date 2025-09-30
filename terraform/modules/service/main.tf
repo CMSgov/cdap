@@ -133,7 +133,7 @@ resource "aws_iam_role" "execution" {
 
 resource "aws_iam_role_policy" "execution" {
   count  = var.execution_role_arn != null ? 0 : 1
-  name   = "${aws_ecs_task_definition.this[0].family}-execution"
+  name   = "${aws_ecs_task_definition.this.family}-execution"
   role   = aws_iam_role.execution[0].name
   policy = data.aws_iam_policy_document.execution[0].json
 }
