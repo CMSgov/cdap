@@ -92,10 +92,6 @@ resource "aws_ecs_service" "this" {
   health_check_grace_period_seconds  = 300
 }
 
-data "aws_kms_alias" "master_key_alias" {
-  name = "alias/${var.platform.kms_alias_primary}"
-}
-
 data "aws_iam_policy_document" "execution" {
   count = var.execution_role_arn != null ? 1 : 0
   statement {
