@@ -5,7 +5,7 @@ terraform {
 }
 
 provider "aws" {
-  alias  = primary
+  alias  = "primary"
   region = "us-east-1"
   default_tags {
     tags = module.standards.default_tags
