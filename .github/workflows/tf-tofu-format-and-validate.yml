@@ -38,8 +38,11 @@ jobs:
         run: |
           set -e
           echo "Validating all workspaces for app ${{ matrix.app }} env ${{ matrix.env }}"
-          for dir in $(find terraform/services/${{ matrix.app }} -type d -name "${{ matrix.env }}" ); do
-            echo "🔍 Validating $dir"
+
+          # Loop through all service folders
+          for dir in terraform/services/*; do
+            [ -d "$dir" ] || continue
+            echo "🔍 Validating $dir with backend ${{ matrix.app }}-${{ matrix.env }}"
             (cd "$dir" && tofu init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend -reconfigure && tofu validate)
           done
 
