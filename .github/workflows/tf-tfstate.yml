@@ -2,6 +2,11 @@ name: tf-tfstate
 run-name: tf-tfstate ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
+  workflow_run:
+    workflows: ["tofu-format-and-validate"]
+    types:
+      - completed
+
   push:
     paths:
       - .github/workflows/tf-tfstate.yml
@@ -25,16 +30,7 @@ defaults:
     working-directory: ./terraform/services/tfstate
 
 jobs:
-  check-fmt:
-    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
-      - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
-      - run: tofu fmt -check -diff -recursive . 
-
   plan-apply:
-    needs: check-fmt
     permissions:
       contents: read
       id-token: write
