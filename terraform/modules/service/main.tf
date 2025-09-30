@@ -3,7 +3,6 @@ locals {
 }
 
 resource "aws_ecs_task_definition" "this" {
-  count = var.execution_role_arn != null ? 0 : 1
   family                   = local.service_name
   network_mode             = "awsvpc"
   execution_role_arn       = var.execution_role_arn != null ? var.execution_role_arn :  aws_iam_role.execution[count.index].arn
@@ -63,7 +62,6 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 resource "aws_ecs_service" "this" {
-  count = var.execution_role_arn != null ? 0 : 1
   name                 = "${var.platform.app}-${var.platform.env}-${local.service_name}"
   cluster              = var.cluster_arn
   task_definition      = aws_ecs_task_definition.this[count.index].arn
