@@ -37,7 +37,7 @@ resource "aws_ecs_task_definition" "this" {
     for_each = var.volumes != null ? toset(var.volumes) : toset([])
 
     content {
-      name                = volume.name
+      name                = volume.value.name
       configure_at_launch = volume.value.configure_at_launch
 
       dynamic "efs_volume_configuration" {
