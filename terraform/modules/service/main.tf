@@ -1,9 +1,10 @@
 locals {
-  service_name = var.service_name_override != null ? var.service_name_override : var.platform.service
+  service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
+  service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
 }
 
 resource "aws_ecs_task_definition" "this" {
-  family                   = local.service_name
+  family                   = local.service_name_full
   network_mode             = "awsvpc"
   execution_role_arn       = var.execution_role_arn != null ? var.execution_role_arn : aws_iam_role.execution[0].arn
   task_role_arn            = var.task_role_arn
@@ -62,7 +63,7 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 resource "aws_ecs_service" "this" {
-  name                 = "${var.platform.app}-${var.platform.env}-${local.service_name}"
+  name                 = local.service_name_full
   cluster              = var.cluster_arn
   task_definition      = aws_ecs_task_definition.this.arn
   desired_count        = var.desired_count
