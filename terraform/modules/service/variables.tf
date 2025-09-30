@@ -129,7 +129,7 @@ variable "volumes" {
       root_directory = optional(string)
     }))
     host_path = optional(string)
-    name      = optional(string)
+    name      = string
   }))
   default = null
 }
