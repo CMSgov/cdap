@@ -5,7 +5,7 @@ locals {
 resource "aws_ecs_task_definition" "this" {
   family                   = local.service_name
   network_mode             = "awsvpc"
-  execution_role_arn       = var.execution_role_arn != null ? var.execution_role_arn :  aws_iam_role.execution[count.index].arn
+  execution_role_arn       = var.execution_role_arn != null ? var.execution_role_arn : aws_iam_role.execution[0].arn
   task_role_arn            = var.task_role_arn
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.cpu
