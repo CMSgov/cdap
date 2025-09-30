@@ -5,13 +5,16 @@ terraform {
 }
 
 provider "aws" {
+  region = "us-east-1"
   default_tags {
-    tags = {
-      business    = "oeda"
-      code        = "https://github.com/CMSgov/cdap/tree/main/terraform/services/cost-anomaly"
-      component   = "cost-anomaly"
-      environment = var.env
-      terraform   = true
-    }
+    tags = module.standards.default_tags
+  }
+}
+
+provider "aws" {
+  alias  = "secondary"
+  region = "us-west-2"
+  default_tags {
+    tags = module.standards.default_tags
   }
 }

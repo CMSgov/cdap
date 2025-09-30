@@ -4,6 +4,14 @@ locals {
   function_name = "cost-anomaly-alert"
 }
 
+module "standards" {
+  source      = "github.com/CMSgov/cdap//terraform/modules/standards"
+  app         = "cdap"
+  env         = var.env
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/cost-anomaly"
+  service     = "cost-anomaly"
+}
+
 resource "aws_ce_anomaly_monitor" "account_alerts" {
   name              = "AccountAlerts"
   monitor_type      = "DIMENSIONAL"
