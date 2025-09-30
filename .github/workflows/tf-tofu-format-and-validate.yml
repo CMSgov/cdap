@@ -1,6 +1,7 @@
 name: tofu-format-and-validate
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'terraform/**'
@@ -39,7 +40,6 @@ jobs:
           set -e
           echo "Validating all workspaces for app ${{ matrix.app }} env ${{ matrix.env }}"
 
-          # Loop through all service folders
           for dir in terraform/services/*; do
             [ -d "$dir" ] || continue
             echo "🔍 Validating $dir with backend ${{ matrix.app }}-${{ matrix.env }}"
