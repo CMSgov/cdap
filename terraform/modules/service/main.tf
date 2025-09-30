@@ -93,7 +93,7 @@ resource "aws_ecs_service" "this" {
 }
 
 data "aws_iam_policy_document" "execution" {
-  count = var.execution_role_arn != null ? 1 : 0
+  count = var.execution_role_arn != null ? 0 : 1
   statement {
     actions = [
       "ecr:GetAuthorizationToken",
