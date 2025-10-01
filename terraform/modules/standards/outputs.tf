@@ -57,3 +57,9 @@ output "is_ephemeral_env" {
   sensitive   = false
   value       = local.env != local.parent_env
 }
+
+output "parent_env" {
+  description = "The solution's source environment. For established environments this is equal to the environment's name"
+  sensitive   = false
+  value       = local.parent_env
+}

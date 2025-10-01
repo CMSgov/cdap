@@ -56,8 +56,8 @@ locals {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~>6 |
-| <a name="provider_aws.secondary"></a> [aws.secondary](#provider\_aws.secondary) | ~>6 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.14.1 |
+| <a name="provider_aws.secondary"></a> [aws.secondary](#provider\_aws.secondary) | 6.14.1 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -124,6 +124,7 @@ No modules.
 | <a name="output_default_tags"></a> [default\_tags](#output\_default\_tags) | Map of tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags` |
 | <a name="output_env"></a> [env](#output\_env) | The solution's application environment name. |
 | <a name="output_is_ephemeral_env"></a> [is\_ephemeral\_env](#output\_is\_ephemeral\_env) | Returns true when environment is \_ephemeral\_, false when \_established\_ |
+| <a name="output_parent_env"></a> [parent\_env](#output\_parent\_env) | The solution's source environment. For established environments this is equal to the environment's name |
 | <a name="output_primary_region"></a> [primary\_region](#output\_primary\_region) | The primary data.aws\_region object from the current caller identity |
 | <a name="output_secondary_region"></a> [secondary\_region](#output\_secondary\_region) | The secondary data.aws\_region object associated with the secondary region. |
 | <a name="output_service"></a> [service](#output\_service) | The name of the current service or terraservice. |
