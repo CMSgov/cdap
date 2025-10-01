@@ -1,3 +1,9 @@
+locals {
+  cdap_ssm = zipmap(
+    data.aws_ssm_parameters_by_path.cdap.names,
+    data.aws_ssm_parameters_by_path.cdap.values
+  )
+  access_logs_bucket = lookup(local.cdap_ssm, "/cdap/bucket-access-logs-bucket", null)
 }
 
 resource "aws_s3_bucket" "this" {
@@ -94,19 +100,24 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   }
 }
 
-data "aws_iam_account_alias" "current" {}
-
-data "aws_s3_bucket" "bucket_access_logs" {
-  bucket = (data.aws_iam_account_alias.current.account_alias == "aws-cms-oeda-bcda-prod"
-    ? "bucket-access-logs-20250411172631068600000001"
-    : "bucket-access-logs-20250409172631068600000001"
-  )
+data "aws_ssm_parameters_by_path" "cdap" {
+  path = "/cdap"
+  recursive = true
 }
 
+data "aws_s3_bucket" "bucket_access_logs" {
+  count = local.access_logs_bucket == null ? 0 : 1
+
+  bucket = local.access_logs_bucket
+}
+
+
 resource "aws_s3_bucket_logging" "this" {
+  count = local.access_logs_bucket == null ? 0 : 1
+
   bucket = aws_s3_bucket.this.id
 
-  target_bucket = data.aws_s3_bucket.bucket_access_logs.id
+  target_bucket = data.aws_s3_bucket.bucket_access_logs[0].id
   target_prefix = "${aws_s3_bucket.this.id}/"
 }
 
