@@ -10,12 +10,6 @@ output "service" {
   value       = local.service
 }
 
-output "region_name" {
-  description = "**Deprecated**. Use `primary_region.name`. The region name associated with the current caller identity"
-  sensitive   = false
-  value       = data.aws_region.primary.name
-}
-
 output "primary_region" {
   description = "The primary data.aws_region object from the current caller identity"
   sensitive   = false

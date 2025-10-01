@@ -4,10 +4,14 @@ locals {
   root_module = var.root_module
   service     = var.service
 
+  established_envs = ["test", "dev", "sandbox", "prod", "mgmt"]
+  parent_env       = one([for x in local.established_envs : x if can(regex("${x}$$", local.env))])
+
   static_tags = {
     application    = local.app
     business       = "oeda"
     environment    = local.env
+    parent_env     = local.parent_env
     service        = local.service
     terraform      = true
     tf_root_module = local.root_module

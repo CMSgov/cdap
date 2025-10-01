@@ -10,12 +10,6 @@ output "service" {
   value       = local.service
 }
 
-output "region_name" {
-  description = "**Deprecated**. Use `primary_region.name`. The region name associated with the current caller identity"
-  sensitive   = false
-  value       = data.aws_region.this.name
-}
-
 output "primary_region" {
   description = "The primary data.aws_region object from the current caller identity"
   sensitive   = false
@@ -29,9 +23,15 @@ output "secondary_region" {
 }
 
 output "account_id" {
-  description = "The AWS account ID associated with the current caller identity"
+  description = "Deprecated. Use `aws_caller_identity.account_id`. The AWS account ID associated with the current caller identity"
   sensitive   = true
   value       = data.aws_caller_identity.this.account_id
+}
+
+output "aws_caller_identity" {
+  description = "The current data.aws_caller_identity object."
+  sensitive   = true
+  value       = data.aws_caller_identity.this
 }
 
 output "env" {
@@ -50,4 +50,16 @@ output "default_permissions_boundary" {
   description = "Default permissions boundary [aws_iam_policy data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy#attribute-reference)"
   sensitive   = false
   value       = data.aws_iam_policy.permissions_boundary
+}
+
+output "is_ephemeral_env" {
+  description = "Returns true when environment is _ephemeral_, false when _established_"
+  sensitive   = false
+  value       = local.env != local.parent_env
+}
+
+output "parent_env" {
+  description = "The solution's source environment. For established environments this is equal to the environment's name"
+  sensitive   = false
+  value       = local.parent_env
 }
