@@ -39,7 +39,7 @@ variable "desired_count" {
 }
 
 variable "execution_role_arn" {
-  description = "ARN of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.  Defaults to creation of a new role."
+  description = "ARN of the role that grants Fargate agents permission to make AWS API calls to pull images for containers, get SSM params in the task definition, etc. Defaults to creation of a new role."
   type        = string
   default     = null
 }
@@ -113,7 +113,7 @@ variable "service_name_override" {
 }
 
 variable "task_role_arn" {
-  description = "ARN of IAM role that allows your Amazon ECS container task to make calls to other AWS services."
+  description = "ARN of the role that allows the application code in tasks to make calls to AWS services."
   type        = string
 }
 
