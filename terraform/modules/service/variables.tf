@@ -62,6 +62,7 @@ variable "load_balancers" {
     container_name   = string
     container_port   = number
   }))
+  default = []
 }
 
 variable "mount_points" {
