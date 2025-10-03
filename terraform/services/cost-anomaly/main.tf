@@ -64,5 +64,4 @@ module "sns_to_slack_queue" {
   app           = "bcda"
   env           = var.env
   function_name = local.function_name
-
 }
