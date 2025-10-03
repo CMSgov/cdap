@@ -37,7 +37,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket       = local.state_bucket
-    key          = "ops/services/${local.service}/tofu.tfstate"
+    key          =  "config/terraform.tfstate"
     region       = var.region
     encrypt      = true
     kms_key_id   = "alias/cdap-mgmt"

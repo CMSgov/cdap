@@ -13,7 +13,7 @@ module "platform" {
 
   app         = local.app
   env         = local.env
-  root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-config"
+  root_module = "https://github.com/CMSgov/cdap/tree/terraform/services/config"
   service     = local.service
 }
 
