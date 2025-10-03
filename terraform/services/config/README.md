@@ -3,6 +3,29 @@
 This root module is responsible for configuring the sops-enabled strategy for storing sensitive and nonsensitive configuration in AWS SSM Parameter Store.
 The _parent environment_ specific configuration values are located in the `values` directory.
 
+Usage:
+```hcl
+# declare the `db` module, defining the desired input variables
+module "db" {
+ source = "github.com/CMSgov/cdap//terraform/modules/aurora"
+
+ backup_retention_period = module.platform.is_ephemeral_env ? 1 : 7
+ deletion_protection     = !module.platform.is_ephemeral_env
+ password                = module.platform.ssm.core.database_password.value
+ username                = module.platform.ssm.core.database_user.value
+ platform                = module.platform
+
+}
+
+# use the `db` module's output to write parameter to SSM parameter store:
+resource "aws_ssm_parameter" "writer_endpoint" {
+ name  = "/cdap/writer_endpoint"
+ value = "${module.db.aurora_cluster.endpoint}:${module.db.aurora_cluster.port}"
+type   = "String"
+}
+```
+
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
