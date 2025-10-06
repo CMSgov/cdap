@@ -10,7 +10,7 @@ updates:
   - package-ecosystem: npm
     directory: /actions/aws-params-env-action/
     schedule:
-      interval: "daily"
+      interval: daily
     # Security updates only
     open-pull-requests-limit: 0
 
