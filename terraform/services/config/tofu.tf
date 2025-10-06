@@ -1,8 +1,5 @@
-# This root tofu.tf is symlink'd to by all per-env Terraservices. Changes to this tofu.tf apply to
-# _all_ Terraservices, so be careful!
-
 locals {
-  app              = "cdap"
+  app          = "cdap"
   state_bucket = "cdap-mgmt-s3.tfbackend"
 }
 
@@ -37,7 +34,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket       = local.state_bucket
-    key          =  "config/terraform.tfstate"
+    key          = "config/terraform.tfstate"
     region       = var.region
     encrypt      = true
     kms_key_id   = "alias/cdap-mgmt"
