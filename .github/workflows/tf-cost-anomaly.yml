@@ -1,11 +1,13 @@
 name: tf-cost-anomaly
-run-name: tf-cost-anomaly ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')) && 'apply' || 'plan' }}
+run-name: tf-cost-anomaly ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
   push:
     paths:
       - .github/workflows/tf-cost-anomaly.yml
       - terraform/services/cost-anomaly/**
+  schedule:
+    - cron: "12 14 * * 1-5"
   workflow_dispatch:
     inputs:
       apply:
@@ -53,7 +55,7 @@ jobs:
         env:
           TF_VAR_app: ${{ matrix.app }}
           TF_VAR_env: ${{ matrix.env }}
-      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-        run: tofu apply -exclude=module.sns_to_slack_queue.data.aws_iam_policy_document.sns_send_message -exclude=module.sns_to_slack_queue.aws_sns_topic_subscription.this -auto-approve tf.plan
+      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')  || github.event_name == 'schedule'
+        run: tofu apply -auto-approve tf.plan
       - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: tofu apply -auto-approve tf.plan
