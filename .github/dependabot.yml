@@ -17,5 +17,5 @@ updates:
   - package-ecosystem: terraform # Works for both Terraform and OpenTofu
     directory: /
     schedule:
-      interval: "daily"
+      interval: daily
     open-pull-requests-limit: 0
