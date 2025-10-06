@@ -19,7 +19,7 @@ diff_dirs="$(git diff --name-only "$ref" -- '*.tf' | xargs dirname | sort | uniq
 repo_root="$(git rev-parse --show-toplevel)"
 for dir in $diff_dirs; do
   cd "$repo_root"
-  [ ! -d "$dir" ] && continue # Skip if directory does not exist
+  [ ! -d "$dir" ] && continue # Skip if directory no longer exists
   echo "Running validate on \"$dir\""
   cd "$dir"
   tofu init -backend=false
