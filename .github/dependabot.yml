@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
-    directory: /actions/aws-params-env-action/
+    directory: /
     schedule:
       interval: daily
     # Security updates only
@@ -12,4 +12,10 @@ updates:
     schedule:
       interval: daily
     # Security updates only
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: terraform # Works for both Terraform and OpenTofu
+    directory: /
+    schedule:
+      interval: daily
     open-pull-requests-limit: 0
