@@ -117,7 +117,7 @@ data "aws_iam_policy_document" "execution" {
 
 resource "aws_iam_role" "execution" {
   count = var.execution_role_arn != null ? 0 : 1
-  name  = "${local.service_name}-execution"
+  name  = "${local.service_name_full}-execution"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
