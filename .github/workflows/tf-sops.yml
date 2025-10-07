@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - .github/workflows/tf-sops.yml
-      - terraform/services/sops/**
+      - terraform/services/config/**
   schedule:
     - cron: "12 14 * * 1-5"
   workflow_dispatch:
@@ -20,7 +20,7 @@ env:
 
 defaults:
   run:
-    working-directory: ./terraform/services/sops
+    working-directory: ./terraform/services/config
 
 jobs:
   check-fmt:
@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [bcda]
+        app: [cdap]
         env: [test, prod]
     steps:
       - uses: actions/checkout@v4
