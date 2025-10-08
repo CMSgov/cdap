@@ -152,7 +152,6 @@ No modules.
 | <a name="output_primary_region"></a> [primary\_region](#output\_primary\_region) | The primary data.aws\_region object from the current caller identity |
 | <a name="output_private_subnets"></a> [private\_subnets](#output\_private\_subnets) | Map of current VPC **private** [aws\_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `subnet_id` |
 | <a name="output_public_subnets"></a> [public\_subnets](#output\_public\_subnets) | Map of current VPC **public** [aws\_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `id` |
-| <a name="output_region_name"></a> [region\_name](#output\_region\_name) | **Deprecated**. Use `primary_region.name`. The region name associated with the current caller identity |
 | <a name="output_sdlc_env"></a> [sdlc\_env](#output\_sdlc\_env) | The SDLC (production vs non-production) environment. |
 | <a name="output_secondary_region"></a> [secondary\_region](#output\_secondary\_region) | The secondary data.aws\_region object associated with the secondary region. |
 | <a name="output_security_groups"></a> [security\_groups](#output\_security\_groups) | Map of current VPC's common [aws\_security\_group data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group#attribute-reference), keyed by `name` |
