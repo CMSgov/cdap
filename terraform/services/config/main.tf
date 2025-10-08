@@ -19,16 +19,14 @@ module "platform" {
 
 locals {
   default_tags = module.platform.default_tags
-  app          = "cdap"
+  app          = local.app
   service      = "config"
 }
 
 module "sops" {
-  source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
-
+  source   = "github.com/CMSgov/cdap//terraform/modules/sops?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   platform = module.platform
 }
-
 
 output "edit" {
   value = module.sops.sopsw
