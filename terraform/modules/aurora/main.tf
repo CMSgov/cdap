@@ -99,6 +99,7 @@ resource "aws_rds_cluster" "this" {
   db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.this.name
   iam_database_authentication_enabled = true
   copy_tags_to_snapshot               = true
+  enabled_cloudwatch_logs_exports     = ["postgresql"]
   vpc_security_group_ids = flatten([
     aws_security_group.this.id,
     var.platform.security_groups.cmscloud-security-tools.id,
