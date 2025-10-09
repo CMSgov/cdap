@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
-      - run: tofu fmt -check -diff -recursive .   
+      - run: tofu fmt -check -diff -recursive .
 
   plan-apply:
     needs: check-fmt
@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [bcda, dpc]
-        env: [test, dev]
+        env: [test]
         include:
           - env: prod
             app: bcda
@@ -56,7 +56,7 @@ jobs:
       - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
       - run: tofu init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
       - run: tofu plan -out=tf.plan
