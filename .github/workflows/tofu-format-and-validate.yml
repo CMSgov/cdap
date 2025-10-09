@@ -1,0 +1,24 @@
+name: tofu-format-and-validate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'terraform/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  format-and-validate:
+    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
+      - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
+      - run: scripts/tofu-format-and-validate-diff
