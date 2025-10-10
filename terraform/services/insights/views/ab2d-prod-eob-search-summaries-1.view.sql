@@ -1,0 +1,38 @@
+CREATE VIEW ab2d_prod_eob_search_summaries_1 AS
+  SELECT
+    event.event_bene_search.id AS "id[event_bene_search]",
+    time_of_event,
+    job_id,
+    event.event_bene_search.contract_number AS "contract_number[event_bene_search]",
+    benes_expected,
+    benes_searched,
+    num_opted_out,
+    benes_errored,
+    aws_id,
+    environment,
+    event.event_bene_search.organization AS "organization[event_bene_search]",
+    benes_queued,
+    eobs_fetched,
+    eobs_written,
+    eob_files,
+    benes_with_eobs,
+    job_view.id AS "id[job_view]",
+    job_uuid,
+    created_at,
+    completed_at,
+    expires_at,
+    resource_types,
+    status,
+    request_url,
+    output_format,
+    since,
+    fhir_version,
+    year_week,
+    week_start,
+    week_end,
+    job_view.organization AS "organization[job_view]",
+    job_view.contract_number AS "contract_number[job_view]",
+    contract_name
+  FROM event.event_bene_search
+  RIGHT JOIN job_view
+  ON job_id = job_uuid;
