@@ -40,7 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [ab2d, bcda, dpc]
-        env: [dev, test, prod] # TODO Add sandbox env back in after pentest ends on 2025-10-10
+        env: [dev, test,sandbox, prod]
         include:
           - app: cdap
             env: mgmt
