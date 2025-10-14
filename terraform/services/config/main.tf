@@ -19,7 +19,6 @@ module "platform" {
 
 locals {
   default_tags = module.platform.default_tags
-  app          = local.app
   service      = "config"
 }
 
