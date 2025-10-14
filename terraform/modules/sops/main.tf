@@ -3,7 +3,7 @@ locals {
   is_ephemeral_env = var.platform.is_ephemeral_env
   env              = var.platform.env
   parent_env       = var.platform.parent_env
-  env_key_arn      = var.platform.kms_alias_primary.id
+  env_key_arn      = var.platform.kms_alias_primary.target_key_arn
 
   # Local Variables with Input Variable Overrides
   sopsw_values_dir            = coalesce(var.sopsw_values_dir, "${path.root}/values")
