@@ -1,5 +1,5 @@
 locals {
-  app          = "cdap"
+  app = "cdap"
 }
 
 variable "region" {
