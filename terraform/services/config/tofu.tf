@@ -1,6 +1,5 @@
 locals {
   app          = "cdap"
-  state_bucket = "cdap-mgmt-s3.tfbackend"
 }
 
 variable "region" {
@@ -33,11 +32,6 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket       = local.state_bucket
-    key          = "config/terraform.tfstate"
-    region       = var.region
-    encrypt      = true
-    kms_key_id   = "alias/cdap-mgmt"
-    use_lockfile = true
+    key = "config/terraform.tfstate"
   }
 }
