@@ -1,6 +1,5 @@
 #!/bin/bash
-# Run tofu fmt and validate on files from git diff. Used in the
-# tofu-format-and-validate workflow.
+# Run checks on tofu files from git diff. Used in the tofu-checks workflow.
 set -e
 
 # When run on main, diff against the prior commit. When run on any
@@ -14,14 +13,14 @@ diff_tf="$(git diff --name-only --diff-filter=ACMR "$ref" -- '*.tf')"
 echo "$diff_tf"
 tofu fmt -check -diff $diff_tf
 
-# Run validate in all affected terraform/tofu directories.
+# Run checks in all affected terraform/tofu directories.
 diff_dirs="$(git diff --name-only "$ref" -- '*.tf' | xargs dirname | sort | uniq)"
 repo_root="$(git rev-parse --show-toplevel)"
 for dir in $diff_dirs; do
   cd "$repo_root"
   [ ! -d "$dir" ] && continue # Skip if directory no longer exists
-  echo "Running validate on \"$dir\""
   cd "$dir"
+  echo "Running validate on \"$dir\""
   tofu init -backend=false
   tofu validate
 done
