@@ -1,10 +1,10 @@
-name: tf-sops
-run-name: tf-sops ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
+name: tf-config
+run-name: tf-config ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
   push:
     paths:
-      - .github/workflows/tf-sops.yml
+      - .github/workflows/tf-config.yml
       - terraform/services/config/**
   schedule:
     - cron: "12 14 * * 1-5"
