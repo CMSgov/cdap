@@ -1,0 +1,53 @@
+name: Install sops
+description: Sets up https://api.github.com/repos/getsops/sops
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        #!/bin/bash
+        
+        set -eo pipefail
+        
+        # Configuration
+        SOPS_VERSION="v3.11.0" # Specify the desired SOPS version
+        SOPS_LATEST="latest"   # Specify the desired SOPS version
+        ARCH="Linux_x86_64"    # Set the architecture
+        OS="linux"             # Set the operating system
+        
+        # URL for the SOPS release files
+        BASE_URL="https://github.com/getsops/sops/releases/download"
+        BINARY_NAME="sops-${SOPS_VERSION}.${OS}.${ARCH}"
+        CHECKSUMS_FILE="sops-${SOPS_VERSION}.checksums.txt"
+        
+        # --- Main installation logic ---
+        
+        # 1. Download the binary and checksums file
+        echo "Downloading SOPS version ${SOPS_VERSION}..."
+        curl -LO "${BASE_URL}/${SOPS_VERSION}/${BINARY_NAME}"
+        curl -LO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_FILE}"
+        
+        # 2. Verify the checksum
+        echo "Verifying checksum..."
+        if sha256sum -c "${CHECKSUMS_FILE}" --ignore-missing; then
+        echo "Checksum verification successful."
+        else
+        echo "Checksum verification failed! Aborting installation."
+        exit 1
+        fi
+        
+        # 3. Move the binary to /usr/local/bin
+        echo "Installing SOPS to /usr/local/bin..."
+        sudo mv "${BINARY_NAME}" /usr/local/bin/sops
+        
+        # 4. Make the binary executable
+        echo "Setting executable permissions..."
+        sudo chmod +x /usr/local/bin/sops
+        
+        # 5. Clean up downloaded files
+        echo "Cleaning up temporary files..."
+        rm "${CHECKSUMS_FILE}"
+        
+        # 6. Verify the installation
+        echo "SOPS installation complete. Checking version:"
+        sops --version
