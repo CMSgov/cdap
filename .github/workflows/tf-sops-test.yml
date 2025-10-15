@@ -49,7 +49,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
-      - uses: cmsgov/cdap/actions/setup-sops
+      - uses: cmsgov/cdap/actions/setup-sops@734b65dd8bc5566133e491b99c1ce10bd56a62c4
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
