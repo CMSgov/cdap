@@ -11,9 +11,10 @@ runs:
         
         # Configuration
         SOPS_VERSION="v3.11.0" # Specify the desired SOPS version
-        SOPS_LATEST="latest"   # Specify the desired SOPS version
-        ARCH="Linux_x86_64"    # Set the architecture
+        ARCH="x64"    # Set the architecture
         OS="linux"             # Set the operating system
+        TMPDIR=$(mktemp -d)
+        cd $TMPDIR
         
         # URL for the SOPS release files
         BASE_URL="https://github.com/getsops/sops/releases/download"
@@ -26,23 +27,25 @@ runs:
         echo "Downloading SOPS version ${SOPS_VERSION}..."
         curl -LO "${BASE_URL}/${SOPS_VERSION}/${BINARY_NAME}"
         curl -LO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_FILE}"
-        
+
         # 2. Verify the checksum
         echo "Verifying checksum..."
-        if sha256sum -c "${CHECKSUMS_FILE}" --ignore-missing; then
-        echo "Checksum verification successful."
-        else
-        echo "Checksum verification failed! Aborting installation."
-        exit 1
-        fi
+          cosign verify-blob sops-v3.11.0.checksums.txt \
+          --certificate sops-v3.11.0.checksums.pem \
+          --signature sops-v3.11.0.checksums.sig \
+          --certificate-identity-regexp=https://github.com/getsops \
+          --certificate-oidc-issuer=https://token.actions.githubusercontent.com
         
-        # 3. Move the binary to /usr/local/bin
-        echo "Installing SOPS to /usr/local/bin..."
-        sudo mv "${BINARY_NAME}" /usr/local/bin/sops
+        # 3. Move the binary to $HOME/.sops
+        echo "Installing SOPS to $HOME/.sops..."
+         mv $TMPDIR $HOME/.sops
+          echo "PATH=$HOME/.sops:$PATH" >> "$GITHUB_ENV"
+          echo "SOPS_INSTALL=true" >> "$GITHUB_ENV"
+          echo "sops installed"
         
         # 4. Make the binary executable
         echo "Setting executable permissions..."
-        sudo chmod +x /usr/local/bin/sops
+        sudo chmod +x $HOME/.sops
         
         # 5. Clean up downloaded files
         echo "Cleaning up temporary files..."
