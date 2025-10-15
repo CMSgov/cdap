@@ -20,7 +20,7 @@ env:
 
 defaults:
   run:
-    working-directory: ./terraform/services/security-groups        
+    working-directory: ./terraform/services/security-groups
 
 jobs:
   plan-apply:
