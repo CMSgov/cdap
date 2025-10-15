@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
-      - run: tofu fmt -check -diff -recursive .   
+      - run: tofu fmt -check -diff -recursive .
 
   plan-apply:
     needs: check-fmt
@@ -46,8 +46,10 @@ jobs:
       fail-fast: false
       matrix:
         app: [bcda, dpc]
-        env: [test, dev]
+        env: [test]
         include:
+          - env: dev
+            app: dpc
           - env: prod
             app: bcda
     steps:
