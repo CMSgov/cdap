@@ -41,7 +41,7 @@ jobs:
       fail-fast: false
       matrix:
         app: [cdap]
-        env: [test, prod]
+        env: [mgmt]
         include:
           - app: cdap
             env: mgmt
