@@ -1,7 +1,7 @@
 locals {
   app              = var.app
   env              = var.env
-  established_envs = ["test", "dev", "sandbox", "prod"]
+  established_envs = ["test", "dev", "sandbox", "prod", "mgmt"]
   root_module      = var.root_module
   parent_env       = one([for x in local.established_envs : x if can(regex("${x}$$", local.env))])
   sdlc_env         = contains(["sandbox", "prod"], local.parent_env) ? "production" : "non-production"
@@ -22,6 +22,7 @@ locals {
     "test"    = "bucket-access-logs-20250409172631068600000001"
     "sandbox" = "bucket-access-logs-20250411172631068600000001"
     "prod"    = "bucket-access-logs-20250411172631068600000001"
+    "mgmt"    = "bucket-access-logs-20250411172631068600000001"
   }
 
   aws_iam_role_names = [
