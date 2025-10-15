@@ -1,0 +1,72 @@
+#!/bin/bash
+# Run tofu plan across all services. Used in the tofu-plan workflow.
+set -e
+
+temp_plan=$(mktemp)
+
+# Set temp file for summary if not running in github actions
+if [ -z "$GITHUB_STEP_SUMMARY" ]; then
+  temp_summary=$(mktemp)
+  echo "Setting GITHUB_STEP_SUMMARY to $temp_summary"
+  GITHUB_STEP_SUMMARY="$temp_summary"
+fi
+
+plan_error=false
+
+# Run plan in each service directory.
+repo_root="$(git rev-parse --show-toplevel)"
+services_dir="$repo_root/terraform/services"
+for dir in $(ls "$services_dir"); do
+  cd "$services_dir"
+  [ ! -d "$dir" ] && echo "No directory found at $dir. Skipping" && continue
+  cd "$dir"
+  [ ! -f "conf.sh" ] && echo "No conf.sh file in $dir. Skipping" && continue
+  set -a
+  source conf.sh
+  set +a
+  case "$INFRA_ENVS" in
+    all)
+      ;;
+    account)
+      if [[ "$app" == "bcda" && ("$env" == "test" || "$env" == "prod") ]]; then
+        echo "Planning the $dir service against the $app-$env env for this account"
+      else
+        echo "Skipping $dir service for the $app-$env environment"
+        continue
+      fi
+      ;;
+    *)
+      in_set=false
+      for infra_env in $INFRA_ENVS; do
+        if [ "$infra_env" == "$app-$env" ]; then
+          in_set=true
+        fi
+      done
+      if [ "$in_set" != true ]; then
+        echo "Skipping $dir service for the $app-$env environment"
+        continue
+      fi
+      ;;
+  esac
+  echo "Running plan on $dir"
+  tofu init -reconfigure -backend-config="../../backends/${app}-${env}.s3.tfbackend"
+  export TF_VAR_app="$app"
+  export TF_VAR_env="$env"
+  tofu plan | tee "$temp_plan"
+  if grep "Your infrastructure matches the configuration." "$temp_plan"; then
+    echo ":white_check_mark: No changes in $dir service on $app-$env env." >> $GITHUB_STEP_SUMMARY
+  elif grep "OpenTofu encountered an error while generating this plan." "$temp_plan"; then
+    plan_error=true
+    echo ":exclamation: Error in plan for $dir service on $app-$env env." >> $GITHUB_STEP_SUMMARY
+  else
+    echo ":pencil: Changes in $dir service on $app-$env env. See plan." >> $GITHUB_STEP_SUMMARY
+  fi
+done
+
+if [ -n "$temp_summary" ]; then
+  echo "See summary at $temp_summary"
+fi
+
+if [ "$plan_error" == "true" ]; then
+  exit 1
+fi
