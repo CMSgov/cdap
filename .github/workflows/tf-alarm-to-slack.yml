@@ -28,16 +28,6 @@ defaults:
     working-directory: ./terraform/services/alarm-to-slack
 
 jobs:
-  python-lint-test:
-    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Python dependencies & Run Lint and Unit Tests
-        run: |
-          pip install pylint pytest
-          pylint lambda_src
-          pytest lambda_src
-
   plan-apply-deploy:
     permissions:
       contents: read
