@@ -2,11 +2,6 @@ name: tf-api-waf
 run-name: tf-api-waf ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
-  workflow_run:
-    workflows: ["tofu-format-and-validate"]
-    types:
-      - completed
-      
   push:
     paths:
       - .github/workflows/tf-api-waf.yml

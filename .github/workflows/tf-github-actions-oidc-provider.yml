@@ -2,11 +2,6 @@ name: tf-github-actions-oidc-provider
 run-name: tf-github-actions-oidc-provider ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
-  workflow_run:
-    workflows: ["tofu-format-and-validate"]
-    types:
-      - completed
-      
   push:
     paths:
       - .github/workflows/tf-github-actions-oidc-provider.yml
