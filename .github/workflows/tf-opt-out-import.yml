@@ -37,8 +37,10 @@ jobs:
       fail-fast: false
       matrix:
         app: [bcda, dpc]
-        env: [test, dev]
+        env: [test]
         include:
+          - env: dev
+            app: dpc
           - env: prod
             app: bcda
     steps:

@@ -36,11 +36,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [bcda, dpc]
-        env: [test, dev]
-        include:
-          - env: prod
-            app: bcda
+        app: [dpc]
+        env: [dev, test]
     steps:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
