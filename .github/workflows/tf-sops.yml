@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [bcda, cdap]
+        app: [cdap]
         env: [test, prod]
         include:
           - app: cdap

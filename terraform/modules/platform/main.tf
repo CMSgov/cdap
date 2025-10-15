@@ -22,6 +22,7 @@ locals {
     "test"    = "bucket-access-logs-20250409172631068600000001"
     "sandbox" = "bucket-access-logs-20250411172631068600000001"
     "prod"    = "bucket-access-logs-20250411172631068600000001"
+    "mgmt"    = "bucket-access-logs-20250411172631068600000001"
   }
 
   aws_iam_role_names = [
