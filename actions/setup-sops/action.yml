@@ -37,12 +37,7 @@ runs:
          
           if [ "$SOPS_SIG_CHECK" -eq "0" ]; then
             echo "signatures verified"
-            #Move the binary to /usr/local/bin/sops
-            echo "Installing SOPS"
-            mv sops-v3.11.0.linux.amd64 /usr/local/bin/sops
-            #Make the binary executable
-            echo "Setting executable permissions..."
-            chmod +x /usr/local/bin/sops
+            
           else
             echo "signature verification failed"
             exit 1
@@ -50,3 +45,16 @@ runs:
         else
           echo "install cosign for signature verification"
         fi
+        
+        if shasum -a 256 -c "${CHECKSUMS_FILE}" --ignore-missing; then
+          echo "checksums checked, installing sops"
+          echo "Installing SOPS"
+          mv ${BINARY_NAME} /usr/local/bin/sops
+          #Make the binary executable
+          echo "Setting executable permissions..."
+          chmod +x /usr/local/bin/sops
+        else
+          echo "checksum check failed"
+          exit 1
+        fi
+
