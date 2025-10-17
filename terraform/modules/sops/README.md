@@ -1,6 +1,6 @@
 # SOPS Child Module
 
-This module faciliates adoption of a terraform/tofu infrastructure-as-code strategy for managing both secure and nonsecure configuration values in AWS SSM Parameter Store with the following:
+This module facilitates adoption of a terraform/tofu infrastructure-as-code strategy for managing both secure and nonsecure configuration values in AWS SSM Parameter Store with the following:
 * distributes a wrapper script `sopsw` for getsops.io that helps us avoid:
   * frequent, largely meaningless git merge conflicts for this specific getsops.io use-case
   * needlessly oversharing semi-sensitive AWS Account IDs
