@@ -28,7 +28,7 @@ jobs:
 #    - name: Install Cosign to verify sops install
 #      uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159
     - name: Install sops
-      uses: cmsgov/cdap/actions/setup-sops@d5076d6980e1fcf972277ed6a3cb3cc608206b3f
+      uses: cmsgov/cdap/actions/setup-sops@1d7f61cce321b6433a43af10a214cce15e9c7a9c
     - name: Call SOPS
       run: |
        sops --version --check-for-updates
