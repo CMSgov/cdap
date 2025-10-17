@@ -11,7 +11,7 @@ steps:
   - name: Install Cosign to verify sops installs
     uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
   - name: Install sops
-    uses: cmsgov/cdap/actions/setup-sops
+    uses: cmsgov/cdap/actions/setup-sops@<hash>
   - name: Call SOPS
     run: |
      sops --version --check-for-updates
