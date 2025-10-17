@@ -19,14 +19,13 @@ runs:
         CHECKSUMS_PEM="sops-${SOPS_VERSION}.checksums.pem"
         CHECKSUMS_SIG="sops-${SOPS_VERSION}.checksums.sig"
         
+        echo "Downloading SOPS version ${SOPS_VERSION}..."
+        curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${BINARY_NAME}"
+        curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_FILE}"
+        
         if cosign version > /dev/null; then
-          #Download the binary and checksums file
-          echo "Downloading SOPS version ${SOPS_VERSION}..."
-          curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${BINARY_NAME}"
-          curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_FILE}"
-          curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_PEM}"
-          curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_SIG}"
-          
+         curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_PEM}"
+         curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_SIG}"
           echo "Verifying checksum..."
           cosign verify-blob ${CHECKSUMS_FILE} \
             --certificate ${CHECKSUMS_PEM} \
