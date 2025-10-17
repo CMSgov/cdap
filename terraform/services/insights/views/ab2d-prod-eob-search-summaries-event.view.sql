@@ -4,8 +4,8 @@ CREATE VIEW ab2d_prod_eob_search_summaries_event AS
     jv.week_end,
     jv.contract_number,
     jv.job_uuid,
-    jv.created_at,
-    jv.completed_at,
+    TO_CHAR(jv.created_at, 'yyyy-MM-ddThh:mm:ss') created_at,
+    TO_CHAR(jv.completed_at, 'yyyy-MM-ddThh:mm:ss') completed_at,
     jv.since,
     bs.benes_searched,
     TO_CHAR(jv.completed_at - jv.created_at,'HH24:MI:SS') time_to_complete

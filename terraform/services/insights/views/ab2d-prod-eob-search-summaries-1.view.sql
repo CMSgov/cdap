@@ -1,7 +1,7 @@
 CREATE VIEW ab2d_prod_eob_search_summaries_1 AS
   SELECT
     event.event_bene_search.id AS "id[event_bene_search]",
-    time_of_event,
+    TO_CHAR(time_of_event, 'yyyy-MM-ddThh:mm:ss') time_of_event,
     job_id,
     event.event_bene_search.contract_number AS "contract_number[event_bene_search]",
     benes_expected,
@@ -18,9 +18,9 @@ CREATE VIEW ab2d_prod_eob_search_summaries_1 AS
     benes_with_eobs,
     job_view.id AS "id[job_view]",
     job_uuid,
-    created_at,
-    completed_at,
-    expires_at,
+    TO_CHAR(created_at, 'yyyy-MM-ddThh:mm:ss') created_at,
+    TO_CHAR(completed_at, 'yyyy-MM-ddThh:mm:ss') completed_at,
+    TO_CHAR(expires_at, 'yyyy-MM-ddThh:mm:ss') expires_at,
     resource_types,
     status,
     request_url,

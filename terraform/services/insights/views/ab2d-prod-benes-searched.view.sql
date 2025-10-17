@@ -1,6 +1,16 @@
 CREATE VIEW ab2d_prod_benes_searched AS
     SELECT 
-    *, 
+    contract_number,
+    job_uuid,
+    benes_searched,
+    TO_CHAR(created_at, 'yyyy-MM-ddThh:mm:ss') created_at, 
+    TO_CHAR(completed_at, 'yyyy-MM-ddThh:mm:ss') completed_at,
+    eobs_written,
+    time_to_complete,
+    data_start_time,
+    since,
+    fhir_version,
+    status,
     contract_number AS "Contract Number", 
     job_uuid AS "Job ID", 
     benes_searched AS "# Bene Searched",
@@ -9,11 +19,11 @@ CREATE VIEW ab2d_prod_benes_searched AS
     data_start_time AS "Data Start Date (Since Date)",
     fhir_version AS "FHIR Version",
     to_char(time_to_complete, 'HH24:MI:SS') AS "Seconds Run",
-    created_at AS "Job Start Time",
-    completed_at AS "Job Complete Time",
+    TO_CHAR(created_at, 'yyyy-MM-ddThh:mm:ss') "Job Start Time",
+    TO_CHAR(completed_at, 'yyyy-MM-ddThh:mm:ss') "Job Complete Time",
     to_char(time_to_complete, 'HH24:MI:SS') AS sec_run,
-    created_at AS job_start_time,
-    completed_at AS job_complete_time
+    TO_CHAR(created_at, 'yyyy-MM-ddThh:mm:ss') job_start_time,
+    TO_CHAR(completed_at, 'yyyy-MM-ddThh:mm:ss') job_complete_time
   FROM (
     SELECT 
       s.contract_number, 
