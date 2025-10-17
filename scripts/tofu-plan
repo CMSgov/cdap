@@ -34,7 +34,7 @@ for dir in $dirs; do
   set -a
   source conf.sh
   set +a
-  case "$INFRA_ENVS" in
+  case "$TARGET_ENVS" in
     all)
       ;;
     account)
@@ -47,7 +47,7 @@ for dir in $dirs; do
       ;;
     *)
       in_set=false
-      for infra_env in $INFRA_ENVS; do
+      for infra_env in $TARGET_ENVS; do
         if [ "$infra_env" == "$APP-$ENV" ]; then
           in_set=true
         fi

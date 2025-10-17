@@ -1,1 +1,1 @@
-INFRA_ENVS=all
+TARGET_ENVS=all

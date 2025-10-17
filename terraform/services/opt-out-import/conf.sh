@@ -1,1 +1,1 @@
-INFRA_ENVS="bcda-test bcda-prod dpc-dev dpc-test"
+TARGET_ENVS="bcda-test bcda-prod dpc-dev dpc-test"

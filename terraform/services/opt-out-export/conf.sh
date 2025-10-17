@@ -1,1 +1,1 @@
-INFRA_ENVS="dpc-dev dpc-test"
+TARGET_ENVS="dpc-dev dpc-test"

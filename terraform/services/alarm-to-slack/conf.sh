@@ -1,1 +1,1 @@
-INFRA_ENVS=account
+TARGET_ENVS=account
