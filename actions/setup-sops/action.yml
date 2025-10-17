@@ -5,13 +5,9 @@ runs:
   steps:
     - shell: bash
       run: |
-        #!/bin/bash
-        
-        set -eo pipefail
-        
         # Configuration
         SOPS_VERSION="v3.11.0" # Specify the desired SOPS version
-        ARCH="x64"    # Set the architecture
+        ARCH="amd64"           # Set the architecture
         OS="linux"             # Set the operating system
         TMPDIR=$(mktemp -d)
         cd $TMPDIR
@@ -20,37 +16,40 @@ runs:
         BASE_URL="https://github.com/getsops/sops/releases/download"
         BINARY_NAME="sops-${SOPS_VERSION}.${OS}.${ARCH}"
         CHECKSUMS_FILE="sops-${SOPS_VERSION}.checksums.txt"
+        CHECKSUMS_PEM="sops-${SOPS_VERSION}.checksums.pem"
+        CHECKSUMS_SIG="sops-${SOPS_VERSION}.checksums.sig"
         
-        # --- Main installation logic ---
+        if cosign version > /dev/null; then
+          #Download the binary and checksums file
+          echo "Downloading SOPS version ${SOPS_VERSION}..."
+          curl -LO "${BASE_URL}/${SOPS_VERSION}/${BINARY_NAME}"
+          curl -LO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_FILE}"
+          curl -LO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_PEM}"
+          curl -LO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_SIG}"
+          
+          echo "Verifying checksum..."
+          cosign verify-blob ${CHECKSUMS_FILE} \
+            --certificate ${CHECKSUMS_PEM} \
+            --signature ${CHECKSUMS_SIG} \
+            --certificate-identity-regexp=https://github.com/getsops \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com
+          SOPS_SIG_CHECK=$?
+         
+          if [ "$SOPS_SIG_CHECK" -eq "0" ]; then
+            echo "signatures verified"
+            #Move the binary to /usr/local/bin/sops
+            echo "Installing SOPS"
+            mv sops-v3.11.0.linux.amd64 /usr/local/bin/sops
+            #Make the binary executable
+            echo "Setting executable permissions..."
+            chmod +x /usr/local/bin/sops
+          else
+            echo "signature verification failed"
+            exit 1
+          fi
+        else
+          echo "install cosign for signature verification"
+        fi
         
-        # 1. Download the binary and checksums file
-        echo "Downloading SOPS version ${SOPS_VERSION}..."
-        curl -LO "${BASE_URL}/${SOPS_VERSION}/${BINARY_NAME}"
-        curl -LO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_FILE}"
 
-        # 2. Verify the checksum
-        echo "Verifying checksum..."
-          cosign verify-blob sops-v3.11.0.checksums.txt \
-          --certificate sops-v3.11.0.checksums.pem \
-          --signature sops-v3.11.0.checksums.sig \
-          --certificate-identity-regexp=https://github.com/getsops \
-          --certificate-oidc-issuer=https://token.actions.githubusercontent.com
         
-        # 3. Move the binary to $HOME/.sops
-        echo "Installing SOPS to $HOME/.sops..."
-         mv $TMPDIR $HOME/.sops
-          echo "PATH=$HOME/.sops:$PATH" >> "$GITHUB_ENV"
-          echo "SOPS_INSTALL=true" >> "$GITHUB_ENV"
-          echo "sops installed"
-        
-        # 4. Make the binary executable
-        echo "Setting executable permissions..."
-        sudo chmod +x $HOME/.sops
-        
-        # 5. Clean up downloaded files
-        echo "Cleaning up temporary files..."
-        rm "${CHECKSUMS_FILE}"
-        
-        # 6. Verify the installation
-        echo "SOPS installation complete. Checking version:"
-        sops --version

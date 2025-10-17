@@ -1,63 +1,35 @@
 name: tf-sops-test
-run-name: tf-sops-test ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
+run-name: tf-sops-test
 
 on:
   push:
     paths:
       - .github/workflows/tf-sops-test.yml
-      - terraform/services/kms-keys/**
-  schedule:
-    - cron: "12 14 * * 1-5"
-  workflow_dispatch:
-    inputs:
-      apply:
-        required: false
-        type: boolean
-        description: "Apply the terraform?"
 
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-defaults:
-  run:
-    working-directory: ./terraform/services/kms-keys
+permissions:
+  contents: write
 
 jobs:
-  check-fmt:
-    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
-      - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
-      - run: tofu fmt -check -diff -recursive .
 
-  plan-apply:
-    needs: check-fmt
-    permissions:
-      contents: read
-      id-token: write
+  check-sops:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     strategy:
       fail-fast: false
       matrix:
-        app: [ab2d, bcda, dpc]
-        env: [dev, test, sandbox, prod]
+        app: [ab2d]
+        env: [test, prod]
         include:
           - app: cdap
             env: mgmt
     steps:
-      - uses: actions/checkout@v4
-      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
-      - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
-      - uses: cmsgov/cdap/actions/setup-sops@734b65dd8bc5566133e491b99c1ce10bd56a62c4
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
-          aws-region: ${{ vars.AWS_REGION }}
-      - run: tofu init -backend-config=../../backends/${{ matrix.app }}-${{ matrix.env }}.s3.tfbackend
-      - run: tofu plan -out=tf.plan
-        env:
-          TF_VAR_app: ${{ matrix.app }}
-          TF_VAR_env: ${{ matrix.env }}
-      - if: inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule'
-        run: tofu apply -auto-approve tf.plan
+    - name: Install Cosign to verify sops install
+      uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159
+    - name: Install sops
+      uses: cmsgov/cdap/actions/setup-sops@c93f663c256f72619c51ff563c5b9621fd98dc76
+    - name: Call SOPS
+      run: |
+       sops --version --check-for-updates
+
