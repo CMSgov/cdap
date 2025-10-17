@@ -50,6 +50,3 @@ runs:
         else
           echo "install cosign for signature verification"
         fi
-        
-
-        

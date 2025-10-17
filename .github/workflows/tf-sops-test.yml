@@ -32,4 +32,3 @@ jobs:
     - name: Call SOPS
       run: |
        sops --version --check-for-updates
-
