@@ -57,4 +57,3 @@ runs:
           echo "checksum check failed"
           exit 1
         fi
-
