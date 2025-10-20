@@ -49,7 +49,7 @@ runs:
           echo "checksums checked, installing sops"
           echo "Installing SOPS"
           mv ${BINARY_NAME} /usr/local/bin/sops
-          #Make the binary executable
+          # Make the binary executable
           echo "Setting executable permissions..."
           chmod +x /usr/local/bin/sops
         else
