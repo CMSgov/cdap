@@ -24,8 +24,8 @@ runs:
         curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_FILE}"
         
         if cosign version > /dev/null; then
-         curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_PEM}"
-         curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_SIG}"
+          curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_PEM}"
+          curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_SIG}"
           echo "Verifying checksum..."
           cosign verify-blob ${CHECKSUMS_FILE} \
             --certificate ${CHECKSUMS_PEM} \
