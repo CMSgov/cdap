@@ -12,7 +12,7 @@ module "platform" {
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app
-  env         = local.env
+  env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/terraform/services/config"
   service     = local.service
 }
