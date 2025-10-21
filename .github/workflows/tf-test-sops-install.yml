@@ -1,0 +1,31 @@
+name: tf-sops-test-install
+run-name: tf-sops-test-install
+
+on:
+  push:
+    paths:
+      - .github/workflows/tf-sops-test-install.yml
+
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+permissions:
+  contents: write
+
+jobs:
+
+  check-sops:
+    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [cdap]
+        env: [mgmt]
+    steps:
+      - name: Install Cosign to verify sops install
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159
+      - name: Install sops
+        uses: cmsgov/cdap/actions/setup-sops@1d7f61cce321b6433a43af10a214cce15e9c7a9c
+      - name: Call SOPS
+        run: |
+          sops --version --check-for-updates && yq --version  --check-for-updates
