@@ -13,7 +13,6 @@ permissions:
   contents: write
 
 jobs:
-
   check-sops:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     strategy:
