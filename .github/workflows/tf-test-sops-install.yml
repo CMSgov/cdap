@@ -6,6 +6,10 @@ on:
     paths:
       - .github/workflows/tf-sops-test-install.yml
 
+defaults:
+  run:
+    working-directory: ./terraform/services/kms-keys
+
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
