@@ -1,10 +1,10 @@
-name: tf-sops
-run-name: tf-sops ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
+name: tf-config
+run-name: tf-config ${{ (inputs.apply || (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'schedule') && 'apply' || 'plan' }}
 
 on:
   push:
     paths:
-      - .github/workflows/tf-sops.yml
+      - .github/workflows/tf-config.yml
       - terraform/services/config/**
   schedule:
     - cron: "12 14 * * 1-5"
@@ -30,7 +30,6 @@ jobs:
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
       - run: tofu fmt -check -diff -recursive .
-
   plan-apply:
     needs: check-fmt
     permissions:
@@ -41,11 +40,12 @@ jobs:
       fail-fast: false
       matrix:
         app: [cdap]
-        env: [test, prod]
+        env: [mgmt]
     steps:
       - uses: actions/checkout@v4
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
       - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
+      - uses: cmsgov/cdap/actions/setup-sops@84a6bcee5b70d63c44f8fec4f9b542cb5ec29a54
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
