@@ -27,4 +27,4 @@ jobs:
         uses: cmsgov/cdap/actions/setup-sops@84a6bcee5b70d63c44f8fec4f9b542cb5ec29a54
       - name: Call SOPS
         run: |
-          sops --version --check-for-updates && yq --version  --check-for-updates
+          sops --version --check-for-updates && yq --version
