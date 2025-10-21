@@ -1,5 +1,5 @@
-/cdap/account/security_events_slack_renotify_after_days: 30
-/cdap/account/security_events_slack_severity_list: CRITICAL,HIGH,MEDIUM
+/cdap/nonsensitive/account/security_events_slack_renotify_after_days: 30
+/cdap/nonsensitive/account/security_events_slack_severity_list: CRITICAL,HIGH,MEDIUM
 /cdap/sensitive/account/security_events_slack_webhook_url: ENC[AES256_GCM,data:z9MLEAlb76u6MZ+GWcWcfnRtax1J677k47tabDmwCqAGN7H2BrmTnkIs1fAhl9dShaL5qZrq78s0sY9b2hCAGIWWaUenVbGGpWBuZvh7rw==,iv:kbgCH76ryIbnU40SWd/Wgg+hULSgGsTO4LLWIPoDE68=,tag:NmwrTB/oVI0WEhL9R5eV2g==,type:str]
 /cdap/sensitive/bucket-access-logs-bucket: ENC[AES256_GCM,data:TjwtktvWlh7Gt7JrTuxZganUT3AotzmEAeYKkpn5GutLcIT1/KSpTV1kjMxV,iv:fSMld0pXjqKabcq+8CK7kG018tspwVAS30ngYFepJKw=,tag:dMsUtxHVSpiHb9U+ebUbNg==,type:str]
 /cdap/sensitive/mgmt-vpc/cidr: ENC[AES256_GCM,data:uNKE6Nckt24ZWHDHEWjU,iv:yVvl1HbK7ljy6lgZdGUkfi0CeIHPnd2uof9tVB1z008=,tag:9tQ1atj1Vwkgw6j1FQ8p5w==,type:str]
@@ -12,6 +12,6 @@ sops:
       created_at: "2025-10-03T17:27:53Z"
       enc: AQICAHiXhc+HhELIyRKOpc5vBWQJB9/2XFW+CxWFIfUyci0r/wGkXSt3AG0b8bCJ0pVuEmyuAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM+S5DlWnhTDkMvmOxAgEQgDvMXlly/I5Vb2ah1KX2fSbY3mMOxA92rK4MU/rsyUN2oR8WXebzzW+ooNY1pEdGE4FMUmLUrU5qbcUoPg==
       aws_profile: ""
-  encrypted_regex: sensitive
+  unencrypted_regex: /nonsensitive/
   mac_only_encrypted: true
   version: 3.11.0
