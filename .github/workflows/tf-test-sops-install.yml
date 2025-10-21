@@ -1,10 +1,10 @@
-name: tf-sops-test-install
-run-name: tf-sops-test-install
+name: tf-test-sops-install
+run-name: tf-test-sops-install
 
 on:
   push:
     paths:
-      - .github/workflows/tf-sops-test-install.yml
+      - .github/workflows/tf-test-sops-install.yml
 
 defaults:
   run:
