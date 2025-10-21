@@ -1,5 +1,5 @@
 CREATE VIEW ab2d_prod_benes_searched AS
-    SELECT 
+  SELECT 
     contract_number,
     job_uuid,
     benes_searched,
