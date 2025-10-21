@@ -10,7 +10,7 @@ runs:
         YQ_VERSION=$(curl --silent https://api.github.com/repos/mikefarah/yq/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
         # Download the yq binary
-        wget "https://github.com/mikefarah/yq/releases/yq_linux_amd64" -O /usr/local/bin/yq
+        wget "https://github.com/mikefarah/yq/releases/download/v4.48.1/yq_linux_amd64" -O /usr/local/bin/yq
 
         # Make the binary executable
         chmod +x /usr/local/bin/yq
