@@ -3,7 +3,37 @@ description: Sets up https://api.github.com/repos/getsops/sops
 runs:
   using: composite
   steps:
-    - shell: bash
+    - name: install yq
+      shell: bash
+      run: |
+        # Determine the latest yq version
+        YQ_VERSION=$(curl --silent https://api.github.com/repos/mikefarah/yq/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+        # Determine the architecture (e.g., amd64, arm64)
+        ARCH=$(uname -m)
+        case "$ARCH" in
+            x86_64)
+                YQ_ARCH="amd64"
+                ;;
+            aarch64)
+                YQ_ARCH="arm64"
+                ;;
+            *)
+                echo "Unsupported architecture: $ARCH"
+                exit 1
+                ;;
+        esac
+
+        # Download the yq binary
+        wget "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_${YQ_ARCH}" -O /usr/local/bin/yq
+
+        # Make the binary executable
+        chmod +x /usr/local/bin/yq
+
+        # Verify the installation
+        yq --version
+    - name: install sops
+      shell: bash
       run: |
         # Configuration
         SOPS_VERSION="v3.11.0" # Specify the desired SOPS version
