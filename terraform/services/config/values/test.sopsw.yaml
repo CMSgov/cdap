@@ -3,9 +3,9 @@
 /cdap/sensitive/account/security_events_slack_webhook_url: ENC[AES256_GCM,data:J70QSI23I0d1OnvD+n2ncd/ii0XiZ3NRcQqVwCLCBd7UxRIKgJ1YWqCZ9xV2Y8s/4fy+hi8iVvIkd0WdnC1Q9Adwh2rvRKKWM6lS59EYlA==,iv:/ZIY4WGOsxo2pR/t2FYADYcUeEq5eutP43KkNeTa3q0=,tag:HYuxPAStpJZ0t39j/xHLYg==,type:str]
 /cdap/sensitive/bucket-access-logs-bucket: ENC[AES256_GCM,data:I8m2zMO44IB1FnAuK08G99390eF5NjLcKTVvY4T5oD2O6/Apt3oSV3GAUldn,iv:DQUyoHG1Gplx4YuogWcG9kZnK3XTZXC+N5Ayzyb6LDM=,tag:wQpSTHVaItOGb3PC6tHw/w==,type:str]
 /cdap/sensitive/mgmt-vpc/cidr: ENC[AES256_GCM,data:bKqvpJcIqTqG9DkzO1/T,iv:ul/XIzIZ3BnERohYmuM7fWXWTYI0b45T4F2lUFHkvIw=,tag:LEpy1QiHUoGlTg+mKUaQtg==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-a: ENC[AES256_GCM,data:dAMCs1t1aqfpzibaswE=,iv:g6q2MfSpDZeaSSkpkdwZhGD0ZCdlvrJpHoGVTD1+FfU=,tag:7Z5gSQuDlI0wjBiafCJmDA==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-b: ENC[AES256_GCM,data:tfr8BWh6eKGNsUkx,iv:oAHGGbq9ttxnJ99I70Z7IXIgKRSPkvqIkAmVOyBzWus=,tag:iZ1A8L7mUQLJvJ6uWsoF6A==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-c: ENC[AES256_GCM,data:nIVBfKDdYIzOObjj,iv:5E2wwUCOtBtmjpAnWOBZxUJVIqci3o2ncBNQmzEOEPM=,tag:bygAmJUYfbP4tLcFRu94XQ==,type:str]
+/cdap/sensitive/gmt/public_nat_ipv4/cdap-east-mgmt-a: ENC[AES256_GCM,data:+mOA32KHMukav+YrGiI=,iv:XsU4F/UvJIlvwgco+SssgdMIEKyKx1e+AwfWP+bheYE=,tag:PsplAE2eFcxWvPddXNHEdQ==,type:str]
+/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-b: ENC[AES256_GCM,data:yrLn9ruTYs3iUGtQ,iv:Sbvhi8ByvNKxq6HiI4sBYZ/J2z3baL6xtCqNwO+QBRo=,tag:cAAvVVyTZe7EC5nMOH7MYg==,type:str]
+/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-c: ENC[AES256_GCM,data:SR+94ef0AuGMEzGP,iv:sbYtwbP3LFByLYzQysND27FDmSbqP7ihT+qXgqSuEds=,tag:UHJhmmOhBQ/7XsUHsLkkpA==,type:str]
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:key/e32dffdb-97e7-4b64-b5cb-f6dc4e6fabca
