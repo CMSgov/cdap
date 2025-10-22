@@ -4,7 +4,7 @@ run-name: tf-test-yq-install
 on:
   push:
     paths:
-      - .github/workflows/tf-test-yq.yml
+      - .github/workflows/tf-test-yq-install.yml
 
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
