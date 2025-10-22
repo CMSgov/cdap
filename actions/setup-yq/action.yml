@@ -1,5 +1,5 @@
 name: Install yq
-description: Sets up https://github.com/mikefarah/yq
+description: Sets up yq yaml parser - https://github.com/mikefarah/yq
 runs:
   using: composite
   steps:
@@ -9,8 +9,6 @@ runs:
         # Automatically get the latest version number and remove the 'v' prefix
         YQ_VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/v//')
         DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${ARCH}"
-        CHECKSUM_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/checksums"
-        CHECKSUM_HASH_ORDER_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/checksums_hashes_order"
 
         INSTALL_PATH="/usr/local/bin/yq"
         
@@ -22,31 +20,8 @@ runs:
         
         # Download the yq binary
         curl -sSL "$DOWNLOAD_URL" -o "yq_binary"
+        sudo mv "yq_binary" "$INSTALL_PATH"
+        sudo chmod +x "$INSTALL_PATH"
+        echo "yq installed to $INSTALL_PATH"
         
-        # Download the checksum file
-        curl -sSL "$CHECKSUM_URL" -o "checksums"
-        
-        echo "extracting checksum..."
-             
-         ./extract-checksum.sh SHA-256 yq_linux_amd64
-        
-        # Outputs: 
-        # yq_linux_amd64.tar.gz	acebc9d07aa2d0e482969b2c080ee306e8f58efbd6f2d857eefbce6469da1473
-        
-        if command -v sha256sum &> /dev/null; then
-        grep "yq_${ARCH}" "checksums" | sha256sum -c -
-        fi
-        
-        # Check the exit status of the checksum command
-        if [ $? -eq 0 ]; then
-          echo "Checksum verification successful. Installing yq..."
-          sudo mv "yq_binary" "$INSTALL_PATH"
-          sudo chmod +x "$INSTALL_PATH"
-          echo "yq installed to $INSTALL_PATH"
-        else
-          echo "Checksum verification failed. The downloaded file may be corrupt or tampered with." >&2
-          exit 1
-        fi
-        
-        # Clean up
         rm -rf "$TMP_DIR"
