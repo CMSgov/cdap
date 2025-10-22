@@ -1,5 +1,5 @@
-name: tf-test-sops-install
-run-name: tf-test-sops-install
+name: tf-test-yq-install
+run-name: tf-test-yq-install
 
 on:
   push:
@@ -22,7 +22,7 @@ jobs:
         env: [mgmt]
     steps:
       - name: Install yq
-        uses: cmsgov/cdap/actions/setup-yq@84a6bcee5b70d63c44f8fec4f9b542cb5ec29a54
+        uses: cmsgov/cdap/actions/setup-yq@914b760e625ecf18066a6a814b736b0b5ea3fe35
       - name: Call yq
         run: |
           yq --version
