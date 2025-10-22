@@ -1,0 +1,27 @@
+name: Install tenv
+description: Sets up https://github.com/tofuutils/tenv
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        # Download the yq binary  
+        wget "https://github.com/mikefarah/yq/releases/download/v4.48.1/yq_linux_amd64" -O yq_linux_amd64 
+        
+        # Download the yq checksum  
+        wget "https://github.com/mikefarah/yq/releases/download/v4.48.1/checksums" -O checksums.txt
+        
+        if shasum -a 256 -c checksums.txt --ignore-missing; then  
+          echo "checksums checked, installing yq"  
+          echo "Installing yq"  
+          mv yq_linux_amd64 /usr/local/bin/yq  
+          # Make the binary executable  
+          echo "Setting executable permissions..."  
+          chmod +x /usr/local/bin/yq  
+          # Verify the installation  
+          yq --version  
+        else  
+          echo "checksum check failed"  
+          exit 1  
+        fi
+
