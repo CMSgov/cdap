@@ -10,6 +10,8 @@ runs:
         YQ_VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/v//')
         DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${ARCH}"
         CHECKSUM_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/checksums"
+        CHECKSUM_HASH_ORDER_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/checksums_hashes_order"
+
         INSTALL_PATH="/usr/local/bin/yq"
         
         # Create a temporary directory
@@ -26,7 +28,8 @@ runs:
         
         echo "extracting checksum..."
              
-         echo ("extract output: " ./extract-checksum.sh SHA-256 yq_linux_amd64)
+         ./extract-checksum.sh SHA-256 yq_linux_amd64
+        
         # Outputs: 
         # yq_linux_amd64.tar.gz	acebc9d07aa2d0e482969b2c080ee306e8f58efbd6f2d857eefbce6469da1473
         
