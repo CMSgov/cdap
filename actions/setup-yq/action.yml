@@ -1,27 +1,45 @@
-name: Install tenv
-description: Sets up https://github.com/tofuutils/tenv
+name: Install yq
+description: Sets up https://github.com/mikefarah/yq
 runs:
   using: composite
   steps:
     - shell: bash
       run: |
-        # Download the yq binary  
-        wget "https://github.com/mikefarah/yq/releases/download/v4.48.1/yq_linux_amd64" -O yq_linux_amd64 
+        ARCH="linux_amd64"
+        # Automatically get the latest version number and remove the 'v' prefix
+        YQ_VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/v//')
+        DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${ARCH}"
+        CHECKSUM_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/checksums"
+        INSTALL_PATH="/usr/local/bin/yq"
         
-        # Download the yq checksum  
-        wget "https://github.com/mikefarah/yq/releases/download/v4.48.1/checksums" -O checksums.txt
+        # Create a temporary directory
+        TMP_DIR=$(mktemp -d)
+        cd "$TMP_DIR"
         
-        if shasum -a 256 -c checksums.txt --ignore-missing; then  
-          echo "checksums checked, installing yq"  
-          echo "Installing yq"  
-          mv yq_linux_amd64 /usr/local/bin/yq  
-          # Make the binary executable  
-          echo "Setting executable permissions..."  
-          chmod +x /usr/local/bin/yq  
-          # Verify the installation  
-          yq --version  
-        else  
-          echo "checksum check failed"  
-          exit 1  
+        echo "Downloading yq version ${YQ_VERSION}..."
+        
+        # Download the yq binary
+        curl -sSL "$DOWNLOAD_URL" -o "yq_binary"
+        
+        # Download the checksum file
+        curl -sSL "$CHECKSUM_URL" -o "checksums"
+        
+        echo "Verifying checksum..."
+        
+        if command -v sha256sum &> /dev/null; then
+        grep "yq_${ARCH}" "checksums" | sha256sum -c -
         fi
-
+        
+        # Check the exit status of the checksum command
+        if [ $? -eq 0 ]; then
+          echo "Checksum verification successful. Installing yq..."
+          sudo mv "yq_binary" "$INSTALL_PATH"
+          sudo chmod +x "$INSTALL_PATH"
+          echo "yq installed to $INSTALL_PATH"
+        else
+          echo "Checksum verification failed. The downloaded file may be corrupt or tampered with." >&2
+          exit 1
+        fi
+        
+        # Clean up
+        rm -rf "$TMP_DIR"
