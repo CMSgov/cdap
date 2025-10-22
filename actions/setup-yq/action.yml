@@ -24,7 +24,11 @@ runs:
         # Download the checksum file
         curl -sSL "$CHECKSUM_URL" -o "checksums"
         
-        echo "Verifying checksum..."
+        echo "extracting checksum..."
+             
+         echo ("extract output: " ./extract-checksum.sh SHA-256 yq_linux_amd64)
+        # Outputs: 
+        # yq_linux_amd64.tar.gz	acebc9d07aa2d0e482969b2c080ee306e8f58efbd6f2d857eefbce6469da1473
         
         if command -v sha256sum &> /dev/null; then
         grep "yq_${ARCH}" "checksums" | sha256sum -c -
