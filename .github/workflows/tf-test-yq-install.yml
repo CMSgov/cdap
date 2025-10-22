@@ -22,7 +22,7 @@ jobs:
         env: [mgmt]
     steps:
       - name: Install yq
-        uses: cmsgov/cdap/actions/setup-yq@c464a40546033b7e6c89a99625c7e9f60ac13bd7
+        uses: cmsgov/cdap/actions/setup-yq@80a84577e5cdfa4c54d7ebe98d01b416d93abcb8
       - name: Call yq
         run: |
           yq --version
