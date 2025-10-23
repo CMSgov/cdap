@@ -35,6 +35,10 @@ data "aws_iam_role" "admin" {
   name = "ct-ado-${local.admin_app}-application-admin"
 }
 
+data "aws_kms_alias" "kms_key" {
+  name = "alias/${var.app}-${var.env}"
+}
+
 data "aws_iam_policy_document" "github_actions_role_assume" {
   # Allow access from the admin role
   statement {
@@ -257,21 +261,29 @@ data "aws_iam_policy_document" "github_actions_policy" {
   }
   # KMS
   statement {
+    sid     = "KmsReadOnly"
     actions = [
       "kms:ListAliases",
-      "kms:DescribeKey",
       "kms:GetKeyPolicy",
       "kms:GetKeyRotationStatus",
-      "kms:Decrypt",
-      "kms:GenerateDataKey",
-      "kms:CreateGrant",
-      "kms:GenerateDataKeyWithoutPlaintext",
-      "kms:Encrypt",
+      "kms:EnableKeyRotation",
       "kms:CreateAlias",
-      "kms:CreateKey",
-      "kms:EnableKeyRotation"
+      "kms:CreateKey"
     ]
     resources = ["*"]
+  }
+  statement {
+    sid     = "KmsUseSpecificKey"
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey",
+      "kms:GenerateDataKeyWithoutPlaintext",
+      "kms:DescribeKey",
+      "kms:CreateGrant"
+    ]
+    resources = [data.aws_kms_alias.kms_key.arn]
   }
   # Kinesis
   statement {
