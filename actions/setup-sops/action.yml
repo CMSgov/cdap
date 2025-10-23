@@ -1,5 +1,5 @@
 name: Install sops
-description: Sets up https://api.github.com/repos/getsops/sops
+description: Sets up sops (https://github.com/getsops/sops)
 runs:
   using: composite
   steps:
