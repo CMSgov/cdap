@@ -261,7 +261,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
   }
   # KMS
   statement {
-    sid     = "KmsReadOnly"
+    sid = "KmsReadOnly"
     actions = [
       "kms:ListAliases",
       "kms:GetKeyPolicy",
@@ -273,7 +273,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
     resources = ["*"]
   }
   statement {
-    sid     = "KmsUseSpecificKey"
+    sid = "KmsUseSpecificKey"
     actions = [
       "kms:Decrypt",
       "kms:Encrypt",
