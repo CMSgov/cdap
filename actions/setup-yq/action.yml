@@ -1,0 +1,27 @@
+name: Install yq
+description: Sets up yq yaml parser - https://github.com/mikefarah/yq
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        ARCH="linux_amd64"
+        # Automatically get the latest version number and remove the 'v' prefix
+        YQ_VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/v//')
+        DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${ARCH}"
+
+        INSTALL_PATH="/usr/local/bin/yq"
+        
+        # Create a temporary directory
+        TMP_DIR=$(mktemp -d)
+        cd "$TMP_DIR"
+        
+        echo "Downloading yq version ${YQ_VERSION}..."
+        
+        # Download the yq binary
+        curl -sSL "$DOWNLOAD_URL" -o "yq_binary"
+        sudo mv "yq_binary" "$INSTALL_PATH"
+        sudo chmod +x "$INSTALL_PATH"
+        echo "yq installed to $INSTALL_PATH"
+        
+        rm -rf "$TMP_DIR"
