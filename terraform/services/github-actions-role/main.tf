@@ -35,10 +35,6 @@ data "aws_iam_role" "admin" {
   name = "ct-ado-${local.admin_app}-application-admin"
 }
 
-data "aws_kms_alias" "kms_key" {
-  name = "alias/${var.app}-${var.env}"
-}
-
 data "aws_iam_policy_document" "github_actions_role_assume" {
   # Allow access from the admin role
   statement {
@@ -261,7 +257,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
   }
   # KMS
   statement {
-    sid = "KmsReadOnly"
+    sid = "KmsUsage"
     actions = [
       "kms:ListAliases",
       "kms:GetKeyPolicy",
@@ -273,7 +269,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
     resources = ["*"]
   }
   statement {
-    sid = "KmsUseSpecificKey"
+    sid = "KmsSpecificKeyUsage"
     actions = [
       "kms:Decrypt",
       "kms:Encrypt",
@@ -283,7 +279,24 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "kms:DescribeKey",
       "kms:CreateGrant"
     ]
-    resources = [data.aws_kms_alias.kms_key.arn]
+    resources = concat(
+      [data.aws_kms_alias.environment_key.arn],
+      var.app == "ab2d" ? concat(
+        data.aws_kms_alias.ab2d_ecr[*].arn,
+        data.aws_kms_alias.ab2d_tfstate_bucket[*].arn,
+      ) : [],
+      var.app == "bcda" ? concat(
+        data.aws_kms_alias.bcda_aco_creds[*].arn,
+        data.aws_kms_alias.bcda_app_config[*].arn,
+        data.aws_kms_alias.bcda_insights_data_sampler[*].arn,
+      ) : [],
+      var.app == "dpc" ? concat(
+        [for key in data.aws_kms_alias.dpc_cloudwatch_keys : key.arn],
+        data.aws_kms_alias.dpc_app_config[*].arn,
+        data.aws_kms_alias.dpc_ecr[*].arn,
+        data.aws_kms_alias.dpc_sns_topic[*].arn
+      ) : []
+    )
   }
   # Kinesis
   statement {
