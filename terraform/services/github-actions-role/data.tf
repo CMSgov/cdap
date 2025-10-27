@@ -1,15 +1,20 @@
 locals {
-  dpc_services = [
-    "sidekiq-portal",
-    "web-portal",
-    "sidekiq-admin",
-    "web",
-    "attribution",
-    "aggregation",
-    "web-admin",
-    "api",
-    "sidekiq",
-  ]
+  dpc_services = concat(
+    [
+      "attribution",
+      "aggregation",
+      "api",
+    ],
+    var.env != "prod" ?
+    [
+      "sidekiq",
+      "sidekiq-portal",
+      "sidekiq-admin",
+      "web",
+      "web-portal",
+      "web-admin",
+    ] : []
+  )
 }
 
 # KMS keys needed for IAM policy
@@ -33,12 +38,12 @@ data "aws_kms_alias" "bcda_app_config" {
 }
 
 data "aws_kms_alias" "bcda_aco_creds" {
-  count = var.app == "bcda" ? 1 : 0
+  count = var.app == "bcda" ? contains(["dev, test"], var.env) ? 1 : 0 : 0
   name  = "alias/bcda-aco-creds-kms"
 }
 
 data "aws_kms_alias" "bcda_insights_data_sampler" {
-  count = var.app == "bcda" ? 1 : 0
+  count = var.app == "bcda" ? var.env == "dev" ? 1 : 0 : 0
   name  = "alias/bcda-insights-data-sampler-${var.env}-key"
 }
 
