@@ -32,23 +32,6 @@ data "aws_iam_policy_document" "sns_send_message" {
 
   source_policy_documents = var.source_policy_documents
   override_policy_documents = var.override_policy_documents
-
-  statement {
-    actions = ["sqs:SendMessage"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["sns.amazonaws.com"]
-    }
-
-    resources = [aws_sqs_queue.this.arn]
-
-    condition {
-      test     = "ArnEquals"
-      variable = "aws:SourceArn"
-      values   = [var.sns_topic_arn]
-    }
-  }
 }
 
 resource "aws_sqs_queue_policy" "sns_send_message" {

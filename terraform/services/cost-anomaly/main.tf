@@ -55,10 +55,32 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
   }
 }
 
+
+data "aws_iam_policy_document" "sns_send_message" {
+
+  statement {
+    actions = ["sqs:SendMessage"]
+
+    principals {
+      type = "Service"
+      identifiers = ["sns.amazonaws.com"]
+    }
+
+    resources = [module.sns_to_slack_queue.arn]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:SourceArn"
+      values = [aws_sns_topic.cost_anomaly_sns.arn]
+    }
+  }
+}
+
+
 module "sns_to_slack_queue" {
   source = "../../modules/queue"
 
-  source_policy_documents   = var
+  source_policy_documents  = data.aws_iam_policy_document.sns_send_message.json
   override_policy_documents = var.override_policy_documents
 
   name          = "cost-anomaly-alert-queue"
