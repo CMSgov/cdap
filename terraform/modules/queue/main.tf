@@ -29,7 +29,9 @@ resource "aws_sqs_queue_redrive_allow_policy" "this" {
 }
 
 data "aws_iam_policy_document" "sns_send_message" {
-  count = var.sns_topic_arn != "None" ? 1 : 0
+
+  source_policy_documents = var.source_policy_documents
+  override_policy_documents = var.override_policy_documents
 
   statement {
     actions = ["sqs:SendMessage"]
@@ -50,19 +52,12 @@ data "aws_iam_policy_document" "sns_send_message" {
 }
 
 resource "aws_sqs_queue_policy" "sns_send_message" {
-  count = var.sns_topic_arn != "None" ? 1 : 0
 
   queue_url = aws_sqs_queue.this.id
   policy    = data.aws_iam_policy_document.sns_send_message[0].json
 }
 
-resource "aws_sns_topic_subscription" "this" {
-  count = var.sns_topic_arn != "None" ? 1 : 0
 
-  endpoint  = aws_sqs_queue.this.arn
-  protocol  = "sqs"
-  topic_arn = var.sns_topic_arn
-}
 
 resource "aws_lambda_event_source_mapping" "this" {
   event_source_arn = aws_sqs_queue.this.arn
