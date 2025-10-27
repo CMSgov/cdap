@@ -1,14 +1,36 @@
 name: Install yq
 description: Sets up yq yaml parser - https://github.com/mikefarah/yq
+outputs:
+  yq-latest-version:
+    description: Get the version we will download.
+    value: ${{ steps.get-version.outputs.yq-latest-version }}
+  checksum:
+    description: Checksum for the downloaded yq binary
+    value: ${{ steps.get-checksum.outputs.checksum }}
+
 runs:
   using: composite
   steps:
-    - shell: bash
+    - name: get-version
+      shell: bash
+      run: |
+        VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/v//')
+        echo "yq-latest-version=${VERSION}" >> $GITHUB_OUTPUT
+    - name: get-checksum
+      shell: bash
+      run: |
+        # Create a temporary directory
+        TMP_CHECKSUM_DIR=$(mktemp -d)
+        cd "$TMP_CHECKSUM_DIR"
+#        download checksum
+#        download checksum_hash
+#        grep for checksum
+#        set variable
+    - name: download-yq
+      shell: bash
       run: |
         ARCH="linux_amd64"
-        # Automatically get the latest version number and remove the 'v' prefix
-        YQ_VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/v//')
-        DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${ARCH}"
+        DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${{ steps.get-version.outputs.yq-latest-version }}/yq_${ARCH}"
 
         INSTALL_PATH="/usr/local/bin/yq"
         
@@ -16,12 +38,18 @@ runs:
         TMP_DIR=$(mktemp -d)
         cd "$TMP_DIR"
         
-        echo "Downloading yq version ${YQ_VERSION}..."
+        echo "Downloading yq version ${{ steps.get-version.outputs.yq-latest-version }}..."
         
         # Download the yq binary
         curl -sSL "$DOWNLOAD_URL" -o "yq_binary"
-        sudo mv "yq_binary" "$INSTALL_PATH"
-        sudo chmod +x "$INSTALL_PATH"
-        echo "yq installed to $INSTALL_PATH"
         
-        rm -rf "$TMP_DIR"
+        if shasum -a 256 -c $ --ignore-missing; then
+          mv "yq_binary" "$INSTALL_PATH"
+          sudo chmod +x "$INSTALL_PATH"
+          echo "yq installed to $INSTALL_PATH"
+          rm -rf "$TMP_DIR"
+        else
+          echo "checksum check failed"
+          rm -rf "$TMP_DIR"
+          exit 1
+        fi
