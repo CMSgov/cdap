@@ -92,7 +92,7 @@ module "sns_to_slack_queue" {
 }
 
 resource "aws_sns_topic_subscription" "this" {
-  endpoint  = module.sns_to_slack_queue
+  endpoint  = module.sns_to_slack_queue.arn
   protocol  = "sqs"
   topic_arn = aws_sns_topic.cost_anomaly_sns.arn
 }
