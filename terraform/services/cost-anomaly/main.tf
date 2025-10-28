@@ -59,7 +59,7 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
 data "aws_iam_policy_document" "sns_send_message" {
 
   statement {
-    sid = "SnsSendMessage"
+    sid     = "SnsSendMessage"
     actions = ["sqs:SendMessage"]
 
     principals {
