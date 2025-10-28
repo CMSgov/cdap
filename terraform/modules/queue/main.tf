@@ -30,7 +30,7 @@ resource "aws_sqs_queue_redrive_allow_policy" "this" {
 
 data "aws_iam_policy_document" "sns_send_message" {
 
-  source_policy_documents = var.source_policy_documents
+  source_policy_documents   = var.source_policy_documents
   override_policy_documents = var.override_policy_documents
 }
 
@@ -39,8 +39,6 @@ resource "aws_sqs_queue_policy" "sns_send_message" {
   queue_url = aws_sqs_queue.this.id
   policy    = data.aws_iam_policy_document.sns_send_message.json
 }
-
-
 
 resource "aws_lambda_event_source_mapping" "this" {
   event_source_arn = aws_sqs_queue.this.arn
