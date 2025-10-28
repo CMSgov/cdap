@@ -80,7 +80,7 @@ data "aws_iam_policy_document" "sns_send_message" {
 module "sns_to_slack_queue" {
   source = "../../modules/queue"
 
-  source_policy_documents   = data.aws_iam_policy_document.sns_send_message.json
+  source_policy_documents   = [data.aws_iam_policy_document.sns_send_message.json]
   override_policy_documents = var.override_policy_documents
 
   name = "cost-anomaly-alert-queue"
@@ -92,7 +92,7 @@ module "sns_to_slack_queue" {
 }
 
 resource "aws_sns_topic_subscription" "this" {
-  endpoint  = sns_to_slack_queue
+  endpoint  = module.sns_to_slack_queue
   protocol  = "sqs"
   topic_arn = aws_sns_topic.cost_anomaly_sns.arn
 }
