@@ -6,61 +6,61 @@ runs:
     - id: download-yq
       shell: bash
       run: |
-        VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/v//')
+        #!/bin/bash
+        set -e  # Exit on error (moved to top)
         
-        # Create a temporary directory
-        TMP_DIR=$(mktemp -d)
-        cd "$TMP_DIR"
-        CHECKSUM_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${VERSION}/checksums"
-        CHECKSUM_HASH_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${VERSION}/checksums_hashes_order"
-        
-        curl -sSL "$CHECKSUM_DOWNLOAD_URL" -o "checksums"
-        curl -sSL "$CHECKSUM_HASH_DOWNLOAD_URL" -o "checksums_hashes_order"
-        
-        if [ ! -f "checksums_hashes_order" ]; then
-        echo "This script requires checksums_hashes_order to run"
-        echo "Download the file from https://github.com/mikefarah/yq/releases/ for the version of yq you are trying to validate"
-        exit 1
-        fi
-        
-        if [ ! -f "checksums" ]; then
-        echo "This script requires the checksums file to run"
-        echo "Download the file from https://github.com/mikefarah/yq/releases/ for the version of yq you are trying to validate"
-        exit 1
-        fi
-                
-        grepMatch=$(grep -m 1 -n "SHA-256" checksums_hashes_order)
-        if [ "$grepMatch" == "" ]; then
-        echo "Could not find hash algorithm '"SHA-256"' in checksums_hashes_order"
-        exit 1
-        fi
-        
-        set -e
-        
-        lineNumber=$(echo "$grepMatch" | cut -f1 -d:)
-        
-        realLineNumber="$(($lineNumber + 1))"
-        
-        CHECKSUM=$(grep "$file" checksums | sed 's/  /\t/g' | cut -f1,$realLineNumber)
-        echo (Got checksum $checksum)
-
+        # Configuration
         ARCH="linux_amd64"
-        DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${VERSION}/yq_${ARCH}"
-
         INSTALL_PATH="/usr/local/bin/yq"
         
+        # Get latest version
+        VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest |
+        grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4 | sed 's/^v//')
+
+      echo "Latest version: $VERSION"
+      
+      # Create temporary directory and ensure cleanup
+        TMP_DIR=$(mktemp -d)
+        trap "rm -rf '$TMP_DIR'" EXIT  # Auto-cleanup on exit
+        
+        cd "$TMP_DIR"
+        
+        # Download checksum files
+        BASE_URL="https://github.com/mikefarah/yq/releases/download/v${VERSION}"
+        curl -sSL "$BASE_URL/checksums" -o checksums
+        curl -sSL "$BASE_URL/checksums_hashes_order" -o checksums_hashes_order
+        
+        # Validate required files exist
+        for file in checksums checksums_hashes_order; do
+        if [ ! -f "$file" ]; then
+      echo "Error: $file not found"
+      echo "Download from: https://github.com/mikefarah/yq/releases/"
+        exit 1
+        fi
+        done
+        
+        # Find SHA-256 line number
+        lineNumber=$(grep -m 1 -n "SHA-256" checksums_hashes_order | cut -f1 -d:)
+        realLineNumber=$((lineNumber + 1))
+        
+        # Extract checksum for our architecture
+        checksum=$(grep "yq_${ARCH} " checksums |
+        sed 's/  /\t/g' |
+        cut -f"$realLineNumber")
+
+      echo "Expected checksum: $checksum"
+      
+      # Download yq binary
         echo "Downloading yq version ${VERSION}..."
+        curl -sSL "$BASE_URL/yq_${ARCH}" -o yq_binary
         
-        # Download the yq binary
-        curl -sSL "$DOWNLOAD_URL" -o "yq_binary"
-        
-        if shasum -a 256 -c ${CHECKSUM} --ignore-missing; then
-          mv "yq_binary" "$INSTALL_PATH"
-          sudo chmod +x "$INSTALL_PATH"
-          echo "yq installed to $INSTALL_PATH"
-          rm -rf "$TMP_DIR"
+        # Verify checksum
+        if echo "$checksum  yq_binary" | sha256sum -c --quiet -; then
+        echo "✓ Checksum verified"
+        sudo mv yq_binary "$INSTALL_PATH"
+        sudo chmod +x "$INSTALL_PATH"
+        echo "✓ yq installed to $INSTALL_PATH"
         else
-          echo "checksum check failed"
-          rm -rf "$TMP_DIR"
-          exit 1
+        echo "✗ Checksum verification failed"
+        exit 1
         fi
