@@ -6,7 +6,6 @@ runs:
     - id: download-yq
       shell: bash
       run: |
-        #!/bin/bash
         set -e  # Exit on error (moved to top)
         
         # Configuration
@@ -19,7 +18,7 @@ runs:
 
         echo "Latest version: $VERSION"
       
-      # Create temporary directory and ensure cleanup
+        # Create temporary directory and ensure cleanup
         TMP_DIR=$(mktemp -d)
         trap "rm -rf '$TMP_DIR'" EXIT  # Auto-cleanup on exit
         
@@ -50,7 +49,7 @@ runs:
 
         echo "Expected checksum: $checksum"
       
-      # Download yq binary
+        # Download yq binary
         echo "Downloading yq version ${VERSION}..."
         curl -sSL "$BASE_URL/yq_${ARCH}" -o yq_binary
         
