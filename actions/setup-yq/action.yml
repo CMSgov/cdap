@@ -11,19 +11,21 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: get-version
+    - id: get-version
       shell: bash
       run: |
         VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/v//')
         echo "yq-latest-version=${VERSION}" >> $GITHUB_OUTPUT
-    - name: get-checksum
+    - id: get-checksum
+      env:
+        VERSION: ${{steps.get-version.outputs.yq-latest-version}}
       shell: bash
       run: |
         # Create a temporary directory
         TMP_CHECKSUM_DIR=$(mktemp -d)
         cd "$TMP_CHECKSUM_DIR"
-        CHECKSUM_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${{ steps.get-version.outputs.yq-latest-version }}/checksums"
-        CHECKSUM_HASH_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${{ steps.get-version.outputs.yq-latest-version }}/checksums_hashes_order"
+        CHECKSUM_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${VERSION}/checksums"
+        CHECKSUM_HASH_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${VERSION}/checksums_hashes_order"
         
         curl -sSL "$CHECKSUM_DOWNLOAD_URL" -o "checksums"
         curl -sSL "$CHECKSUM_HASH_DOWNLOAD_URL" -o "checksums_hashes_order"
