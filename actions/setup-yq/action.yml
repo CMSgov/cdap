@@ -1,26 +1,13 @@
 name: Install yq
 description: Sets up yq yaml parser - https://github.com/mikefarah/yq
-outputs:
-  yq-latest-version:
-    description: Get the version we will download.
-    value: ${{ steps.get-version.outputs.yq-latest-version }}
-  checksum:
-    description: Checksum for the downloaded yq binary.
-    value: ${{ steps.get-checksum.outputs.checksum }}
-
 runs:
   using: composite
   steps:
-    - id: get-version
+    - id: download-yq
       shell: bash
       run: |
         VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/v//')
-        echo "yq-latest-version=${VERSION}" >> $GITHUB_OUTPUT
-    - id: get-checksum
-      env:
-        VERSION: ${{steps.get-version.outputs.yq-latest-version}}
-      shell: bash
-      run: |
+        
         # Create a temporary directory
         TMP_CHECKSUM_DIR=$(mktemp -d)
         cd "$TMP_CHECKSUM_DIR"
@@ -41,8 +28,7 @@ runs:
         echo "Download the file from https://github.com/mikefarah/yq/releases/ for the version of yq you are trying to validate"
         exit 1
         fi
-        
-        
+                
         grepMatch=$(grep -m 1 -n "SHA-256" checksums_hashes_order)
         if [ "$grepMatch" == "" ]; then
         echo "Could not find hash algorithm '"SHA-256"' in checksums_hashes_order"
@@ -55,14 +41,11 @@ runs:
         
         realLineNumber="$(($lineNumber + 1))"
         
-        checksum=$(grep "$file" checksums | sed 's/  /\t/g' | cut -f1,$realLineNumber)
+        CHECKSUM=$(grep "$file" checksums | sed 's/  /\t/g' | cut -f1,$realLineNumber)
         echo (Got checksum $checksum)
 
-    - name: download-yq
-      shell: bash
-      run: |
         ARCH="linux_amd64"
-        DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${{ steps.get-version.outputs.yq-latest-version }}/yq_${ARCH}"
+        DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${VERSION}/yq_${ARCH}"
 
         INSTALL_PATH="/usr/local/bin/yq"
         
@@ -70,12 +53,12 @@ runs:
         TMP_DIR=$(mktemp -d)
         cd "$TMP_DIR"
         
-        echo "Downloading yq version ${{ steps.get-version.outputs.yq-latest-version }}..."
+        echo "Downloading yq version ${VERSION}..."
         
         # Download the yq binary
         curl -sSL "$DOWNLOAD_URL" -o "yq_binary"
         
-        if shasum -a 256 -c ${{ steps.get-checksum.outputs.checksum }} --ignore-missing; then
+        if shasum -a 256 -c ${CHECKSUM} --ignore-missing; then
           mv "yq_binary" "$INSTALL_PATH"
           sudo chmod +x "$INSTALL_PATH"
           echo "yq installed to $INSTALL_PATH"
