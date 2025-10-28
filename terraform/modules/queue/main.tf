@@ -37,7 +37,7 @@ data "aws_iam_policy_document" "sns_send_message" {
 resource "aws_sqs_queue_policy" "sns_send_message" {
 
   queue_url = aws_sqs_queue.this.id
-  policy    = data.aws_iam_policy_document.sns_send_message[0].json
+  policy    = data.aws_iam_policy_document.sns_send_message.json
 }
 
 
