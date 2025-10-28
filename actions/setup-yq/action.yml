@@ -22,12 +22,40 @@ runs:
         # Create a temporary directory
         TMP_CHECKSUM_DIR=$(mktemp -d)
         cd "$TMP_CHECKSUM_DIR"
-        CHECKSUM_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${{ steps.get-version.outputs.yq-latest-version }}/yq_${ARCH}"
-        CHECKSUM_HASH_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${{ steps.get-version.outputs.yq-latest-version }}/yq_${ARCH}"
-#        download checksum
-#        download checksum_hash
-#        grep for checksum
-#        set variable
+        CHECKSUM_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${{ steps.get-version.outputs.yq-latest-version }}/checksums"
+        CHECKSUM_HASH_DOWNLOAD_URL="https://github.com/mikefarah/yq/releases/download/v${{ steps.get-version.outputs.yq-latest-version }}/checksums_hashes_order"
+        
+        curl -sSL "$CHECKSUM_DOWNLOAD_URL" -o "checksums"
+        curl -sSL "$CHECKSUM_HASH_DOWNLOAD_URL" -o "checksums_hashes_order"
+        
+        if [ ! -f "checksums_hashes_order" ]; then
+        echo "This script requires checksums_hashes_order to run"
+        echo "Download the file from https://github.com/mikefarah/yq/releases/ for the version of yq you are trying to validate"
+        exit 1
+        fi
+        
+        if [ ! -f "checksums" ]; then
+        echo "This script requires the checksums file to run"
+        echo "Download the file from https://github.com/mikefarah/yq/releases/ for the version of yq you are trying to validate"
+        exit 1
+        fi
+        
+        
+        grepMatch=$(grep -m 1 -n "SHA-256" checksums_hashes_order)
+        if [ "$grepMatch" == "" ]; then
+        echo "Could not find hash algorithm '"SHA-256"' in checksums_hashes_order"
+        exit 1
+        fi
+        
+        set -e
+        
+        lineNumber=$(echo "$grepMatch" | cut -f1 -d:)
+        
+        realLineNumber="$(($lineNumber + 1))"
+        
+        checksum=$(grep "$file" checksums | sed 's/  /\t/g' | cut -f1,$realLineNumber)
+        echo (Got checksum $checksum)
+
     - name: download-yq
       shell: bash
       run: |
