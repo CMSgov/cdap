@@ -6,7 +6,7 @@ runs:
     - id: download-yq
       shell: bash
       run: |
-        set -e  # Exit on error (moved to top)
+        set -e  # Exit on error
         
         # Configuration
         ARCH="linux_amd64"
@@ -18,7 +18,7 @@ runs:
 
         echo "Latest version: $VERSION"
       
-        # Create temporary directory and ensure cleanup
+        # Create temporary directory and ensure cleanup with trap
         TMP_DIR=$(mktemp -d)
         trap "rm -rf '$TMP_DIR'" EXIT  # Auto-cleanup on exit
         
@@ -29,7 +29,7 @@ runs:
         curl -sSL "$BASE_URL/checksums" -o checksums
         curl -sSL "$BASE_URL/checksums_hashes_order" -o checksums_hashes_order
         
-        # Validate required files exist
+        # Validate checksum files exist
         for file in checksums checksums_hashes_order; do
         if [ ! -f "$file" ]; then
           echo "Error: $file not found"
@@ -38,11 +38,11 @@ runs:
         fi
         done
         
-        # Find SHA-256 line number
+        # Find SHA-256 by line number
         lineNumber=$(grep -m 1 -n "SHA-256" checksums_hashes_order | cut -f1 -d:)
         realLineNumber=$((lineNumber + 1))
         
-        # Extract checksum for our architecture
+        # Extract checksum for amd64 binary (space at the end so we don't get the tar distro)
         checksum=$(grep "yq_${ARCH} " checksums |
         sed 's/  /\t/g' |
         cut -f"$realLineNumber")
