@@ -17,7 +17,7 @@ runs:
         VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest |
         grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4 | sed 's/^v//')
 
-      echo "Latest version: $VERSION"
+        echo "Latest version: $VERSION"
       
       # Create temporary directory and ensure cleanup
         TMP_DIR=$(mktemp -d)
@@ -33,9 +33,9 @@ runs:
         # Validate required files exist
         for file in checksums checksums_hashes_order; do
         if [ ! -f "$file" ]; then
-      echo "Error: $file not found"
-      echo "Download from: https://github.com/mikefarah/yq/releases/"
-        exit 1
+          echo "Error: $file not found"
+          echo "Download from: https://github.com/mikefarah/yq/releases/"
+          exit 1
         fi
         done
         
@@ -48,7 +48,7 @@ runs:
         sed 's/  /\t/g' |
         cut -f"$realLineNumber")
 
-      echo "Expected checksum: $checksum"
+        echo "Expected checksum: $checksum"
       
       # Download yq binary
         echo "Downloading yq version ${VERSION}..."
@@ -56,11 +56,11 @@ runs:
         
         # Verify checksum
         if echo "$checksum  yq_binary" | sha256sum -c --quiet -; then
-        echo "✓ Checksum verified"
-        sudo mv yq_binary "$INSTALL_PATH"
-        sudo chmod +x "$INSTALL_PATH"
-        echo "✓ yq installed to $INSTALL_PATH"
+          echo "✓ Checksum verified"
+          sudo mv yq_binary "$INSTALL_PATH"
+          sudo chmod +x "$INSTALL_PATH"
+          echo "✓ yq installed to $INSTALL_PATH"
         else
-        echo "✗ Checksum verification failed"
-        exit 1
+          echo "✗ Checksum verification failed"
+          exit 1
         fi
