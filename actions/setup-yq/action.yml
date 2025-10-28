@@ -73,7 +73,7 @@ runs:
         # Download the yq binary
         curl -sSL "$DOWNLOAD_URL" -o "yq_binary"
         
-        if shasum -a 256 -c $ --ignore-missing; then
+        if shasum -a 256 -c ${{ steps.get-checksum.outputs.checksum }} --ignore-missing; then
           mv "yq_binary" "$INSTALL_PATH"
           sudo chmod +x "$INSTALL_PATH"
           echo "yq installed to $INSTALL_PATH"
