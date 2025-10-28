@@ -21,7 +21,7 @@ jobs:
         app: [cdap]
         env: [mgmt]
     steps:
-      - name: Install yq
+      - name: Setup yq
         uses: cmsgov/cdap/actions/setup-yq@88aef076652882fd3d70e936000aa427f37bea52
       - name: Call yq
         run: |
