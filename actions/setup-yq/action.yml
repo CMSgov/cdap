@@ -54,7 +54,7 @@ runs:
         curl -sSL "$BASE_URL/yq_${ARCH}" -o yq_binary
         
         # Verify checksum
-        if echo "$checksum  yq_binary" | sha256sum -c --quiet -; then
+        if echo "$checksum yq_binary" | sha256sum -c --quiet -; then
           echo "✓ Checksum verified"
           sudo mv yq_binary "$INSTALL_PATH"
           sudo chmod +x "$INSTALL_PATH"
