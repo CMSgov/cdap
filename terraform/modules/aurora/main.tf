@@ -40,20 +40,8 @@ resource "aws_rds_cluster_parameter_group" "this" {
   family      = local.aurora_family
   description = "Aurora cluster parameter group for ${local.service_prefix}"
 
-  parameter {
-    apply_method = "immediate"
-    name         = "rds.force_ssl"
-    value        = "1"
-  }
-
-  parameter {
-    apply_method = "pending-reboot"
-    name         = "shared_preload_libraries"
-    value        = "pg_stat_statements,pg_cron"
-  }
-
   dynamic "parameter" {
-    for_each = toset(var.cluster_parameters)
+    for_each = toset(concat(local.default_cluster_parameters, var.cluster_parameters))
 
     content {
       apply_method = parameter.value.apply_method
