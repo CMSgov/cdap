@@ -6,60 +6,22 @@ runs:
     - id: download-yq
       shell: bash
       run: |
-        set -e  # Exit on error
-        
         # Configuration
-        ARCH="linux_amd64"
+        VERSION="v4.48.1"
+        FILENAME="yq_linux_amd64"
+        BASE_URL="https://github.com/mikefarah/yq/releases/download/${VERSION}"
         INSTALL_PATH="/usr/local/bin/yq"
-        
-        # Get latest version
-        VERSION=$(curl -sL https://api.github.com/repos/mikefarah/yq/releases/latest |
-        grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4 | sed 's/^v//')
-
-        echo "Latest version: $VERSION"
-      
-        # Create temporary directory and ensure cleanup with trap
-        TMP_DIR=$(mktemp -d)
-        trap "rm -rf '$TMP_DIR'" EXIT  # Auto-cleanup on exit
-        
-        cd "$TMP_DIR"
-        
-        # Download checksum files
-        BASE_URL="https://github.com/mikefarah/yq/releases/download/v${VERSION}"
-        curl -sSLO "$BASE_URL/checksums"
-        curl -sSLO "$BASE_URL/checksums_hashes_order"
-        
-        # Validate checksum files exist
-        for file in checksums checksums_hashes_order; do
-        if [ ! -f "$file" ]; then
-          echo "Error: $file not found"
-          echo "Download from: https://github.com/mikefarah/yq/releases/"
-          exit 1
-        fi
-        done
-        
-        # Find SHA-256 by line number
-        lineNumber=$(grep -m 1 -n "SHA-256" checksums_hashes_order | cut -f1 -d:)
-        realLineNumber=$((lineNumber + 1))
-        
-        # Extract checksum for amd64 binary (space at the end so we don't get the tar distro)
-        checksum=$(grep "yq_${ARCH} " checksums |
-        sed 's/  /\t/g' |
-        cut -f"$realLineNumber")
-
-        echo "Expected checksum: $checksum"
-      
-        # Download yq binary
-        echo "Downloading yq version ${VERSION}..."
-        curl -sSL "$BASE_URL/yq_${ARCH}" -o yq_binary
-        
-        # Verify checksum
-        if echo "$checksum yq_binary" | sha256sum -c --quiet -; then
-          echo "✓ Checksum verified"
-          sudo mv yq_binary "$INSTALL_PATH"
+  
+          echo "Downloading $FILENAME.tar.gz and checksums"
+          curl -sSLO "$BASE_URL/$FILENAME.tar.gz"
+          curl -sSLO "$BASE_URL/checksums"
+          curl -sSLO "$BASE_URL/checksums_hashes_order"
+          curl -sSLO "$BASE_URL/extract-checksum.sh"
+          
+          echo "Verifying $FILENAME.tar.gz against checksum"
+          bash extract-checksum.sh SHA-256 "$FILENAME.tar.gz" | awk '{ print $2 " " $1}' | sha256sum -c --quiet -
+          
+          echo "Extracting $FILENAME and making executable at $INSTALL_PATH"
+          tar xf "$FILENAME.tar.gz"
+          mv "$FILENAME" "$INSTALL_PATH"
           sudo chmod +x "$INSTALL_PATH"
-          echo "✓ yq installed to $INSTALL_PATH"
-        else
-          echo "✗ Checksum verification failed"
-          exit 1
-        fi

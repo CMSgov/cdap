@@ -4,8 +4,6 @@ This GitHub action installs [yq](https://github.com/mikefarah/yq), a yaml parser
 
 ## Usage
 
-In calling workflows, set TENV_GITHUB_TOKEN to avoid rate limiting by the GitHub API. This environment variable must be available to all steps running tofu commands.
-
 ```yaml
 steps:
   - name: Install YQ
