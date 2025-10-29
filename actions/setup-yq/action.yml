@@ -26,8 +26,8 @@ runs:
         
         # Download checksum files
         BASE_URL="https://github.com/mikefarah/yq/releases/download/v${VERSION}"
-        curl -sSL "$BASE_URL/checksums" -o checksums
-        curl -sSL "$BASE_URL/checksums_hashes_order" -o checksums_hashes_order
+        curl -sSLO "$BASE_URL/checksums"
+        curl -sSLO "$BASE_URL/checksums_hashes_order"
         
         # Validate checksum files exist
         for file in checksums checksums_hashes_order; do
