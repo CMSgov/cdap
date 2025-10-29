@@ -46,6 +46,12 @@ resource "aws_rds_cluster_parameter_group" "this" {
     value        = "1"
   }
 
+  parameter {
+    apply_method = "pending-reboot"
+    name         = "shared_preload_libraries"
+    value        = "pg_stat_statements,pg_cron"
+  }
+
   dynamic "parameter" {
     for_each = toset(var.cluster_parameters)
 
