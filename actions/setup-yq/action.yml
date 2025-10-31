@@ -1,0 +1,27 @@
+name: Install yq
+description: Sets up yq yaml parser - https://github.com/mikefarah/yq
+runs:
+  using: composite
+  steps:
+    - id: download-yq
+      shell: bash
+      run: |
+        # Configuration
+        VERSION="v4.48.1"
+        FILENAME="yq_linux_amd64"
+        BASE_URL="https://github.com/mikefarah/yq/releases/download/${VERSION}"
+        INSTALL_PATH="/usr/local/bin/yq"
+  
+        echo "Downloading $FILENAME.tar.gz and checksums"
+        curl -sSLO "$BASE_URL/$FILENAME.tar.gz"
+        curl -sSLO "$BASE_URL/checksums"
+        curl -sSLO "$BASE_URL/checksums_hashes_order"
+        curl -sSLO "$BASE_URL/extract-checksum.sh"
+          
+        echo "Verifying $FILENAME.tar.gz against checksum"
+        bash extract-checksum.sh SHA-256 "$FILENAME.tar.gz" | awk '{ print $2 " " $1}' | sha256sum -c --quiet -
+          
+        echo "Extracting $FILENAME and making executable at $INSTALL_PATH"
+        tar xf "$FILENAME.tar.gz"
+        mv "$FILENAME" "$INSTALL_PATH"
+        sudo chmod +x "$INSTALL_PATH"
