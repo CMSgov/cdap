@@ -257,21 +257,46 @@ data "aws_iam_policy_document" "github_actions_policy" {
   }
   # KMS
   statement {
+    sid = "KmsUsage"
     actions = [
       "kms:ListAliases",
-      "kms:DescribeKey",
       "kms:GetKeyPolicy",
       "kms:GetKeyRotationStatus",
-      "kms:Decrypt",
-      "kms:GenerateDataKey",
-      "kms:CreateGrant",
-      "kms:GenerateDataKeyWithoutPlaintext",
-      "kms:Encrypt",
+      "kms:EnableKeyRotation",
       "kms:CreateAlias",
-      "kms:CreateKey",
-      "kms:EnableKeyRotation"
+      "kms:CreateKey"
     ]
     resources = ["*"]
+  }
+  statement {
+    sid = "KmsSpecificKeyUsage"
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey",
+      "kms:GenerateDataKeyWithoutPlaintext",
+      "kms:DescribeKey",
+      "kms:CreateGrant"
+    ]
+    resources = concat(
+      [data.aws_kms_alias.environment_key.arn],
+      var.app == "ab2d" ? concat(
+        data.aws_kms_alias.ab2d_ecr[*].arn,
+        data.aws_kms_alias.ab2d_tfstate_bucket[*].arn,
+      ) : [],
+      var.app == "bcda" ? concat(
+        data.aws_kms_alias.bcda_aco_creds[*].arn,
+        data.aws_kms_alias.bcda_app_config[*].arn,
+        data.aws_kms_alias.bcda_insights_data_sampler[*].arn,
+      ) : [],
+      var.app == "dpc" ? concat(
+        [for key in data.aws_kms_alias.dpc_cloudwatch_keys : key.arn],
+        data.aws_kms_alias.dpc_app_config[*].arn,
+        data.aws_kms_alias.dpc_ecr[*].arn,
+        data.aws_kms_alias.dpc_sns_topic[*].arn
+      ) : []
+    )
   }
   # Kinesis
   statement {
