@@ -1,0 +1,17 @@
+/cdap/mgmt/insights/sensitive/production-account: ENC[AES256_GCM,data:Q4IQ10q1U9Z9LHsV,iv:msDZEXCE1nDfDiT5OCwSy6P6Ux2+rg88MlPgBotKEGA=,tag:Ux+aJ1iwcf8dVu4v4gStXA==,type:int]
+/cdap/mgmt/insights/sensitive/ip-restrictions: ENC[AES256_GCM,data:TH/Wefc/8xxF9qB+q/rp9iqhCBewzvz5K0o=,iv:0zj/O2MYd2hrbAZjpf/19f6ux/BVbEFawA6PujTVrn8=,tag:EoYOTqJjTS5eOM7RQHWC6w==,type:str]
+/bb2/mgmt/insights/sensitive/production-account: ENC[AES256_GCM,data:DcCO+t2uT1KbBvLG,iv:ExMspQ9CN5hq8bPLFL5KKWiDuI6yXpTnLSf6kZQ4fQM=,tag:XmksqLTyohSNBxS6J6p38A==,type:int]
+/bfd/mgmt/insights/sensitive/production-account: ENC[AES256_GCM,data:7+mpZZm1qvASmcTs,iv:mh1lrbiSGpT+yR+6QrlcHWlnWd3oFZr9wm40Y0RBEhQ=,tag:5do/BZFSoOrLIKcch78/Ug==,type:int]
+sops:
+  kms:
+    - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-mgmt
+      created_at: "2025-09-30T19:13:00Z"
+      enc: AQICAHiKQjEEYvJPdywF5tXeCz/FMh8ciiBXHJWYytbH1uw6WAHXW/jBPCgfFFvNAduurTWAAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMYzrROySfTwxycQu4AgEQgDuf5uH3iGb0blD2+r43vtd6R77A+/Zk77BfVhHGC03I0Qm7EqgdymL6cntCAeMxbybefBN3BKWFVWYD+w==
+      aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-mgmt
+      created_at: "2025-09-30T19:13:00Z"
+      enc: AQICAHgWPUweNgOZBy54eQNTANw37AMcHppSZnWTksh1eOtc+wGh8N9L+gMCpKxWGdj0ob8ZAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMJT/PBEbyPHJ4h8cgAgEQgDuOyZxSH2R8GQiz8eqcDM2X8xuWxvpC0pYAaH+KJ64dWv6DEGJ7i0luLQ+dqFTGV6/aAeG5d+ybjzNFFg==
+      aws_profile: ""
+  unencrypted_regex: /nonsensitive/
+  mac_only_encrypted: true
+  version: 3.10.2
