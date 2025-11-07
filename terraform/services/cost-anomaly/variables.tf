@@ -6,4 +6,3 @@ variable "env" {
     error_message = "Valid value for env is test or prod."
   }
 }
-
