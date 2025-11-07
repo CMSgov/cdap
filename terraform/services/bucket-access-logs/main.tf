@@ -75,6 +75,33 @@ resource "aws_s3_bucket_policy" "bucket_access_logs" {
   policy = data.aws_iam_policy_document.bucket_access_logs.json
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "bucket_access_logs" {
+  bucket = aws_s3_bucket.bucket_access_logs.id
+
+  rule {
+    id     = "noncurrent-ia"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_transition {
+      noncurrent_days = 30
+      storage_class   = "STANDARD_IA"
+    }
+  }
+
+  rule {
+    id     = "cleanup-multipart"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
 resource "aws_ssm_parameter" "bucket_access_logs" {
   name        = "/cdap/bucket-access-logs-bucket"
   value       = aws_s3_bucket.bucket_access_logs.id
