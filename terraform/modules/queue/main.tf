@@ -8,8 +8,8 @@ resource "aws_sqs_queue" "dead_letter" {
 }
 
 resource "aws_sqs_queue" "this" {
-  name              = var.name
-  kms_master_key_id = data.aws_kms_alias.kms_key.arn
+  name                    = var.name
+  kms_master_key_id       = data.aws_kms_alias.kms_key.arn
 
   visibility_timeout_seconds = var.visibility_timeout_seconds
 
@@ -47,6 +47,7 @@ data "aws_iam_policy_document" "sns_send_message" {
       values   = [var.sns_topic_arn]
     }
   }
+  source_policy_documents = var.policy_documents
 }
 
 resource "aws_sqs_queue_policy" "sns_send_message" {
