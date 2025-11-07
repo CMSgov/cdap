@@ -81,7 +81,6 @@ module "sns_to_slack_queue" {
   source = "../../modules/queue"
 
   source_policy_documents   = [data.aws_iam_policy_document.sns_send_message.json]
-  override_policy_documents = var.override_policy_documents
 
   name = "cost-anomaly-alert-queue"
 
