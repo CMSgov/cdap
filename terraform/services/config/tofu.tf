@@ -1,8 +1,3 @@
-locals {
-  app          = "cdap"
-  state_bucket = "cdap-mgmt-s3.tfbackend"
-}
-
 variable "region" {
   default  = "us-east-1"
   nullable = false

@@ -1,16 +1,11 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5"
-    }
-  }
+locals {
+  app          = "cdap"
 }
 
+# TODO to switch to a commit hash for reference after merge
 module "platform" {
   source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1358_sops"
   providers = { aws = aws, aws.secondary = aws.secondary }
-
   app         = local.app
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/terraform/services/config"
