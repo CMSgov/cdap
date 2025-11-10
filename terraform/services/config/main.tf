@@ -2,15 +2,6 @@ locals {
   app = "cdap"
 }
 
-# terraform {
-#   required_providers {
-#     aws = {
-#       source  = "hashicorp/aws"
-#       version = "~> 5"
-#     }
-#   }
-# }
-
 # TODO to switch to a commit hash for reference after merge
 module "platform" {
   source      = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1358_sops"
