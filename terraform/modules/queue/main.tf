@@ -29,7 +29,7 @@ resource "aws_sqs_queue_redrive_allow_policy" "this" {
 }
 
 data "aws_iam_policy_document" "sns_send_message" {
-  count = var.sns_topic_arn != "None" ? 1 : 0
+  count = (var.sns_topic_arn != "None" &&  length(var.policy_documents)>0) ? 1 : 0
 
   statement {
     actions = ["sqs:SendMessage"]
@@ -51,7 +51,7 @@ data "aws_iam_policy_document" "sns_send_message" {
 }
 
 resource "aws_sqs_queue_policy" "sns_send_message" {
-  count = var.sns_topic_arn != "None" ? 1 : 0
+  count = (var.sns_topic_arn != "None" &&  length(var.policy_documents)>0) ? 1 : 0
 
   queue_url = aws_sqs_queue.this.id
   policy    = data.aws_iam_policy_document.sns_send_message[0].json

@@ -84,6 +84,7 @@ module "sns_to_slack_queue" {
   app           = "bcda"
   env           = var.env
   function_name = local.function_name
+  policy_documents = [data.aws_iam_policy_document.sns_send_message]
 
 }
 
