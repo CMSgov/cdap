@@ -1,0 +1,82 @@
+#!/bin/bash
+# Run tofu plan across all services. Used in the tofu-plan workflow.
+set -e
+
+temp_plan=$(mktemp)
+
+# Set temp file for summary if not running in github actions
+if [ -z "$GITHUB_STEP_SUMMARY" ]; then
+  temp_summary=$(mktemp)
+  echo "Setting GITHUB_STEP_SUMMARY to $temp_summary"
+  GITHUB_STEP_SUMMARY="$temp_summary"
+fi
+
+plan_error=false
+
+if [ "$ALL_SERVICES" == "true" ]; then
+  dirs="$(ls -d terraform/services/*)"
+else
+  # When run on main, diff against the prior commit. When run on any
+  # other branch, diff against main.
+  ref="$([ "$(git branch --show-current)" == "main" ] && echo "HEAD^" || echo "main")"
+  echo "Using $ref for diff"
+
+  # Get all affected service directories.
+  dirs="$(git diff --name-only "$ref" -- 'terraform/services/**/*.tf' | xargs dirname | sort | uniq)"
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+for dir in $dirs; do
+  cd "$repo_root"
+  [ ! -d "$dir" ] && echo "No directory found at $dir. Skipping" && continue
+  cd "$dir"
+  [ ! -f "conf.sh" ] && echo "No conf.sh file in $dir. Skipping" && continue
+  set -a
+  source conf.sh
+  set +a
+  case "$INFRA_ENVS" in
+    all)
+      ;;
+    account)
+      if [[ "$APP" == "bcda" && ("$ENV" == "test" || "$ENV" == "prod") ]]; then
+        echo "Planning the $dir service against the $APP-$ENV env for this account"
+      else
+        echo "Skipping $dir service for the $APP-$ENV environment"
+        continue
+      fi
+      ;;
+    *)
+      in_set=false
+      for infra_env in $INFRA_ENVS; do
+        if [ "$infra_env" == "$APP-$ENV" ]; then
+          in_set=true
+        fi
+      done
+      if [ "$in_set" != true ]; then
+        echo "Skipping $dir service for the $APP-$ENV environment"
+        continue
+      fi
+      ;;
+  esac
+  echo "Running plan on $dir"
+  tofu init -reconfigure -backend-config="../../backends/${APP}-${ENV}.s3.tfbackend"
+  export TF_VAR_app="$APP"
+  export TF_VAR_env="$ENV"
+  tofu plan | tee "$temp_plan"
+  if grep "Your infrastructure matches the configuration." "$temp_plan"; then
+    echo ":white_check_mark: No changes in $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
+  elif grep "OpenTofu encountered an error while generating this plan." "$temp_plan"; then
+    plan_error=true
+    echo ":exclamation: Error in plan for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
+  else
+    echo ":pencil: Changes in $dir service on $APP-$ENV env. See plan." >> $GITHUB_STEP_SUMMARY
+  fi
+done
+
+if [ -n "$temp_summary" ]; then
+  echo "See summary at $temp_summary"
+fi
+
+if [ "$plan_error" == "true" ]; then
+  exit 1
+fi
