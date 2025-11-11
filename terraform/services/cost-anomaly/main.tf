@@ -2,12 +2,12 @@ data "aws_caller_identity" "current" {}
 
 locals {
   function_name = "cost-anomaly-alert"
-  app = "cdap"
-  service = "cost-anomaly"
+  app           = "cdap"
+  service       = "cost-anomaly"
 }
 
 module "platform" {
-  source    ="github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app
