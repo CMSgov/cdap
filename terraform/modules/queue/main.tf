@@ -28,33 +28,16 @@ resource "aws_sqs_queue_redrive_allow_policy" "this" {
   })
 }
 
-data "aws_iam_policy_document" "sns_send_message" {
-  count = (var.sns_topic_arn != "None" &&  length(var.policy_documents)>0) ? 1 : 0
-
-  statement {
-    actions = ["sqs:SendMessage"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["sns.amazonaws.com"]
-    }
-
-    resources = [aws_sqs_queue.this.arn]
-
-    condition {
-      test     = "ArnEquals"
-      variable = "aws:SourceArn"
-      values   = [var.sns_topic_arn]
-    }
-  }
+data "aws_iam_policy_document" "this" {
+  count = (var.sns_topic_arn != "None" ||  length(var.policy_documents)>0) ? 1 : 0
   source_policy_documents = var.policy_documents
 }
 
-resource "aws_sqs_queue_policy" "sns_send_message" {
-  count = (var.sns_topic_arn != "None" &&  length(var.policy_documents)>0) ? 1 : 0
+resource "aws_sqs_queue_policy" "this" {
+  count = (var.sns_topic_arn != "None" || length(var.policy_documents)>0) ? 1 : 0
 
   queue_url = aws_sqs_queue.this.id
-  policy    = data.aws_iam_policy_document.sns_send_message[0].json
+  policy    = data.aws_iam_policy_document.this[0].json
 }
 
 resource "aws_sns_topic_subscription" "this" {
