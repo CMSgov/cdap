@@ -8,8 +8,8 @@ resource "aws_sqs_queue" "dead_letter" {
 }
 
 resource "aws_sqs_queue" "this" {
-  name                    = var.name
-  kms_master_key_id       = data.aws_kms_alias.kms_key.arn
+  name              = var.name
+  kms_master_key_id = data.aws_kms_alias.kms_key.arn
 
   visibility_timeout_seconds = var.visibility_timeout_seconds
 

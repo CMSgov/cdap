@@ -98,8 +98,8 @@ module "opt_out_import_queue" {
 
   name = local.full_name
 
-  function_name = module.opt_out_import_function.name
-  sns_topic_arn = data.aws_ssm_parameter.bfd_sns_topic_arn.value
+  function_name    = module.opt_out_import_function.name
+  sns_topic_arn    = data.aws_ssm_parameter.bfd_sns_topic_arn.value
   policy_documents = [data.aws_iam_policy_document.sns_send_message]
 }
 
