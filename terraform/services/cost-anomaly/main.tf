@@ -2,15 +2,18 @@ data "aws_caller_identity" "current" {}
 
 locals {
   function_name = "cost-anomaly-alert"
+  app = "cdap"
+  service = "cost-anomaly"
 }
 
-module "standards" {
-  source      = "github.com/CMSgov/cdap//terraform/modules/standards"
-  app         = "cdap"
+module "platform" {
+  source    ="github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  providers = { aws = aws, aws.secondary = aws.secondary }
+
+  app         = local.app
   env         = var.env
-  providers   = { aws = aws, aws.secondary = aws.secondary }
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/cost-anomaly"
-  service     = "cost-anomaly"
+  root_module = "https://github.com/CMSgov/cdap/tree/terraform/services/cost-anomaly"
+  service     = local.service
 }
 
 resource "aws_ce_anomaly_monitor" "account_alerts" {
