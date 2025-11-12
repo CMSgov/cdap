@@ -8,14 +8,6 @@ variable "function_name" {
   type        = string
 }
 
-variable "sns_topic_arn" {
-  description = "ARN of the SNS topic to subscribe to"
-  type        = string
-  # Setting default to "None" allows us to set the AWS Parameter Store value
-  # to "None" to disable creation of SNS Topic Subscription
-  default = "None"
-}
-
 variable "visibility_timeout_seconds" {
   description = "Queue visibility timeout in seconds"
   type        = number
