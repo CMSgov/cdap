@@ -4,6 +4,7 @@ locals {
   function_name = "cost-anomaly-alert"
   app           = "cdap"
   service       = "cost-anomaly"
+  default_tags = module.platform.default_tags
 }
 
 module "platform" {
