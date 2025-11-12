@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 locals {
   function_name = "cost-anomaly-alert"
-  app           = "cdap"
+  app           = "bcda"
   service       = "cost-anomaly"
   default_tags = module.platform.default_tags
 }
