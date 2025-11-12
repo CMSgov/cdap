@@ -70,7 +70,6 @@ module "cclf_import_queue" {
 }
 
 data "aws_iam_policy_document" "sns_send_message" {
-
   statement {
     sid     = "SnsSendMessage"
     actions = ["sqs:SendMessage"]
