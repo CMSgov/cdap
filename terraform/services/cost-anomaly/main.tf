@@ -90,6 +90,7 @@ module "sns_to_slack_queue" {
   function_name    = local.function_name
   policy_documents = [data.aws_iam_policy_document.sns_send_message.json]
 }
+
 resource "aws_sns_topic_subscription" "this" {
   endpoint  = module.sns_to_slack_queue.arn
   protocol  = "sqs"
