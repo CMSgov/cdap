@@ -4,7 +4,7 @@ locals {
   function_name = "cost-anomaly-alert"
   app           = "bcda"
   service       = "cost-anomaly"
-  default_tags = module.platform.default_tags
+  default_tags  = module.platform.default_tags
 }
 
 module "platform" {
