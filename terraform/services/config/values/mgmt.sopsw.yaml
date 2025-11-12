@@ -6,6 +6,11 @@
 /cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-a: ENC[AES256_GCM,data:sL/7GoM3BjiBN0Wt1Xg=,iv:vxDF8a1nduKPkjNGjxFai/oLi9NrO5F2fzdbjZ9OC+w=,tag:iKQYgyBHaZqTnVKd2L6UcQ==,type:str]
 /cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-b: ENC[AES256_GCM,data:3T3XJXAfO+ukonOB,iv:pRRz120EXNn3Mjp+MWmjybWk20Tiqt5mZyH9tCt06FI=,tag:ejOONP6IvUWMfQUMotshcw==,type:str]
 /cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-c: ENC[AES256_GCM,data:FqJ5g/NEdjs9VUW1,iv:gPMZEY94Th2seM4bg6axdVKyD8ZS4y6EUjt92spY0nk=,tag:dM7vk5x4WRZd1/iC96LOjg==,type:str]
+/sonarqube/sensitive/token: ENC[AES256_GCM,data:qojFBoJfbl7R58OzIrYpQXDXk9Q0y+HuJ/j6mNh6UlwF/tZO4D/fNrCAEII=,iv:Sz88t6Ne3REPp8QWMjN5EeWa2MLE/lz2slJnktOOxUc=,tag:qyqRzmaKlaoEcT4X/rQ4Ug==,type:str]
+/sonarqube/nonsensitive/url: https://sonarqube.cloud.cms.gov
+/artifactory/sensitive/password: ENC[AES256_GCM,data:Nbun/dCVtQSrvZ7sgVqbj6NQvPZVvoIzG+V7k3HuLeuR2sudR9sBttHXdFxLI9eMHti6vqgvpLW0jhkgybqT/Q==,iv:IQcgnmn//o4cXqX0XST75n+JxlWVBlcKIgaheJAWbko=,tag:7hd5yhowYR8n0uVy0SVS7w==,type:str]
+/artifactory/nonsensitive/url: https://artifactory.cloud.cms.gov/artifactory
+/artifactory/nonsensitive/user: ab2d-bcda-dpc-plt
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:key/e32dffdb-97e7-4b64-b5cb-f6dc4e6fabca
