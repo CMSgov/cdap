@@ -1,3 +1,4 @@
+# TODO switch to a commit hash reference after merge
 module "platform" {
   source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1358_sops"
   providers = { aws = aws, aws.secondary = aws.secondary }
