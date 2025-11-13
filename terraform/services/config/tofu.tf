@@ -11,7 +11,7 @@ variable "secondary_region" {
 }
 
 provider "aws" {
-  region = var.region
+  region = "us-east-1"
   default_tags {
     tags = local.default_tags
   }
