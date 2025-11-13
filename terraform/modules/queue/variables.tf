@@ -8,14 +8,6 @@ variable "function_name" {
   type        = string
 }
 
-variable "sns_topic_arn" {
-  description = "ARN of the SNS topic to subscribe to"
-  type        = string
-  # Setting default to "None" allows us to set the AWS Parameter Store value
-  # to "None" to disable creation of SNS Topic Subscription
-  default = "None"
-}
-
 variable "visibility_timeout_seconds" {
   description = "Queue visibility timeout in seconds"
   type        = number
@@ -39,4 +31,10 @@ variable "env" {
     condition     = contains(["dev", "test", "sandbox", "prod"], var.env)
     error_message = "Valid value for env is dev, test, sandbox, or prod."
   }
+}
+
+variable "policy_documents" {
+  description = "List of IAM policy documents that are merged together into the exported document. Statements must have unique `sid`s"
+  type        = list(string)
+  default     = []
 }
