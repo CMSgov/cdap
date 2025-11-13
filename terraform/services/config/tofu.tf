@@ -6,7 +6,7 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias = "secondary"
+  alias  = "secondary"
   region = "us-west-2"
   default_tags {
     tags = local.default_tags
