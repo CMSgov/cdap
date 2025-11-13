@@ -11,7 +11,7 @@ module "platform" {
   source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1358_sops"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app         = local.app
+  app         = "bcda"
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/terraform/services/config"
   service     = local.service
