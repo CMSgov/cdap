@@ -1,7 +1,7 @@
 locals {
   app              = var.app
   env              = var.env
-  established_envs = ["test", "dev", "sandbox", "prod", "mgmt"]
+  established_envs = ["test", "dev", "sandbox", "prod"]
   root_module      = var.root_module
   parent_env       = one([for x in local.established_envs : x if can(regex("${x}$$", local.env))])
   sdlc_env         = contains(["sandbox", "prod"], local.parent_env) ? "production" : "non-production"
