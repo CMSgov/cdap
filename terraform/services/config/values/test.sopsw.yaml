@@ -1,21 +1,23 @@
 /cdap/nonsensitive/account/security_events_slack_renotify_after_days: 30
 /cdap/nonsensitive/account/security_events_slack_severity_list: CRITICAL,HIGH,MEDIUM
-/cdap/sensitive/account/security_events_slack_webhook_url: ENC[AES256_GCM,data:J70QSI23I0d1OnvD+n2ncd/ii0XiZ3NRcQqVwCLCBd7UxRIKgJ1YWqCZ9xV2Y8s/4fy+hi8iVvIkd0WdnC1Q9Adwh2rvRKKWM6lS59EYlA==,iv:/ZIY4WGOsxo2pR/t2FYADYcUeEq5eutP43KkNeTa3q0=,tag:HYuxPAStpJZ0t39j/xHLYg==,type:str]
-/cdap/sensitive/bucket-access-logs-bucket: ENC[AES256_GCM,data:I8m2zMO44IB1FnAuK08G99390eF5NjLcKTVvY4T5oD2O6/Apt3oSV3GAUldn,iv:DQUyoHG1Gplx4YuogWcG9kZnK3XTZXC+N5Ayzyb6LDM=,tag:wQpSTHVaItOGb3PC6tHw/w==,type:str]
-/cdap/sensitive/mgmt-vpc/cidr: ENC[AES256_GCM,data:bKqvpJcIqTqG9DkzO1/T,iv:ul/XIzIZ3BnERohYmuM7fWXWTYI0b45T4F2lUFHkvIw=,tag:LEpy1QiHUoGlTg+mKUaQtg==,type:str]
-/cdap/sensitive/gmt/public_nat_ipv4/cdap-east-mgmt-a: ENC[AES256_GCM,data:+mOA32KHMukav+YrGiI=,iv:XsU4F/UvJIlvwgco+SssgdMIEKyKx1e+AwfWP+bheYE=,tag:PsplAE2eFcxWvPddXNHEdQ==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-b: ENC[AES256_GCM,data:yrLn9ruTYs3iUGtQ,iv:Sbvhi8ByvNKxq6HiI4sBYZ/J2z3baL6xtCqNwO+QBRo=,tag:cAAvVVyTZe7EC5nMOH7MYg==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-c: ENC[AES256_GCM,data:SR+94ef0AuGMEzGP,iv:sbYtwbP3LFByLYzQysND27FDmSbqP7ihT+qXgqSuEds=,tag:UHJhmmOhBQ/7XsUHsLkkpA==,type:str]
-/cdap/sensitive/sonarqube/token: ENC[AES256_GCM,data:8Vu/Q9Xb9F2r43Xi2qDvrbOwEl1dOQCDaZAQchZdjbiqiUbdCM/ZUHM1Xiw=,iv:Vc8u7xoaAY4jiwN8/hlIA0fP5GpH4iWbWt+E5a2Bxjk=,tag:Klucyv8omHZz9yAcy/D3SQ==,type:str]
+/cdap/sensitive/account/security_events_slack_webhook_url: ENC[AES256_GCM,data:aiW0cRzw2ZBM+WmgyXYeEGTIgP3Rm2vL6wa8+mGYyMnMQ718iODap66yNHLkOttq2Lz3V+HDdvjwYXDfG+IBvj9zVpQTjC3EabvByOCIeA==,iv:3GRLuWVe8Z5N3I9JY0DVyrPcwmIv+5vMwIS5ZR4P/v0=,tag:N4Hq6cI/JUUkCzR0BaL/sA==,type:str]
+/cdap/sensitive/bucket-access-logs-bucket: ENC[AES256_GCM,data:a9oeAjfhElMm1bceKXkQiZuCnvKGJ4KZdUDHHgbcJhV/KDOJ/Kms+ThAl4s1,iv:86Bff+m1IP0eMbEEzTql64XjeXqkXqEpWXHc9HElkAU=,tag:bAIb8jWb4VQXw603f3zv1g==,type:str]
+/cdap/sensitive/mgmt-vpc/cidr: ENC[AES256_GCM,data:EFep+iQ02YJJe22XX4LZ,iv:nOoqFQiizuPIHDzR5xsLDeIDjZvGxmnDaWu8eGzjWrQ=,tag:En0682ms1NNWjCZhnOtrkg==,type:str]
+/cdap/sensitive/gmt/public_nat_ipv4/cdap-east-mgmt-a: ENC[AES256_GCM,data:Q//cSfZmUiNc5FqmzII=,iv:BDII9+oRF8tlpoZAGsH6eE0UBigdaZEwDWFs/saYvqQ=,tag:WwfrS9Wn1+aL2xieWP+pXA==,type:str]
+/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-b: ENC[AES256_GCM,data:zznp+VJvDrbdMFgz,iv:/gS+Vtt+rBsKbyjLJAyYXeAWkMHAxYClv/kqocwGUfs=,tag:CpOs+maoTJChJW7lz72Slw==,type:str]
+/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-c: ENC[AES256_GCM,data:jmZGAzdcyIwPdq69,iv:jlAyPtL700BnqiWtsqQSrmZmt2TXtSzJUM2cR07bRrc=,tag:Zul0kmzRQZNMkbsLwmiUIA==,type:str]
+/cdap/sensitive/sonarqube/token: ENC[AES256_GCM,data:G8DmkxGggaryrx9+eIGmOtgM2DW931q3k9X/Cjy58Q2ZQ/Tp/bgx4yoJ7Do=,iv:IgsPiB8Fjbw984dB6tgjJa2nQrGl6Ko9TiNWNI+VIUE=,tag:SP61z5HnoDjbe3HVkLfJiQ==,type:str]
 /cdap/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
-/cdap/sensitive/artifactory/password: ENC[AES256_GCM,data:IRxXjLkc9U04LGlDdaFeGjLQjvqRhdgDzMD4LuQObpS30tFgfHcgQxUEH/ZfYHxo7+P8YWRa+H7A+5qnmprLow==,iv:TMdVDwurOwV6PakCthdzDLQU9rtChiYH95Cstk3qiNw=,tag:ZUT0Av6p93lnUYXo83+Mng==,type:str]
+/cdap/sensitive/artifactory/password: ENC[AES256_GCM,data:YHIx5dSONjUgnO/rAP7JsvIR0PElCzLiARuABts0zcAUTYXC4hl4M+MGabhEzrUAqtRfD3wvIw2RiXmFrKqRNQ==,iv:UCrI+tMCwoYtf1gWAlr1/7PWHzj/Tqvc5lajjbCxAd0=,tag:02HC5T7mi2mZi0euLEwELA==,type:str]
 /cdap/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
 /cdap/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
 sops:
-  kms:
-    - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:key/e32dffdb-97e7-4b64-b5cb-f6dc4e6fabca
-      created_at: "2025-10-03T17:38:55Z"
-      enc: AQICAHiXhc+HhELIyRKOpc5vBWQJB9/2XFW+CxWFIfUyci0r/wGgF/ZOMV/LMrvJSRhtedM1AAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM8xXrZN9mTFGkvKjtAgEQgDsOpxt5mGlXEpdiTlnAjnt/AcOMpA8coSH4NHWfC2Tsw/VES55XVAaWQYXuOOdKnIJznMlUqzqBVrfvTw==
-      aws_profile: ""
-  unencrypted_regex: /nonsensitive/
-  version: 3.11.0
+    kms:
+        - arn: arn:aws:kms:us-east-1:539247469933:alias/bcda-test
+          created_at: "2025-11-17T21:10:18Z"
+          enc: AQICAHjmpdIoLQvhLo0ak4uYFiScF9EZlYU3g9HHyCuiUTXbOwHLNWrV6czniW+ynxVXARD/AAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMl7Aj8t3HMIwdjbVFAgEQgDsvvnioXJMRDPB5vydrZbzQKqEpISs9UOYX4OUGEfNHl7dGxI/3BA6yoZPn/GU7zl3RDZfxs9QQdZaIcg==
+          aws_profile: ""
+    lastmodified: "2025-11-17T21:19:40Z"
+    mac: ENC[AES256_GCM,data:bssj91Ngo0DYAM6FItDqsWez3ycy4efnMAQ+D/nRyYsQ35LC5J+Ra0iE0GwqJjInt3iggKvNWGX8JPa4Xo0vDI9TCS+rBVT0keB0af0k6eApLPGavDC1LW0VWfZjBuIvx881HmGgAO10SrIGlBJV9Vv7y4injBJVvIB68PSO4aQ=,iv:EnEYf8SGUVQdQDNXNV++d+tcqaZsP0eW4Zb1/8xNgfs=,tag:Gn3IYLAGqQxHk9H8P/MjSg==,type:str]
+    unencrypted_regex: /nonsensitive/
+    version: 3.11.0
