@@ -1,0 +1,59 @@
+name: Install sops
+description: Sets up sops (https://github.com/getsops/sops)
+runs:
+  using: composite
+  steps:
+    - name: install sops
+      shell: bash
+      run: |
+        # Configuration
+        SOPS_VERSION="v3.11.0" # Specify the desired SOPS version
+        ARCH="amd64"           # Set the architecture
+        OS="linux"             # Set the operating system
+        TMPDIR=$(mktemp -d)
+        cd $TMPDIR
+        
+        # URL for the SOPS release files
+        BASE_URL="https://github.com/getsops/sops/releases/download"
+        BINARY_NAME="sops-${SOPS_VERSION}.${OS}.${ARCH}"
+        CHECKSUMS_FILE="sops-${SOPS_VERSION}.checksums.txt"
+        CHECKSUMS_PEM="sops-${SOPS_VERSION}.checksums.pem"
+        CHECKSUMS_SIG="sops-${SOPS_VERSION}.checksums.sig"
+        
+        echo "Downloading SOPS version ${SOPS_VERSION}..."
+        curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${BINARY_NAME}"
+        curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_FILE}"
+        
+        if cosign version > /dev/null; then
+          curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_PEM}"
+          curl -SsLO "${BASE_URL}/${SOPS_VERSION}/${CHECKSUMS_SIG}"
+          echo "Verifying checksum..."
+          cosign verify-blob ${CHECKSUMS_FILE} \
+            --certificate ${CHECKSUMS_PEM} \
+            --signature ${CHECKSUMS_SIG} \
+            --certificate-identity-regexp=https://github.com/getsops \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com
+          SOPS_SIG_CHECK=$?
+         
+          if [ "$SOPS_SIG_CHECK" -eq "0" ]; then
+            echo "signatures verified"
+            
+          else
+            echo "signature verification failed"
+            exit 1
+          fi
+        else
+          echo "install cosign for signature verification"
+        fi
+        
+        if shasum -a 256 -c "${CHECKSUMS_FILE}" --ignore-missing; then
+          echo "checksums checked, installing sops"
+          echo "Installing SOPS"
+          mv ${BINARY_NAME} /usr/local/bin/sops
+          # Make the binary executable
+          echo "Setting executable permissions..."
+          chmod +x /usr/local/bin/sops
+        else
+          echo "checksum check failed"
+          exit 1
+        fi

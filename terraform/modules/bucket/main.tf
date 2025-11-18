@@ -1,10 +1,3 @@
-module "bucket_key" {
-  source      = "../key"
-  name        = "${var.name}-bucket"
-  description = "For ${var.name} S3 bucket and its access logs"
-  user_roles  = var.cross_account_read_roles
-}
-
 resource "aws_s3_bucket" "this" {
   # Max length on bucket_prefix is 37, so cut it to 36 plus the dash
   bucket_prefix = "${substr(var.name, 0, 36)}-"
@@ -91,11 +84,12 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
   rule {
+    bucket_key_enabled = true
+
     apply_server_side_encryption_by_default {
       kms_master_key_id = data.aws_kms_alias.kms_key.target_key_arn
       sse_algorithm     = "aws:kms"
     }
-    bucket_key_enabled = true
   }
 }
 
@@ -109,8 +103,7 @@ data "aws_s3_bucket" "bucket_access_logs" {
 }
 
 resource "aws_s3_bucket_logging" "this" {
-  bucket = aws_s3_bucket.this.id
-
+  bucket        = aws_s3_bucket.this.id
   target_bucket = data.aws_s3_bucket.bucket_access_logs.id
   target_prefix = "${aws_s3_bucket.this.id}/"
 }

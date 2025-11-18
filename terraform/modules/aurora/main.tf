@@ -1,11 +1,3 @@
-locals {
-  service_prefix      = "${var.platform.app}-${var.platform.env}"
-  major_version       = split(".", var.engine_version)[0]
-  aurora_engine       = "aurora-postgresql"
-  aurora_family       = "${local.aurora_engine}${local.major_version}"
-  security_group_name = coalesce(var.security_group_override, "${local.service_prefix}-db")
-}
-
 resource "aws_db_subnet_group" "this" {
   description = "${local.service_prefix} database subnet group"
   name        = coalesce(var.subnet_group_override, local.service_prefix)
@@ -40,14 +32,8 @@ resource "aws_rds_cluster_parameter_group" "this" {
   family      = local.aurora_family
   description = "Aurora cluster parameter group for ${local.service_prefix}"
 
-  parameter {
-    apply_method = "immediate"
-    name         = "rds.force_ssl"
-    value        = "1"
-  }
-
   dynamic "parameter" {
-    for_each = toset(var.cluster_parameters)
+    for_each = toset(concat(local.default_cluster_parameters, var.cluster_parameters))
 
     content {
       apply_method = parameter.value.apply_method
@@ -173,4 +159,3 @@ resource "aws_rds_cluster_instance" "this" {
     ]
   }
 }
-

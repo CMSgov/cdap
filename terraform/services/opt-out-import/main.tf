@@ -98,8 +98,35 @@ module "opt_out_import_queue" {
 
   name = local.full_name
 
-  function_name = module.opt_out_import_function.name
-  sns_topic_arn = data.aws_ssm_parameter.bfd_sns_topic_arn.value
+  function_name    = module.opt_out_import_function.name
+  policy_documents = [data.aws_iam_policy_document.sns_send_message.json]
+}
+
+data "aws_iam_policy_document" "sns_send_message" {
+
+  statement {
+    sid     = "SnsSendMessage"
+    actions = ["sqs:SendMessage"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["sns.amazonaws.com"]
+    }
+
+    resources = [module.opt_out_import_queue.arn]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:SourceArn"
+      values   = [data.aws_ssm_parameter.bfd_sns_topic_arn.value]
+    }
+  }
+}
+
+resource "aws_sns_topic_subscription" "this" {
+  endpoint  = module.opt_out_import_queue.arn
+  protocol  = "sqs"
+  topic_arn = data.aws_ssm_parameter.bfd_sns_topic_arn.value
 }
 
 # Add a rule to the database security group to allow access from the function
