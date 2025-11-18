@@ -11,7 +11,7 @@ on:
       - terraform/modules/queue/**
       - terraform/modules/subnets/**
       - terraform/modules/vpc/**
-      - terraform/services/cost-anomaly-to-slack/**
+      - terraform/services/cost-anomaly/**
   schedule:
     - cron: "12 14 * * 1-5"
   workflow_dispatch:
