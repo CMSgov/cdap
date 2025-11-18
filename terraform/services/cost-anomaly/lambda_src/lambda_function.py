@@ -13,7 +13,7 @@ from botocore.exceptions import ClientError
 
 SSM_PARAMETER_CACHE = {}
 
-
+# pylint: disable=too-few-public-methods
 class Field:
     """Represents a field object from SNS JSON."""
 
@@ -30,7 +30,7 @@ class Field:
         self.text = text
         self.emoji = emoji
 
-
+# pylint: disable=too-few-public-methods
 class Block:
     """Represents a block object from SNS JSON."""
 
@@ -48,7 +48,7 @@ class Block:
         if kwargs.get("text"):
             self.text = kwargs.get("text")
 
-
+# pylint: disable=too-few-public-methods
 class Text:
     """Represents a text object from SNS JSON."""
 
@@ -112,8 +112,8 @@ def is_ignore_ok():
     """
     return os.environ.get('IGNORE_OK', 'false').lower() == 'true'
 
-
-def lambda_handler(event):
+# pylint: disable=too-many-locals
+def lambda_handler(event,context):
     """
     Handle incoming Lambda events from Cost Anomaly Monitor.
 
@@ -125,6 +125,7 @@ def lambda_handler(event):
         dict: Status code and response message
     """
     print(json.dumps(event))
+    print(json.dumps(context))
 
     print("Retrieve Slack URL from Secrets Manager")
 
