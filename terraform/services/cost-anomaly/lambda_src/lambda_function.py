@@ -13,26 +13,37 @@ from botocore.exceptions import ClientError
 
 ssm_parameter_cache = {}
 
+
 class Field:
-    def __init__(self,  type, text, emoji):
+    def __init__(self, type: object, text, emoji):
         self.type = type
+        #text: text to be displayed
         self.text = text
+        #emoji: boolean
         self.emoji = emoji
 
+
 class Block:
-    def __init__(self, type, **kwargs):
+    #def __init__(self, type,  text=None, fields=None):
+    def __init__(self, type: object, **kwargs):
         self.type = type
+        #fields: an array of fields in the section
         if kwargs.get("fields"):
             self.fields = kwargs.get("fields")
         if kwargs.get("text"):
             self.text = kwargs.get("text")
 
+
 class Text:
-    def __init__(self, type, text, **kwargs):
-       self.type = type
-       self.text = text
-       if kwargs.get("emoji"):
-          self.emoji = kwargs.get("emoji")
+    #def __init__(self, type, text, emoji):
+    def __init__(self, type: object, text, **kwargs):
+        self.type = type
+        #text: text to be displayed
+        self.text = text
+        #emoji: boolean
+        if kwargs.get("emoji"):
+            self.emoji = kwargs.get("emoji")
+
 
 def get_ssm_client():
     """
@@ -40,6 +51,7 @@ def get_ssm_client():
     Prevents global instantiation to avoid NoRegionError during tests.
     """
     return boto3.client('ssm')
+
 
 def get_ssm_parameter(name):
     """
@@ -58,6 +70,7 @@ def get_ssm_parameter(name):
 
     return ssm_parameter_cache[name]
 
+
 def is_ignore_ok():
     """
     Returns the current value of the IGNORE_OK environment variable.
@@ -65,32 +78,8 @@ def is_ignore_ok():
     """
     return os.environ.get('IGNORE_OK', 'false').lower() == 'true'
 
-# def lambda_handlerOLD(event, _):
-#     """
-#     Main entry point for the Lambda function.
-#     It iterates through the SQS records, processes each CloudWatch alarm,
-#     and forwards it to the appropriate Slack channel.
-#     """
-#     processed_count = 0
-#     for record in event['Records']:
-#         message = enriched_cloudwatch_message(record)
-#         if message:
-#             app = message.get('App')
-#             if app:
-#                 webhook = get_ssm_parameter(f'/{app}/lambda/slack_webhook_url')
-#                 if webhook:
-#                     send_message_to_slack(webhook, message, record.get('messageId'))
-#                     processed_count += 1
-#                 else:
-#                     log({'messageId': record.get('messageId'),
-#                          'msg': f'Could not find Slack webhook for app: {app}'})
-#     return {
-#         'statusCode': 200,
-#         'body': f'Processed {processed_count} messages successfully'
-#     }
 
-def lambda_handler(event, context):
-
+def lambda_handler(event):
     print(json.dumps(event))
 
     print("Retrieve Slack URL from Secrets Manager")
@@ -102,57 +91,47 @@ def lambda_handler(event, context):
     print("Initialise Slack Webhook Client")
 
     print("Decoding the SNS Message")
-    anomalyEvent = json.loads(event["Records"][0]["Sns"]["Message"])
+    anomaly_event = json.loads(event["Records"][0]["Sns"]["Message"])
 
-    #Total Cost of the Anomaly
-    totalcostImpact = anomalyEvent["impact"]["totalImpact"]
+    totalcost_impact = anomaly_event["impact"]["totalImpact"]
 
-    #Anomaly Detection Interval
-    anomalyStartDate =  anomalyEvent["anomalyStartDate"]
-    anomalyEndDate = anomalyEvent["anomalyEndDate"]
+    anomaly_start_date = anomaly_event["anomalyStartDate"]
+    anomaly_end_date = anomaly_event["anomalyEndDate"]
 
-    #anomalyDetailsLink
-    anomalyDetailsLink = anomalyEvent["anomalyDetailsLink"]
+    anomaly_details_link = anomaly_event["anomalyDetailsLink"]
 
-    #Now, will start building the Slack Message.
-    #Blocks is the main array thagit git holds the full message.
-    #Instantiate an Object of the Class Block
     blocks = []
 
-    #MessageFormatting - Keep Appending the blocks object. Order is important here.
-    #First, Populating the 'Text' Object that is a subset of the Block object.
-    headerText = Text("plain_text", ":warning: Cost Anomaly Detected ", emoji = True)
-    totalAnomalyCostText = Text("mrkdwn", "*Total Anomaly Cost*: $" + str(totalcostImpact))
-    rootCausesHeaderText = Text("mrkdwn", "*Root Causes* :mag:")
-    anomalyStartDateText = Text("mrkdwn", "*Anomaly Start Date*: " + str(anomalyStartDate))
-    anomalyEndDateText = Text("mrkdwn", "*Anomaly End Date*: " + str(anomalyEndDate))
-    anomalyDetailsLinkText = Text("mrkdwn", "*Anomaly Details Link*: " + str(anomalyDetailsLink))
+    header_text = Text("plain_text", ":warning: Cost Anomaly Detected ", emoji=True)
+    total_anomaly_cost_text = Text("mrkdwn", "*Total Anomaly Cost*: $" + str(totalcost_impact))
+    root_causes_header_text = Text("mrkdwn", "*Root Causes* :mag:")
+    anomaly_start_date_text = Text("mrkdwn", "*Anomaly Start Date*: " + str(anomaly_start_date))
+    anomaly_end_date_text = Text("mrkdwn", "*Anomaly End Date*: " + str(anomaly_end_date))
+    anomaly_details_link_text = Text("mrkdwn", "*Anomaly Details Link*: " + str(anomaly_details_link))
 
+    blocks.append(Block("header", text=header_text.__dict__))
+    blocks.append(Block("section", text=total_anomaly_cost_text.__dict__))
+    blocks.append(Block("section", text=anomaly_start_date_text.__dict__))
+    blocks.append(Block("section", text=anomaly_end_date_text.__dict__))
+    blocks.append(Block("section", text=anomaly_details_link_text.__dict__))
+    blocks.append(Block("section", text=root_causes_header_text.__dict__))
 
-    #Second, Start appending the 'blocks' object with the header, totalAnomalyCost and rootCausesHeaderText
-    blocks.append(Block("header", text=headerText.__dict__))
-    blocks.append(Block("section", text=totalAnomalyCostText.__dict__))
-    blocks.append(Block("section", text=anomalyStartDateText.__dict__))
-    blocks.append(Block("section", text=anomalyEndDateText.__dict__))
-    blocks.append(Block("section", text=anomalyDetailsLinkText.__dict__))
-    blocks.append(Block("section", text=rootCausesHeaderText.__dict__))
-
-    #Third, iterate through all possible root causes in the Anomaly Event and append the blocks as well as fields objects.
-    for rootCause in anomalyEvent["rootCauses"]:
+    for root_cause in anomaly_event["rootCauses"]:
         fields = []
-        for rootCauseAttribute in rootCause:
-                if rootCauseAttribute == "linkedAccount":
-                  fields.append(Field("plain_text", "accountName"  + " : " + "non-prod", False))
-                  fields.append(Field("plain_text", rootCauseAttribute  + " : " + rootCause[rootCauseAttribute], False))
-        blocks.append(Block("section", fields = [ob.__dict__ for ob in fields]))
+        for root_cause_attribute in root_cause:
+            if root_cause_attribute == "linkedAccount":
+                fields.append(Field("plain_text", "accountName" + " : " + "non-prod", False))
+                fields.append(
+                    Field("plain_text", root_cause_attribute + " : " + root_cause[root_cause_attribute], False))
+        blocks.append(Block("section", fields=[ob.__dict__ for ob in fields]))
 
-
-    send_message_to_slack(slack_url, anomalyEvent, json.dumps([ob.__dict__ for ob in blocks]))
+    send_message_to_slack(slack_url, anomaly_event, json.dumps([ob.__dict__ for ob in blocks]))
 
     return {
         'statusCode': 200,
         'responseMessage': 'Posted to Slack Channel Successfully'
     }
+
 
 def send_message_to_slack(webhook, message, message_id):
     """
