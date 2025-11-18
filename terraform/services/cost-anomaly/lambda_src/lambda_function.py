@@ -84,7 +84,7 @@ def lambda_handler(event):
 
     print("Retrieve Slack URL from Secrets Manager")
 
-    slack_url = get_ssm_parameter(f'/cdap/sensitive/webhook/cost-anomaly')
+    slack_url = get_ssm_parameter('/cdap/sensitive/webhook/cost-anomaly')
 
     print("Slack Webhook URL retrieved")
 
