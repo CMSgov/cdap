@@ -20,23 +20,20 @@ class Field:
         self.text = text
         self.emoji = emoji
 
-
 class Block:
     def __init__(self, type, **kwargs):
         self.type = type
         if kwargs.get("fields"):
-            self.fields = kwargs.get("fields")
+           self.fields = kwargs.get("fields")
         if kwargs.get("text"):
-            self.text = kwargs.get("text")
-
+           self.text = kwargs.get("text")
 
 class Text:
     def __init__(self, type, text, **kwargs):
         self.type = type
         self.text = text
         if kwargs.get("emoji"):
-            self.emoji = kwargs.get("emoji")
-
+           self.emoji = kwargs.get("emoji")
 
 def get_ssm_client():
     """
