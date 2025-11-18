@@ -12,7 +12,7 @@ if [ -z "$GITHUB_STEP_SUMMARY" ]; then
   GITHUB_STEP_SUMMARY="$temp_summary"
 fi
 
-plan_or_apply_error=false
+tofu_error=false
 
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
@@ -49,7 +49,11 @@ for dir in $(ls terraform/services); do
       fi
       ;;
   esac
-  tofu init -reconfigure -backend-config="../../backends/${APP}-${ENV}.s3.tfbackend"
+  if ! tofu init -reconfigure -backend-config="../../backends/${APP}-${ENV}.s3.tfbackend"; then
+    tofu_error=true
+    echo ":exclamation: Error in init for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
+    continue
+  fi
   export TF_VAR_app="$APP"
   export TF_VAR_env="$ENV"
   tofu plan -out "$temp_plan_out" | tee "$temp_plan"
@@ -57,7 +61,7 @@ for dir in $(ls terraform/services); do
     echo ":white_check_mark: No changes in $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     continue
   elif grep "OpenTofu encountered an error while generating this plan." "$temp_plan"; then
-    plan_or_apply_error=true
+    tofu_error=true
     echo ":exclamation: Error in plan for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     continue
   else
@@ -68,7 +72,7 @@ for dir in $(ls terraform/services); do
     if tofu apply "$temp_plan_out"; then
       echo ":rocket: Successful apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     else
-      plan_or_apply_error=true
+      tofu_error=true
       echo ":exclamation: Error in apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     fi
   fi
@@ -79,6 +83,6 @@ if [ -n "$temp_summary" ]; then
   echo "See summary at $temp_summary"
 fi
 
-if [ "$plan_or_apply_error" == "true" ]; then
+if [ "$tofu_error" == "true" ]; then
   exit 1
 fi
