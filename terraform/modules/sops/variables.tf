@@ -1,8 +1,9 @@
 variable "platform" {
   description = "Object that describes standardized platform values."
   type = object({
-    app = string,
-    parent_env = string,env = string,
+    app        = string,
+    parent_env = string,
+    env = string,
     kms_alias_primary = object({
       target_key_arn = string,
     }),
