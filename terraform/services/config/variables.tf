@@ -1,5 +1,5 @@
 variable "env" {
-  description = "The application environment (test, prod, mgmt)"
+  description = "The application environment (test, prod)"
   type        = string
   validation {
     condition     = contains(["test", "prod",], var.env)
