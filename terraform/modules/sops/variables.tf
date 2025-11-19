@@ -3,7 +3,7 @@ variable "platform" {
   type = object({
     app        = string,
     parent_env = string,
-    env = string,
+    env        = string,
     kms_alias_primary = object({
       target_key_arn = string,
     }),
