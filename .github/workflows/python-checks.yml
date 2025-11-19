@@ -1,14 +1,20 @@
 name: python-checks
 
 on:
-  push:
-    paths:
-      - terraform/services/alarm-to-slack/lambda_src/**
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'terraform/services/alarm-to-slack/lambda_src/**'
 
 jobs:
   python-checks:
     runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47
+        id: changed-python-files
+        with:
+          files: '*.py'
       - run: scripts/python-checks
+        env:
+          CHANGED_PYTHON_FILES: ${{ steps.changed-python-files.outputs.all_changed_files }}
