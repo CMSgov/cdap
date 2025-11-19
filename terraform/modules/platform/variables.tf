@@ -2,17 +2,17 @@ variable "app" {
   description = "The short name for the delivery team or ADO."
   type        = string
   validation {
-    condition     = contains(["ab2d", "bcda", "dpc"], var.app)
-    error_message = "Invalid short var.app (application). Must be one of ab2d, bcda, or dpc."
+    condition     = contains(["ab2d", "bcda", "dpc", "cdap"], var.app)
+    error_message = "Invalid short var.app (application). Must be one of ab2d, bcda, dpc or cdap."
   }
 }
 
 variable "env" {
-  description = "The solution's environment name."
+  description = "The application environment (dev, test, sandbox, prod, mgmt)"
   type        = string
   validation {
-    condition     = one([for x in ["test", "dev", "sandbox", "prod"] : x if can(regex("^${x}$$|^([a-z0-9]+[a-z0-9-])+([^--])-${x}$$", var.env))]) != null
-    error_message = "Invalid environment/workspace name. Must end in one of test, dev, sandbox, or prod."
+    condition     = contains(["dev", "test", "sandbox", "prod", "mgmt"], var.env)
+    error_message = "Valid value for env is dev, test, sandbox, prod, or mgmt."
   }
 }
 
