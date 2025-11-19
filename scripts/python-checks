@@ -1,11 +1,9 @@
 #!/bin/bash
-# Run checks on python files from git diff. Used in the python-checks workflow.
+# Run checks on python directories. Used in the python-checks workflow.
 set -e
 
-# Run checks in all affected python directories.
-diff_dirs="$(echo "$CHANGED_PYTHON_FILES" | xargs dirname | sort | uniq)"
 repo_root="$(git rev-parse --show-toplevel)"
-for dir in $diff_dirs; do
+for dir in $CHANGED_DIRS; do
   dir_absolute="$repo_root/$dir"
   [ ! -d "$dir_absolute" ] && echo "No directory found at $dir. Skipping" && continue
   cd "$dir_absolute"
