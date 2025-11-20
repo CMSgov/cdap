@@ -3,7 +3,6 @@ locals {
   app           = "bcda"
   service       = "cost-anomaly"
   default_tags  = module.platform.default_tags
-  ssm_parameter = "/cdap/sensitive/webhook/cost-anomaly"
 }
 
 module "platform" {
@@ -17,7 +16,7 @@ module "platform" {
 }
 
 resource "aws_ce_anomaly_monitor" "account_alerts" {
-  name              = "AccountAlerts"
+  name              = "BCDA Cost Anomaly Alerts"
   monitor_type      = "DIMENSIONAL"
   monitor_dimension = "SERVICE"
 }
@@ -45,14 +44,14 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
       dimension {
         key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
         match_options = ["GREATER_THAN_OR_EQUAL"]
-        values        = ["20"]
+        values        = ["0.1"] # non-testing value is 20
       }
     }
     or {
       dimension {
         key           = "ANOMALY_TOTAL_IMPACT_PERCENTAGE"
         match_options = ["GREATER_THAN_OR_EQUAL"]
-        values        = ["5"]
+        values        = ["1"]  # non-testing value is 5
       }
     }
   }
@@ -111,7 +110,7 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "cost_anomaly_alert" {
-  name               = "lambda_execution_role"
+  name               = "cost_anomaly_lambda_execution_role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
@@ -125,7 +124,7 @@ data "archive_file" "cost_anomaly_alert" {
 # Lambda function
 resource "aws_lambda_function" "cost_anomaly_alert" {
   filename         = data.archive_file.cost_anomaly_alert.output_path
-  function_name    = "cost_anomaly_alert_lambda_function"
+  function_name    = local.function_name
   role             = aws_iam_role.cost_anomaly_alert.arn
   handler          = "lambda_function.lambda_handler"
   source_code_hash = data.archive_file.cost_anomaly_alert.output_base64sha256
@@ -136,12 +135,8 @@ resource "aws_lambda_function" "cost_anomaly_alert" {
     variables = {
       ENVIRONMENT   = var.env
       IGNORE_OK     = "false"
-      WEBHOOK_PARAM = local.ssm_parameter
     }
   }
 
-  tags = {
-    Environment = var.env
-    Application = "cost_anomaly_alert"
-  }
+  tags = module.platform.default_tags
 }
