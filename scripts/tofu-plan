@@ -10,9 +10,8 @@ if [ -z "$GITHUB_STEP_SUMMARY" ]; then
   GITHUB_STEP_SUMMARY="$temp_summary"
 fi
 
-tofu_error=false
-
 repo_root="$(git rev-parse --show-toplevel)"
+tofu_error=false
 for dir in $(ls "$repo_root/terraform/services"); do
   cd "$repo_root/terraform/services/$dir"
   [ ! -f "conf.sh" ] && echo "Skipping $dir service due to no conf.sh file" && continue
@@ -46,24 +45,26 @@ for dir in $(ls "$repo_root/terraform/services"); do
       fi
       ;;
   esac
+  echo "::group::$dir tofu"
   if ! tofu init -reconfigure -backend-config="../../backends/${APP}-${ENV}.s3.tfbackend"; then
     tofu_error=true
     echo ":exclamation: Error in init for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
+    echo "::endgroup::"
     continue
   fi
   export TF_VAR_app="$APP"
   export TF_VAR_env="$ENV"
+  apply_needed=false
   if tofu plan -detailed-exitcode -out "$temp_plan_out"; then
     echo ":white_check_mark: No changes in $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
-    continue
   elif [ "$?" -eq "1" ]; then
     tofu_error=true
     echo ":exclamation: Error in plan for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
-    continue
   else # Detailed exit code is 2, meaning changes are planned
+    apply_needed=true
     echo ":pencil: Changes in $dir service on $APP-$ENV env. See plan." >> $GITHUB_STEP_SUMMARY
   fi
-  if [ "$APPLY" == "true" ]; then
+  if [[ "$apply_needed" == "true" && "$APPLY" == "true" ]]; then
     echo "Applying plan for $dir"
     if tofu apply "$temp_plan_out"; then
       echo ":rocket: Successful apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
@@ -72,6 +73,7 @@ for dir in $(ls "$repo_root/terraform/services"); do
       echo ":exclamation: Error in apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     fi
   fi
+  echo "::endgroup::"
 done
 
 # Reference summary again if running locally
