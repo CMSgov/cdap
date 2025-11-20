@@ -125,7 +125,7 @@ def lambda_handler(event,context):
         dict: Status code and response message
     """
     print(json.dumps(event))
-    print(json.dumps(context))
+    print(context)
 
     print("Retrieve Slack URL from Secrets Manager")
 
