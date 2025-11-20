@@ -7,9 +7,6 @@ locals {
     ],
     var.env != "prod" ?
     [
-      "sidekiq",
-      "sidekiq-portal",
-      "sidekiq-admin",
       "web",
       "web-portal",
       "web-admin",
