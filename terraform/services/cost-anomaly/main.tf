@@ -105,13 +105,34 @@ data "aws_iam_policy_document" "assume_role" {
       identifiers = ["lambda.amazonaws.com"]
     }
 
-    actions = ["sts:AssumeRole","sqs:ReceiveMessage"]
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "lambda_permissions" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes"
+    ]
+
+    resources = [module.sns_to_slack_queue.arn]
   }
 }
 
 resource "aws_iam_role" "cost_anomaly_alert" {
   name               = "cost_anomaly_lambda_execution_role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+# Attach the SQS permissions policy
+resource "aws_iam_role_policy" "lambda_sqs_permissions" {
+  name   = "lambda-sqs-permissions"
+  role   = aws_iam_role.cost_anomaly_alert.id
+  policy = data.aws_iam_policy_document.lambda_permissions.json
 }
 
 # Package the Lambda function code
