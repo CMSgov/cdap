@@ -20,7 +20,6 @@ module "sops" {
   platform = module.platform
 }
 
-
 output "edit" {
   value = module.sops.sopsw
 }
