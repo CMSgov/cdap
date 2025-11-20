@@ -48,7 +48,7 @@ for dir in $(ls "$repo_root/terraform/services"); do
   echo "::group::$dir tofu"
   if ! tofu init -reconfigure -backend-config="../../backends/${APP}-${ENV}.s3.tfbackend"; then
     tofu_error=true
-    echo ":exclamation: Error in init for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
+    echo ":x: Error in init for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     echo "::endgroup::"
     continue
   fi
@@ -59,7 +59,7 @@ for dir in $(ls "$repo_root/terraform/services"); do
     echo ":white_check_mark: No changes in $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
   elif [ "$?" -eq "1" ]; then
     tofu_error=true
-    echo ":exclamation: Error in plan for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
+    echo ":x: Error in plan for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
   else # Detailed exit code is 2, meaning changes are planned
     apply_needed=true
     echo ":pencil: Changes in $dir service on $APP-$ENV env. See plan." >> $GITHUB_STEP_SUMMARY
@@ -70,7 +70,7 @@ for dir in $(ls "$repo_root/terraform/services"); do
       echo ":rocket: Successful apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     else
       tofu_error=true
-      echo ":exclamation: Error in apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
+      echo ":x: Error in apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     fi
   fi
   echo "::endgroup::"
