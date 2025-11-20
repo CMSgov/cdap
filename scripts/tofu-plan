@@ -11,13 +11,15 @@ if [ -z "$GITHUB_STEP_SUMMARY" ]; then
 fi
 
 repo_root="$(git rev-parse --show-toplevel)"
-tofu_error=false
+job_error=false
 for dir in $(ls "$repo_root/terraform/services"); do
   cd "$repo_root/terraform/services/$dir"
+
   [ ! -f "conf.sh" ] && echo "Skipping $dir service due to no conf.sh file" && continue
   set -a
   source conf.sh
   set +a
+
   case "$TARGET_ENVS" in
     all)
       echo "Planning $dir service because it exists in all environments, including $APP-$ENV"
@@ -45,35 +47,44 @@ for dir in $(ls "$repo_root/terraform/services"); do
       fi
       ;;
   esac
+
   echo "::group::$dir tofu"
   if ! tofu init -reconfigure -backend-config="../../backends/${APP}-${ENV}.s3.tfbackend"; then
-    tofu_error=true
+    job_error=true
     echo ":x: Error in init for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     echo "::endgroup::"
+    echo "::error::Error in tofu init for $dir"
     continue
   fi
+
   export TF_VAR_app="$APP"
   export TF_VAR_env="$ENV"
-  apply_needed=false
+  tofu_error=""
   if tofu plan -detailed-exitcode -out "$temp_plan_out"; then
     echo ":white_check_mark: No changes in $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
   elif [ "$?" -eq "1" ]; then
-    tofu_error=true
+    job_error=true
+    tofu_error="Error in tofu plan for $dir"
     echo ":x: Error in plan for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
   else # Detailed exit code is 2, meaning changes are planned
-    apply_needed=true
     echo ":pencil: Changes in $dir service on $APP-$ENV env. See plan." >> $GITHUB_STEP_SUMMARY
   fi
-  if [[ "$apply_needed" == "true" && "$APPLY" == "true" ]]; then
+
+  if [[ -z "$tofu_plan_error" && "$APPLY" == "true" ]]; then
     echo "Applying plan for $dir"
     if tofu apply "$temp_plan_out"; then
       echo ":rocket: Successful apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     else
-      tofu_error=true
+      job_error=true
+      tofu_error="Error in tofu apply for $dir"
       echo ":x: Error in apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
     fi
   fi
   echo "::endgroup::"
+
+  if [ -n "$tofu_error" ]; then
+    echo "::error::$tofu_error"
+  fi
 done
 
 # Reference summary again if running locally
@@ -81,6 +92,6 @@ if [ -n "$temp_summary" ]; then
   echo "See summary at $temp_summary"
 fi
 
-if [ "$tofu_error" == "true" ]; then
+if [ "$job_error" == "true" ]; then
   exit 1
 fi
