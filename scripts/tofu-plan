@@ -10,6 +10,10 @@ if [ -z "$GITHUB_STEP_SUMMARY" ]; then
   GITHUB_STEP_SUMMARY="$temp_summary"
 fi
 
+if [ -n "$GITHUB_RUN_ID" ]; then
+  echo "[View log for this run](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)" >> $GITHUB_STEP_SUMMARY
+fi
+
 repo_root="$(git rev-parse --show-toplevel)"
 tofu_error=false
 for dir in $(ls "$repo_root/terraform/services"); do
