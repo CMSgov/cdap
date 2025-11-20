@@ -5,12 +5,23 @@ locals {
       "aggregation",
       "api",
     ],
-    var.env != "prod" ?
+    var.env == "dev" ?
     [
       "web",
-      "web-portal",
       "web-admin",
-    ] : []
+      "web-portal",
+    ] : [],
+    var.env == "test" ?
+    [
+      "web",
+      "web-admin",
+      "web-portal",
+    ] : [],
+    var.env == "sandbox" ?
+    [
+      "web",
+      "web-admin",
+    ] : [],
   )
 }
 
