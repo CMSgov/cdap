@@ -116,7 +116,8 @@ data "aws_iam_policy_document" "lambda_permissions" {
     actions = [
       "sqs:ReceiveMessage",
       "sqs:DeleteMessage",
-      "sqs:GetQueueAttributes"
+      "sqs:GetQueueAttributes",
+      "ssm:GetParameter"
     ]
 
     resources = [module.sns_to_slack_queue.arn]

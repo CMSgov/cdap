@@ -6,10 +6,15 @@ Forwards the message to Slack channel #dasg_metrics_and_insights.
 from datetime import datetime, timezone
 import json
 import os
+import logging
+from logging import Logger
 from urllib import request
 from urllib.error import URLError
 import boto3
 from botocore.exceptions import ClientError
+
+logger: Logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 SSM_PARAMETER_CACHE = {}
 
@@ -113,89 +118,149 @@ def is_ignore_ok():
     return os.environ.get('IGNORE_OK', 'false').lower() == 'true'
 
 # pylint: disable=too-many-locals
-def lambda_handler(event,context):
+def lambda_handler(event, context):
     """
-    Handle incoming Lambda events from Cost Anomaly Monitor.
-
-    Args:
-        event: Lambda event containing SNS message
-        context: Lambda context (unused)
-
-    Returns:
-        dict: Status code and response message
+    Parse AWS Cost Anomaly Detection SNS messages
     """
-    print(json.dumps(event))
-    print(context)
+    logger.info(f"Received event: {json.dumps(event)}")
 
-    print("Retrieve Slack URL from Secrets Manager")
+    message = "test"
 
-    slack_url = get_ssm_parameter('/cdap/sensitive/webhook/cost-anomaly')
+    try:
+        # Handle SQS trigger (SNS messages delivered via SQS)
+        if 'Records' in event:
+            for record in event['Records']:
+                # Extract SNS message from SQS
+                if 'body' in record:
+                    body = json.loads(record['body'])
 
-    print("Slack Webhook URL retrieved")
+                    # Check if it's an SNS message
+                    if 'Message' in body:
+                        sns_message = json.loads(body['Message'])
+                        message = process_cost_anomaly(sns_message)
+                    else:
+                        logger.warning("No SNS Message found in SQS body")
 
-    print("Initialise Slack Webhook Client")
+        # Handle direct SNS trigger
+        elif 'Records' in event and event['Records'][0].get('EventSource') == 'aws:sns':
+            for record in event['Records']:
+                sns_message = json.loads(record['Sns']['Message'])
+                message = process_cost_anomaly(sns_message)
 
-    print("Decoding the SNS Message")
-    anomaly_event = json.loads(event["Records"][0]["Sns"]["Message"])
+        # Handle direct invocation with message
+        else:
+            message = process_cost_anomaly(event)
 
-    totalcost_impact = anomaly_event["impact"]["totalImpact"]
+        webhook = get_ssm_parameter("/cdap/sensitive/webhook/cost-anomaly")
+        send_message_to_slack(webhook,message,0)
 
-    anomaly_start_date = anomaly_event["anomalyStartDate"]
-    anomaly_end_date = anomaly_event["anomalyEndDate"]
+        return {
+            'statusCode': 200,
+            'body': json.dumps('Successfully processed cost anomaly alert')
+        }
 
-    anomaly_details_link = anomaly_event["anomalyDetailsLink"]
+    except Exception as e:
+        logger.error(f"Error processing message: {str(e)}", exc_info=True)
+        raise
 
-    blocks = []
+def process_cost_anomaly(message):
+    """
+    Process and parse the cost anomaly detection message
+    """
+    logger.info("Processing cost anomaly message")
 
-    header_text = Text("plain_text", ":warning: Cost Anomaly Detected ", emoji=True)
-    total_anomaly_cost_text = Text(
-        "mrkdwn", f"*Total Anomaly Cost*: ${totalcost_impact}"
-    )
-    root_causes_header_text = Text("mrkdwn", "*Root Causes* :mag:")
-    anomaly_start_date_text = Text(
-        "mrkdwn", f"*Anomaly Start Date*: {anomaly_start_date}"
-    )
-    anomaly_end_date_text = Text(
-        "mrkdwn", f"*Anomaly End Date*: {anomaly_end_date}"
-    )
-    anomaly_details_text = Text(
-        "mrkdwn", f"*Anomaly Details Link*: {anomaly_details_link}"
-    )
+    # Extract key information
+    account_id = message.get('accountId', 'Unknown')
+    anomaly_id = message.get('anomalyId', 'Unknown')
+    anomaly_score = message.get('anomalyScore', 0)
 
-    blocks.append(Block("header", text=header_text.__dict__))
-    blocks.append(Block("section", text=total_anomaly_cost_text.__dict__))
-    blocks.append(Block("section", text=anomaly_start_date_text.__dict__))
-    blocks.append(Block("section", text=anomaly_end_date_text.__dict__))
-    blocks.append(Block("section", text=anomaly_details_text.__dict__))
-    blocks.append(Block("section", text=root_causes_header_text.__dict__))
+    # Get impact details
+    impact = message.get('impact', {})
+    max_impact = impact.get('maxImpact', 0)
+    total_impact = impact.get('totalImpact', 0)
 
-    for root_cause in anomaly_event["rootCauses"]:
-        fields = []
-        for root_cause_attribute in root_cause:
-            if root_cause_attribute == "linkedAccount":
-                fields.append(
-                    Field("plain_text", "accountName : non-prod", False)
-                )
-                fields.append(
-                    Field(
-                        "plain_text",
-                        f"{root_cause_attribute} : {root_cause[root_cause_attribute]}",
-                        False
-                    )
-                )
-        blocks.append(Block("section", fields=[ob.__dict__ for ob in fields]))
+    # Get date information
+    anomaly_start = message.get('anomalyStartDate', 'Unknown')
+    anomaly_end = message.get('anomalyEndDate', 'Unknown')
 
-    send_message_to_slack(
-        slack_url,
-        anomaly_event,
-        json.dumps([ob.__dict__ for ob in blocks])
-    )
+    # Get root causes
+    root_causes = message.get('rootCauses', [])
 
-    return {
-        'statusCode': 200,
-        'responseMessage': 'Posted to Slack Channel Successfully'
+    # Get dimension details
+    dimension_value = message.get('dimensionValue', 'Unknown')
+
+    # Format the parsed data
+    parsed_data = {
+        'account_id': account_id,
+        'anomaly_id': anomaly_id,
+        'anomaly_score': anomaly_score,
+        'max_impact': max_impact,
+        'total_impact': total_impact,
+        'start_date': anomaly_start,
+        'end_date': anomaly_end,
+        'dimension_value': dimension_value,
+        'root_causes': root_causes,
+        'severity': get_severity(anomaly_score),
+        'timestamp': datetime.utcnow().isoformat()
     }
 
+    logger.info(f"Parsed anomaly data: {json.dumps(parsed_data, indent=2)}")
+
+    # Format alert message
+    alert_message = format_alert_message(parsed_data)
+    logger.info(f"Alert message:\n{alert_message}")
+
+
+    return parsed_data
+
+def get_severity(score):
+    """
+    Determine severity based on anomaly score
+    """
+    if score["currentScore"] >= 80:
+        return "CRITICAL"
+    elif score["currentScore"] >= 60:
+        return "HIGH"
+    elif score["currentScore"] >= 40:
+        return "MEDIUM"
+    else:
+        return "LOW"
+
+def format_alert_message(data):
+    """
+    Format a human-readable alert message
+    """
+    message = f"""
+🚨 AWS Cost Anomaly Detected
+
+Severity: {data['severity']}
+Anomaly Score: {data['anomaly_score']}
+
+💰 Financial Impact:
+- Max Impact: ${data['max_impact']:.2f}
+- Total Impact: ${data['total_impact']:.2f}
+
+📅 Time Period:
+- Start: {data['start_date']}
+- End: {data['end_date']}
+
+🔍 Details:
+- Account ID: {data['account_id']}
+- Anomaly ID: {data['anomaly_id']}
+- Dimension: {data['dimension_value']}
+
+📊 Root Causes:
+"""
+
+    for i, cause in enumerate(data['root_causes'], 1):
+        service = cause.get('service', 'Unknown')
+        region = cause.get('region', 'Unknown')
+        usage_type = cause.get('usageType', 'Unknown')
+        message += f"\n  {i}. Service: {service}"
+        message += f"\n     Region: {region}"
+        message += f"\n     Usage Type: {usage_type}"
+
+    return message
 
 def send_message_to_slack(webhook, message, message_id):
     """
