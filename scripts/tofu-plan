@@ -72,7 +72,7 @@ for dir in $(ls "$repo_root/terraform/services"); do
     echo ":x: Error in plan for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
   fi
 
-  if [[ -z "$tofu_plan_error" && "$APPLY" == "true" ]]; then
+  if [[ -n "$tofu_warning" && "$APPLY" == "true" ]]; then
     echo "Applying plan for $dir"
     if tofu apply "$temp_plan_out"; then
       echo ":rocket: Successful apply of $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
