@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW bcda_prod_requests_per_entity AS
+CREATE OR REPLACE VIEW bcda_sandbox_requests_per_entity AS
 select  acos.name, jobs.request_url, jobs.created_at FROM jobs
 join acos on acos.uuid = jobs.aco_id
 where jobs.created_at > DATE(NOW() - interval '1 year')
