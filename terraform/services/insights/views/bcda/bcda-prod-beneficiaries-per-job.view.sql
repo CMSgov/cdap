@@ -1,4 +1,4 @@
-CREATE VIEW bcda_prod_beneficiaries_per_job AS
+CREATE OR REPLACE VIEW bcda_prod_beneficiaries_per_job AS
 select sub.job_id, SUM(sub.max_benes) as max_benes from (
 	select jobs.id as job_id, jk.resource_type, CASE
 	  WHEN jk.resource_type = 'ExplanationOfBenefit' THEN 50
@@ -13,4 +13,3 @@ select sub.job_id, SUM(sub.max_benes) as max_benes from (
 ) sub
 group by sub.job_id
 order by sub.job_id;
-

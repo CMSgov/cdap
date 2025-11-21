@@ -1,4 +1,4 @@
-CREATE VIEW bcda_prod_active_acos AS
+CREATE OR REPLACE VIEW bcda_prod_active_acos AS
 select
   s.client_name,
   trim(
