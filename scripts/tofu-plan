@@ -59,15 +59,17 @@ for dir in $(ls "$repo_root/terraform/services"); do
 
   export TF_VAR_app="$APP"
   export TF_VAR_env="$ENV"
+  tofu_warning=""
   tofu_error=""
   if tofu plan -detailed-exitcode -out "$temp_plan_out"; then
     echo ":white_check_mark: No changes in $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
-  elif [ "$?" -eq "1" ]; then
+  elif [ "$?" -eq "2" ]; then # Detailed exit code is 2, meaning changes are planned
+    tofu_warning="Changes planned for $dir"
+    echo ":pencil: Changes in $dir service on $APP-$ENV env. See plan." >> $GITHUB_STEP_SUMMARY
+  else
     job_error=true
     tofu_error="Error in tofu plan for $dir"
     echo ":x: Error in plan for $dir service on $APP-$ENV env." >> $GITHUB_STEP_SUMMARY
-  else # Detailed exit code is 2, meaning changes are planned
-    echo ":pencil: Changes in $dir service on $APP-$ENV env. See plan." >> $GITHUB_STEP_SUMMARY
   fi
 
   if [[ -z "$tofu_plan_error" && "$APPLY" == "true" ]]; then
@@ -82,6 +84,9 @@ for dir in $(ls "$repo_root/terraform/services"); do
   fi
   echo "::endgroup::"
 
+  if [ -n "$tofu_warning" ]; then
+    echo "::warning::$tofu_warning"
+  fi
   if [ -n "$tofu_error" ]; then
     echo "::error::$tofu_error"
   fi
