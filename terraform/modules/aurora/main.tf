@@ -76,7 +76,6 @@ resource "aws_rds_cluster" "this" {
   storage_type                        = var.storage_type
   storage_encrypted                   = true
   kms_key_id                          = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
-  backup_retention_period             = var.backup_retention_period
   preferred_backup_window             = var.backup_window
   preferred_maintenance_window        = var.maintenance_window
   apply_immediately                   = false
