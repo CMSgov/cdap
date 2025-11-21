@@ -26,7 +26,6 @@ module "sns_to_slack_function" {
   runtime = "python3.13"
 
   environment_variables = {
-
     IGNORE_OK = true
   }
   extra_kms_key_arns = local.extra_kms_key_arns
