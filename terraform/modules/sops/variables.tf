@@ -5,7 +5,7 @@ variable "platform" {
     parent_env = string,
     env        = string,
     kms_alias_primary = object({
-      target_key_arn = string,
+      id = string,
     }),
     service          = string,
     is_ephemeral_env = string
@@ -31,7 +31,7 @@ variable "sopsw_parent_yaml_file" {
 }
 
 variable "create_local_sops_wrapper" {
-  default     = true
+  default     = false
   description = "Specify whether to create the script for localling editing the wrapped, sops 'sopsw' values file."
   type        = string
 }
