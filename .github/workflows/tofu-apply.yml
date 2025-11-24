@@ -9,6 +9,9 @@ on:
       - 'terraform/services/**'
   schedule:
     - cron: '12 14 * * 1-5'
+  pull_request: #TODO Remove after successful run in PR
+    paths:
+      - 'terraform/services/**'
 
 concurrency:
   group: tofu-plan-or-apply
