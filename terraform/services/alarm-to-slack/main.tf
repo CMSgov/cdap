@@ -1,8 +1,6 @@
 locals {
   full_name = "${var.app}-${var.env}-alarm-to-slack"
 
-  ignore_ok = true
-
   extra_kms_key_arns = var.app == "bcda" ? [data.aws_kms_alias.bcda_app_config_kms_key[0].target_key_arn] : []
 }
 
