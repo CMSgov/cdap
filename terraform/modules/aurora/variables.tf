@@ -102,6 +102,12 @@ variable "engine_version" {
   type        = string
 }
 
+variable "backup_retention_period" {
+  default     = 1
+  description = "Days to retain backups for."
+  type        = number
+}
+
 variable "storage_type" {
   default     = ""
   description = "Aurora cluster [storage_type](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#storage_type-1)"
