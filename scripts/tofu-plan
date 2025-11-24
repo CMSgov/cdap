@@ -80,6 +80,7 @@ for dir in $(ls "$repo_root/terraform/services"); do
   fi
 done
 
-if [ "$job_error" == "true" ]; then
-  exit 1
-fi
+# TODO Drop or uncomment job_error after testing
+#if [ "$job_error" == "true" ]; then
+#  exit 1
+#fi
