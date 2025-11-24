@@ -1,3 +1,5 @@
+-- Get latest cclf file per ACO, count total benes in file, in past year
+-- NO PHI/PII allowed!
 CREATE OR REPLACE VIEW bcda_prod_beneficiaries_attributed_to_active_entities AS
 select sub.cms_id,
 	sub.latest_cclf_file,

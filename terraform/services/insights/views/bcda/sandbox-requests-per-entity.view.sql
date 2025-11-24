@@ -1,3 +1,5 @@
+-- Get SANDBOX requests by entity
+-- This should be run in SANDBOX only!
 CREATE OR REPLACE VIEW bcda_sandbox_requests_per_entity AS
 select acos.name,
     jobs.request_url,

@@ -1,3 +1,5 @@
+-- Get all active ACOs that have had credentials created, updated, or deleted in the past year
+-- NO PHI/PII allowed!
 CREATE OR REPLACE VIEW bcda_prod_active_entities_served AS
 select distinct on (acos.cms_id) acos.cms_id
 from active_acos acos

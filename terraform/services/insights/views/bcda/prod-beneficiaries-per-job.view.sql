@@ -1,3 +1,5 @@
+-- Number of beneficiaries per job request
+-- NO PHI/PII allowed!
 CREATE OR REPLACE VIEW bcda_prod_beneficiaries_per_job AS
 select sub.job_id,
 	SUM(sub.max_benes) as max_benes

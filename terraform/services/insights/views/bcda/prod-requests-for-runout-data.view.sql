@@ -1,3 +1,5 @@
+-- Total number of requests made for prior year runout
+-- NO PHI/PII allowed!
 CREATE OR REPLACE VIEW bcda_prod_requests_for_runout_data AS
 select acos.cms_id,
     jobs.request_url

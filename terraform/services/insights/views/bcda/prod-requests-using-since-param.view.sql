@@ -1,3 +1,5 @@
+-- Total number of requests made using the since parameter
+-- NO PHI/PII allowed!
 CREATE OR REPLACE VIEW bcda_prod_requests_using_since_param AS
 select acos.cms_id,
     jobs.request_url

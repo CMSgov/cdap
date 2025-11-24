@@ -1,3 +1,9 @@
+-- These are views designed to give metrics and insights into BCDA usage without exposing actual DB structures/info.
+-- The goal is to be very explicit with what is being shown to make sure NO PHI/PII is exposed.
+-- These views will be used for various metrics and analytics so will be slightly more accessible than other tables.
+
+-- Active ACOs View table
+-- Select query from https://github.com/CMSgov/bcda-ops/blob/main/terraform/insights/queries/get_active_acos.sql
 CREATE OR REPLACE VIEW bcda_prod_active_acos AS
 select s.client_name,
   trim(
