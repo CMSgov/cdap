@@ -147,6 +147,7 @@ No requirements.
 | <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | `any` | n/a | yes |
 | <a name="input_username"></a> [username](#input\_username) | The database's primary/master credentials username | `string` | n/a | yes |
 | <a name="input_aws_backup_tag"></a> [aws\_backup\_tag](#input\_aws\_backup\_tag) | Override for a standard, CDAP-managed backup tag for AWS Backups | `string` | `"4hr1dr_d7_w35_m90"` | no |
+| <a name="input_backup_retention_period"></a> [backup\_retention\_period](#input\_backup\_retention\_period) | Days to retain backups for. | `number` | `1` | no |
 | <a name="input_cluster_identifier"></a> [cluster\_identifier](#input\_cluster\_identifier) | Override for the aurora cluster identifier | `string` | `null` | no |
 | <a name="input_cluster_instance_parameters"></a> [cluster\_instance\_parameters](#input\_cluster\_instance\_parameters) | A list of objects containing the values for apply\_method, name, and value that corresponds to the instance-level prameters. | <pre>list(object({<br/>    apply_method = string<br/>    name         = string<br/>    value        = any<br/>  }))</pre> | `[]` | no |
 | <a name="input_cluster_parameters"></a> [cluster\_parameters](#input\_cluster\_parameters) | A list of objects containing the values for apply\_method, name, and value that corresponds to the cluster-level prameters. | <pre>list(object({<br/>    apply_method = string<br/>    name         = string<br/>    value        = any<br/>  }))</pre> | `[]` | no |
