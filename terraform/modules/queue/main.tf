@@ -29,17 +29,23 @@ resource "aws_sqs_queue_redrive_allow_policy" "this" {
 }
 
 data "aws_iam_policy_document" "this" {
+  count = length(var.policy_documents) == 0 ? 0 : 1
+
   source_policy_documents = var.policy_documents
 }
 
 resource "aws_sqs_queue_policy" "this" {
+  count = length(var.policy_documents) == 0 ? 0 : 1
+
   queue_url = aws_sqs_queue.this.id
-  policy    = data.aws_iam_policy_document.this.json
+  policy    = data.aws_iam_policy_document.this[0].json
 }
 
 resource "aws_lambda_event_source_mapping" "this" {
+  count = var.function_name == "" ? 0 : 1
+
   event_source_arn = aws_sqs_queue.this.arn
   function_name    = var.function_name
   batch_size       = 1
-  enabled          = true
+  enabled          = var.lambda_event_enabled
 }
