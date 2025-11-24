@@ -6,6 +6,9 @@ on:
     paths:
       - 'terraform/services/**'
 
+concurrency:
+  group: tofu-plan-or-apply
+
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

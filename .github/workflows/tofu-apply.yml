@@ -10,6 +10,9 @@ on:
   schedule:
     - cron: '12 14 * * 1-5'
 
+concurrency:
+  group: tofu-plan-or-apply
+
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
