@@ -6,7 +6,7 @@ locals {
 
 data "aws_kms_alias" "bcda_app_config_kms_key" {
   count = var.app == "bcda" ? 1 : 0
-  name  = "alias/bcda-${var.env}-app-config-kms"
+  name  = "alias/bcda-${var.env}-fake" # TODO Revert after test of tofu-apply
 }
 
 module "sns_to_slack_function" {
