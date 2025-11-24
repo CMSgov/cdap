@@ -1,6 +1,6 @@
 SELECT cron.schedule_in_database(
   's3_export_bcda_prod_unique_entities_making_v2_requests',
-  '0 */6 * * *',
+  '15 */6 * * *',
   $$
     SELECT *
     FROM aws_s3.query_export_to_s3
