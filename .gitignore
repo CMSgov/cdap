@@ -10,3 +10,4 @@ terraform.tfvars
 !.terraform-docs.yml
 
 __pycache__
+.idea
