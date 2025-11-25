@@ -10,7 +10,7 @@ data "aws_kms_alias" "bcda_app_config_kms_key" {
 }
 
 module "sns_to_slack_function" {
-  source = "../../modules/function"
+  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=e37e99cef05ea7c779e6ea188fc29b13387bd2b5"
 
   app = var.app
   env = var.env
@@ -30,12 +30,34 @@ module "sns_to_slack_function" {
 }
 
 module "sns_to_slack_queue" {
-  source = "../../modules/queue"
+  source = "github.com/CMSgov/cdap/terraform/modules/queue?ref=e37e99cef05ea7c779e6ea188fc29b13387bd2b5"
 
-  app = var.app
-  env = var.env
-
-  name = local.full_name
-
+  app           = var.app
+  env           = var.env
+  name          = local.full_name
   function_name = module.sns_to_slack_function.name
+
+  policy_documents = [
+    data.aws_iam_policy_document.sqs_queue_policy.json
+  ]
+}
+
+data "aws_iam_policy_document" "sqs_queue_policy" {
+  statement {
+    sid    = "user_updates_sqs_target"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["sns.amazonaws.com"]
+    }
+
+    actions = [
+      "SQS:SendMessage",
+    ]
+
+    resources = [
+      module.sns_to_slack_queue.arn
+    ]
+  }
 }
