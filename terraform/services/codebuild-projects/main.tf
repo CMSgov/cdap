@@ -1,10 +1,6 @@
 locals {
   repos = [
     "ab2d",
-    "ab2d-contracts",
-    "ab2d-events",
-    "AB2D-Libs",
-    "ab2d-properties",
     "ab2d-website",
     "bcda-app",
     "bcda-ssas-app",
