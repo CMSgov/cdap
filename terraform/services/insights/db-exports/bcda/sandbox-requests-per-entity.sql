@@ -16,5 +16,5 @@ SELECT cron.schedule_in_database(
       kms_key => '<aurora_export key arn>'
     );
   $$,
-  'main'
+  'bcda'
 );
