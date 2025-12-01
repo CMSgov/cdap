@@ -101,7 +101,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket_access_logs" {
 }
 
 resource "aws_ssm_parameter" "bucket_access_logs" {
-  name        = " /cdap/sensitive/bucket-access-logs-bucket "
+  name        = "/cdap/sensitive/bucket-access-logs-bucket"
   value       = aws_s3_bucket.bucket_access_logs.id
   type        = "String"
   description = "S3 bucket for storing access logs from other buckets"
