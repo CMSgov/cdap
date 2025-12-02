@@ -1,5 +1,5 @@
 data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
-  name = "/cdap/sensitive/mgmt-vpc/cidr "
+  name = "/cdap/sensitive/mgmt-vpc/cidr"
 }
 
 module "vpc" {

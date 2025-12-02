@@ -135,7 +135,7 @@ data "aws_security_group" "this" {
 }
 
 data "aws_ssm_parameter" "platform_cidr" {
-  name            = "/cdap/sensitive/mgmt-vpc/cidr "
+  name            = "/cdap/sensitive/mgmt-vpc/cidr"
   with_decryption = true
 }
 
