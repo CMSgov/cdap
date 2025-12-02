@@ -6,6 +6,13 @@ variable "name" {
 variable "function_name" {
   description = "Name of the lambda function to trigger"
   type        = string
+  default     = ""
+}
+
+variable "lambda_event_enabled" {
+  description = "Whether the aws_lambda_event_source_mapping is enabled"
+  type        = bool
+  default     = true
 }
 
 variable "visibility_timeout_seconds" {
