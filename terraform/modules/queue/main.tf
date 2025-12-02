@@ -28,45 +28,24 @@ resource "aws_sqs_queue_redrive_allow_policy" "this" {
   })
 }
 
-data "aws_iam_policy_document" "sns_send_message" {
-  count = var.sns_topic_arn != "None" ? 1 : 0
+data "aws_iam_policy_document" "this" {
+  count = length(var.policy_documents) == 0 ? 0 : 1
 
-  statement {
-    actions = ["sqs:SendMessage"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["sns.amazonaws.com"]
-    }
-
-    resources = [aws_sqs_queue.this.arn]
-
-    condition {
-      test     = "ArnEquals"
-      variable = "aws:SourceArn"
-      values   = [var.sns_topic_arn]
-    }
-  }
+  source_policy_documents = var.policy_documents
 }
 
-resource "aws_sqs_queue_policy" "sns_send_message" {
-  count = var.sns_topic_arn != "None" ? 1 : 0
+resource "aws_sqs_queue_policy" "this" {
+  count = length(var.policy_documents) == 0 ? 0 : 1
 
   queue_url = aws_sqs_queue.this.id
-  policy    = data.aws_iam_policy_document.sns_send_message[0].json
-}
-
-resource "aws_sns_topic_subscription" "this" {
-  count = var.sns_topic_arn != "None" ? 1 : 0
-
-  endpoint  = aws_sqs_queue.this.arn
-  protocol  = "sqs"
-  topic_arn = var.sns_topic_arn
+  policy    = data.aws_iam_policy_document.this[0].json
 }
 
 resource "aws_lambda_event_source_mapping" "this" {
+  count = var.function_name == "" ? 0 : 1
+
   event_source_arn = aws_sqs_queue.this.arn
   function_name    = var.function_name
   batch_size       = 1
-  enabled          = true
+  enabled          = var.lambda_event_enabled
 }

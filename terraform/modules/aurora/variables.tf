@@ -102,7 +102,7 @@ variable "engine_version" {
   type        = string
 }
 
-variable "backup_retention_period" { #TODO: Consider removing this in favor of AWS Backups
+variable "backup_retention_period" {
   default     = 1
   description = "Days to retain backups for."
   type        = number

@@ -1,6 +1,15 @@
 variable "platform" {
   description = "Object that describes standardized platform values."
-  type        = any
+  type = object({
+    app        = string,
+    parent_env = string,
+    env        = string,
+    kms_alias_primary = object({
+      id = string,
+    }),
+    service          = string,
+    is_ephemeral_env = string
+  })
 }
 
 variable "sopsw_values_file_extension" {
@@ -22,7 +31,7 @@ variable "sopsw_parent_yaml_file" {
 }
 
 variable "create_local_sops_wrapper" {
-  default     = true
+  default     = false
   description = "Specify whether to create the script for localling editing the wrapped, sops 'sopsw' values file."
   type        = string
 }

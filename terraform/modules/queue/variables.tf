@@ -6,14 +6,13 @@ variable "name" {
 variable "function_name" {
   description = "Name of the lambda function to trigger"
   type        = string
+  default     = ""
 }
 
-variable "sns_topic_arn" {
-  description = "ARN of the SNS topic to subscribe to"
-  type        = string
-  # Setting default to "None" allows us to set the AWS Parameter Store value
-  # to "None" to disable creation of SNS Topic Subscription
-  default = "None"
+variable "lambda_event_enabled" {
+  description = "Whether the aws_lambda_event_source_mapping is enabled"
+  type        = bool
+  default     = true
 }
 
 variable "visibility_timeout_seconds" {
@@ -39,4 +38,10 @@ variable "env" {
     condition     = contains(["dev", "test", "sandbox", "prod"], var.env)
     error_message = "Valid value for env is dev, test, sandbox, or prod."
   }
+}
+
+variable "policy_documents" {
+  description = "List of IAM policy documents that are merged together into the exported document. Statements must have unique `sid`s"
+  type        = list(string)
+  default     = []
 }

@@ -1,0 +1,18 @@
+#!/bin/bash
+# Run checks on python directories. Used in the python-checks workflow.
+set -e
+
+repo_root="$(git rev-parse --show-toplevel)"
+for dir in $CHANGED_DIRS; do
+  dir_absolute="$repo_root/$dir"
+  [ ! -d "$dir_absolute" ] && echo "No directory found at $dir. Skipping" && continue
+  cd "$dir_absolute"
+  temp_venv=$(mktemp -d)
+  python -m venv "$temp_venv"
+  source "$temp_venv/bin/activate"
+  [ -f "requirements.txt" ] && pip install -r requirements.txt
+  pip install pylint pytest
+  echo "Running python lint and test on \"$dir\""
+  pylint .
+  pytest .
+done
