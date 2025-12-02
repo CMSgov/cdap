@@ -1,7 +1,6 @@
 /cdap/account/nonsensitive/security_events_slack_renotify_after_days: 30
 /cdap/account/nonsensitive/security_events_slack_severity_list: CRITICAL,HIGH,MEDIUM
 /cdap/sensitive/account/security_events_slack_webhook_url: ENC[AES256_GCM,data:z9MLEAlb76u6MZ+GWcWcfnRtax1J677k47tabDmwCqAGN7H2BrmTnkIs1fAhl9dShaL5qZrq78s0sY9b2hCAGIWWaUenVbGGpWBuZvh7rw==,iv:kbgCH76ryIbnU40SWd/Wgg+hULSgGsTO4LLWIPoDE68=,tag:NmwrTB/oVI0WEhL9R5eV2g==,type:str]
-/cdap/sensitive/bucket-access-logs-bucket: ENC[AES256_GCM,data:TjwtktvWlh7Gt7JrTuxZganUT3AotzmEAeYKkpn5GutLcIT1/KSpTV1kjMxV,iv:fSMld0pXjqKabcq+8CK7kG018tspwVAS30ngYFepJKw=,tag:dMsUtxHVSpiHb9U+ebUbNg==,type:str]
 /cdap/sensitive/mgmt-vpc/cidr: ENC[AES256_GCM,data:uNKE6Nckt24ZWHDHEWjU,iv:yVvl1HbK7ljy6lgZdGUkfi0CeIHPnd2uof9tVB1z008=,tag:9tQ1atj1Vwkgw6j1FQ8p5w==,type:str]
 /cdap/mgmt/public_nat_ipv4/sensitive/cdap-east-mgmt-a: ENC[AES256_GCM,data:FlVrW4HMpGxShfezY7k=,iv:5pZNFGbdfyrGCti7cL/7pfm4S3i5VpnESEO5Rglqw7E=,tag:NZIPNuaSZD/NSD6Q2sE2PQ==,type:str]
 /cdap/mgmt/public_nat_ipv4/sensitive/cdap-east-mgmt-b: ENC[AES256_GCM,data:N1zEW1bym0cRrT5b,iv:+i6TbqeQLVdZRGUb/O0FUDSEXHsuxxW8hEJbQJYy8gU=,tag:dypP4NS1W0h0c+SeMmuI+g==,type:str]
