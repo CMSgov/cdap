@@ -55,7 +55,7 @@ data "aws_iam_policy_document" "sqs_queue_policy" {
     ]
 
     condition {
-      test = "ArnLike"
+      test     = "ArnLike"
       variable = "aws:SourceArn"
 
       values = [
