@@ -100,6 +100,18 @@ variable "port_mappings" {
   default = null
 }
 
+variable "health_check" {
+  description = "Health check that monitors the service."
+  type = object({
+    command = list(string),
+    interval = optional(number),
+    retries = optional(number),
+    startPeriod = optional(number),
+    timeout = optional(number)
+  })
+  default = null
+}
+
 variable "security_groups" {
   description = "List of security groups to associate with the service."
   type        = list(string)
