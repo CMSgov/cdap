@@ -33,6 +33,10 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
+data "aws_kms_alias" "sops_value_key" {
+  name = "alias/bcda-${local.env}"
+}
+
 data "aws_iam_policy_document" "codebuild" {
   # Logs
   statement {
@@ -112,5 +116,13 @@ data "aws_iam_policy_document" "codebuild" {
       variable = "ec2:AuthorizedService"
       values   = ["codebuild.amazonaws.com"]
     }
+  }
+
+  statement {
+    actions = [
+      "kms:Decrypt"
+    ]
+    resources = data.aws_kms_alias.sops_value_key.arn
+    effect    = "Allow"
   }
 }
