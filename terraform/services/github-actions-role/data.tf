@@ -24,7 +24,7 @@ locals {
     ] : [],
   )
 
-  sops_env = var.env == "dev" ? "test" : (var.env == "sandbox" ? "prod" : "prod")
+  sops_env = contains(["dev", "test"], var.env) ? "test": "prod"
 }
 
 # KMS keys needed for IAM policy
