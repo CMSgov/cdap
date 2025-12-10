@@ -23,6 +23,7 @@ locals {
       "web-admin",
     ] : [],
   )
+  sops_env = var.env == "dev" ? "test" : "prod"
 }
 
 # KMS keys needed for IAM policy
@@ -32,7 +33,7 @@ data "aws_kms_alias" "environment_key" {
 
 #TODO Replace with cdap-prod and cdap-test when vpcs are in place
 data "aws_kms_alias" "tmp_cdap_sops_environment_key" {
-  name = "alias/bcda-${var.env}"
+  name = "alias/bcda-${local.sops_env}"
 }
 
 data "aws_kms_alias" "ab2d_tfstate_bucket" {
