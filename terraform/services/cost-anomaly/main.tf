@@ -51,7 +51,7 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
       dimension {
         key           = "ANOMALY_TOTAL_IMPACT_PERCENTAGE"
         match_options = ["GREATER_THAN_OR_EQUAL"]
-        values        = ["1"]  # non-testing value is 5
+        values        = ["1"] # non-testing value is 5
       }
     }
   }
@@ -155,8 +155,8 @@ resource "aws_lambda_function" "cost_anomaly_alert" {
 
   environment {
     variables = {
-      ENVIRONMENT   = var.env
-      IGNORE_OK     = "false"
+      ENVIRONMENT = var.env
+      IGNORE_OK   = "false"
     }
   }
 
