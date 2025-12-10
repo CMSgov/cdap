@@ -30,6 +30,11 @@ data "aws_kms_alias" "environment_key" {
   name = "alias/${var.app}-${var.env}"
 }
 
+#TODO Replace with cdap-prod and cdap-test when vpcs are in place
+data "aws_kms_alias" "tmp_cdap_sops_environment_key" {
+  name = "alias/bcda-${var.env}"
+}
+
 data "aws_kms_alias" "ab2d_tfstate_bucket" {
   count = var.env == "ab2d" ? 1 : 0
   name  = "alias/ab2d-${var.env}-tfstate-bucket"
