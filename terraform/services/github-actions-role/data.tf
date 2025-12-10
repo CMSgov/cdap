@@ -23,7 +23,8 @@ locals {
       "web-admin",
     ] : [],
   )
-  sops_env = var.env == "dev" ? "test" : "prod"
+
+  sops_env = var.env == "dev" ? "test" : (var.env == "sandbox" ? "prod" : "prod")
 }
 
 # KMS keys needed for IAM policy
