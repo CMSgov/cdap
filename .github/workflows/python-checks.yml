@@ -16,8 +16,6 @@ jobs:
         with:
           files: '**/lambda_src/**'
           dir_names: 'true'
-      - name: Install dependencies
-        run: pip install boto3 pylint
       - run: scripts/python-checks
         env:
           CHANGED_DIRS: ${{ steps.changed-dirs.outputs.all_changed_files }}
