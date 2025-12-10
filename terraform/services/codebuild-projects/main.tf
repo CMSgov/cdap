@@ -10,7 +10,6 @@ locals {
     "dpc-ops",
     "dpc-static-site",
   ]
-  env = terraform.workspace
 }
 
 module "standards" {
