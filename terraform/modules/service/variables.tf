@@ -103,11 +103,11 @@ variable "port_mappings" {
 variable "health_check" {
   description = "Health check that monitors the service."
   type = object({
-    command = list(string),
-    interval = optional(number),
-    retries = optional(number),
+    command     = list(string),
+    interval    = optional(number),
+    retries     = optional(number),
     startPeriod = optional(number),
-    timeout = optional(number)
+    timeout     = optional(number)
   })
   default = null
 }
