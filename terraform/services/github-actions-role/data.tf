@@ -65,11 +65,6 @@ data "aws_kms_alias" "dpc_ecr" {
   name  = "alias/dpc-ecr"
 }
 
-data "aws_kms_alias" "dpc_sns_topic" {
-  count = var.app == "dpc" ? 1 : 0
-  name  = "alias/dpc-${var.env}-sns-topic-key"
-}
-
 data "aws_kms_alias" "dpc_cloudwatch_keys" {
   for_each = toset([for k in local.dpc_services : k if var.app == "dpc"])
   name     = "alias/dpc-${var.env}-${each.key}-cloudwatch-key"
