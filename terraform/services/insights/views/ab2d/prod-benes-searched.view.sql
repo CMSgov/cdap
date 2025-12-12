@@ -1,4 +1,6 @@
-select *, contract_number as "Contract Number", contract_name  as "Contract Name",
+CREATE VIEW ab2d_prod_benes_searched AS
+select *, contract_number as "Contract Number",
+contract_name  as "Contract Name",
 job_uuid as "Job ID",
 benes_searched as "# Bene Searched",
 completed_at as "Completed At",
