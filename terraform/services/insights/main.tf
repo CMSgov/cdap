@@ -19,7 +19,7 @@ locals {
 }
 
 module "standards" {
-  source = "../../../modules/standards" #TODO: Update with appropriate reference
+  source = "../../modules/standards" #TODO: Update with appropriate reference
 
   app         = local.app
   env         = local.env
@@ -38,7 +38,7 @@ data "aws_kms_alias" "secondary" {
 }
 
 module "sops" {
-  source = "../../../modules/sops" #TODO: Update with appropriate reference
+  source = "../../modules/sops" #TODO: Update with appropriate reference
 
   platform = merge(module.standards, local.kms_key_aliases)
 }
