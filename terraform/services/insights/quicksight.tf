@@ -5,7 +5,8 @@ resource "aws_quicksight_account_settings" "this" {
 }
 
 resource "aws_quicksight_ip_restriction" "this" {
-  enabled = length(local.ip_restrictions) > 0
+  # IP restrictions temporarily disabled due to Zscaler access issues
+  enabled = false #length(local.ip_restrictions) > 0
 
   ip_restriction_rule_map = local.ip_restrictions
 
