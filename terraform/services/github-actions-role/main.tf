@@ -291,8 +291,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       var.app == "dpc" ? concat(
         [for key in data.aws_kms_alias.dpc_cloudwatch_keys : key.arn],
         data.aws_kms_alias.dpc_app_config[*].arn,
-        data.aws_kms_alias.dpc_ecr[*].arn,
-        data.aws_kms_alias.dpc_sns_topic[*].arn
+        data.aws_kms_alias.dpc_ecr[*].arn
       ) : []
     )
   }
