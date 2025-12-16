@@ -32,12 +32,6 @@ variable "health_check_grace_period_seconds" {
   type        = number
 }
 
-# reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
-variable "memory" {
-  description = "Amount (in MiB) of memory used by the task."
-  type        = number
-}
-
 variable "desired_count" {
   description = "Number of instances of the task definition to place and keep running."
   type        = number
@@ -71,6 +65,12 @@ variable "load_balancers" {
   default = []
 }
 
+# reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
+variable "memory" {
+  description = "Amount (in MiB) of memory used by the task."
+  type        = number
+}
+
 variable "mount_points" {
   description = "The mount points for data volumes in your container"
   type = list(object({
@@ -91,6 +91,12 @@ variable "platform" {
     private_subnets   = map(object({ id = string }))
     service           = string
   })
+}
+
+variable "platform_version" {
+  default     = "1.4.0"
+  description = "Platform version on which to run your service. Only applicable for launch_type set to FARGATE."
+  type        = string
 }
 
 variable "port_mappings" {
