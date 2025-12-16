@@ -26,6 +26,12 @@ variable "cpu" {
   type        = number
 }
 
+variable "health_check_grace_period_seconds" {
+  default     = 300
+  description = "Seconds to ignore failing load balancer health checks on newly instantiated tasks to prevent premature shutdown, up to 2147483647. Only valid for services configured to use load balancers."
+  type        = number
+}
+
 # reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
 variable "memory" {
   description = "Amount (in MiB) of memory used by the task."
