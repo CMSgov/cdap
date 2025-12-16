@@ -24,7 +24,8 @@ locals {
     ] : [],
   )
 
-  sops_env = contains(["dev", "test"], var.env) ? "test" : "prod"
+  # TODO Replace with cdap-test and cdap-prod when those environments are set up
+  account_env = contains(["dev", "test"], var.env) ? "bcda-test" : "bcda-prod"
 }
 
 # KMS keys needed for IAM policy
