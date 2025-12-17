@@ -1,4 +1,5 @@
 locals {
+  sops_env = contains(["dev", "test"], var.env) ? "test" : "prod"
   dpc_services = concat(
     [
       "attribution",
