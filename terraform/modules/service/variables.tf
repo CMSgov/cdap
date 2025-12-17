@@ -1,3 +1,9 @@
+variable "awslogs_group_override" {
+  default     = null
+  description = "Override to allow to non-standard log group names that do not match the service name."
+  type        = string
+}
+
 variable "cluster_arn" {
   description = "The ecs cluster ARN hosting the service and task."
   type        = string
@@ -10,6 +16,12 @@ variable "container_environment" {
     value = string
   }))
   default = null
+}
+
+variable "container_name_override" {
+  default     = null
+  description = "Override to allow for non-standard container names that do not match the service name."
+  type        = string
 }
 
 variable "container_secrets" {
