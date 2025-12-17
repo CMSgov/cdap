@@ -1,5 +1,5 @@
 locals {
-  sops_env = contains(["dev", "test"], var.env) ? "test" : "prod"
+
   dpc_services = concat(
     [
       "attribution",
@@ -36,7 +36,7 @@ data "aws_kms_alias" "environment_key" {
 
 #TODO Replace with cdap-prod and cdap-test when vpcs are in place
 data "aws_kms_alias" "tmp_cdap_sops_environment_key" {
-  name = "alias/bcda-${local.sops_env}"
+  name = "alias/bcda-${local.account_env}"
 }
 
 data "aws_kms_alias" "ab2d_tfstate_bucket" {
