@@ -34,8 +34,7 @@ data "aws_kms_alias" "environment_key" {
   name = "alias/${var.app}-${var.env}"
 }
 
-#TODO Replace with cdap-prod and cdap-test when vpcs are in place
-data "aws_kms_alias" "tmp_cdap_sops_environment_key" {
+data "aws_kms_alias" "account_env" {
   name = "alias/${local.account_env}"
 }
 
