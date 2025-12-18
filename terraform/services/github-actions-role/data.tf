@@ -23,11 +23,18 @@ locals {
       "web-admin",
     ] : [],
   )
+
+  # TODO Replace with cdap-test and cdap-prod when those environments are set up
+  account_env = contains(["dev", "test"], var.env) ? "bcda-test" : "bcda-prod"
 }
 
 # KMS keys needed for IAM policy
 data "aws_kms_alias" "environment_key" {
   name = "alias/${var.app}-${var.env}"
+}
+
+data "aws_kms_alias" "account_env" {
+  name = "alias/${local.account_env}"
 }
 
 data "aws_kms_alias" "ab2d_tfstate_bucket" {
