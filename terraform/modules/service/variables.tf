@@ -1,3 +1,9 @@
+variable "awslogs_group_override" {
+  default     = null
+  description = "Override to allow to non-standard log group names that do not match the service name."
+  type        = string
+}
+
 variable "cluster_arn" {
   description = "The ecs cluster ARN hosting the service and task."
   type        = string
@@ -10,6 +16,12 @@ variable "container_environment" {
     value = string
   }))
   default = null
+}
+
+variable "container_name_override" {
+  default     = null
+  description = "Override to allow for non-standard container names that do not match the service name."
+  type        = string
 }
 
 variable "container_secrets" {
@@ -26,9 +38,9 @@ variable "cpu" {
   type        = number
 }
 
-# reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
-variable "memory" {
-  description = "Amount (in MiB) of memory used by the task."
+variable "health_check_grace_period_seconds" {
+  default     = 300
+  description = "Seconds to ignore failing load balancer health checks on newly instantiated tasks to prevent premature shutdown, up to 2147483647. Only valid for services configured to use load balancers."
   type        = number
 }
 
@@ -65,6 +77,12 @@ variable "load_balancers" {
   default = []
 }
 
+# reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
+variable "memory" {
+  description = "Amount (in MiB) of memory used by the task."
+  type        = number
+}
+
 variable "mount_points" {
   description = "The mount points for data volumes in your container"
   type = list(object({
@@ -85,6 +103,12 @@ variable "platform" {
     private_subnets   = map(object({ id = string }))
     service           = string
   })
+}
+
+variable "platform_version" {
+  default     = "1.4.0"
+  description = "Platform version on which to run your service. Only applicable for launch_type set to FARGATE."
+  type        = string
 }
 
 variable "port_mappings" {
