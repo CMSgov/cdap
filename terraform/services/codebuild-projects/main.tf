@@ -10,6 +10,8 @@ locals {
     "dpc-ops",
     "dpc-static-site",
   ]
+  # TODO Replace with cdap-test and cdap-prod when those environments are set up
+  account_env = "bcda-prod"
 }
 
 module "standards" {

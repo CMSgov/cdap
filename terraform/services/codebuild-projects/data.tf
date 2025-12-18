@@ -33,6 +33,11 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
+# KMS keys needed for IAM policy
+data "aws_kms_alias" "account_env" {
+name = "alias/${local.account_env}"
+}
+
 data "aws_iam_policy_document" "codebuild" {
   # Logs
   statement {
@@ -90,6 +95,15 @@ data "aws_iam_policy_document" "codebuild" {
     ]
 
     resources = ["*"]
+  }
+
+  # KMS - needed for workflows that use encrypted sops files
+  statement {
+    actions = [
+      "kms:Decrypt",
+    ]
+
+    resources = [data.aws_kms_alias.account_env.arn]
   }
 
   statement {
