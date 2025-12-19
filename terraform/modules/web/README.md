@@ -3,7 +3,7 @@
 This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. 
 This module assumes an S3 bucket as the origin has already been created. This module currently assumes a single domain with an already issued certificate. 
 
-A sample usage is as follows:
+A sample usage is as follows    :
 
 ```
 module "platform" {

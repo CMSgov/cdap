@@ -6,14 +6,14 @@ data "aws_acm_certificate" "issued" {
 }
 
 resource "aws_cloudfront_function" "redirects" {
-  name    = var.domain_name
+  name    = "${var.domain_name}-redirects"
   runtime = "cloudfront-js-2.0"
   comment = "Function that handles cool URIs and redirects."
   code    = templatefile("${path.module}/redirects-function.tftpl", { redirects = var.redirects })
 }
 
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = var.origin_bucket.bucket_regional_domain_name
+  name                              = "${var.domain_name}-s3-origin"
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
