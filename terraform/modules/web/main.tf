@@ -1,3 +1,10 @@
+data "aws_caller_identity" "this" {}
+
+data "aws_acm_certificate" "issued" {
+  domain   = var.domain_name
+  statuses = ["ISSUED"]
+}
+
 resource "aws_cloudfront_function" "redirects" {
   name    = "redesign-redirects"
   runtime = "cloudfront-js-2.0"
@@ -6,21 +13,32 @@ resource "aws_cloudfront_function" "redirects" {
 }
 
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = var.origin_bucket.bucket_regional_domain_name
+  name                              = var.domain_name
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
 
+resource "aws_cloudfront_response_headers_policy" "this" {
+  name = "${var.platform.app}-${var.platform.env}-StsHeaderPolicy"
+
+  security_headers_config {
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      override                   = false
+      include_subdomains         = true
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "this" {
-  aliases             = var.certificate == null ? [] : [var.certificate.domain_name]
+  aliases             = [var.domain_name]
   comment             = "Distribution for the ${var.platform.app}-${var.platform.env} website"
   default_root_object = "index.html"
   enabled             = var.enabled
   http_version        = "http2and3"
   is_ipv6_enabled     = true
-  price_class         = "PriceClass_100"
   web_acl_id          = var.web_acl.arn
 
   custom_error_response {
@@ -41,7 +59,7 @@ resource "aws_cloudfront_distribution" "this" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    target_origin_id       = "s3_origin"
+    target_origin_id       = var.s3_origin_id
     viewer_protocol_policy = "redirect-to-https"
 
     cache_policy_id = (
@@ -49,6 +67,8 @@ resource "aws_cloudfront_distribution" "this" {
       "658327ea-f89d-4fab-a63d-7e88639e58f6" : # CachingOptimized managed policy
       "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"   # CachingDisabled managed policy
     )
+
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.this.id
 
     function_association {
       event_type   = "viewer_request"
@@ -59,7 +79,7 @@ resource "aws_cloudfront_distribution" "this" {
   origin {
     domain_name              = var.origin_bucket.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
-    origin_id                = "s3_origin"
+    origin_id                = var.s3_origin_id
   }
 
   restrictions {
@@ -70,29 +90,9 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = var.certificate == null ? true : false
-    acm_certificate_arn            = var.certificate == null ? null : var.certificate.arn
-    minimum_protocol_version       = var.certificate == null ? null : "TLSv1.2_2021"
-    ssl_support_method             = var.certificate == null ? null : "sni-only"
+    cloudfront_default_certificate = false
+    acm_certificate_arn            = data.aws_acm_certificate.issued.arn
+    minimum_protocol_version       = "TLSv1.2_2021"
+    ssl_support_method             = "sni-only"
   }
-}
-
-resource "aws_cloudwatch_log_delivery_source" "this" {
-  name         = "${var.platform.app}-${var.platform.env}"
-  log_type     = "ACCESS_LOGS"
-  resource_arn = aws_cloudfront_distribution.this.arn
-}
-
-resource "aws_cloudwatch_log_delivery_destination" "this" {
-  name          = "${var.platform.app}-${var.platform.env}"
-  output_format = "parquet"
-
-  delivery_destination_configuration {
-    destination_resource_arn = "${var.logging_bucket.arn}/${var.origin_bucket.bucket_regional_domain_name}"
-  }
-}
-
-resource "aws_cloudwatch_log_delivery" "this" {
-  delivery_source_name     = aws_cloudwatch_log_delivery_source.this.name
-  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.this.arn
 }
