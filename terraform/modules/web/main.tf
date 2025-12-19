@@ -13,7 +13,7 @@ resource "aws_cloudfront_function" "redirects" {
 }
 
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = var.domain_name
+  name                              = var.origin_bucket.bucket_regional_domain_name
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
