@@ -6,7 +6,7 @@ data "aws_acm_certificate" "issued" {
 }
 
 resource "aws_cloudfront_function" "redirects" {
-  name    = "redesign-redirects"
+  name    = var.domain_name
   runtime = "cloudfront-js-2.0"
   comment = "Function that handles cool URIs and redirects."
   code    = templatefile("${path.module}/redirects-function.tftpl", { redirects = var.redirects })
