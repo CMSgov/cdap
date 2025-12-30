@@ -421,7 +421,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:PutBucketPolicy",
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
-      "s3:PutLifecycleConfiguration"
+      "s3:PutLifecycleConfiguration",
+      "s3:ListBucket"
     ]
     resources = ["*"]
   }
