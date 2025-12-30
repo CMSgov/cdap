@@ -1,0 +1,1 @@
+# Write a policy to read SSM parameters
