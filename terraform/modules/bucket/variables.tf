@@ -32,3 +32,21 @@ variable "ssm_parameter" {
   type        = string
   default     = null
 }
+
+variable "create_write_policy" {
+    description = "When true, will generate a policy allowing writing objects to the bucket. Use with aws_iam_role_policy_attachment to grant access to resources in other modules"
+    type = bool
+    default = false
+ }
+
+variable "create_read_policy" {
+    description = "When true, will generate a policy allowing reading objects from the bucket. Use with aws_iam_role_policy_attachment to grant access to resources in other modules."
+    type = bool
+    default = false
+ }
+
+variable "create_delete_policy" {
+    description = "When true, will generate a policy allowing deletion of objects from the bucket. Use with aws_iam_role_policy_attachment to grant access to resources in other modules."
+    type = bool
+    default = false
+ }
