@@ -1,15 +1,16 @@
-/cdap/account/nonsensitive/security_events_slack_renotify_after_days: 30
-/cdap/account/nonsensitive/security_events_slack_severity_list: CRITICAL,HIGH,MEDIUM
-/cdap/sensitive/account/security_events_slack_webhook_url: ENC[AES256_GCM,data:z9MLEAlb76u6MZ+GWcWcfnRtax1J677k47tabDmwCqAGN7H2BrmTnkIs1fAhl9dShaL5qZrq78s0sY9b2hCAGIWWaUenVbGGpWBuZvh7rw==,iv:kbgCH76ryIbnU40SWd/Wgg+hULSgGsTO4LLWIPoDE68=,tag:NmwrTB/oVI0WEhL9R5eV2g==,type:str]
-/cdap/sensitive/mgmt-vpc/cidr: ENC[AES256_GCM,data:uNKE6Nckt24ZWHDHEWjU,iv:yVvl1HbK7ljy6lgZdGUkfi0CeIHPnd2uof9tVB1z008=,tag:9tQ1atj1Vwkgw6j1FQ8p5w==,type:str]
-/cdap/mgmt/public_nat_ipv4/sensitive/cdap-east-mgmt-a: ENC[AES256_GCM,data:FlVrW4HMpGxShfezY7k=,iv:5pZNFGbdfyrGCti7cL/7pfm4S3i5VpnESEO5Rglqw7E=,tag:NZIPNuaSZD/NSD6Q2sE2PQ==,type:str]
-/cdap/mgmt/public_nat_ipv4/sensitive/cdap-east-mgmt-b: ENC[AES256_GCM,data:N1zEW1bym0cRrT5b,iv:+i6TbqeQLVdZRGUb/O0FUDSEXHsuxxW8hEJbQJYy8gU=,tag:dypP4NS1W0h0c+SeMmuI+g==,type:str]
-/cdap/mgmt/public_nat_ipv4/sensitive/cdap-east-mgmt-c: ENC[AES256_GCM,data:dE2gJAAstO0VcCol,iv:C5g6vtQbu6AQUmtobCrnZmFcBc4Pn6EZmex1YhQqXA8=,tag:gsAznB9ygxhNdpK73HbAwQ==,type:str]
-/cdap/sensitive/sonarqube/token: ENC[AES256_GCM,data:IzX5uyi0n7Jas1UuHPP7pdmGpYlWuXdAh5cXOgBAc4D+I8vBQese8RZa8zs=,iv:jnjgYubcGBKeA+S+puNWR5OY+xxisorfNXBm8rLbwFI=,tag:r4JfuxyGxmqmdHB4JRb3cw==,type:str]
-/cdap/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
-/cdap/sensitive/artifactory/password: ENC[AES256_GCM,data:Y0pqIlDqheFTaH7RGDS/c8D59emCj969TT2N0GVPcJln3cJF3fkhlvdaDugjwSoaxisLuNXV0nQYs/g80lPHAw==,iv:bur6pAEm5V+M/Jfn1YNXZAYMs60rqGjnkPCMR2Z+Isw=,tag:bwMQmmK7S99EvgdApgTLJQ==,type:str]
-/cdap/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
-/cdap/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
+#ENC[AES256_GCM,data:X6NWj5WgPZ3Qd/BvyWxKaaWAL1GgMtJkh7so60RSri4offX4N5yuyL4+jheYI29SgVYNNG+j/BPAiANOzltJCN/Jf/TAfkAoDeeh0TSiNWV0CQxTjw==,iv:kbNDcmFEjsqVZv0qrhbB/Uorwq0D9Ed/XAajQWmkUhw=,tag:E6GhqwVOBYfSri+cNB2iAA==,type:comment]
+/cdap/mgmt/vpc/cidr: ENC[AES256_GCM,data:kQWyi/zCBc7fDfjdPq1Q,iv:q7O1jWiz9Pi1dIH8r15K9lzZyccxoGop/PiNWmwZTps=,tag:PcqPWIx/TC5nlgHib07vTw==,type:str]
+/cdap/mgmt/vpc/nat-a: ENC[AES256_GCM,data:2ssSj23BPuPj+oj1/Nw=,iv:wxiZrfQXJ3yCCk1GsNkc79JVx8CPO8E/4vYC7Lz8tlY=,tag:El91/RuIr3kBrX9HWvYgGA==,type:str]
+/cdap/mgmt/vpc/nat-b: ENC[AES256_GCM,data:iJY6mLRH0g956V3k,iv:ifcOvaLhzQhkcc8Xmgpj1cNNOktuJ8Ial/WUqli9gtU=,tag:0Fu5u/jch+h+/EP4DiA/Rg==,type:str]
+/cdap/mgmt/vpc/nat-c: ENC[AES256_GCM,data:YL7R99lIz92f1WA4,iv:rjQ2jlnf2bJW53WlHKCuItbzNPOMs4gXYS6QRWi+yBM=,tag:FuXeyK3Je3DjQjxxWpY6WQ==,type:str]
+/cdap/${env}/artifactory/password: ENC[AES256_GCM,data:K499WWanmRKKsVubjmDcinaH9xvp2XKoTIzLn32dfEjmtaxgm72/oS4O2aDXKruaQ+oDRAm/foYtt2ccbhdgqw==,iv:QhEyb6ERDjpqVVX8btFkpsWnR3xGSi8rbQDqxb60tiQ=,tag:1lBPs0JH3vErMY4l4b0bPw==,type:str]
+/cdap/${env}/artifactory/url: ENC[AES256_GCM,data:dgrly+5xFdPPsMk+WxCP5Np7hjTMCixzMaTlZu7WuEbeXGLCeVzsFAV99Bo4,iv:o1perEaeaDjdMPRhH8bwkYUb1RZbM19EnTBYgO/HvX8=,tag:H5LMP9Ycnubt7PXM2zi9Eg==,type:str]
+/cdap/${env}/artifactory/user: ENC[AES256_GCM,data:Q6sX9jCTKeWEnxc8ZKT8E9M=,iv:3pNBjw0Cs2zCDiyDKujQ0aCtd7kLy3q+o6C5Rrz7GQw=,tag:nPKVlSa+Yt+VkPXQVuknLA==,type:str]
+/cdap/${env}/security_events_slack/renotify_after_days: ENC[AES256_GCM,data:8ZQ=,iv:bEUEISqcyOw8AQTKmYztJN4Zc8zPNdHVT42P5PSY+GU=,tag:ZPq34/qbRSNTTclUvKNlVQ==,type:int]
+/cdap/${env}/security_events_slack/severity_list: ENC[AES256_GCM,data:J9iEFB22WlP3xG91wVl9i60CZ/E=,iv:0Fini9HzoM+IzRPBu9mLL7uYjuLcak0i0NZTX6i2pro=,tag:W4R7mGgTNarko+SXfjG9FQ==,type:str]
+/cdap/${env}/security_events_slack/webhook_url: ENC[AES256_GCM,data:wsfzKsWcigg4oyYgZfx9PsvHCwVEYAroDxsMgwdlFSQsZ91l2vRI4oK57jYdw2PAz8brk49wzpFLDciel+KO5C8yt46CG7Rg5rPhW61t2A==,iv:W9Qa46fW3UfdL6Jj2jE6PnHNRd6Rtl7mwFs/1Z5OqF8=,tag:GgQU0r4OfgfVNbZf1ap/Jg==,type:str]
+/cdap/${env}/sonarqube/token: ENC[AES256_GCM,data:e2eRodG9G7FE4g6hufplMpwlPPfFGZPevp2oPUup42/WlQrQ1qJcCmp7gzQ=,iv:/2aeEUaJQgj8GZR8iUU8zrU4dRDD0VBy+6yCV4G7MvI=,tag:Fl5+6ljPy03cRpdzU/U9Eg==,type:str]
+/cdap/${env}/sonarqube/url: ENC[AES256_GCM,data:oEymzTRTT2kLFfgEBCcPQgAXN4KXJIRzh8BArOrGXQ==,iv:O6uKIkEkOIBrr5n1P0uyqNBSOv6eEuk+aTT0Y9hA42g=,tag:NH3OkcUElbZ2XnRtTBLD9Q==,type:str]
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:key/e32dffdb-97e7-4b64-b5cb-f6dc4e6fabca

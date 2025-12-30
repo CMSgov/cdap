@@ -1,15 +1,16 @@
-/cdap/nonsensitive/account/security_events_slack_renotify_after_days: 30
-/cdap/nonsensitive/account/security_events_slack_severity_list: CRITICAL,HIGH,MEDIUM
-/cdap/sensitive/account/security_events_slack_webhook_url: ENC[AES256_GCM,data:aiW0cRzw2ZBM+WmgyXYeEGTIgP3Rm2vL6wa8+mGYyMnMQ718iODap66yNHLkOttq2Lz3V+HDdvjwYXDfG+IBvj9zVpQTjC3EabvByOCIeA==,iv:3GRLuWVe8Z5N3I9JY0DVyrPcwmIv+5vMwIS5ZR4P/v0=,tag:N4Hq6cI/JUUkCzR0BaL/sA==,type:str]
-/cdap/sensitive/mgmt-vpc/cidr: ENC[AES256_GCM,data:EFep+iQ02YJJe22XX4LZ,iv:nOoqFQiizuPIHDzR5xsLDeIDjZvGxmnDaWu8eGzjWrQ=,tag:En0682ms1NNWjCZhnOtrkg==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-a: ENC[AES256_GCM,data:Ce1Qb8Cma/ZC92QQYoU=,iv:+TTn3vo6+M4p70GsYCYndtWNW0avAWU9Ui5zDsSSPjo=,tag:saS8pZptSPXjbTjB1l5N+A==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-b: ENC[AES256_GCM,data:zznp+VJvDrbdMFgz,iv:/gS+Vtt+rBsKbyjLJAyYXeAWkMHAxYClv/kqocwGUfs=,tag:CpOs+maoTJChJW7lz72Slw==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-c: ENC[AES256_GCM,data:jmZGAzdcyIwPdq69,iv:jlAyPtL700BnqiWtsqQSrmZmt2TXtSzJUM2cR07bRrc=,tag:Zul0kmzRQZNMkbsLwmiUIA==,type:str]
-/cdap/sensitive/sonarqube/token: ENC[AES256_GCM,data:G8DmkxGggaryrx9+eIGmOtgM2DW931q3k9X/Cjy58Q2ZQ/Tp/bgx4yoJ7Do=,iv:IgsPiB8Fjbw984dB6tgjJa2nQrGl6Ko9TiNWNI+VIUE=,tag:SP61z5HnoDjbe3HVkLfJiQ==,type:str]
-/cdap/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
-/cdap/sensitive/artifactory/password: ENC[AES256_GCM,data:YHIx5dSONjUgnO/rAP7JsvIR0PElCzLiARuABts0zcAUTYXC4hl4M+MGabhEzrUAqtRfD3wvIw2RiXmFrKqRNQ==,iv:UCrI+tMCwoYtf1gWAlr1/7PWHzj/Tqvc5lajjbCxAd0=,tag:02HC5T7mi2mZi0euLEwELA==,type:str]
-/cdap/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
-/cdap/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
+#ENC[AES256_GCM,data:TLIqa05M/wvgi+4LYGd4BDRITLztmrDj7GaG7A+pzW4by/jAadpeMRGUUiQmYZ4/73m+PIWRV8FOmduqek/nC5UGLOd04IGNJ8Xfa2/SsZsUDmrMxw==,iv:SHRd10rmd3mzWocr6RDM2dZ3tqWYaNPC0otgW5xRPPo=,tag:50dyz2PxGgzvgSTeyoeVvw==,type:comment]
+/cdap/mgmt/vpc/cidr: ENC[AES256_GCM,data:zwxkMxIffMW/nHS1OSls,iv:egazCCP7rf7IDJi7w6cQby3TT1sZ/eJ/raxbKcXoqPc=,tag:LLRYWZA4SLuAqYMLNLtx7A==,type:str]
+/cdap/mgmt/vpc/nat-a: ENC[AES256_GCM,data:et1kdWgdyG1ocmlMkuk=,iv:GQa0H6VaQ7IyqUnJDTFuT/hJqg7QJFIJ+K0+rDFpgds=,tag:mE6ankgqjCo1SFgX5jN0/A==,type:str]
+/cdap/mgmt/vpc/nat-b: ENC[AES256_GCM,data:fXbx3qLBNt0+XI09,iv:hIKLH1jYBv793zsBiD6DHoqxhNw5PRPq8Qjsosmf4sM=,tag:tWC7+JF6AMC5g9TjJADZyQ==,type:str]
+/cdap/mgmt/vpc/nat-c: ENC[AES256_GCM,data:45rErJaqjbS9TKnm,iv:Wh93Lq9eimz1WTlRf10REXHg7Z0JrxOMMr03nheBfZs=,tag:5af8VkkGi8pDLagXiQyH5Q==,type:str]
+/cdap/${env}/artifactory/password: ENC[AES256_GCM,data:OoJ6yh15ENHz3Qi4kF/rV6JzOYRn/qDfQ8Myq4GShJGRK7u++yrXvu4s3e2XaGr28f5lCLI2EECNHP9ixdcVTQ==,iv:4KQK+hFhXKrZOfO5ihmB0KoBqZwCoO+ib4LOMNvztgY=,tag:blO3Mnbj2QDMRxgqY69kpg==,type:str]
+/cdap/${env}/artifactory/url: ENC[AES256_GCM,data:LJHeU4q8Xv7QrfCHo8er0Wj/Sct2dGEy7U9v0r1kFbemXWn0ce00O2DOVI2B,iv:WzNYBv35yKa5BxnqSwXPNElkP5DdYL9LyzI1/aAkuqA=,tag:r36e77lbFr8F2bIWsY/Hyw==,type:str]
+/cdap/${env}/artifactory/user: ENC[AES256_GCM,data:LKXWwku3MXt2geA7NAtbvQ0=,iv:EsdbHN+fqo3Z/FWhhULujgS30iPWjMQdeJRSEdS7QKI=,tag:9p2ggiYWNhNtWgkc/5cpIg==,type:str]
+/cdap/${env}/security_events_slack/renotify_after_days: ENC[AES256_GCM,data:xL4=,iv:Tx1CgpIsATVCdZVho0hyuDNLvwUgxkAwBMSCBmt6eco=,tag:SUXMwKm7h+Sgt1cT6F8jog==,type:int]
+/cdap/${env}/security_events_slack/severity_list: ENC[AES256_GCM,data:5vH6scemCXcRr+ILmibnWHEC8yQ=,iv:PR1jmcm5LHUfYd/XOKFECSzyU/LaPscLEH/CZhPmN+w=,tag:O9OhhdU9+nOPuZ9tLlxJQg==,type:str]
+/cdap/${env}/security_events_slack/webhook_url: ENC[AES256_GCM,data:TgHIIahixocxdqWgTz9BHXHOjkNkZkQEj4J/UbMhca+waCWCesidfw5zyLWeHqPxbvfYW47RWz9BCdpfl/9WYkmhT7Je14TqdNWTWu0kew==,iv:W8BNq9mGu5j5SIk19IVL1FH8cYE4oGZzo7hPMZzdwvo=,tag:zYh0gbGDSNsuxkQD72V0Gw==,type:str]
+/cdap/${env}/sonarqube/token: ENC[AES256_GCM,data:D1ACQ7QHDLx8g2js3kgnMdOGf7C6EJ9EeZ9yC7LqXH127QHWl6/KYJDfQ2s=,iv:L95mg4McwlmKGmtMR7a6PqU0Ysnlr/P8D8wE1D50RxM=,tag:yAH/5nhLIN9leHwWzvNDpA==,type:str]
+/cdap/${env}/sonarqube/url: ENC[AES256_GCM,data:kh2AT0l/e20LNs6A26w8W6A4s38wnxoKfAB3lpdYcA==,iv:2Os04jzRmKefShjew5371tpdE36ig6Z65BjOp7P03hM=,tag:x8EJAmUsfDm+PIWhyYKUBg==,type:str]
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/bcda-test
