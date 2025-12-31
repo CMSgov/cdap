@@ -274,7 +274,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "kms:GenerateDataKey",
       "kms:GenerateDataKeyWithoutPlaintext",
       "kms:DescribeKey",
-      "kms:CreateGrant"
+      "kms:CreateGrant",
+      "kms:ListResourceTags"
     ]
     resources = concat(
       [data.aws_kms_alias.environment_key.target_key_arn],
@@ -410,6 +411,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:GetBucketOwnershipControls",
       "s3:GetBucketPolicy",
       "s3:GetBucketRequestPayment",
+      "s3:GetBucketTagging",
       "s3:GetBucketVersioning",
       "s3:GetBucketWebsite",
       "s3:GetEncryptionConfiguration",
