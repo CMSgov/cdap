@@ -1,3 +1,11 @@
+module "standards" {
+  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=0bd3eeae6b03cc8883b7dbdee5f04deb33468260"
+  app         = var.app
+  env         = var.env
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/github-actions-role"
+  service     = "github-actions-role"
+}
+
 locals {
   provider_domain = "token.actions.githubusercontent.com"
   repos = {
@@ -274,24 +282,27 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "kms:GenerateDataKey",
       "kms:GenerateDataKeyWithoutPlaintext",
       "kms:DescribeKey",
-      "kms:CreateGrant"
+      "kms:CreateGrant",
+      "kms:ListResourceTags"
     ]
     resources = concat(
-      [data.aws_kms_alias.environment_key.arn],
-      [data.aws_kms_alias.account_env.arn],
+      [data.aws_kms_alias.environment_key.target_key_arn],
+      [data.aws_kms_alias.account_env_old.target_key_arn],
+      [data.aws_kms_alias.account_env.target_key_arn],
+      [data.aws_kms_alias.account_env_secondary.target_key_arn],
       var.app == "ab2d" ? concat(
-        data.aws_kms_alias.ab2d_ecr[*].arn,
-        data.aws_kms_alias.ab2d_tfstate_bucket[*].arn,
+        data.aws_kms_alias.ab2d_ecr[*].target_key_arn,
+        data.aws_kms_alias.ab2d_tfstate_bucket[*].target_key_arn,
       ) : [],
       var.app == "bcda" ? concat(
-        data.aws_kms_alias.bcda_aco_creds[*].arn,
-        data.aws_kms_alias.bcda_app_config[*].arn,
-        data.aws_kms_alias.bcda_insights_data_sampler[*].arn,
+        data.aws_kms_alias.bcda_aco_creds[*].target_key_arn,
+        data.aws_kms_alias.bcda_app_config[*].target_key_arn,
+        data.aws_kms_alias.bcda_insights_data_sampler[*].target_key_arn,
       ) : [],
       var.app == "dpc" ? concat(
-        [for key in data.aws_kms_alias.dpc_cloudwatch_keys : key.arn],
-        data.aws_kms_alias.dpc_app_config[*].arn,
-        data.aws_kms_alias.dpc_ecr[*].arn
+        [for key in data.aws_kms_alias.dpc_cloudwatch_keys : key.target_key_arn],
+        data.aws_kms_alias.dpc_app_config[*].target_key_arn,
+        data.aws_kms_alias.dpc_ecr[*].target_key_arn
       ) : []
     )
   }
@@ -409,6 +420,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:GetBucketOwnershipControls",
       "s3:GetBucketPolicy",
       "s3:GetBucketRequestPayment",
+      "s3:GetBucketTagging",
       "s3:GetBucketVersioning",
       "s3:GetBucketWebsite",
       "s3:GetEncryptionConfiguration",
@@ -420,7 +432,11 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:PutBucketPolicy",
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
-      "s3:PutLifecycleConfiguration"
+      "s3:PutLifecycleConfiguration",
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject"
     ]
     resources = ["*"]
   }
