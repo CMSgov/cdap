@@ -42,6 +42,11 @@ data "aws_kms_alias" "account_env" {
   name = "alias/${local.account_env}"
 }
 
+data "aws_kms_alias" "account_env_secondary" {
+  provider = aws.secondary
+  name     = "alias/${local.account_env}"
+}
+
 data "aws_kms_alias" "ab2d_tfstate_bucket" {
   count = var.env == "ab2d" ? 1 : 0
   name  = "alias/ab2d-${var.env}-tfstate-bucket"

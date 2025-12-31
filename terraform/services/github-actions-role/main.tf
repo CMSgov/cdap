@@ -1,3 +1,11 @@
+module "standards" {
+  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=0bd3eeae6b03cc8883b7dbdee5f04deb33468260"
+  app         = var.app
+  env         = var.env
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/github-actions-role"
+  service     = "github-actions-role"
+}
+
 locals {
   provider_domain = "token.actions.githubusercontent.com"
   repos = {
@@ -281,6 +289,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       [data.aws_kms_alias.environment_key.target_key_arn],
       [data.aws_kms_alias.account_env_old.target_key_arn],
       [data.aws_kms_alias.account_env.target_key_arn],
+      [data.aws_kms_alias.account_env_secondary.target_key_arn],
       var.app == "ab2d" ? concat(
         data.aws_kms_alias.ab2d_ecr[*].target_key_arn,
         data.aws_kms_alias.ab2d_tfstate_bucket[*].target_key_arn,
