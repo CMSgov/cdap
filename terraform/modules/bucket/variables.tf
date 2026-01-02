@@ -17,8 +17,34 @@ variable "env" {
 }
 
 variable "name" {
-  description = "Name for the S3 bucket"
+  description = <<EOT
+    Full name for the S3 bucket.
+    Full readable string for pre-existing buckets or
+    those that don't follow convention. Prioritized name value.
+  EOT
   type        = string
+  default     = null
+
+  validation {
+    # Check if either this variable is true OR bucket_common_name is not null
+    condition     = var.name != null || var.bucket_common_name != null
+    error_message = "You must provide a value for 'name' or 'common_name'."
+  }
+}
+
+variable "common_name" {
+  description = <<EOT
+    Common readable string name to which a standard
+    prefix is added using app and env. Preferred for convention
+  EOT
+  type        = string
+  default     = null
+
+  validation {
+    # Check if either this variable is true OR bucket_common_name is not null
+    condition     = var.bucket_name != null || var.name != null
+    error_message = "You must provide a value for 'name' or 'common_name'."
+  }
 }
 
 variable "cross_account_read_roles" {
@@ -34,19 +60,28 @@ variable "ssm_parameter" {
 }
 
 variable "create_write_policy" {
-  description = "When true, will generate a policy allowing writing objects to the bucket. Use with aws_iam_role_policy_attachment to grant access to resources in other modules"
+  description = <<EOT
+    When true, will generate a policy allowing writing objects to the bucket.
+    Use with aws_iam_role_policy_attachment to grant access to resources in other modules
+   EOT
   type        = bool
   default     = false
 }
 
 variable "create_read_policy" {
-  description = "When true, will generate a policy allowing reading objects from the bucket. Use with aws_iam_role_policy_attachment to grant access to resources in other modules."
+  description = <<EOT
+    When true, will generate a policy allowing reading objects from the bucket.
+    Use with aws_iam_role_policy_attachment to grant access to resources in other modules
+   EOT
   type        = bool
   default     = false
 }
 
 variable "create_delete_policy" {
-  description = "When true, will generate a policy allowing deletion of objects from the bucket. Use with aws_iam_role_policy_attachment to grant access to resources in other modules."
+  description = <<EOT
+  When true, will generate a policy allowing deletion of objects from the bucket.\n
+    Use with aws_iam_role_policy_attachment to grant access to resources in other modules.
+  EOT
   type        = bool
   default     = false
 }

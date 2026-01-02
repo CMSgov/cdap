@@ -1,6 +1,10 @@
+locals {
+  full_bucket_name = var.name != null ? var.name : "${var.app}-${var.env}-${var.common_name}"
+}
+
 resource "aws_s3_bucket" "this" {
   # Max length on bucket_prefix is 37, so cut it to 36 plus the dash
-  bucket_prefix = "${substr(var.name, 0, 36)}-"
+  bucket_prefix = "${substr(local.full_bucket_name, 0, 36)}-"
   force_destroy = true
 }
 
