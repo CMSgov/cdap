@@ -1,11 +1,14 @@
 provider "aws" {
   default_tags {
-    tags = {
-      business  = "oeda"
-      code      = "https://github.com/CMSgov/cdap/tree/main/terraform/services/github-actions-role"
-      component = "github-actions"
-      terraform = true
-    }
+    tags = module.standards.default_tags
+  }
+}
+
+provider "aws" {
+  alias  = "secondary"
+  region = "us-west-2"
+  default_tags {
+    tags = module.standards.default_tags
   }
 }
 
