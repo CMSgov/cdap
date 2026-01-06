@@ -117,13 +117,7 @@ data "aws_iam_policy_document" "lambda_permissions" {
       "sqs:ReceiveMessage",
       "sqs:DeleteMessage",
       "sqs:GetQueueAttributes",
-      "ssm:GetParameter",
-      "kms:GenerateDataKey",
-      "kms:Encrypt" ,
-      "kms:Decrypt",
-      "logs:PutLogEvents",
-      "logs:CreateLogStream",
-      "logs:CreateLogGroup"
+      "ssm:GetParameter"
     ]
 
     resources = [module.sns_to_slack_queue.arn]
