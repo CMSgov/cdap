@@ -5,7 +5,6 @@ CREATE OR REPLACE VIEW bcda_sandbox_api_calls_weekly AS
 SELECT
     week_start,
     week_end,
-    cms_id,
     COUNT(*) AS total_api_calls,
     COUNT(*) FILTER (WHERE jobs.request_url LIKE '%/v1/%') AS v1_api_calls,
     COUNT(*) FILTER (WHERE jobs.request_url LIKE '%/v2/%') AS v2_api_calls,
@@ -14,10 +13,8 @@ FROM (
     SELECT
         DATE(jobs.created_at) - (EXTRACT(DOW FROM jobs.created_at)::int * INTERVAL '1 day') AS week_start,
         DATE(jobs.created_at) - (EXTRACT(DOW FROM jobs.created_at)::int * INTERVAL '1 day') + INTERVAL '6 days' AS week_end,
-        acos.cms_id,
         jobs.request_url
     FROM jobs
-    JOIN acos ON acos.uuid = jobs.aco_id
     WHERE jobs.aco_id IN (
         '48351751-8d6a-4c8e-ae0c-7f249cf356ea',
         -- Basic XSmall ACO
@@ -40,5 +37,5 @@ FROM (
         '44f78e2b-5247-4557-b41e-4d2d66babc0d' -- PACA Large ACO
     )
 ) jobs
-GROUP BY week_start, week_end, cms_id
-ORDER BY week_start DESC, cms_id;
+GROUP BY week_start, week_end
+ORDER BY week_start DESC;
