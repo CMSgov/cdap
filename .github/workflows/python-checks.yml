@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - '**/lambda_src/**'
+      - 'terraform/services/alarm-to-slack/lambda_src/**'
 
 jobs:
   python-checks:
@@ -14,7 +14,8 @@ jobs:
       - uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47
         id: changed-dirs
         with:
-          files: '**/lambda_src/**'
+          files: |
+            terraform/services/alarm-to-slack/lambda_src/**
           dir_names: 'true'
       - run: scripts/python-checks
         env:
