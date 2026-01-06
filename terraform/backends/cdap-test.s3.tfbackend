@@ -1,2 +1,0 @@
-bucket       = "cdap-test-tfstate-20251230174431053500000001"
-use_lockfile = true
