@@ -1,14 +1,29 @@
-variable "domain_name" {
-  description = "An externally managed domain that points to this distribution. A matching ACM certificate must already be issued."
-  type        = string
+variable "certificate" {
+  default     = null
+  description = "Object representing the website certificate."
+  type = object({
+    arn         = string
+    domain_name = string
+  })
+}
+
+variable "enabled" {
+  default     = true
+  description = "Whether the distribution is enabled to accept end user requests for content."
+  type        = bool
+}
+
+variable "logging_bucket" {
+  description = "Object representing the logging S3 bucket."
+  type = object({
+    arn = string
+  })
 }
 
 variable "origin_bucket" {
   description = "Object representing the origin S3 bucket."
   type = object({
     bucket_regional_domain_name = string,
-    arn                         = string,
-    id                          = string
   })
 }
 
@@ -16,10 +31,7 @@ variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
     app = string,
-    env = string,
-    splunk_logging_bucket = object({
-      arn = string
-    })
+    env = string
   })
 }
 
@@ -33,16 +45,4 @@ variable "web_acl" {
   type = object({
     arn = string
   })
-}
-
-variable "enabled" {
-  default     = true
-  description = "Whether the distribution is enabled to accept end user requests for content."
-  type        = bool
-}
-
-variable "s3_origin_id" {
-  default     = "s3_origin"
-  description = "Variable to manage existing s3 origins without recreation. All new instances of this module can leave the default."
-  type        = string
 }

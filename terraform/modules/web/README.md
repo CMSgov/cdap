@@ -1,9 +1,6 @@
 # CDAP Web Module
 
-This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. 
-This module assumes an S3 bucket as the origin has already been created. This module currently assumes a single domain with an already issued certificate. 
-
-A sample usage is as follows    :
+This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. A sample usage is as follows:
 
 ```
 module "platform" {
@@ -59,6 +56,7 @@ module "web" {
   source = "../modules/web"
 
   certificate     = aws_acm_certificate.cert
+  logging_bucket  = module.logging_bucket
   origin_bucket   = module.origin_bucket
   platform        = module.platform
   web_acl         = module.web_acl
