@@ -1,7 +1,7 @@
--- Get PRODUCTION API calls by week (total, V1, V2, and V3)
+-- Get PRODUCTION job request calls by week (total, V1, V2, and V3)
 -- Also includes total cancelled calls and cancelled calls by version
 -- Weeks run Sunday to Saturday
-CREATE OR REPLACE VIEW bcda_prod_api_calls_weekly AS
+CREATE OR REPLACE VIEW bcda_prod_job_request_calls_weekly AS
 SELECT
     week_start,
     week_end,

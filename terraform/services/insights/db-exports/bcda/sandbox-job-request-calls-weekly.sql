@@ -1,15 +1,15 @@
 SELECT cron.schedule_in_database(
-  's3_export_bcda_prod_api_calls_weekly',
-  '40 */6 * * *',
+  's3_export_bcda_sandbox_job_request_calls_weekly',
+  '5 */6 * * *',
   $$
     SELECT *
     FROM aws_s3.query_export_to_s3
     (
-      'SELECT * FROM bcda_prod_api_calls_weekly',
+      'SELECT * FROM bcda_sandbox_job_request_calls_weekly',
       aws_commons.create_s3_uri
       (
-        'bcda-prod-aurora-export-2025xxxxxxxxxxxxxxxxxxxxxx',
-        'bcda-prod-api-calls-weekly.csv',
+        'bcda-sandbox-aurora-export-2025xxxxxxxxxxxxxxxxxxxxxx',
+        'bcda-sandbox-api-calls-weekly.csv',
         'us-east-1'
       ),
       options := 'format csv, HEADER true',

@@ -1,7 +1,7 @@
--- Get SANDBOX API calls by week (total, V1, V2, and V3)
+-- Get SANDBOX job request calls by week (total, V1, V2, and V3)
 -- Weeks run Sunday to Saturday
 -- This should be run in SANDBOX only!
-CREATE OR REPLACE VIEW bcda_sandbox_api_calls_weekly AS
+CREATE OR REPLACE VIEW bcda_sandbox_job_request_calls_weekly AS
 SELECT
     week_start,
     week_end,
