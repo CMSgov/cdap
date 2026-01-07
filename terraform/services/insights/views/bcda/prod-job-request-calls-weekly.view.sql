@@ -20,6 +20,8 @@ FROM (
         jobs.request_url,
         jobs.status
     FROM jobs
+    LEFT JOIN acos ON acos.uuid = jobs.aco_id
+    WHERE acos.cms_id !~ '^(A999|V99|E999|TEST|DA999)'
 ) jobs
 GROUP BY week_start, week_end
 ORDER BY week_start DESC;
