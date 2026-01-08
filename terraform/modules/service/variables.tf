@@ -1,9 +1,3 @@
-# variable "awslogs_group_override" {
-#   default     = null
-#   description = "Override to allow to non-standard log group names that do not match the service name."
-#   type        = string
-# }
-
 variable "cluster_arn" {
   description = "The ecs cluster ARN hosting the service and task."
   type        = string
@@ -17,12 +11,6 @@ variable "container_environment" {
   }))
   default = null
 }
-
-# variable "container_name_override" {
-#   default     = null
-#   description = "Override to allow for non-standard container names that do not match the service name."
-#   type        = string
-# }
 
 variable "container_secrets" {
   description = "The secrets to pass to the container. For more information, see [Specifying Sensitive Data](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/specifying-sensitive-data.html) in the Amazon Elastic Container Service Developer Guide"
