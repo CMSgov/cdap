@@ -1,6 +1,6 @@
 -- Get all jobs with CMS ID added from acos table
 -- This should be run in SANDBOX only!
-CREATE OR REPLACE VIEW bcda_jobs_with_cms_id AS
+CREATE OR REPLACE VIEW bcda_sandbox_jobs_with_cms_id AS
 SELECT
     jobs.*,
     acos.cms_id
