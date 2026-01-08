@@ -6,15 +6,10 @@ Forwards the message to Slack channel #dasg_metrics_and_insights.
 from datetime import datetime, timezone
 import json
 import os
-import logging
-from logging import Logger
 from urllib import request
 from urllib.error import URLError
 import boto3
 from botocore.exceptions import ClientError
-
-logger: Logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
 SSM_PARAMETER_CACHE = {}
 
@@ -101,7 +96,7 @@ def get_ssm_parameter(name):
             value = response['Parameter']['Value']
             SSM_PARAMETER_CACHE[name] = value
         except ClientError as error:
-            log({'msg': f'Error getting SSM parameter {name}: {error}'})
+            print({'msg': f'Error getting SSM parameter {name}: {error}'})
             SSM_PARAMETER_CACHE[name] = None
 
     return SSM_PARAMETER_CACHE[name]
@@ -122,7 +117,7 @@ def lambda_handler(event, context):
     """
     Parse AWS Cost Anomaly Detection SNS messages
     """
-    logger.info(f"Received event: {json.dumps(event)}")
+    print(f"Received event: {json.dumps(event)}")
 
     message = "test"
 
@@ -139,7 +134,7 @@ def lambda_handler(event, context):
                         sns_message = json.loads(body['Message'])
                         message = process_cost_anomaly(sns_message)
                     else:
-                        logger.warning("No SNS Message found in SQS body")
+                        print("No SNS Message found in SQS body")
 
         # Handle direct SNS trigger
         elif 'Records' in event and event['Records'][0].get('EventSource') == 'aws:sns':
@@ -160,14 +155,14 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
-        logger.error(f"Error processing message: {str(e)}", exc_info=True)
+        print(f"Error processing message: {str(e)}")
         raise
 
 def process_cost_anomaly(message):
     """
     Process and parse the cost anomaly detection message
     """
-    logger.info("Processing cost anomaly message")
+    print("Processing cost anomaly message")
 
     # Extract key information
     account_id = message.get('accountId', 'Unknown')
@@ -204,11 +199,11 @@ def process_cost_anomaly(message):
         'timestamp': datetime.utcnow().isoformat()
     }
 
-    logger.info(f"Parsed anomaly data: {json.dumps(parsed_data, indent=2)}")
+    print(f"Parsed anomaly data: {json.dumps(parsed_data, indent=2)}")
 
     # Format alert message
     alert_message = format_alert_message(parsed_data)
-    logger.info(f"Alert message:\n{alert_message}")
+    print(f"Alert message:\n{alert_message}")
 
 
     return parsed_data
@@ -275,7 +270,7 @@ def send_message_to_slack(webhook, message, message_id):
         bool: True if successful, False otherwise
     """
     if not webhook:
-        log({
+        print({
             'msg': 'Unable to send to Slack as webhook URL is not set',
             'messageId': message_id
         })
@@ -290,30 +285,19 @@ def send_message_to_slack(webhook, message, message_id):
     try:
         with request.urlopen(req, jsondataasbytes) as resp:
             if resp.status == 200:
-                log({
+                print({
                     'msg': 'Successfully sent message to Slack',
                     'messageId': message_id
                 })
                 return True
-            log({
+            print({
                 'msg': f'Unsuccessful attempt to send message to Slack ({resp.status})',
                 'messageId': message_id
             })
             return False
     except URLError as error:
-        log({
+        print({
             'msg': f'Unsuccessful attempt to send message to Slack ({error.reason})',
             'messageId': message_id
         })
         return False
-
-
-def log(data):
-    """
-    Enrich the log message with the current time and print it to standard out.
-
-    Args:
-        data: Dictionary containing log data
-    """
-    data['time'] = datetime.now().astimezone(tz=timezone.utc).isoformat()
-    print(json.dumps(data))
