@@ -1,6 +1,4 @@
 locals {
-  # awslogs_group     = var.awslogs_group_override != null ? var.awslogs_group_override : local.service_name
-  # container_name    = var.container_name_override != null ? var.container_name_override : local.service_name
   service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
 }
@@ -15,7 +13,6 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
   container_definitions = nonsensitive(jsonencode([
     {
-      # name                   = local.container_name
       name                   = local.service_name
       image                  = var.image
       readonlyRootFilesystem = true
@@ -26,7 +23,6 @@ resource "aws_ecs_task_definition" "this" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          # awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.awslogs_group}"
           awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
           awslogs-create-group  = "true"
           awslogs-region        = var.platform.primary_region.name
