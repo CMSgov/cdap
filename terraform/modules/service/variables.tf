@@ -93,7 +93,7 @@ variable "platform" {
   })
 }
 
-variable "platform_version" {
+variable "fargate_version" {
   default     = "1.4.0"
   description = "Platform version on which to run your service. Only applicable for launch_type set to FARGATE."
   type        = string
