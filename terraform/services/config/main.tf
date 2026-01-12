@@ -14,8 +14,9 @@ locals {
 }
 
 module "sops" {
-  source   = "../../modules/sops"
-  platform = module.platform
+  source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=8874310"
+
+  platform                  = module.platform
   create_local_sops_wrapper = var.create_local_sops_wrapper
 }
 
