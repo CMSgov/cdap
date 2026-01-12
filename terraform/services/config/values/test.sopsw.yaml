@@ -6,17 +6,11 @@
 /cdap/${env}/common/sensitive/artifactory/password: ENC[AES256_GCM,data:I1aJH47720hOkHzzr1nmAM3EXdAl2Piz4WUnl0a8bdNZfQK8oVxH3bECttmxMM0XKitX++YFOJuruNoElNfaRA==,iv:ThvHPPTf2ZWQdNhwrfNVfdHRN7Ul+nV9YhAL8nPl3dQ=,tag:XomFdm8+QD/Sa8QklKxivA==,type:str]
 /cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:lV6+7ZUVIASah1MsVxwM4ppAaUPtl2U9KN/U3/oOJKAe8uBRqoi1VfTbK9/fkULWEEo8xeXClhyQ/5pwuBEeJeiF1T28s7PB/xazojIKwA==,iv:AvJO7UfGFPp+CUwU/qJI24/A45AyKH3K8JTnvJy6rmc=,tag:I82g2EdIFMrAQBjnHVyQ0Q==,type:str]
 /cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:mi95Tomm4XsYBSdSoUe86P88EzVdeXwtMIxvizocrgdgDJJ/T2wWcSeGgHg=,iv:td8FoqLemd971hVxDvJh9hYFoT78/MZBxhQUr5kwfzo=,tag:zZrKfii+Ql5ffLjVrJ9qKA==,type:str]
-/cdap/${env}/common/sensitive/vpc/cidr: ENC[AES256_GCM,data:K1PmnO6btbzqJvkYe03Q,iv:FsxwfAtLDJy7B1r7qpPZXjFMWHvba70yzY+V6F0eN2Y=,tag:qLnfvdwRO3VwIrqMyMcw5g==,type:str]
-/cdap/${env}/common/sensitive/vpc/nat-a: ENC[AES256_GCM,data:pNS6sqvPjFLPxOM=,iv:CHL5ZCM88xrl52xkb4h5m+qNyxCfH6Ejd3RvM6+k8UY=,tag:MPUib898Q0BiLJLR286GNw==,type:str]
-/cdap/${env}/common/sensitive/vpc/nat-b: ENC[AES256_GCM,data:7r400Ya9eN11vgVL8w==,iv:eGLA2nCBdx955olDp8uk1XDb4QOwAY8p91TMgZyujGw=,tag:SxyJVXAVuoKaywYKT7RI/w==,type:str]
-/cdap/${env}/common/sensitive/vpc/nat-c: ENC[AES256_GCM,data:wLrL8NVgQlUNuG9mneFIRG262qfbAm6jPvZ8ay/ugg4Vgse4bQatAAMz3AyKjrIFm5aS9g==,iv:wMHHlijil0h7LViwguMp96hWwDo+PuUaVBLVx1iGp3k=,tag:CCoz2N404a7Etq76SzTQyg==,type:str]
 sops:
-    kms:
-        - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-test
-          created_at: "2026-01-08T20:29:55Z"
-          enc: AQICAHhRVR5bK8ZYKFTKNNSHhEFksAVIRCiMf5uovRP3zJDkeAHWypXhv1uWVWyKeePMZ50bAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM6+S+/quJXLdh+eYLAgEQgDtaGCuiq3E+vNW/y6iIQulTw/iEq7WE7hSiYThlLR2o39B6LnaOkyr0xnTzh90dY6R/TgUgd29lY7WG+w==
-          aws_profile: ""
-    lastmodified: "2026-01-08T20:30:16Z"
-    mac: ENC[AES256_GCM,data:FpY24tV5HpfK7zkNMw0vE1w/u1ZNHkCdSvt2GolFONdVIDC47haQdOv1bailqj532I1P2L+5dj6/fix1jG3ArsWKq72Ho38VopdJguCRDteP7jhFzfNyNycKdfDrJyWLiXJ021ej5M2tM1xSf6fFjh6qBptsKcL4XxOzBa+0PSc=,iv:67bj6jkLURgCgV5RYpFgzJhB63ycT6avKNhlua+9IaU=,tag:LTovdaAPGsQdooah1HRlKg==,type:str]
-    unencrypted_regex: /nonsensitive/
-    version: 3.11.0
+  kms:
+    - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-test
+      created_at: "2026-01-08T20:29:55Z"
+      enc: AQICAHhRVR5bK8ZYKFTKNNSHhEFksAVIRCiMf5uovRP3zJDkeAHWypXhv1uWVWyKeePMZ50bAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM6+S+/quJXLdh+eYLAgEQgDtaGCuiq3E+vNW/y6iIQulTw/iEq7WE7hSiYThlLR2o39B6LnaOkyr0xnTzh90dY6R/TgUgd29lY7WG+w==
+      aws_profile: ""
+  unencrypted_regex: /nonsensitive/
+  version: 3.11.0
