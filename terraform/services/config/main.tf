@@ -4,7 +4,7 @@ module "platform" {
 
   app         = "cdap"
   env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/terraform/services/config"
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/config"
   service     = local.service
 }
 
