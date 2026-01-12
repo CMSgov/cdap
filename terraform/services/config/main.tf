@@ -17,6 +17,7 @@ locals {
 module "sops" {
   source   = "../../modules/sops"
   platform = module.platform
+  create_local_sops_wrapper = var.create_local_sops_wrapper
 }
 
 output "edit" {
