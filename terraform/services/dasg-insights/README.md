@@ -1,4 +1,4 @@
-# CDAP Insights Management Environment
+# Insights service
 
 This root module configures the fundamental platform resources in the AWS DASG Insights account, including IAM, QuickSight, and SSM Parameters.
 

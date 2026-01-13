@@ -1,1 +1,1 @@
-TARGET_ENVS="dasg-insights-prod"
+TARGET_ENVS="insights-prod"
