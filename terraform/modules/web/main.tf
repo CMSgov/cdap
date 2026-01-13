@@ -15,6 +15,7 @@ data "aws_acm_certificate" "issued" {
   statuses = ["ISSUED"]
 }
 
+# Core cloudfront distribution
 resource "aws_cloudfront_function" "redirects" {
   name    = "${local.naming_prefix}-redirects"
   runtime = "cloudfront-js-2.0"
@@ -104,7 +105,7 @@ resource "aws_cloudfront_distribution" "this" {
 # WAF and firewall
 resource "aws_wafv2_ip_set" "this" {
   # There is no IP blocking in Prod for the Static Site
-  name               = local.naming_string
+  name               = "${var.platform.app}-${var.platform.env}-cloudfront"
   description        = "IP set with access to ${var.domain_name}"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
@@ -113,7 +114,7 @@ resource "aws_wafv2_ip_set" "this" {
 
 module "firewall" {
   source       = "../firewall"
-  name         = local.naming_string
+  name         = "${var.platform.app}-${var.platform.env}-cloudfront"
   app          = var.platform.app
   env          = var.platform.env
   scope        = "CLOUDFRONT"
