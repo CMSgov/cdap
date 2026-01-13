@@ -56,9 +56,9 @@ SOPS documentation:  https://confluence.cms.gov/spaces/ODI/pages/1353352386/SOPS
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
-| <a name="provider_external"></a> [external](#provider\_external) | n/a |
-| <a name="provider_local"></a> [local](#provider\_local) | n/a |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.5.0 |
+| <a name="provider_external"></a> [external](#provider\_external) | 2.3.5 |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.5.3 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -78,8 +78,8 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | `any` | n/a | yes |
-| <a name="input_create_local_sops_wrapper"></a> [create\_local\_sops\_wrapper](#input\_create\_local\_sops\_wrapper) | Specify whether to create the script for localling editing the wrapped, sops 'sopsw' values file. | `string` | `true` | no |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | <pre>object({<br/>    app        = string,<br/>    parent_env = string,<br/>    env        = string,<br/>    kms_alias_primary = object({<br/>      id = string,<br/>    }),<br/>    service          = string,<br/>    is_ephemeral_env = string<br/>  })</pre> | n/a | yes |
+| <a name="input_create_local_sops_wrapper"></a> [create\_local\_sops\_wrapper](#input\_create\_local\_sops\_wrapper) | Specify whether to create the script for localling editing the wrapped, sops 'sopsw' values file. | `string` | `false` | no |
 | <a name="input_sopsw_parent_yaml_file"></a> [sopsw\_parent\_yaml\_file](#input\_sopsw\_parent\_yaml\_file) | Override. With `var.sopsw_values_file_extension`, specifies the wrapped, sops 'sopsw' values file base name. Defaults to `${local.parent_env}.${var.sopsw_values_file_extension}`, e.g. `prod.sopsw.yaml`. | `string` | `null` | no |
 | <a name="input_sopsw_values_dir"></a> [sopsw\_values\_dir](#input\_sopsw\_values\_dir) | Override. Path to the root module's directory where the wrapped sops 'sopsw' values files directory. Defaults to `./values/` within the root module. | `string` | `null` | no |
 | <a name="input_sopsw_values_file_extension"></a> [sopsw\_values\_file\_extension](#input\_sopsw\_values\_file\_extension) | Override. File extension of the wrapped sops 'sopsw' values file. | `string` | `"sopsw.yaml"` | no |
