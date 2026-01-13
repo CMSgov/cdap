@@ -18,7 +18,7 @@ for dir in $(ls "$repo_root/terraform/services"); do
       echo "Planning $dir service because it exists in all environments, including $APP-$ENV"
       ;;
     account)
-      if [[ "$APP" == "bcda" && ("$ENV" == "test" || "$ENV" == "prod") ]]; then
+      if [[ "$APP" == "insights" || ("$APP" == "bcda" && ("$ENV" == "test" || "$ENV" == "prod")) ]]; then
         echo "Planning $dir service for the account-wide $APP-$ENV environment"
       else
         echo "Skipping $dir service because $APP-$ENV is not an account-wide environment"
