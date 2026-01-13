@@ -1,1 +1,1 @@
-TARGET_ENVS="dpc-dev dpc-test dpc-prod"
+TARGET_ENVS="dpc-dev dpc-prod"
