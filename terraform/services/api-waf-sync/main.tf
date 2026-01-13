@@ -7,6 +7,15 @@ data "aws_kms_alias" "bcda_app_config_kms_key" {
   name = "alias/bcda-${var.env}-app-config-kms"
 }
 
+data "aws_kms_alias" "dpc_app_config" {
+  count = var.app == "dpc" ? 1 : 0
+  name  = "alias/dpc-${var.env}-master-key"
+}
+
+data "aws_kms_alias" "environment_key" {
+  name = "alias/${var.app}-${var.env}"
+}
+
 module "api_waf_sync_function" {
   source = "../../modules/function"
 
@@ -31,7 +40,13 @@ module "api_waf_sync_function" {
     DB_HOST  = data.aws_ssm_parameter.dpc_db_host.value
   }
 
-  extra_kms_key_arns = [data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn]
+  extra_kms_key_arns = concat(
+    [
+      data.aws_kms_alias.environment_key.target_key_arn,
+      data.aws_kms_alias.bcda_app_config_kms_key.target_key_arn
+    ],
+    var.app == "dpc" ? data.aws_kms_alias.dpc_app_config[*].target_key_arn : []
+  )
 }
 
 # Add a rule to the database security group to allow access from the function

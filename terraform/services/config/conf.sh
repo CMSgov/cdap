@@ -1,1 +1,1 @@
-TARGET_ENVS=account
+TARGET_ENVS="cdap-test cdap-prod"

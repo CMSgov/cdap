@@ -29,7 +29,7 @@ resource "aws_ecs_task_definition" "this" {
           awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
         }
       }
-      healthCheck = null
+      healthCheck = var.health_check
     }
   ]))
 

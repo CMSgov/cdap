@@ -23,11 +23,28 @@ locals {
       "web-admin",
     ] : [],
   )
+
+  # TODO Drop account_env_old when we are fully migrated to cdap-test and cdap-prod
+  account_env_old = contains(["dev", "test"], var.env) ? "bcda-test" : "bcda-prod"
+  account_env     = contains(["dev", "test"], var.env) ? "cdap-test" : "cdap-prod"
 }
 
 # KMS keys needed for IAM policy
 data "aws_kms_alias" "environment_key" {
   name = "alias/${var.app}-${var.env}"
+}
+
+data "aws_kms_alias" "account_env_old" {
+  name = "alias/${local.account_env_old}"
+}
+
+data "aws_kms_alias" "account_env" {
+  name = "alias/${local.account_env}"
+}
+
+data "aws_kms_alias" "account_env_secondary" {
+  provider = aws.secondary
+  name     = "alias/${local.account_env}"
 }
 
 data "aws_kms_alias" "ab2d_tfstate_bucket" {
@@ -63,11 +80,6 @@ data "aws_kms_alias" "dpc_app_config" {
 data "aws_kms_alias" "dpc_ecr" {
   count = var.app == "dpc" ? 1 : 0
   name  = "alias/dpc-ecr"
-}
-
-data "aws_kms_alias" "dpc_sns_topic" {
-  count = var.app == "dpc" ? 1 : 0
-  name  = "alias/dpc-${var.env}-sns-topic-key"
 }
 
 data "aws_kms_alias" "dpc_cloudwatch_keys" {

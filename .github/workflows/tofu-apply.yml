@@ -30,6 +30,10 @@ jobs:
         include:
           - app: cdap
             env: mgmt
+          - app: cdap
+            env: prod
+          - app: cdap
+            env: test
           - app: dasg-insights
             env: prod
     steps:

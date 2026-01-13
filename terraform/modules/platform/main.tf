@@ -114,6 +114,10 @@ data "aws_s3_bucket" "access_logs" {
   bucket = local.access_logs_bucket[local.parent_env]
 }
 
+data "aws_s3_bucket" "logs_to_splunk" {
+  bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}"
+}
+
 data "aws_security_groups" "this" {
   filter {
     name   = "vpc-id"
@@ -135,7 +139,7 @@ data "aws_security_group" "this" {
 }
 
 data "aws_ssm_parameter" "platform_cidr" {
-  name            = "/cdap/mgmt-vpc/cidr"
+  name            = "/cdap/sensitive/mgmt-vpc/cidr"
   with_decryption = true
 }
 
