@@ -2,8 +2,8 @@ variable "app" {
   description = "The short name for the delivery team or ADO."
   type        = string
   validation {
-    condition     = contains(["ab2d", "bcda", "dpc"], var.app)
-    error_message = "Invalid short var.app (application). Must be one of ab2d, bcda, or dpc."
+    condition     = contains(["ab2d", "bcda", "dpc", "cdap"], var.app)
+    error_message = "Invalid short var.app (application). Must be one of ab2d, bcda, dpc, or cdap."
   }
 }
 
