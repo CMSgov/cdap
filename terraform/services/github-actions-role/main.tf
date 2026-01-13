@@ -289,6 +289,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
     resources = concat(
       [data.aws_kms_alias.environment_key.target_key_arn],
       [data.aws_kms_alias.account_env_old.target_key_arn],
+      [data.aws_kms_alias.account_env_old_secondary.target_key_arn],
       [data.aws_kms_alias.account_env.target_key_arn],
       [data.aws_kms_alias.account_env_secondary.target_key_arn],
       var.app == "ab2d" ? concat(

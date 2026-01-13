@@ -38,6 +38,11 @@ data "aws_kms_alias" "account_env_old" {
   name = "alias/${local.account_env_old}"
 }
 
+data "aws_kms_alias" "account_env_old_secondary" {
+  provider = aws.secondary
+  name     = "alias/${local.account_env_old}"
+}
+
 data "aws_kms_alias" "account_env" {
   name = "alias/${local.account_env}"
 }
