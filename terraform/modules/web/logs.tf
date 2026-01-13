@@ -3,13 +3,17 @@ data "aws_s3_bucket" "cms_cloudfront_logs" {
 }
 
 resource "aws_cloudwatch_log_delivery_source" "this" {
-  name         = "${local.naming_prefix}-static-site"
+  name         = "${var.platform.app}-${var.platform.env}-${var.domain_name}"
   log_type     = "ACCESS_LOGS"
   resource_arn = aws_cloudfront_distribution.this.arn
 }
 
+data "aws_s3_bucket" "cms_cloudfront_logs" {
+  bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}"
+}
+
 resource "aws_cloudwatch_log_delivery_destination" "this" {
-  name          = "${local.naming_prefix}-static-site"
+  name          = "${var.platform.app}-${var.platform.env}-${var.domain_name}"
   output_format = "parquet"
 
   delivery_destination_configuration {

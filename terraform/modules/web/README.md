@@ -1,7 +1,6 @@
 # CDAP Web Module
 
-This module creates a CloudFront distribution including all necessary resources for operability except creation of certificates and CNAMES/domains.  
-Modifications to the bucket name, and therefore its regional domain name, need to be registered with DNS management, currently managed by CMS.
+This module creates a CloudFront distribution including all necessary resources for operability except creation of certificates and CNAMES/domains. 
 
 A sample usage is as follows    :
 
