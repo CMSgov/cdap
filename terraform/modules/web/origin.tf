@@ -33,7 +33,8 @@ data "aws_iam_policy_document" "allow_cloudfront_access" {
     }
 
     resources = [
-      var.origin_bucket.arn
+      var.origin_bucket.arn,
+      "${var.origin_bucket.arn}/*",
     ]
   }
   statement {
