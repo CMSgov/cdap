@@ -1,7 +1,6 @@
 locals {
   service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
-  container_name = var.container_name_override != null ? var.container_name_override : var.platform.service
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -14,7 +13,7 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
   container_definitions = nonsensitive(jsonencode([
     {
-      name                   = local.container_name
+      name                   = local.service_name
       image                  = var.image
       readonlyRootFilesystem = true
       portMappings           = var.port_mappings
@@ -79,13 +78,13 @@ resource "aws_ecs_service" "this" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = var.cluster_service_connect_namespace_arn
+    namespace = aws_service_discovery_http_namespace.service-discovery.arn
     service {
-      discovery_name = "ecs-service-discovery-service"
-      port_name      = var.port_mappings[0].name
+      discovery_name = "service-discovery-service"
+      port_name      = var.port_mappings.name
       client_alias {
         dns_name = "service-connect-client"
-        port     = var.port_mappings[0].containerPort
+        port     = var.port_mappings.containerPort
       }
     }
   }
@@ -94,15 +93,6 @@ resource "aws_ecs_service" "this" {
     subnets          = keys(var.platform.private_subnets)
     assign_public_ip = false
     security_groups  = var.security_groups
-  }
-
-  dynamic "load_balancer" {
-    for_each = var.load_balancers
-    content {
-      target_group_arn = load_balancer.value.target_group_arn
-      container_name   = load_balancer.value.container_name
-      container_port   = load_balancer.value.container_port
-    }
   }
 
   deployment_minimum_healthy_percent = 100
