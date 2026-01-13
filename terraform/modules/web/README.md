@@ -1,7 +1,6 @@
 # CDAP Web Module
 
-This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. 
-This module assumes an S3 bucket as the origin has already been created. This module currently assumes a single domain with an already issued certificate. 
+This module creates a CloudFront distribution including all necessary resources for operability except creation of certificates and CNAMES/domains. 
 
 A sample usage is as follows    :
 
@@ -14,32 +13,6 @@ module "platform" {
   env         = "prod"
   root_module = ""
   service     = "bcda"
-}
-
-module web_acl {
-  source  = "github.com/CMSgov/cdap//terraform/modules/firewall?ref=<hash>"
-
-  app           = module.platform.app
-  content_type  = "APPLICATION_JSON"
-  env           = module.platform.env
-  name          = "samplewebacl"
-  scope         = "CLOUDFRONT"
-}
-
-module origin_bucket {
-  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=<hash>"
-  
-  app   = module.platform.app
-  env   = module.platform.env
-  name  = "origin"
-}
-
-module logging_bucket {
-  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=<hash>"
-  
-  app   = module.platform.app
-  env   = module.platform.env
-  name  = "logging"
 }
 
 resource "aws_acm_certificate" "cert" {
@@ -57,11 +30,8 @@ resource "aws_acm_certificate" "cert" {
 
 module "web" {
   source = "../modules/web"
-
-  certificate     = aws_acm_certificate.cert
-  origin_bucket   = module.origin_bucket
+  domain_name = ""
   platform        = module.platform
-  web_acl         = module.web_acl
   
   redirects = {
     "/value1" = "/redirect1",

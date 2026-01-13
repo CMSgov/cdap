@@ -1,8 +1,12 @@
-/* To reduce module nesting and adhere to current configurations, S3 buckets are managed outside of this module.
-Permissions for Cloudfront, however, are managed here.  */
+module "origin_bucket" {
+  source = "../bucket"
+  app    = var.platform.app
+  env    = var.platform.env
+  name   = var.domain_name
+}
 
 resource "aws_s3_bucket_policy" "allow_cloudfront_access" {
-  bucket = var.origin_bucket.id
+  bucket = one(module.origin_bucket[*].id)
   policy = data.aws_iam_policy_document.allow_cloudfront_access.json
 }
 

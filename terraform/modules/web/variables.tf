@@ -17,22 +17,24 @@ variable "platform" {
   type = object({
     app = string,
     env = string,
-    splunk_logging_bucket = object({
-      arn = string
-    })
   })
+}
+
+variable "allowed_ips_list" {
+  default     = []
+  description = "Optional though needed for access. Generates an IP set that is attached to the firewall for access."
+  type        = list(any)
+}
+
+variable "existing_ip_sets" {
+  default     = []
+  description = "Optional. Attaches existing IP sets to the firewall."
+  type        = list(any)
 }
 
 variable "redirects" {
   description = "Map of redirects to be passed to the CloudFront redirects function."
   type        = map(string)
-}
-
-variable "web_acl" {
-  description = "Object representing the associated WAF acl."
-  type = object({
-    arn = string
-  })
 }
 
 variable "enabled" {
@@ -46,3 +48,4 @@ variable "s3_origin_id" {
   description = "Variable to manage existing s3 origins without recreation. All new instances of this module can leave the default."
   type        = string
 }
+
