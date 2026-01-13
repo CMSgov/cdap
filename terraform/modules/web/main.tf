@@ -105,7 +105,7 @@ resource "aws_cloudfront_distribution" "this" {
 # WAF and firewall
 resource "aws_wafv2_ip_set" "this" {
   # There is no IP blocking in Prod for the Static Site
-  name               = "${var.platform.app}-${var.platform.env}-cloudfront"
+  name               = local.naming_string
   description        = "IP set with access to ${var.domain_name}"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
@@ -114,7 +114,7 @@ resource "aws_wafv2_ip_set" "this" {
 
 module "firewall" {
   source       = "../firewall"
-  name         = "${var.platform.app}-${var.platform.env}-cloudfront"
+  name         = local.naming_string
   app          = var.platform.app
   env          = var.platform.env
   scope        = "CLOUDFRONT"

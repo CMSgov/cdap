@@ -3,15 +3,6 @@ variable "domain_name" {
   type        = string
 }
 
-variable "origin_bucket" {
-  description = "Object representing the origin S3 bucket."
-  type = object({
-    bucket_regional_domain_name = string,
-    arn                         = string,
-    id                          = string
-  })
-}
-
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
