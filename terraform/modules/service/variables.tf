@@ -55,16 +55,6 @@ variable "image" {
   type        = string
 }
 
-variable "load_balancers" {
-  description = "Load balancer(s) for use by the AWS ECS service."
-  type = list(object({
-    target_group_arn = string
-    container_name   = string
-    container_port   = number
-  }))
-  default = []
-}
-
 variable "mount_points" {
   description = "The mount points for data volumes in your container"
   type = list(object({

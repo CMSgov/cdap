@@ -62,6 +62,10 @@ resource "aws_ecs_task_definition" "this" {
   }
 }
 
+resource "aws_service_discovery_http_namespace" "service-discovery" {
+  name = "service-discovery"
+}
+
 resource "aws_ecs_service" "this" {
   name                 = local.service_name_full
   cluster              = var.cluster_arn
@@ -72,19 +76,23 @@ resource "aws_ecs_service" "this" {
   force_new_deployment = var.force_new_deployment
   propagate_tags       = "SERVICE"
 
+  service_connect_configuration {
+    enabled   = true
+    namespace = aws_service_discovery_http_namespace.service-discovery.arn
+    service {
+      discovery_name = "service-discovery-service"
+      port_name      = var.port_mappings.name
+      client_alias {
+        dns_name = "service-connect-client"
+        port     = var.port_mappings.containerPort
+      }
+    }
+  }
+
   network_configuration {
     subnets          = keys(var.platform.private_subnets)
     assign_public_ip = false
     security_groups  = var.security_groups
-  }
-
-  dynamic "load_balancer" {
-    for_each = var.load_balancers
-    content {
-      target_group_arn = load_balancer.value.target_group_arn
-      container_name   = load_balancer.value.container_name
-      container_port   = load_balancer.value.container_port
-    }
   }
 
   deployment_minimum_healthy_percent = 100
