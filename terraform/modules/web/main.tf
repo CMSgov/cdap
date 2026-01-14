@@ -15,7 +15,6 @@ data "aws_acm_certificate" "issued" {
   statuses = ["ISSUED"]
 }
 
-# Core cloudfront distribution
 resource "aws_cloudfront_function" "redirects" {
   name    = "${local.naming_prefix}-redirects"
   runtime = "cloudfront-js-2.0"
