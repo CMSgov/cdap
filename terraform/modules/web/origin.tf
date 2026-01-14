@@ -6,7 +6,7 @@ module "origin_bucket" {
 }
 
 resource "aws_s3_bucket_policy" "allow_cloudfront_access" {
-  bucket = one(module.origin_bucket[*].id)
+  bucket = module.origin_bucket.id
   policy = data.aws_iam_policy_document.allow_cloudfront_access.json
 }
 
@@ -37,8 +37,8 @@ data "aws_iam_policy_document" "allow_cloudfront_access" {
     }
 
     resources = [
-      var.origin_bucket.arn,
-      "${var.origin_bucket.arn}/*",
+      module.origin_bucket.arn,
+      "${module.origin_bucket.arn}/*"
     ]
   }
   statement {
@@ -50,8 +50,8 @@ data "aws_iam_policy_document" "allow_cloudfront_access" {
     }
     actions = ["s3:*"]
     resources = [
-      var.origin_bucket.arn,
-      "${var.origin_bucket.arn}/*",
+      module.origin_bucket.arn,
+      "${module.origin_bucket.arn}/*"
     ]
     condition {
       test     = "Bool"

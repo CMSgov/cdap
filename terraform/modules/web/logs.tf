@@ -1,5 +1,5 @@
 resource "aws_cloudwatch_log_delivery_source" "this" {
-  name         = "${var.platform.app}-${var.platform.env}-${var.domain_name}"
+  name         = "${local.naming_prefix}-static-site"
   log_type     = "ACCESS_LOGS"
   resource_arn = aws_cloudfront_distribution.this.arn
 }
@@ -9,7 +9,7 @@ data "aws_s3_bucket" "cms_cloudfront_logs" {
 }
 
 resource "aws_cloudwatch_log_delivery_destination" "this" {
-  name          = "${var.platform.app}-${var.platform.env}-${var.domain_name}"
+  name          = "${local.naming_prefix}-static-site"
   output_format = "parquet"
 
   delivery_destination_configuration {
