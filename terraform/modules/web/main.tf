@@ -13,7 +13,7 @@ data "aws_acm_certificate" "issued" {
   statuses = ["ISSUED"]
 }
 
-resource "aws_cloudfront_function" "this" {
+resource "aws_cloudfront_function" "redirects" {
   name    = "${local.naming_prefix}-redirects"
   runtime = "cloudfront-js-2.0"
   comment = "Function that handles cool URIs and redirects for ${local.naming_prefix}."
@@ -55,7 +55,6 @@ resource "aws_cloudfront_distribution" "this" {
   http_version               = "http2and3"
   is_ipv6_enabled            = true
   web_acl_id                 = var.web_acl.arn
-  response_headers_policy_id = aws_cloudfront_response_headers_policy.this.id
 
   restrictions {
     geo_restriction {
@@ -78,10 +77,11 @@ resource "aws_cloudfront_distribution" "this" {
     target_origin_id       = var.s3_origin_id
     compress               = true
     viewer_protocol_policy = "redirect-to-https"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.this.id
 
     function_association {
       event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.this.arn
+      function_arn = aws_cloudfront_function.redirects.arn
     }
   }
 
