@@ -24,7 +24,7 @@ resource "aws_cloudfront_function" "redirects" {
 }
 
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = local.naming_string
+  name                              = local.naming_prefix
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -50,13 +50,13 @@ resource "aws_cloudfront_distribution" "this" {
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
   }
 
-  aliases                    = [var.domain_name]
-  enabled                    = var.enabled
-  comment                    = "Distribution for the ${local.naming_prefix} website"
-  default_root_object        = "index.html"
-  http_version               = "http2and3"
-  is_ipv6_enabled            = true
-  web_acl_id                 = module.firewall.arn
+  aliases             = [var.domain_name]
+  enabled             = var.enabled
+  comment             = "Distribution for the ${local.naming_prefix} website"
+  default_root_object = "index.html"
+  http_version        = "http2and3"
+  is_ipv6_enabled     = true
+  web_acl_id          = module.firewall.arn
 
   restrictions {
     geo_restriction {
@@ -73,12 +73,12 @@ resource "aws_cloudfront_distribution" "this" {
   }
 
   default_cache_behavior {
-    cache_policy_id        = var.platform.env == "prod" ? local.caching_policy["CachingOptimized"] : local.caching_policy["CachingDisabled"]
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = var.s3_origin_id
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
+    cache_policy_id            = var.platform.env == "prod" ? local.caching_policy["CachingOptimized"] : local.caching_policy["CachingDisabled"]
+    allowed_methods            = ["GET", "HEAD"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = var.s3_origin_id
+    compress                   = true
+    viewer_protocol_policy     = "redirect-to-https"
     response_headers_policy_id = aws_cloudfront_response_headers_policy.this.id
 
     function_association {
