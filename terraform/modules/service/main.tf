@@ -62,8 +62,8 @@ resource "aws_ecs_task_definition" "this" {
   }
 }
 
-resource "aws_service_discovery_http_namespace" "service-discovery" {
-  name = "service-discovery"
+resource "aws_service_discovery_http_namespace" "ecs-service-discovery" {
+  name = "ecs-service-discovery"
 }
 
 resource "aws_ecs_service" "this" {
@@ -78,9 +78,9 @@ resource "aws_ecs_service" "this" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = aws_service_discovery_http_namespace.service-discovery.arn
+    namespace = aws_service_discovery_http_namespace.ecs-service-discovery.arn
     service {
-      discovery_name = "service-discovery-service"
+      discovery_name = "ecs-service-discovery-service"
       port_name      = var.port_mappings.name
       client_alias {
         dns_name = "service-connect-client"
