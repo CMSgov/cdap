@@ -21,7 +21,7 @@ module "sops" {
     env               = module.standards.env
     kms_alias_primary = { id = "cdap-${var.env}" }
     service           = local.service
-    is_ephemeral_env  = contains(["sandbox, prod"], var.env) ? true : false
+    is_ephemeral_env  = contains(["sandbox, prod"], var.env) ? false : true
   }
   create_local_sops_wrapper = var.create_local_sops_wrapper
 }
