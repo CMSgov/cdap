@@ -45,8 +45,8 @@ resource "aws_cloudfront_response_headers_policy" "this" {
 
 resource "aws_cloudfront_distribution" "this" {
   origin {
-    domain_name              = "${var.s3_origin_id}.s3.us-east-1.amazonaws.com"
-    origin_id                = var.s3_origin_id
+    domain_name              = "${module.origin_bucket.id}.s3.us-east-1.amazonaws.com"
+    origin_id                = module.origin_bucket.id
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
   }
 
@@ -76,7 +76,7 @@ resource "aws_cloudfront_distribution" "this" {
     cache_policy_id            = var.platform.env == "prod" ? local.caching_policy["CachingOptimized"] : local.caching_policy["CachingDisabled"]
     allowed_methods            = ["GET", "HEAD"]
     cached_methods             = ["GET", "HEAD"]
-    target_origin_id           = var.s3_origin_id
+    target_origin_id           = module.origin_bucket.id
     compress                   = true
     viewer_protocol_policy     = "redirect-to-https"
     response_headers_policy_id = aws_cloudfront_response_headers_policy.this.id
