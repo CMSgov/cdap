@@ -93,12 +93,6 @@ variable "platform" {
   })
 }
 
-variable "fargate_version" {
-  default     = "1.4.0"
-  description = "Platform version on which to run your service. Only applicable for launch_type set to FARGATE."
-  type        = string
-}
-
 variable "port_mappings" {
   description = "The list of port mappings for the container. Port mappings allow containers to access ports on the host container instance to send or receive traffic. For task definitions that use the awsvpc network mode, only specify the containerPort. The hostPort can be left blank or it must be the same value as the containerPort"
   type = list(object({
