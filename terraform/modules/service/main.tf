@@ -95,6 +95,15 @@ resource "aws_ecs_service" "this" {
     security_groups  = var.security_groups
   }
 
+  dynamic "load_balancer" {
+    for_each = var.load_balancers
+    content {
+      target_group_arn = load_balancer.value.target_group_arn
+      container_name   = load_balancer.value.container_name
+      container_port   = load_balancer.value.container_port
+    }
+  }
+
   deployment_minimum_healthy_percent = 100
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 }
