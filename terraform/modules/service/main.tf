@@ -68,7 +68,7 @@ resource "aws_ecs_service" "this" {
   task_definition      = aws_ecs_task_definition.this.arn
   desired_count        = var.desired_count
   launch_type          = "FARGATE"
-  platform_version     = var.fargate_version
+  platform_version     = "1.4.0"
   force_new_deployment = var.force_new_deployment
   propagate_tags       = "SERVICE"
 
