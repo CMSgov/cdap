@@ -56,7 +56,7 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object        = "index.html"
   http_version               = "http2and3"
   is_ipv6_enabled            = true
-  web_acl_id                 = var.web_acl.arn
+  web_acl_id                 = module.firewall.arn
 
   restrictions {
     geo_restriction {
@@ -105,7 +105,7 @@ resource "aws_cloudfront_distribution" "this" {
 # WAF and firewall
 resource "aws_wafv2_ip_set" "this" {
   # There is no IP blocking in Prod for the Static Site
-  name               = local.naming_string
+  name               = "${local.naming_prefix}-static-site"
   description        = "IP set with access to ${var.domain_name}"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
@@ -114,7 +114,7 @@ resource "aws_wafv2_ip_set" "this" {
 
 module "firewall" {
   source       = "../firewall"
-  name         = local.naming_string
+  name         = "${local.naming_prefix}-static-site"
   app          = var.platform.app
   env          = var.platform.env
   scope        = "CLOUDFRONT"
