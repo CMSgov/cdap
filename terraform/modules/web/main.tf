@@ -13,10 +13,10 @@ data "aws_acm_certificate" "issued" {
   statuses = ["ISSUED"]
 }
 
-resource "aws_cloudfront_function" "redirects" {
+resource "aws_cloudfront_function" "this" {
   name    = "${local.naming_prefix}-redirects"
   runtime = "cloudfront-js-2.0"
-  comment = "Function that handles cool URIs and redirects."
+  comment = "Function that handles cool URIs and redirects for ${local.naming_prefix}."
   code    = templatefile("${path.module}/redirects-function.tftpl", { redirects = var.redirects })
 }
 
