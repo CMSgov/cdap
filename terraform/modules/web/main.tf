@@ -65,10 +65,16 @@ data "aws_iam_policy_document" "allow_cloudfront_access" {
   }
 }
 
+resource "aws_s3_bucket_policy" "allow_cloudfront_access" {
+  bucket = module.origin_bucket.id
+  policy = data.aws_iam_policy_document.allow_cloudfront_access.json
+}
+
+# Cloudfront core
 resource "aws_cloudfront_distribution" "this" {
   origin {
     domain_name              = module.origin_bucket.bucket_regional_domain_name
-    origin_id                = module.origin_bucket.id
+    origin_id                = var.s3_origin
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
   }
 
@@ -98,7 +104,7 @@ resource "aws_cloudfront_distribution" "this" {
     cache_policy_id            = var.platform.env == "prod" ? local.caching_policy["CachingOptimized"] : local.caching_policy["CachingDisabled"]
     allowed_methods            = ["GET", "HEAD"]
     cached_methods             = ["GET", "HEAD"]
-    target_origin_id           = module.origin_bucket.id
+    target_origin_id           = var.s3_origin
     compress                   = true
     viewer_protocol_policy     = "redirect-to-https"
     response_headers_policy_id = aws_cloudfront_response_headers_policy.this.id
@@ -139,11 +145,6 @@ module "origin_bucket" {
   app    = var.platform.app
   env    = var.platform.env
   name   = var.domain_name
-}
-
-resource "aws_s3_bucket_policy" "allow_cloudfront_access" {
-  bucket = module.origin_bucket.id
-  policy = data.aws_iam_policy_document.allow_cloudfront_access.json
 }
 
 # Core Cloudfront distribution

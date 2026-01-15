@@ -12,18 +12,6 @@ variable "platform" {
   })
 }
 
-variable "allowed_ips_list" {
-  default     = []
-  description = "Optional though needed for access. Generates an IP set that is attached to the firewall for access."
-  type        = list(any)
-}
-
-variable "existing_ip_sets" {
-  default     = []
-  description = "Optional. Attaches existing IP sets to the firewall."
-  type        = list(any)
-}
-
 variable "redirects" {
   description = "Map of redirects to be passed to the CloudFront redirects function."
   type        = map(string)
@@ -33,6 +21,18 @@ variable "enabled" {
   default     = true
   description = "Whether the distribution is enabled to accept end user requests for content."
   type        = bool
+}
+
+variable "allowed_ips_list" {
+  default     = []
+  description = "Optional though needed for access. Generates an IP set that is attached to the firewall for access."
+  type        = list(any)
+}
+
+variable "existing_ip_sets" {
+  default     = []
+  description = "Optional. Attaches existing IP sets to the firewall. Favor a dedicated allowed list over existing IP sets."
+  type        = list(any)
 }
 
 variable "s3_origin_id" {
