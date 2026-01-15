@@ -6,8 +6,9 @@ variable "domain_name" {
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
-    app = string,
-    env = string,
+    app                   = string,
+    env                   = string,
+    splunk_logging_bucket = string
   })
 }
 
@@ -39,4 +40,3 @@ variable "s3_origin_id" {
   description = "Variable to manage existing s3 origins without recreation. All new instances of this module can leave the default."
   type        = string
 }
-

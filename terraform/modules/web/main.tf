@@ -193,9 +193,6 @@ module "firewall" {
 }
 
 # Logging
-data "aws_s3_bucket" "cms_cloudfront_logs" {
-  bucket = var.platform.splunk_logging_bucket
-}
 
 resource "aws_cloudwatch_log_delivery_source" "this" {
   name         = "${local.naming_prefix}-static-site"
@@ -208,7 +205,7 @@ resource "aws_cloudwatch_log_delivery_destination" "this" {
   output_format = "parquet"
 
   delivery_destination_configuration {
-    destination_resource_arn = data.aws_s3_bucket.cms_cloudfront_logs.arn
+    destination_resource_arn = var.platform.splunk_logging_bucket.arn
   }
 }
 
