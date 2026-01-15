@@ -1,11 +1,11 @@
+data "aws_s3_bucket" "cms_cloudfront_logs" {
+  bucket = var.platform.splunk_logging_bucket
+}
+
 resource "aws_cloudwatch_log_delivery_source" "this" {
   name         = "${local.naming_prefix}-static-site"
   log_type     = "ACCESS_LOGS"
   resource_arn = aws_cloudfront_distribution.this.arn
-}
-
-data "aws_s3_bucket" "cms_cloudfront_logs" {
-  bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}"
 }
 
 resource "aws_cloudwatch_log_delivery_destination" "this" {
