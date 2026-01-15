@@ -74,10 +74,12 @@ No requirements.
 | <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | An externally managed domain that points to this distribution. A matching ACM certificate must already be issued. | `string` | n/a | yes |
 | <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | <pre>object({<br/>    app                   = string,<br/>    env                   = string,<br/>    splunk_logging_bucket = string<br/>  })</pre> | n/a | yes |
 | <a name="input_redirects"></a> [redirects](#input\_redirects) | Map of redirects to be passed to the CloudFront redirects function. | `map(string)` | n/a | yes |
-| <a name="input_allowed_ips_list"></a> [allowed\_ips\_list](#input\_allowed\_ips\_list) | Optional though needed for access. Generates an IP set that is attached to the firewall for access. | `list(any)` | `[]` | no |
+| <a name="input_allowed_ips_list"></a> [allowed\_ips\_list](#input\_allowed\_ips\_list) | Repositories using sops leave this blank. After sops migration, deprecate this variable. The IPs that firewall allows to access service. | `list(string)` | `[]` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
 | <a name="input_existing_ip_sets"></a> [existing\_ip\_sets](#input\_existing\_ip\_sets) | Optional. Attaches existing IP sets to the firewall. Favor a dedicated allowed list over existing IP sets. | `list(any)` | `[]` | no |
 | <a name="input_s3_origin_id"></a> [s3\_origin\_id](#input\_s3\_origin\_id) | Variable to manage existing s3 origins without recreation. All new instances of this module can leave the default. | `string` | `"s3_origin"` | no |
+| <a name="input_service"></a> [service](#input\_service) | Friendly name for this service. Do not include app, env. | `string` | `"static-site"` | no |
+| <a name="input_waf_ip_allow_list_keyname"></a> [waf\_ip\_allow\_list\_keyname](#input\_waf\_ip\_allow\_list\_keyname) | The friendly name used to store the IP allow list in sops and ssm. Do not include full path construction. | `string` | `"waf_ip_allow_list"` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -108,7 +110,7 @@ No requirements.
 | [aws_cloudwatch_log_delivery_destination.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery_destination) | resource |
 | [aws_cloudwatch_log_delivery_source.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery_source) | resource |
 | [aws_s3_bucket_policy.allow_cloudfront_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
-| [aws_ssm_parameter.allowed_ip_list](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_ssm_parameter.waf_ip_allow_list](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [aws_wafv2_ip_set.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_ip_set) | resource |
 | [aws_acm_certificate.issued](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/acm_certificate) | data source |
 | [aws_caller_identity.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
@@ -125,4 +127,5 @@ No requirements.
 | Name | Description |
 |------|-------------|
 | <a name="output_distribution"></a> [distribution](#output\_distribution) | n/a |
+| <a name="output_ip_allow_list_ssm_parameter_name"></a> [ip\_allow\_list\_ssm\_parameter\_name](#output\_ip\_allow\_list\_ssm\_parameter\_name) | n/a |
 <!-- END_TF_DOCS -->

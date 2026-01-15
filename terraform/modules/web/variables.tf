@@ -12,6 +12,12 @@ variable "platform" {
   })
 }
 
+variable "service" {
+  description = "Friendly name for this service. Do not include app, env."
+  default     = "static-site"
+  type        = string
+}
+
 variable "redirects" {
   description = "Map of redirects to be passed to the CloudFront redirects function."
   type        = map(string)
@@ -23,10 +29,16 @@ variable "enabled" {
   type        = bool
 }
 
+variable "waf_ip_allow_list_keyname" {
+  default     = "waf_ip_allow_list"
+  description = "The friendly name used to store the IP allow list in sops and ssm. Do not include full path construction."
+  type        = string
+}
+
 variable "allowed_ips_list" {
   default     = []
-  description = "Optional though needed for access. Generates an IP set that is attached to the firewall for access."
-  type        = list(any)
+  description = "Repositories using sops leave this blank. After sops migration, deprecate this variable. The IPs that firewall allows to access service."
+  type        = list(string)
 }
 
 variable "existing_ip_sets" {
