@@ -8,7 +8,7 @@ variable "platform" {
   type = object({
     app                   = string,
     env                   = string,
-    splunk_logging_bucket = string
+    splunk_logging_bucket = object
   })
 }
 

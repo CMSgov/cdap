@@ -167,21 +167,16 @@ resource "aws_cloudfront_response_headers_policy" "this" {
     }
   }
 }
-resource "aws_ssm_parameter" "waf_ip_allow_list" {
-  name  = "/${var.platform.app}/${var.platform.env}/${var.service}/${var.waf_ip_allow_list_keyname}"
-  value = lookup(lookup(var.platform.ssm, "${var.service}", "static_site"), var.waf_ip_allow_list_keyname, var.allowed_ips_list)
-  type  = "StringList"
-}
 
 # WAF and firewall
 resource "aws_wafv2_ip_set" "this" {
   # There is no IP blocking in Prod for the Static Site
-  count              = length(module.aws_ssm_parameter.allowed_ip_list.value) < 1 ? 0 : 1
+  count              = length(aws_ssm_parameter.allowed_ip_list.value) < 1 ? 0 : 1
   name               = "${local.naming_prefix}-${var.service}"
   description        = "IP set with access to ${var.domain_name}"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses          = sensitive(module.aws_ssm_parameter.allowed_ip_list.value)
+  addresses          = sensitive(lookup(lookup(var.platform.ssm, "${var.service}", "static_site"), var.waf_ip_allow_list_keyname, var.allowed_ips_list))
 }
 
 module "firewall" {
