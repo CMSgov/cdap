@@ -1,12 +1,4 @@
-/cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
-/cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
-/cdap/${env}/common/nonsensitive/security-events/renotify-after-days: 30
-/cdap/${env}/common/nonsensitive/security-events/severity-list: CRITICAL,HIGH,MEDIUM
-/cdap/${env}/common/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
-/cdap/${env}/common/sensitive/artifactory/password: ENC[AES256_GCM,data:nscDKdf+wuKMJ+gFpUIDb0zZbdBvsk3qYFey0/wbMw345ARL3u8vq2/YqUTnWAm1fYqieKOzq/yJYvM43CIZCg==,iv:XgWvwq94ShSpJwU659XXX/6bLv77oCECiza9FDJau+o=,tag:2afCpXFqv905cIQ0sRQIFg==,type:str]
-/cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:Vgp2HifAdY+8wNPltsPt9wZkVDd/YOvGLvzA5wU3Bn4XbEUwTDzJavSLNbTEZwYzGol6tryZBgk8hhP+HxyHNbB0xmJdo783ZZlou9rOQA==,iv:sMxWjUaXd4jfsE6U+cj9ft+8g7sBwVLI9g+1TiwS1eA=,tag:H6YaBowY//nIeppO7pTOQw==,type:str]
-/cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:YBillFWDRXEQqW3dTofMyf55zA6Xy3nJFhGF0L9al19GhdsS9xto8Qzq5Yg=,iv:XNUY9Q5PBFxnNYF/nOlMkeBvSHUcTbDNA1dD5xilgXg=,tag:+mR1nXu5rfqKK5/Y5bhLhA==,type:str]
-/cdap/${env}/common/nonsensitive/bfd-server/mtls_certificate: |
+/bfd/${test}/mtls/nonsensitive/public.p12.b64: |
   -----BEGIN CERTIFICATE-----
   MIIFLDCCAxSgAwIBAgIIOB/waE+MjNowDQYJKoZIhvcNAQEMBQAwJzElMCMGA1UE
   AxMcdGVzdC5maGlyLmJmZC5jbXNjbG91ZC5sb2NhbDAeFw0yNTA1MjExOTQwNDha
@@ -37,6 +29,14 @@
   LgtvQosnDqfawNHFTwJ4Dc5Od+KGbFVfUZmy8+sTLOFvPl5PHAAe+d6CvdU91V8D
   +V4U8pQYig4O/L6oZ2D7h3muHmxUF0wmqfkS2qvkqGg=
   -----END CERTIFICATE-----
+/cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
+/cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
+/cdap/${env}/common/nonsensitive/security-events/renotify-after-days: 30
+/cdap/${env}/common/nonsensitive/security-events/severity-list: CRITICAL,HIGH,MEDIUM
+/cdap/${env}/common/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
+/cdap/${env}/common/sensitive/artifactory/password: ENC[AES256_GCM,data:nscDKdf+wuKMJ+gFpUIDb0zZbdBvsk3qYFey0/wbMw345ARL3u8vq2/YqUTnWAm1fYqieKOzq/yJYvM43CIZCg==,iv:XgWvwq94ShSpJwU659XXX/6bLv77oCECiza9FDJau+o=,tag:2afCpXFqv905cIQ0sRQIFg==,type:str]
+/cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:Vgp2HifAdY+8wNPltsPt9wZkVDd/YOvGLvzA5wU3Bn4XbEUwTDzJavSLNbTEZwYzGol6tryZBgk8hhP+HxyHNbB0xmJdo783ZZlou9rOQA==,iv:sMxWjUaXd4jfsE6U+cj9ft+8g7sBwVLI9g+1TiwS1eA=,tag:H6YaBowY//nIeppO7pTOQw==,type:str]
+/cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:YBillFWDRXEQqW3dTofMyf55zA6Xy3nJFhGF0L9al19GhdsS9xto8Qzq5Yg=,iv:XNUY9Q5PBFxnNYF/nOlMkeBvSHUcTbDNA1dD5xilgXg=,tag:+mR1nXu5rfqKK5/Y5bhLhA==,type:str]
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-test
