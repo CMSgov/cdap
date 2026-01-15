@@ -6,9 +6,12 @@ variable "domain_name" {
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
-    app                   = string,
-    env                   = string,
-    splunk_logging_bucket = object
+    app = string,
+    env = string,
+    splunk_logging_bucket = object({
+      arn = string
+      id  = string
+    })
   })
 }
 
