@@ -109,6 +109,7 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
+  # 403 points to a 404 page to hide information about private resources
   custom_error_response {
     error_caching_min_ttl = 10
     error_code            = 403
