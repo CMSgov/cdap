@@ -480,7 +480,9 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ssm:GetParametersByPath",
       "ssm:PutParameter",
       "ssm:StartSession",
-      "ssm:TerminateSession"
+      "ssm:TerminateSession",
+      "ssm:AddTagsToResource",
+      "ssm:ListTagsForResource"
     ]
     resources = ["*"]
   }

@@ -12,6 +12,10 @@ locals {
   service      = "config"
 }
 
+data "aws_kms_alias" "primary" {
+  name = "alias/cdap-${var.env}"
+}
+
 module "sops" {
   source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=8874310"
 
@@ -19,7 +23,7 @@ module "sops" {
     app               = module.standards.app
     parent_env        = module.standards.env
     env               = module.standards.env
-    kms_alias_primary = { id = "cdap-${var.env}" }
+    kms_alias_primary = data.aws_kms_alias.primary
     service           = local.service
     is_ephemeral_env  = false
   }
