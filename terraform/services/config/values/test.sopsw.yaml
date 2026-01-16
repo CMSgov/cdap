@@ -1,4 +1,4 @@
-/bfd/${test}/mtls/nonsensitive/public.p12.b64: |
+/bfd/${env}/mtls/nonsensitive/public.p12.b64: |
   -----BEGIN CERTIFICATE-----
   MIIFLDCCAxSgAwIBAgIIOB/waE+MjNowDQYJKoZIhvcNAQEMBQAwJzElMCMGA1UE
   AxMcdGVzdC5maGlyLmJmZC5jbXNjbG91ZC5sb2NhbDAeFw0yNTA1MjExOTQwNDha
