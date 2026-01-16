@@ -1,7 +1,6 @@
-module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=9389a80e100ec6cbdf0e2fc25123678c9156ff73"
-  providers = { aws = aws, aws.secondary = aws.secondary }
-
+module "standards" {
+  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=0bd3eeae6b03cc8883b7dbdee5f04deb33468260"
+  providers   = { aws = aws, aws.secondary = aws.secondary }
   app         = "cdap"
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/config"
@@ -9,14 +8,25 @@ module "platform" {
 }
 
 locals {
-  default_tags = module.platform.default_tags
+  default_tags = module.standards.default_tags
   service      = "config"
+}
+
+data "aws_kms_alias" "primary" {
+  name = "alias/cdap-${var.env}"
 }
 
 module "sops" {
   source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=8874310"
 
-  platform                  = module.platform
+  platform = {
+    app               = module.standards.app
+    parent_env        = module.standards.env
+    env               = module.standards.env
+    kms_alias_primary = data.aws_kms_alias.primary
+    service           = local.service
+    is_ephemeral_env  = false
+  }
   create_local_sops_wrapper = var.create_local_sops_wrapper
 }
 
