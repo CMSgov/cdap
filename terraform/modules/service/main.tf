@@ -62,6 +62,10 @@ resource "aws_ecs_task_definition" "this" {
   }
 }
 
+resource "aws_service_discovery_http_namespace" "ecs-service-discovery" {
+  name = "ecs-service-discovery"
+}
+
 resource "aws_ecs_service" "this" {
   name                 = local.service_name_full
   cluster              = var.cluster_arn
@@ -71,6 +75,19 @@ resource "aws_ecs_service" "this" {
   platform_version     = "1.4.0"
   force_new_deployment = var.force_new_deployment
   propagate_tags       = "SERVICE"
+
+  service_connect_configuration {
+    enabled   = true
+    namespace = aws_service_discovery_http_namespace.ecs-service-discovery.arn
+    service {
+      discovery_name = "ecs-service-discovery-service"
+      port_name      = var.port_mappings.name
+      client_alias {
+        dns_name = "service-connect-client"
+        port     = var.port_mappings.containerPort
+      }
+    }
+  }
 
   network_configuration {
     subnets          = keys(var.platform.private_subnets)
