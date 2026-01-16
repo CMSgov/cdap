@@ -3,15 +3,6 @@ variable "domain_name" {
   type        = string
 }
 
-variable "origin_bucket" {
-  description = "Object representing the origin S3 bucket."
-  type = object({
-    bucket_regional_domain_name = string,
-    arn                         = string,
-    id                          = string
-  })
-}
-
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
@@ -19,8 +10,15 @@ variable "platform" {
     env = string,
     splunk_logging_bucket = object({
       arn = string
+      id  = string
     })
   })
+}
+
+variable "service" {
+  description = "Friendly name for this service. Do not include app, env."
+  default     = "static-site"
+  type        = string
 }
 
 variable "redirects" {
@@ -28,17 +26,28 @@ variable "redirects" {
   type        = map(string)
 }
 
-variable "web_acl" {
-  description = "Object representing the associated WAF acl."
-  type = object({
-    arn = string
-  })
-}
-
 variable "enabled" {
   default     = true
   description = "Whether the distribution is enabled to accept end user requests for content."
   type        = bool
+}
+
+variable "waf_ip_allow_list_keyname" {
+  default     = "waf_ip_allow_list"
+  description = "The friendly name used to store the IP allow list in sops and ssm. Do not include full path construction."
+  type        = string
+}
+
+variable "allowed_ips_list" {
+  default     = []
+  description = "Repositories using sops leave this blank. After sops migration, deprecate this variable. The IPs that firewall allows to access service."
+  type        = list(string)
+}
+
+variable "existing_ip_sets" {
+  default     = []
+  description = "Optional. Attaches existing IP sets to the firewall. Favor a dedicated allowed list over existing IP sets."
+  type        = list(any)
 }
 
 variable "s3_origin_id" {

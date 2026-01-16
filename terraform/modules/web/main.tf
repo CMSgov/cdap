@@ -1,5 +1,5 @@
 locals {
-  naming_prefix = "${var.platform.app}-${var.platform.env}"
+  naming_prefix = "${var.platform.app}-${var.platform.env}-${var.service}"
   caching_policy = {
     CachingDisabled  = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     CachingOptimized = "658327ea-f89d-4fab-a63d-7e88639e58f6"
@@ -8,53 +8,83 @@ locals {
 
 data "aws_caller_identity" "this" {}
 
+data "aws_region" "primary" {}
+
 data "aws_acm_certificate" "issued" {
   domain   = var.domain_name
   statuses = ["ISSUED"]
 }
 
-resource "aws_cloudfront_function" "redirects" {
-  name    = "${local.naming_prefix}-redirects"
-  runtime = "cloudfront-js-2.0"
-  comment = "Function that handles cool URIs and redirects for ${local.naming_prefix}."
-  code    = templatefile("${path.module}/redirects-function.tftpl", { redirects = var.redirects })
-}
+# IAM
+# S3 static site host bucket policy document
+data "aws_iam_policy_document" "allow_cloudfront_access" {
+  statement {
+    sid    = "AllowCloudfrontAccess"
+    effect = "Allow"
 
-resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = "${var.domain_name}-s3-origin"
-  description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
-}
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
 
-resource "aws_cloudfront_response_headers_policy" "this" {
-  name = "${local.naming_prefix}-StsHeaderPolicy"
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket"
+    ]
 
-  security_headers_config {
-    strict_transport_security {
-      access_control_max_age_sec = 31536000
-      override                   = false
-      include_subdomains         = true
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values = [
+        aws_cloudfront_distribution.this.arn
+      ]
+    }
+
+    resources = [
+      module.origin_bucket.arn,
+      "${module.origin_bucket.arn}/*"
+    ]
+  }
+  statement {
+    sid    = "AllowSSLRequestsOnly"
+    effect = "Deny"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    actions = ["s3:*"]
+    resources = [
+      module.origin_bucket.arn,
+      "${module.origin_bucket.arn}/*"
+    ]
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
     }
   }
 }
 
-resource "aws_cloudfront_distribution" "this" {
+resource "aws_s3_bucket_policy" "allow_cloudfront_access" {
+  bucket = module.origin_bucket.id
+  policy = data.aws_iam_policy_document.allow_cloudfront_access.json
+}
 
+# Cloudfront core
+resource "aws_cloudfront_distribution" "this" {
   origin {
-    domain_name              = "${var.s3_origin_id}.s3.us-east-1.amazonaws.com"
-    origin_id                = var.s3_origin_id
+    domain_name              = module.origin_bucket.bucket_regional_domain_name
+    origin_id                = var.s3_origin
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
   }
 
   aliases             = [var.domain_name]
   enabled             = var.enabled
-  comment             = "Distribution for the ${local.naming_prefix} website"
+  comment             = "Distribution for the ${local.naming_prefix} hosted at ${var.domain_name}"
   default_root_object = "index.html"
   http_version        = "http2and3"
   is_ipv6_enabled     = true
-  web_acl_id          = var.web_acl.arn
+  web_acl_id          = module.firewall.arn
 
   restrictions {
     geo_restriction {
@@ -74,7 +104,7 @@ resource "aws_cloudfront_distribution" "this" {
     cache_policy_id            = var.platform.env == "prod" ? local.caching_policy["CachingOptimized"] : local.caching_policy["CachingDisabled"]
     allowed_methods            = ["GET", "HEAD"]
     cached_methods             = ["GET", "HEAD"]
-    target_origin_id           = var.s3_origin_id
+    target_origin_id           = var.s3_origin
     compress                   = true
     viewer_protocol_policy     = "redirect-to-https"
     response_headers_policy_id = aws_cloudfront_response_headers_policy.this.id
@@ -98,5 +128,89 @@ resource "aws_cloudfront_distribution" "this" {
     error_code            = 404
     response_code         = 404
     response_page_path    = "/404.html"
+  }
+}
+
+# Redirect function
+resource "aws_cloudfront_function" "redirects" {
+  name    = "${local.naming_prefix}-redirects"
+  runtime = "cloudfront-js-2.0"
+  comment = "Function that handles cool URIs and redirects for ${local.naming_prefix}."
+  code    = templatefile("${path.module}/redirects-function.tftpl", { redirects = var.redirects })
+}
+
+# S3 origin for distribution
+module "origin_bucket" {
+  source = "../bucket"
+  app    = var.platform.app
+  env    = var.platform.env
+  name   = var.domain_name
+}
+
+# Core Cloudfront distribution
+resource "aws_cloudfront_origin_access_control" "this" {
+  name                              = local.naming_prefix
+  description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+resource "aws_cloudfront_response_headers_policy" "this" {
+  name = "${local.naming_prefix}-StsHeaderPolicy"
+
+  security_headers_config {
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      override                   = false
+      include_subdomains         = true
+    }
+  }
+}
+
+# WAF and firewall
+resource "aws_wafv2_ip_set" "this" {
+  # There is no IP blocking in Prod for the Static Site
+  count              = length(aws_ssm_parameter.allowed_ip_list.value) < 1 ? 0 : 1
+  name               = "${local.naming_prefix}-${var.service}"
+  description        = "IP set with access to ${var.domain_name}"
+  scope              = "CLOUDFRONT"
+  ip_address_version = "IPV4"
+  addresses          = sensitive(lookup(lookup(var.platform.ssm, "${var.service}", "static_site"), var.waf_ip_allow_list_keyname, var.allowed_ips_list))
+}
+
+module "firewall" {
+  source       = "../firewall"
+  name         = local.naming_prefix
+  app          = var.platform.app
+  env          = var.platform.env
+  scope        = "CLOUDFRONT"
+  content_type = "APPLICATION_JSON"
+  ip_sets      = concat(one(aws_wafv2_ip_set.this[*].arn), var.additional_allowed_ip_list)
+}
+
+# Logging
+
+resource "aws_cloudwatch_log_delivery_source" "this" {
+  name         = "${local.naming_prefix}-static-site"
+  log_type     = "ACCESS_LOGS"
+  resource_arn = aws_cloudfront_distribution.this.arn
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "this" {
+  name          = "${local.naming_prefix}-static-site"
+  output_format = "parquet"
+
+  delivery_destination_configuration {
+    destination_resource_arn = var.platform.splunk_logging_bucket.arn
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "this" {
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.this.name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.this.arn
+
+  s3_delivery_configuration {
+    suffix_path = "/AWSLogs/${data.aws_caller_identity.this.account_id}/Cloudfront/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
   }
 }
