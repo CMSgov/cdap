@@ -2,6 +2,7 @@
 
 This module creates a CloudFront distribution including all necessary resources for operability except creation of certificates and CNAMES/domains.  
 Modifications to the Cloudfront distribution name changes need to be registered with DNS management, currently managed by CMS.
+An IP allow list must be set using sops and stored in /{team}/{env}/{service}/{waf_ip_allow_list}. 
 
 A sample usage is as follows    :
 

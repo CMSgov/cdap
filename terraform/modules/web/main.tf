@@ -74,7 +74,7 @@ resource "aws_s3_bucket_policy" "allow_cloudfront_access" {
 resource "aws_cloudfront_distribution" "this" {
   origin {
     domain_name              = module.origin_bucket.bucket_regional_domain_name
-    origin_id                = var.s3_origin
+    origin_id                = var.s3_origin_id
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
   }
 
@@ -104,7 +104,7 @@ resource "aws_cloudfront_distribution" "this" {
     cache_policy_id            = var.platform.env == "prod" ? local.caching_policy["CachingOptimized"] : local.caching_policy["CachingDisabled"]
     allowed_methods            = ["GET", "HEAD"]
     cached_methods             = ["GET", "HEAD"]
-    target_origin_id           = var.s3_origin
+    target_origin_id           = var.s3_origin_id
     compress                   = true
     viewer_protocol_policy     = "redirect-to-https"
     response_headers_policy_id = aws_cloudfront_response_headers_policy.this.id
@@ -149,7 +149,7 @@ module "origin_bucket" {
 
 # Core Cloudfront distribution
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = local.naming_prefix
+  name                              = module.origin_bucket.id
   description                       = "Manages an AWS CloudFront Origin Access Control, which is used by CloudFront Distributions with an Amazon S3 bucket as the origin."
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -171,12 +171,11 @@ resource "aws_cloudfront_response_headers_policy" "this" {
 # WAF and firewall
 resource "aws_wafv2_ip_set" "this" {
   # There is no IP blocking in Prod for the Static Site
-  count              = length(aws_ssm_parameter.allowed_ip_list.value) < 1 ? 0 : 1
   name               = "${local.naming_prefix}-${var.service}"
   description        = "IP set with access to ${var.domain_name}"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses          = sensitive(lookup(lookup(var.platform.ssm, "${var.service}", "static_site"), var.waf_ip_allow_list_keyname, var.allowed_ips_list))
+  addresses          = sensitive(try(var.platform.ssm["${var.service}"].waf_ip_allow_list, var.allowed_ips_list))
 }
 
 module "firewall" {
@@ -186,19 +185,19 @@ module "firewall" {
   env          = var.platform.env
   scope        = "CLOUDFRONT"
   content_type = "APPLICATION_JSON"
-  ip_sets      = concat(one(aws_wafv2_ip_set.this[*].arn), var.additional_allowed_ip_list)
+  ip_sets      = coalesce([aws_wafv2_ip_set.this.arn], var.existing_ip_sets)
 }
 
 # Logging
 
 resource "aws_cloudwatch_log_delivery_source" "this" {
-  name         = "${local.naming_prefix}-static-site"
+  name         = local.naming_prefix
   log_type     = "ACCESS_LOGS"
   resource_arn = aws_cloudfront_distribution.this.arn
 }
 
 resource "aws_cloudwatch_log_delivery_destination" "this" {
-  name          = "${local.naming_prefix}-static-site"
+  name          = local.naming_prefix
   output_format = "parquet"
 
   delivery_destination_configuration {
