@@ -146,10 +146,5 @@ output "ssm" {
 
 output "splunk_logging_bucket" {
   description = "Bucket created by the CMS Hybrid Cloud team where logs are ingested into Splunk"
-  value = {
-    name   = data.aws_s3_bucket.logs_to_splunk.id
-    id     = data.aws_s3_bucket.logs_to_splunk.id
-    arn    = data.aws_s3_bucket.logs_to_splunk.arn
-    region = data.aws_s3_bucket.logs_to_splunk.bucket_region
-  }
+  value       = data.aws_s3_bucket.logs_to_splunk
 }
