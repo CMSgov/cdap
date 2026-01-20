@@ -129,6 +129,10 @@ resource "aws_cloudfront_distribution" "this" {
     response_code         = 404
     response_page_path    = "/404.html"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Redirect function
