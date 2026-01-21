@@ -131,7 +131,7 @@ variable "service_name_override" {
 }
 
 variable "subnets" {
-  description = "Optional list of subnets associated with the service."
+  description = "Optional list of subnets associated with the service. Defaults to private subnets as specified by the platform module."
   type        = list(string)
   default     = null
 }
