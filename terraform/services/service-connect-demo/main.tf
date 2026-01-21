@@ -16,7 +16,7 @@ module "platform" {
   source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app         = "cdap"
+  app         = "ab2d"
   env         = "test"
   root_module = "https://github.com/CMSgov/cdap/tree/plt-1448_test_service_connect/terraform/services/service-connect-demo"
   service     = local.service
