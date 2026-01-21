@@ -84,7 +84,7 @@ resource "aws_ecs_service" "this" {
       port_name      = var.port_mappings.name
       client_alias {
         dns_name = "service-connect-client"
-        port     = var.port_mappings.containerPort
+        port     = var.port_mappings[0].containerPort
       }
     }
   }
