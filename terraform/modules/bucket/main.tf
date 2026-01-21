@@ -4,7 +4,7 @@ data "aws_region" "primary" {}
 
 resource "aws_s3_bucket" "this" {
   # Max length on bucket_prefix is 37, so cut it to 36 plus the dash
-  bucket_prefix = "${substr(var.name, 0, 36)}-"
+  bucket_prefix = var.existing_bucket_name != null ? var.existing_bucket_name : "${substr(var.name, 0, 36)}-"
   force_destroy = true
 }
 
