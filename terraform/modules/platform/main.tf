@@ -106,7 +106,7 @@ data "aws_nat_gateway" "this" {
 data "aws_s3_bucket" "access_logs" {
   bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}-access-logs"
 }
-ch
+
 data "aws_s3_bucket" "logs_to_splunk" {
   bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}"
 }

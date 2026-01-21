@@ -1,3 +1,7 @@
+data "aws_caller_identity" "this" {}
+
+data "aws_region" "primary" {}
+
 resource "aws_s3_bucket" "this" {
   # Max length on bucket_prefix is 37, so cut it to 36 plus the dash
   bucket_prefix = "${substr(var.name, 0, 36)}-"
@@ -18,6 +22,7 @@ resource "aws_s3_bucket_versioning" "this" {
     status = "Enabled"
   }
 }
+
 
 data "aws_kms_alias" "kms_key" {
   name = "alias/${var.app}-${var.env}"
@@ -96,10 +101,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 data "aws_iam_account_alias" "current" {}
 
 data "aws_s3_bucket" "bucket_access_logs" {
-  bucket = (data.aws_iam_account_alias.current.account_alias == "aws-cms-oeda-bcda-prod"
-    ? "bucket-access-logs-20250411172631068600000001"
-    : "bucket-access-logs-20250409172631068600000001"
-  )
+  bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}-access-logs"
 }
 
 resource "aws_s3_bucket_logging" "this" {
