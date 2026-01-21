@@ -38,7 +38,7 @@ resource "aws_service_discovery_http_namespace" "service_connect" {
 # ===========================
 
 resource "aws_ecs_cluster" "main" {
-  name = "microservices-cluster"
+  name = "jjr-microservices-cluster"
 
   setting {
     name  = "containerInsights"
@@ -100,6 +100,26 @@ resource "aws_iam_role" "ecs_task_role" {
   })
 }
 
+resource "aws_iam_role_policy" "ecs_task_policy" {
+  name = "ecs-task-policy"
+  role = aws_iam_role.ecs_task_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
 # ===========================
 # Step 4: Security Group for ECS Tasks
 # ===========================
@@ -172,7 +192,7 @@ resource "aws_ecs_task_definition" "backend" {
   container_definitions = jsonencode([
     {
       name  = "backend"
-      image = "nginx:latest" # Replace with your backend image
+      image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest" # Replace with your backend image
 
       portMappings = [
         {
@@ -258,11 +278,6 @@ resource "aws_ecs_service" "backend" {
         "awslogs-stream-prefix" = "service-connect"
       }
     }
-  }
-
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
   }
 
   enable_execute_command = true
@@ -364,11 +379,6 @@ resource "aws_ecs_service" "frontend" {
         "awslogs-stream-prefix" = "service-connect"
       }
     }
-  }
-
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
   }
 
   enable_execute_command = true
