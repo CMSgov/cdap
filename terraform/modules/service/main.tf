@@ -3,10 +3,6 @@ locals {
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
 }
 
-data "aws_service_discovery_http_namespace" "ecs-service-discovery" {
-  name = "ecs-service-discovery"
-}
-
 resource "aws_ecs_task_definition" "this" {
   family                   = local.service_name_full
   network_mode             = "awsvpc"
@@ -78,7 +74,7 @@ resource "aws_ecs_service" "this" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = data.aws_service_discovery_http_namespace.ecs-service-discovery.arn
+    namespace = var.cluster_service_connect_namespace_arn
     service {
       discovery_name = "ecs-service-discovery-service"
       port_name      = var.port_mappings[0].name
