@@ -2,9 +2,13 @@ data "aws_caller_identity" "this" {}
 
 data "aws_region" "primary" {}
 
+locals {
+  full_bucket_prefix = var.existing_bucket_name == null ? "${substr("${var.app}-${var.env}-${var.name}", 0, 36)}-" : var.existing_bucket_name
+}
+
 resource "aws_s3_bucket" "this" {
   # Max length on bucket_prefix is 37, so cut it to 36 plus the dash
-  bucket_prefix = var.existing_bucket_name != null ? var.existing_bucket_name : "${substr(var.name, 0, 36)}-"
+  bucket_prefix = local.full_bucket_prefix
   force_destroy = true
 }
 
