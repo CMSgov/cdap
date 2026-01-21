@@ -1,67 +1,61 @@
 # ===========================
 # ECS Service Connect Setup
 # ===========================
-variable "env" {
-  default = ""
-}
-module "standards" {
-  source      = "github.com/CMSgov/cdap//terraform/modules/standards"
-  providers   = { aws = aws, aws.secondary = aws.secondary }
-  app         = "cdap"
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/service-connect-demo"
-  service     = "service-connect-demo"
-}
-
 locals {
-  default_tags = module.standards.default_tags
-  service      = "service-connect-demo"
+  default_tags            = module.platform.default_tags
+  service                 = "service-connect-demo"
+  api_image_uri           = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx"
+  ecs_task_def_cpu_api    = 4096
+  ecs_task_def_memory_api = 14336
+  api_desired_instances   = 1
+  container_port          = 8080
+  force_api_deployment    = true
+}
+
+module "platform" {
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  providers = { aws = aws, aws.secondary = aws.secondary }
+
+  app         = "cdap"
+  env         = "test"
+  root_module = "https://github.com/CMSgov/cdap/tree/plt-1448_test_service_connect/terraform/services/service-connect-demo"
+  service     = local.service
+}
+
+module "cluster" {
+  source                = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=plt-1448_implement_service_connect"
+  cluster_name_override = "jjr-microservices-cluster"
+  platform              = module.platform
 }
 
 # ===========================
-# Step 1: Create Cloud Map Namespace
+# Data Sources
 # ===========================
 
-resource "aws_service_discovery_http_namespace" "service_connect" {
-  name        = var.namespace_name
-  description = "Service Connect namespace for microservices communication"
+data "aws_vpc" "selected" {
+  id = var.vpc_id
+}
 
-  tags = {
-    Name        = var.namespace_name
-    Environment = "production"
-    ManagedBy   = "terraform"
+data "aws_security_group" "ecs-sg" {
+  # Add filter or id to identify the security group
+  vpc_id = var.vpc_id
+
+  filter {
+    name   = "tag:Name"
+    values = ["ecs-sg"] # Adjust as needed
   }
 }
 
-# ===========================
-# Step 2: Create ECS Cluster with Service Connect
-# ===========================
-
-resource "aws_ecs_cluster" "main" {
-  name = "jjr-microservices-cluster"
-
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
-  }
-
-  service_connect_defaults {
-    namespace = aws_service_discovery_http_namespace.service_connect.arn
-  }
-
-  tags = {
-    Name        = "microservices-cluster"
-    Environment = "production"
-  }
+data "aws_iam_role" "ecs-task-role" {
+  name = "ecs-task-role" # Adjust to your actual role name
 }
 
 # ===========================
-# Step 3: IAM Roles and Policies
+# IAM Roles and Policies
 # ===========================
 
-# ECS Task Execution Role
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs-task-execution-role"
+  name = "jjr-ecs-task-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -82,9 +76,8 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# ECS Task Role
 resource "aws_iam_role" "ecs_task_role" {
-  name = "ecs-task-role"
+  name = "jjr-ecs-task-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -101,7 +94,7 @@ resource "aws_iam_role" "ecs_task_role" {
 }
 
 resource "aws_iam_role_policy" "ecs_task_policy" {
-  name = "ecs-task-policy"
+  name = "jjr-ecs-task-policy"
   role = aws_iam_role.ecs_task_role.id
 
   policy = jsonencode({
@@ -120,12 +113,13 @@ resource "aws_iam_role_policy" "ecs_task_policy" {
     ]
   })
 }
+
 # ===========================
-# Step 4: Security Group for ECS Tasks
+# Security Groups
 # ===========================
 
 resource "aws_security_group" "ecs_tasks" {
-  name        = "ecs-tasks-sg"
+  name        = "jjr-ecs-tasks-sg"
   description = "Security group for ECS tasks"
   vpc_id      = var.vpc_id
 
@@ -150,16 +144,64 @@ resource "aws_security_group" "ecs_tasks" {
   }
 }
 
-data "aws_vpc" "selected" {
-  id = var.vpc_id
+resource "aws_security_group" "load_balancer" {
+  name        = "jjr-load-balancer-sg"
+  description = "Security group for load balancer"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description = "HTTP from internet"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "load-balancer-sg"
+  }
+}
+
+resource "aws_security_group" "alb" {
+  name        = "jjr-frontend-alb-sg"
+  description = "Security group for frontend ALB"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description = "HTTP from internet"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "All outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "frontend-alb-sg"
+  }
 }
 
 # ===========================
-# Step 5: CloudWatch Log Groups
+# CloudWatch Log Groups
 # ===========================
 
 resource "aws_cloudwatch_log_group" "backend_service" {
-  name              = "/ecs/backend-service"
+  name              = "/ecs/jjr-backend-service"
   retention_in_days = 7
 
   tags = {
@@ -168,7 +210,7 @@ resource "aws_cloudwatch_log_group" "backend_service" {
 }
 
 resource "aws_cloudwatch_log_group" "frontend_service" {
-  name              = "/ecs/frontend-service"
+  name              = "/ecs/jjr-frontend-service"
   retention_in_days = 7
 
   tags = {
@@ -177,7 +219,72 @@ resource "aws_cloudwatch_log_group" "frontend_service" {
 }
 
 # ===========================
-# Step 6: Backend Service (Server) Task Definition
+# Load Balancer for API Service
+# ===========================
+
+resource "aws_lb_target_group" "cdap_api" {
+  name        = "cdap-api-tg"
+  port        = local.container_port
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 5
+    interval            = 30
+    path                = "/"
+    protocol            = "HTTP"
+  }
+
+  tags = {
+    Name = "cdap-api-target-group"
+  }
+}
+
+# ===========================
+# Backend Service (using module)
+# ===========================
+
+module "backend_service" {
+  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
+  service_name_override = "backend-service"
+  platform        = module.platform
+  cluster_arn     = module.cluster.this.arn
+  image           = local.api_image_uri
+  cpu             = local.ecs_task_def_cpu_api
+  memory          = local.ecs_task_def_memory_api
+  desired_count   = local.api_desired_instances
+  port_mappings   = var.port_mappings
+  security_groups = [data.aws_security_group.ecs-sg.id, aws_security_group.load_balancer.id]
+  task_role_arn   = data.aws_iam_role.ecs-task-role.arn
+
+  force_new_deployment = local.force_api_deployment
+
+  load_balancers = [{
+    target_group_arn = aws_lb_target_group.cdap_api.arn
+    container_name   = local.service
+    container_port   = local.container_port
+  }]
+
+  mount_points = [
+    {
+      "containerPath" = "/var/log",
+      "sourceVolume"  = "var_log",
+    },
+  ]
+
+  volumes = [
+    {
+      name = "var_log"
+    },
+  ]
+}
+
+# ===========================
+# Backend Service Task Definition
 # ===========================
 
 resource "aws_ecs_task_definition" "backend" {
@@ -192,7 +299,7 @@ resource "aws_ecs_task_definition" "backend" {
   container_definitions = jsonencode([
     {
       name  = "backend"
-      image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest" # Replace with your backend image
+      image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
 
       portMappings = [
         {
@@ -235,60 +342,60 @@ resource "aws_ecs_task_definition" "backend" {
 }
 
 # ===========================
-# Step 7: Backend ECS Service with Service Connect (Server Mode)
+# Backend ECS Service
 # ===========================
-
-resource "aws_ecs_service" "backend" {
-  name            = "backend-service"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.backend.arn
-  desired_count   = 2
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = var.private_subnet_ids
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
-
-  service_connect_configuration {
-    enabled   = true
-    namespace = aws_service_discovery_http_namespace.service_connect.arn
-
-    service {
-      port_name      = "backend-port"
-      discovery_name = "backend"
-
-      client_alias {
-        port     = 80
-        dns_name = "backend"
-      }
-
-      timeout {
-        idle_timeout_seconds       = 300
-        per_request_timeout_seconds = 60
-      }
-    }
-
-    log_configuration {
-      log_driver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.backend_service.name
-        "awslogs-region"        = var.aws_region
-        "awslogs-stream-prefix" = "service-connect"
-      }
-    }
-  }
-
-  enable_execute_command = true
-
-  tags = {
-    Name = "backend-service"
-  }
-}
+#
+# resource "aws_ecs_service" "backend" {
+#   name            = "backend-service"
+#   cluster         = module.cluster.this.id
+#   task_definition = aws_ecs_task_definition.backend.arn
+#   desired_count   = 2
+#   launch_type     = "FARGATE"
+#
+#   network_configuration {
+#     subnets          = var.private_subnet_ids
+#     security_groups  = [aws_security_group.ecs_tasks.id]
+#     assign_public_ip = false
+#   }
+#
+#   service_connect_configuration {
+#     enabled   = true
+#     namespace = data.aws_service_discovery_http_namespace.ecs-service-discovery.arn
+#
+#     service {
+#       port_name      = "backend-port"
+#       discovery_name = "backend"
+#
+#       client_alias {
+#         port     = 80
+#         dns_name = "backend"
+#       }
+#
+#       timeout {
+#         idle_timeout_seconds        = 300
+#         per_request_timeout_seconds = 60
+#       }
+#     }
+#
+#     log_configuration {
+#       log_driver = "awslogs"
+#       options = {
+#         "awslogs-group"         = aws_cloudwatch_log_group.backend_service.name
+#         "awslogs-region"        = var.aws_region
+#         "awslogs-stream-prefix" = "service-connect"
+#       }
+#     }
+#   }
+#
+#   enable_execute_command = true
+#
+#   tags = {
+#     Name = "backend-service"
+#   }
+# }
 
 # ===========================
-# Step 8: Frontend Service (Client) Task Definition
+# Frontend Service Task Definition
 # ===========================
 
 resource "aws_ecs_task_definition" "frontend" {
@@ -303,7 +410,7 @@ resource "aws_ecs_task_definition" "frontend" {
   container_definitions = jsonencode([
     {
       name  = "frontend"
-      image = "nginx:latest" # Replace with your frontend image
+      image = "nginx:latest"
 
       portMappings = [
         {
@@ -321,7 +428,7 @@ resource "aws_ecs_task_definition" "frontend" {
         },
         {
           name  = "BACKEND_URL"
-          value = "http://backend:80" # Service Connect DNS name
+          value = "http://backend:80"
         }
       ]
 
@@ -350,48 +457,7 @@ resource "aws_ecs_task_definition" "frontend" {
 }
 
 # ===========================
-# Step 9: Frontend ECS Service with Service Connect (Client Mode)
-# ===========================
-
-resource "aws_ecs_service" "frontend" {
-  name            = "frontend-service"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.frontend.arn
-  desired_count   = 2
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = var.private_subnet_ids
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
-
-  service_connect_configuration {
-    enabled   = true
-    namespace = aws_service_discovery_http_namespace.service_connect.arn
-
-    # Frontend acts as client only, no service block needed
-    log_configuration {
-      log_driver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.frontend_service.name
-        "awslogs-region"        = var.aws_region
-        "awslogs-stream-prefix" = "service-connect"
-      }
-    }
-  }
-
-  enable_execute_command = true
-
-  tags = {
-    Name = "frontend-service"
-  }
-
-  depends_on = [aws_ecs_service.backend]
-}
-
-# ===========================
-# Step 10: Application Load Balancer (Optional - for external access)
+# Application Load Balancer for Frontend
 # ===========================
 
 resource "aws_lb" "frontend" {
@@ -399,38 +465,12 @@ resource "aws_lb" "frontend" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
-  subnets            = var.private_subnet_ids # Use public subnets for internet-facing ALB
+  subnets            = var.public_subnet_ids # Use public subnets for internet-facing ALB
 
   enable_deletion_protection = false
 
   tags = {
     Name = "frontend-alb"
-  }
-}
-
-resource "aws_security_group" "alb" {
-  name        = "frontend-alb-sg"
-  description = "Security group for frontend ALB"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    description = "HTTP from internet"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    description = "All outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "frontend-alb-sg"
   }
 }
 
@@ -467,48 +507,94 @@ resource "aws_lb_listener" "frontend" {
   }
 }
 
-# Update frontend service with load balancer
-resource "aws_ecs_service" "frontend_with_alb" {
-  name            = "frontend-service-alb"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.frontend.arn
-  desired_count   = 2
-  launch_type     = "FARGATE"
+# ===========================
+# Frontend ECS Service with ALB
+# ===========================
 
-  network_configuration {
-    subnets          = var.private_subnet_ids
-    security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
-  }
+# resource "aws_ecs_service" "frontend" {
+#   name            = "frontend-service"
+#   cluster         = module.cluster.this.id
+#   task_definition = aws_ecs_task_definition.frontend.arn
+#   desired_count   = 2
+#   launch_type     = "FARGATE"
+#
+#   network_configuration {
+#     subnets          = var.private_subnet_ids
+#     security_groups  = [aws_security_group.ecs_tasks.id]
+#     assign_public_ip = false
+#   }
+#
+#   load_balancer {
+#     target_group_arn = aws_lb_target_group.frontend.arn
+#     container_name   = "frontend"
+#     container_port   = 8080
+#   }
+#
+#   service_connect_configuration {
+#     enabled   = true
+#     namespace = data.aws_service_discovery_http_namespace.ecs-service-discovery.arn
+#
+#     log_configuration {
+#       log_driver = "awslogs"
+#       options = {
+#         "awslogs-group"         = aws_cloudwatch_log_group.frontend_service.name
+#         "awslogs-region"        = var.aws_region
+#         "awslogs-stream-prefix" = "service-connect"
+#       }
+#     }
+#   }
+#
+#   enable_execute_command = true
+#
+#   tags = {
+#     Name = "frontend-service"
+#   }
+#
+#   depends_on = [
+#     aws_lb_listener.frontend,
+#     aws_ecs_service.backend
+#   ]
+# }
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.frontend.arn
-    container_name   = "frontend"
-    container_port   = 8080
-  }
+# ===========================
+# Frontend ECS Service with ALB from module
+# ===========================
+module "frontend_service" {
+  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
+  service_name_override = "frontend-service"
+  platform        = module.platform
+  cluster_arn     = module.cluster.this.arn
+  image           = local.api_image_uri
+  cpu             = local.ecs_task_def_cpu_api
+  memory          = local.ecs_task_def_memory_api
+  desired_count   = local.api_desired_instances
+  port_mappings   = var.port_mappings
+  security_groups = [data.aws_security_group.ecs-sg.id, aws_security_group.load_balancer.id]
+  task_role_arn   = data.aws_iam_role.ecs-task-role.arn
 
-  service_connect_configuration {
-    enabled   = true
-    namespace = aws_service_discovery_http_namespace.service_connect.arn
+  force_new_deployment = local.force_api_deployment
 
-    log_configuration {
-      log_driver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.frontend_service.name
-        "awslogs-region"        = var.aws_region
-        "awslogs-stream-prefix" = "service-connect"
-      }
-    }
-  }
+  load_balancers = [{
+    target_group_arn = aws_lb_target_group.cdap_api.arn
+    container_name   = local.service
+    container_port   = local.container_port
+  }]
 
-  enable_execute_command = true
-
-  tags = {
-    Name = "frontend-service-with-alb"
-  }
-
-  depends_on = [
-    aws_lb_listener.frontend,
-    aws_ecs_service.backend
+  mount_points = [
+    {
+      "containerPath" = "/var/log",
+      "sourceVolume"  = "var_log",
+    },
   ]
+
+  volumes = [
+    {
+      name = "var_log"
+    },
+  ]
+
+    depends_on = [
+      aws_lb_listener.frontend,
+      module.backend_service
+    ]
 }
