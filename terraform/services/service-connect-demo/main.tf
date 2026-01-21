@@ -36,20 +36,6 @@ data "aws_vpc" "selected" {
   id = var.vpc_id
 }
 
-data "aws_security_group" "ecs-sg" {
-  # Add filter or id to identify the security group
-  vpc_id = var.vpc_id
-
-  filter {
-    name   = "tag:Name"
-    values = ["ecs-sg"] # Adjust as needed
-  }
-}
-
-data "aws_iam_role" "ecs-task-role" {
-  name = "ecs-task-role" # Adjust to your actual role name
-}
-
 # ===========================
 # IAM Roles and Policies
 # ===========================
@@ -249,17 +235,18 @@ resource "aws_lb_target_group" "cdap_api" {
 # ===========================
 
 module "backend_service" {
-  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
-  service_name_override = "backend-service"
-  platform        = module.platform
-  cluster_arn     = module.cluster.this.arn
-  image           = local.api_image_uri
-  cpu             = local.ecs_task_def_cpu_api
-  memory          = local.ecs_task_def_memory_api
-  desired_count   = local.api_desired_instances
-  port_mappings   = var.port_mappings
-  security_groups = [data.aws_security_group.ecs-sg.id, aws_security_group.load_balancer.id]
-  task_role_arn   = data.aws_iam_role.ecs-task-role.arn
+  source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
+  service_name_override                 = "backend-service"
+  platform                              = module.platform
+  cluster_arn                           = module.cluster.this.arn
+  cluster_service_connect_namespace_arn = module.cluster.service_connect_namespace.arn
+  image                                 = local.api_image_uri
+  cpu                                   = local.ecs_task_def_cpu_api
+  memory                                = local.ecs_task_def_memory_api
+  desired_count                         = local.api_desired_instances
+  port_mappings                         = var.port_mappings
+  security_groups                       = [aws_security_group.ecs_tasks.id, aws_security_group.load_balancer.id]
+  task_role_arn                         = aws_iam_role.ecs_task_role.arn
 
   force_new_deployment = local.force_api_deployment
 
@@ -560,17 +547,18 @@ resource "aws_lb_listener" "frontend" {
 # Frontend ECS Service with ALB from module
 # ===========================
 module "frontend_service" {
-  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
-  service_name_override = "frontend-service"
-  platform        = module.platform
-  cluster_arn     = module.cluster.this.arn
-  image           = local.api_image_uri
-  cpu             = local.ecs_task_def_cpu_api
-  memory          = local.ecs_task_def_memory_api
-  desired_count   = local.api_desired_instances
-  port_mappings   = var.port_mappings
-  security_groups = [data.aws_security_group.ecs-sg.id, aws_security_group.load_balancer.id]
-  task_role_arn   = data.aws_iam_role.ecs-task-role.arn
+  source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
+  service_name_override                 = "frontend-service"
+  platform                              = module.platform
+  cluster_arn                           = module.cluster.this.arn
+  cluster_service_connect_namespace_arn = module.cluster.service_connect_namespace.arn
+  image                                 = local.api_image_uri
+  cpu                                   = local.ecs_task_def_cpu_api
+  memory                                = local.ecs_task_def_memory_api
+  desired_count                         = local.api_desired_instances
+  port_mappings                         = var.port_mappings
+  security_groups                       = [aws_security_group.ecs_tasks.id, aws_security_group.load_balancer.id]
+  task_role_arn                         = aws_iam_role.ecs_task_role.arn
 
   force_new_deployment = local.force_api_deployment
 
@@ -593,8 +581,8 @@ module "frontend_service" {
     },
   ]
 
-    depends_on = [
-      aws_lb_listener.frontend,
-      module.backend_service
-    ]
+  depends_on = [
+    aws_lb_listener.frontend,
+    module.backend_service
+  ]
 }

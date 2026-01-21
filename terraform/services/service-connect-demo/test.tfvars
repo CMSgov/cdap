@@ -3,7 +3,7 @@ aws_region = "us-east-1"
 
 # VPC Configuration
 # Replace with your actual VPC ID
-vpc_id = "vpc-0123456789abcdef0"
+vpc_id = "vpc-07cac3327db239c92"
 
 # Private Subnet IDs for ECS Tasks
 # Replace with your actual private subnet IDs
