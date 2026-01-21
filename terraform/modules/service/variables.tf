@@ -3,6 +3,11 @@ variable "cluster_arn" {
   type        = string
 }
 
+variable "cluster_service_connect_namespace_arn" {
+  description = "The Service Connect discovery namespace arn."
+  type        = string
+}
+
 variable "container_environment" {
   description = "The environment variables to pass to the container"
   type = list(object({
