@@ -135,6 +135,12 @@ variable "service_name_override" {
   default     = null
 }
 
+variable "container_name_override" {
+  description = "Desired container name for the ecs task.  Defaults to local.service_name."
+  type        = string
+  default     = null
+}
+
 variable "task_role_arn" {
   description = "ARN of the role that allows the application code in tasks to make calls to AWS services."
   type        = string
