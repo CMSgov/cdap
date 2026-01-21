@@ -13,10 +13,10 @@ locals {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1448_implement_service_connect"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app         = "ab2d"
+  app         = "cdap"
   env         = "test"
   root_module = "https://github.com/CMSgov/cdap/tree/plt-1448_test_service_connect/terraform/services/service-connect-demo"
   service     = local.service
@@ -285,7 +285,7 @@ resource "aws_ecs_task_definition" "backend" {
 
   container_definitions = jsonencode([
     {
-      name  = "backend"
+      name  = local.service
       image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
 
       portMappings = [
@@ -329,59 +329,6 @@ resource "aws_ecs_task_definition" "backend" {
 }
 
 # ===========================
-# Backend ECS Service
-# ===========================
-#
-# resource "aws_ecs_service" "backend" {
-#   name            = "backend-service"
-#   cluster         = module.cluster.this.id
-#   task_definition = aws_ecs_task_definition.backend.arn
-#   desired_count   = 2
-#   launch_type     = "FARGATE"
-#
-#   network_configuration {
-#     subnets          = var.private_subnet_ids
-#     security_groups  = [aws_security_group.ecs_tasks.id]
-#     assign_public_ip = false
-#   }
-#
-#   service_connect_configuration {
-#     enabled   = true
-#     namespace = data.aws_service_discovery_http_namespace.ecs-service-discovery.arn
-#
-#     service {
-#       port_name      = "backend-port"
-#       discovery_name = "backend"
-#
-#       client_alias {
-#         port     = 80
-#         dns_name = "backend"
-#       }
-#
-#       timeout {
-#         idle_timeout_seconds        = 300
-#         per_request_timeout_seconds = 60
-#       }
-#     }
-#
-#     log_configuration {
-#       log_driver = "awslogs"
-#       options = {
-#         "awslogs-group"         = aws_cloudwatch_log_group.backend_service.name
-#         "awslogs-region"        = var.aws_region
-#         "awslogs-stream-prefix" = "service-connect"
-#       }
-#     }
-#   }
-#
-#   enable_execute_command = true
-#
-#   tags = {
-#     Name = "backend-service"
-#   }
-# }
-
-# ===========================
 # Frontend Service Task Definition
 # ===========================
 
@@ -396,8 +343,8 @@ resource "aws_ecs_task_definition" "frontend" {
 
   container_definitions = jsonencode([
     {
-      name  = "frontend"
-      image = "nginx:latest"
+      name  = local.service
+      image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
 
       portMappings = [
         {
@@ -448,7 +395,7 @@ resource "aws_ecs_task_definition" "frontend" {
 # ===========================
 
 resource "aws_lb" "frontend" {
-  name               = "frontend-alb"
+  name               = "sc-frontend-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
@@ -462,7 +409,7 @@ resource "aws_lb" "frontend" {
 }
 
 resource "aws_lb_target_group" "frontend" {
-  name        = "frontend-tg"
+  name        = "sc-frontend-tg"
   port        = 8080
   protocol    = "HTTP"
   target_type = "ip"
@@ -493,55 +440,6 @@ resource "aws_lb_listener" "frontend" {
     target_group_arn = aws_lb_target_group.frontend.arn
   }
 }
-
-# ===========================
-# Frontend ECS Service with ALB
-# ===========================
-
-# resource "aws_ecs_service" "frontend" {
-#   name            = "frontend-service"
-#   cluster         = module.cluster.this.id
-#   task_definition = aws_ecs_task_definition.frontend.arn
-#   desired_count   = 2
-#   launch_type     = "FARGATE"
-#
-#   network_configuration {
-#     subnets          = var.private_subnet_ids
-#     security_groups  = [aws_security_group.ecs_tasks.id]
-#     assign_public_ip = false
-#   }
-#
-#   load_balancer {
-#     target_group_arn = aws_lb_target_group.frontend.arn
-#     container_name   = "frontend"
-#     container_port   = 8080
-#   }
-#
-#   service_connect_configuration {
-#     enabled   = true
-#     namespace = data.aws_service_discovery_http_namespace.ecs-service-discovery.arn
-#
-#     log_configuration {
-#       log_driver = "awslogs"
-#       options = {
-#         "awslogs-group"         = aws_cloudwatch_log_group.frontend_service.name
-#         "awslogs-region"        = var.aws_region
-#         "awslogs-stream-prefix" = "service-connect"
-#       }
-#     }
-#   }
-#
-#   enable_execute_command = true
-#
-#   tags = {
-#     Name = "frontend-service"
-#   }
-#
-#   depends_on = [
-#     aws_lb_listener.frontend,
-#     aws_ecs_service.backend
-#   ]
-# }
 
 # ===========================
 # Frontend ECS Service with ALB from module
