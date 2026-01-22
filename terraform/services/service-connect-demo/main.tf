@@ -237,6 +237,7 @@ resource "aws_lb_target_group" "cdap_api" {
 module "backend_service" {
   source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
   service_name_override                 = "backend-service"
+  container_name_override               = local.service
   platform                              = module.platform
   cluster_arn                           = module.cluster.this.arn
   cluster_service_connect_namespace_arn = module.cluster.service_connect_namespace.arn
@@ -447,6 +448,7 @@ resource "aws_lb_listener" "frontend" {
 module "frontend_service" {
   source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
   service_name_override                 = "frontend-service"
+  container_name_override               = local.service
   platform                              = module.platform
   cluster_arn                           = module.cluster.this.arn
   cluster_service_connect_namespace_arn = module.cluster.service_connect_namespace.arn
