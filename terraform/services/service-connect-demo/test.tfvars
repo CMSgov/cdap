@@ -8,9 +8,9 @@ vpc_id = "vpc-07cac3327db239c92"
 # Private Subnet IDs for ECS Tasks
 # Replace with your actual private subnet IDs
 private_subnet_ids = [
-  "subnet-0123456789abcdef0",
-  "subnet-0123456789abcdef1",
-  "subnet-0123456789abcdef2"
+  "subnet-0c46ebc2dad32d964",
+  "subnet-0f26c81d2b603e918",
+  "subnet-0c9276af7df0a20eb"
 ]
 
 # Public Subnet IDs for Load Balancers
@@ -20,9 +20,6 @@ public_subnet_ids = [
   "subnet-07f988f48aa18c6c8",
   "subnet-03948d4372e37165d"
 ]
-
-# Cloud Map Namespace for Service Connect
-namespace_name = "microservices.local"
 
 # Port Mappings for Container
 # Example configuration - adjust based on your application needs

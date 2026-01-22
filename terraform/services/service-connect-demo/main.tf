@@ -334,7 +334,7 @@ resource "aws_ecs_task_definition" "backend" {
 # ===========================
 
 resource "aws_ecs_task_definition" "frontend" {
-  family                   = "frontend-service"
+  family                   = "sc-frontend-service"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
@@ -447,7 +447,7 @@ resource "aws_lb_listener" "frontend" {
 # ===========================
 module "frontend_service" {
   source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
-  service_name_override                 = "frontend-service"
+  service_name_override                 = "sc-frontend-service"
   container_name_override               = local.service
   platform                              = module.platform
   cluster_arn                           = module.cluster.this.arn
@@ -483,6 +483,7 @@ module "frontend_service" {
 
   depends_on = [
     aws_lb_listener.frontend,
-    module.backend_service
+    module.backend_service,
+    module.cluster.service_connect_namespace
   ]
 }
