@@ -130,6 +130,12 @@ variable "service_name_override" {
   default     = null
 }
 
+variable "subnets" {
+  description = "Optional list of subnets associated with the service. Defaults to private subnets as specified by the platform module."
+  type        = list(string)
+  default     = null
+}
+
 variable "task_role_arn" {
   description = "ARN of the role that allows the application code in tasks to make calls to AWS services."
   type        = string
