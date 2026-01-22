@@ -1,5 +1,5 @@
 resource "aws_service_discovery_http_namespace" "ecs-service-discovery" {
-  name = "ecs-service-discovery--${var.platform.env}"
+  name = "ecs-service-discovery-${var.platform.env}"
 }
 
 resource "aws_ecs_cluster" "this" {
