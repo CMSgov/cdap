@@ -17,13 +17,6 @@ locals {
     tf_root_module = local.root_module
   }
 
-  access_logs_bucket = {
-    "dev"     = "bucket-access-logs-20250409172631068600000001"
-    "test"    = "bucket-access-logs-20250409172631068600000001"
-    "sandbox" = "bucket-access-logs-20250411172631068600000001"
-    "prod"    = "bucket-access-logs-20250411172631068600000001"
-  }
-
   aws_iam_role_names = [
     "ct-ado-bcda-application-admin",
     "ct-ado-dasg-application-admin"
@@ -111,7 +104,7 @@ data "aws_nat_gateway" "this" {
 }
 
 data "aws_s3_bucket" "access_logs" {
-  bucket = local.access_logs_bucket[local.parent_env]
+  bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}-access-logs"
 }
 
 data "aws_s3_bucket" "logs_to_splunk" {
