@@ -202,7 +202,7 @@ resource "aws_cloudwatch_log_delivery_source" "this" {
 
 resource "aws_cloudwatch_log_delivery_destination" "this" {
   name          = local.naming_prefix
-  output_format = "parquet"
+  output_format = "json"
 
   delivery_destination_configuration {
     destination_resource_arn = var.platform.splunk_logging_bucket.arn
