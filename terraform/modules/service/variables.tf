@@ -26,9 +26,9 @@ variable "cpu" {
   type        = number
 }
 
-# reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
-variable "memory" {
-  description = "Amount (in MiB) of memory used by the task."
+variable "health_check_grace_period_seconds" {
+  default     = null
+  description = "Seconds to ignore failing load balancer health checks on newly instantiated tasks to prevent premature shutdown, up to 2147483647. Only valid for services configured to use load balancers."
   type        = number
 }
 
@@ -63,6 +63,12 @@ variable "load_balancers" {
     container_port   = number
   }))
   default = []
+}
+
+# reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
+variable "memory" {
+  description = "Amount (in MiB) of memory used by the task."
+  type        = number
 }
 
 variable "mount_points" {
@@ -121,6 +127,12 @@ variable "security_groups" {
 variable "service_name_override" {
   description = "Desired service name for the service tag on the aws ecs service.  Defaults to var.platform.app-var.platform.env-var.platform.service."
   type        = string
+  default     = null
+}
+
+variable "subnets" {
+  description = "Optional list of subnets associated with the service. Defaults to private subnets as specified by the platform module."
+  type        = list(string)
   default     = null
 }
 

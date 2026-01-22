@@ -169,6 +169,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ec2:DescribeRouteTables",
       "ec2:DescribeSecurityGroupRules",
       "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
       "ec2:DescribeVolumes",
       "ec2:DescribeVpcAttribute",
       "ec2:DescribeVpcs",
@@ -288,6 +289,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
     resources = concat(
       [data.aws_kms_alias.environment_key.target_key_arn],
       [data.aws_kms_alias.account_env_old.target_key_arn],
+      [data.aws_kms_alias.account_env_old_secondary.target_key_arn],
       [data.aws_kms_alias.account_env.target_key_arn],
       [data.aws_kms_alias.account_env_secondary.target_key_arn],
       var.app == "ab2d" ? concat(
@@ -478,7 +480,9 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ssm:GetParametersByPath",
       "ssm:PutParameter",
       "ssm:StartSession",
-      "ssm:TerminateSession"
+      "ssm:TerminateSession",
+      "ssm:AddTagsToResource",
+      "ssm:ListTagsForResource"
     ]
     resources = ["*"]
   }

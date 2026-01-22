@@ -73,7 +73,7 @@ resource "aws_ecs_service" "this" {
   propagate_tags       = "SERVICE"
 
   network_configuration {
-    subnets          = keys(var.platform.private_subnets)
+    subnets          = var.subnets == null ? keys(var.platform.private_subnets) : var.subnets
     assign_public_ip = false
     security_groups  = var.security_groups
   }
@@ -88,7 +88,7 @@ resource "aws_ecs_service" "this" {
   }
 
   deployment_minimum_healthy_percent = 100
-  health_check_grace_period_seconds  = 300
+  health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 }
 
 data "aws_iam_policy_document" "execution" {

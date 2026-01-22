@@ -1,20 +1,20 @@
-/cdap/account/nonsensitive/security_events_slack_renotify_after_days: 30
-/cdap/account/nonsensitive/security_events_slack_severity_list: CRITICAL,HIGH,MEDIUM
-/cdap/sensitive/account/security_events_slack_webhook_url: ENC[AES256_GCM,data:z9MLEAlb76u6MZ+GWcWcfnRtax1J677k47tabDmwCqAGN7H2BrmTnkIs1fAhl9dShaL5qZrq78s0sY9b2hCAGIWWaUenVbGGpWBuZvh7rw==,iv:kbgCH76ryIbnU40SWd/Wgg+hULSgGsTO4LLWIPoDE68=,tag:NmwrTB/oVI0WEhL9R5eV2g==,type:str]
-/cdap/sensitive/mgmt-vpc/cidr: ENC[AES256_GCM,data:uNKE6Nckt24ZWHDHEWjU,iv:yVvl1HbK7ljy6lgZdGUkfi0CeIHPnd2uof9tVB1z008=,tag:9tQ1atj1Vwkgw6j1FQ8p5w==,type:str]
-/cdap/mgmt/public_nat_ipv4/sensitive/cdap-east-mgmt-a: ENC[AES256_GCM,data:FlVrW4HMpGxShfezY7k=,iv:5pZNFGbdfyrGCti7cL/7pfm4S3i5VpnESEO5Rglqw7E=,tag:NZIPNuaSZD/NSD6Q2sE2PQ==,type:str]
-/cdap/mgmt/public_nat_ipv4/sensitive/cdap-east-mgmt-b: ENC[AES256_GCM,data:N1zEW1bym0cRrT5b,iv:+i6TbqeQLVdZRGUb/O0FUDSEXHsuxxW8hEJbQJYy8gU=,tag:dypP4NS1W0h0c+SeMmuI+g==,type:str]
-/cdap/mgmt/public_nat_ipv4/sensitive/cdap-east-mgmt-c: ENC[AES256_GCM,data:dE2gJAAstO0VcCol,iv:C5g6vtQbu6AQUmtobCrnZmFcBc4Pn6EZmex1YhQqXA8=,tag:gsAznB9ygxhNdpK73HbAwQ==,type:str]
-/cdap/sensitive/sonarqube/token: ENC[AES256_GCM,data:IzX5uyi0n7Jas1UuHPP7pdmGpYlWuXdAh5cXOgBAc4D+I8vBQese8RZa8zs=,iv:jnjgYubcGBKeA+S+puNWR5OY+xxisorfNXBm8rLbwFI=,tag:r4JfuxyGxmqmdHB4JRb3cw==,type:str]
-/cdap/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
-/cdap/sensitive/artifactory/password: ENC[AES256_GCM,data:Y0pqIlDqheFTaH7RGDS/c8D59emCj969TT2N0GVPcJln3cJF3fkhlvdaDugjwSoaxisLuNXV0nQYs/g80lPHAw==,iv:bur6pAEm5V+M/Jfn1YNXZAYMs60rqGjnkPCMR2Z+Isw=,tag:bwMQmmK7S99EvgdApgTLJQ==,type:str]
-/cdap/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
-/cdap/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
+/cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
+/cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
+/cdap/${env}/common/nonsensitive/security-events/renotify-after-days: 30
+/cdap/${env}/common/nonsensitive/security-events/severity-list: CRITICAL,HIGH,MEDIUM
+/cdap/${env}/common/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
+/cdap/${env}/common/sensitive/artifactory/password: ENC[AES256_GCM,data:O87T1Y7qQNbEytR3pG1K7pHVX8F7OEz2CZ+0Uo/E2E1XNb6PSs9iAVnROC9Mio3uv9KRNHdWxt6wytfcil0JyA==,iv:lOneSA9kmP6ycjsXDb1PTBwTEmw0+svXk1ksQ5kP8oQ=,tag:tdAqOs6oTvgCg9DPsf/g1Q==,type:str]
+/cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:SawGrnZegQH9JCd4XLRqDJeU3yI9pt7eSjOyax7uIOl1PyJEHD1LahaaRipVsEC5y+FRftxkKax1WqjSo20vK19HhrlwPhN8T6PV/GyFVg==,iv:mRI+bXCQXKITQaiuC4EkNGUUuV4q7Ogg9xsZZs6PW6s=,tag:HP1C4OWLbwID9ckgsOFX/A==,type:str]
+/cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:eZucMWrzVWvl2q9cwCRXQfv809VF+ZTSFPthaTAX6yuZxrkmNkLqkKtiWCM=,iv:KQnKCOfRf4nfmhT4qrhUuFlmZqrC2DuhXSgVaxuYf4c=,tag:3q328+okWudtm6/7LTiSGQ==,type:str]
 sops:
   kms:
-    - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:key/e32dffdb-97e7-4b64-b5cb-f6dc4e6fabca
-      created_at: "2025-10-03T17:27:53Z"
-      enc: AQICAHiXhc+HhELIyRKOpc5vBWQJB9/2XFW+CxWFIfUyci0r/wGkXSt3AG0b8bCJ0pVuEmyuAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM+S5DlWnhTDkMvmOxAgEQgDvMXlly/I5Vb2ah1KX2fSbY3mMOxA92rK4MU/rsyUN2oR8WXebzzW+ooNY1pEdGE4FMUmLUrU5qbcUoPg==
+    - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-prod
+      created_at: "2026-01-12T15:41:07Z"
+      enc: AQICAHhFK5WpttutkcboPynMViVnpNPMGZugCZIggQQtL9bdTQEVc7aw0Dj/CJQVlpM/eSyPAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM3F5iEguM2hXz9f/iAgEQgDtXiU6GxFA32Xslvj1R8w+TaGC1UvYtc3rdlg49JU/xJLt/LpnXoBRD3Yfqqj3xyx33KdbhAD623ooF9Q==
+      aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-prod
+      created_at: "2026-01-12T15:41:07Z"
+      enc: AQICAHiMFrJFiUnwYvJXakJHJWqEMy1v6tkF0T1GwxO2Rp9u8wEFdRMn/TTetpUqYnY2ejpkAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMq8fSnFvcU1+8hIlrAgEQgDvFXLUTojxRKoHnruqy+moh58mk//npBqXdIZAAE5U4kUIwhUniitWHJ8zOptpAmwik1UMcH6ScXKJKBA==
       aws_profile: ""
   unencrypted_regex: /nonsensitive/
   mac_only_encrypted: true

@@ -1,20 +1,23 @@
-/cdap/nonsensitive/account/security_events_slack_renotify_after_days: 30
-/cdap/nonsensitive/account/security_events_slack_severity_list: CRITICAL,HIGH,MEDIUM
-/cdap/sensitive/account/security_events_slack_webhook_url: ENC[AES256_GCM,data:aiW0cRzw2ZBM+WmgyXYeEGTIgP3Rm2vL6wa8+mGYyMnMQ718iODap66yNHLkOttq2Lz3V+HDdvjwYXDfG+IBvj9zVpQTjC3EabvByOCIeA==,iv:3GRLuWVe8Z5N3I9JY0DVyrPcwmIv+5vMwIS5ZR4P/v0=,tag:N4Hq6cI/JUUkCzR0BaL/sA==,type:str]
-/cdap/sensitive/mgmt-vpc/cidr: ENC[AES256_GCM,data:EFep+iQ02YJJe22XX4LZ,iv:nOoqFQiizuPIHDzR5xsLDeIDjZvGxmnDaWu8eGzjWrQ=,tag:En0682ms1NNWjCZhnOtrkg==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-a: ENC[AES256_GCM,data:Ce1Qb8Cma/ZC92QQYoU=,iv:+TTn3vo6+M4p70GsYCYndtWNW0avAWU9Ui5zDsSSPjo=,tag:saS8pZptSPXjbTjB1l5N+A==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-b: ENC[AES256_GCM,data:zznp+VJvDrbdMFgz,iv:/gS+Vtt+rBsKbyjLJAyYXeAWkMHAxYClv/kqocwGUfs=,tag:CpOs+maoTJChJW7lz72Slw==,type:str]
-/cdap/sensitive/mgmt/public_nat_ipv4/cdap-east-mgmt-c: ENC[AES256_GCM,data:jmZGAzdcyIwPdq69,iv:jlAyPtL700BnqiWtsqQSrmZmt2TXtSzJUM2cR07bRrc=,tag:Zul0kmzRQZNMkbsLwmiUIA==,type:str]
-/cdap/sensitive/sonarqube/token: ENC[AES256_GCM,data:G8DmkxGggaryrx9+eIGmOtgM2DW931q3k9X/Cjy58Q2ZQ/Tp/bgx4yoJ7Do=,iv:IgsPiB8Fjbw984dB6tgjJa2nQrGl6Ko9TiNWNI+VIUE=,tag:SP61z5HnoDjbe3HVkLfJiQ==,type:str]
-/cdap/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
-/cdap/sensitive/artifactory/password: ENC[AES256_GCM,data:YHIx5dSONjUgnO/rAP7JsvIR0PElCzLiARuABts0zcAUTYXC4hl4M+MGabhEzrUAqtRfD3wvIw2RiXmFrKqRNQ==,iv:UCrI+tMCwoYtf1gWAlr1/7PWHzj/Tqvc5lajjbCxAd0=,tag:02HC5T7mi2mZi0euLEwELA==,type:str]
-/cdap/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
-/cdap/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
+/cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
+/cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
+/cdap/${env}/common/nonsensitive/security-events/renotify-after-days: 30
+/cdap/${env}/common/nonsensitive/security-events/severity-list: CRITICAL,HIGH,MEDIUM
+/cdap/${env}/common/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
+/cdap/${env}/common/sensitive/artifactory/password: ENC[AES256_GCM,data:nscDKdf+wuKMJ+gFpUIDb0zZbdBvsk3qYFey0/wbMw345ARL3u8vq2/YqUTnWAm1fYqieKOzq/yJYvM43CIZCg==,iv:XgWvwq94ShSpJwU659XXX/6bLv77oCECiza9FDJau+o=,tag:2afCpXFqv905cIQ0sRQIFg==,type:str]
+/cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:Vgp2HifAdY+8wNPltsPt9wZkVDd/YOvGLvzA5wU3Bn4XbEUwTDzJavSLNbTEZwYzGol6tryZBgk8hhP+HxyHNbB0xmJdo783ZZlou9rOQA==,iv:sMxWjUaXd4jfsE6U+cj9ft+8g7sBwVLI9g+1TiwS1eA=,tag:H6YaBowY//nIeppO7pTOQw==,type:str]
+/cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:YBillFWDRXEQqW3dTofMyf55zA6Xy3nJFhGF0L9al19GhdsS9xto8Qzq5Yg=,iv:XNUY9Q5PBFxnNYF/nOlMkeBvSHUcTbDNA1dD5xilgXg=,tag:+mR1nXu5rfqKK5/Y5bhLhA==,type:str]
 sops:
   kms:
-    - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/bcda-test
-      created_at: "2025-11-17T21:10:18Z"
-      enc: AQICAHjmpdIoLQvhLo0ak4uYFiScF9EZlYU3g9HHyCuiUTXbOwHLNWrV6czniW+ynxVXARD/AAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMl7Aj8t3HMIwdjbVFAgEQgDsvvnioXJMRDPB5vydrZbzQKqEpISs9UOYX4OUGEfNHl7dGxI/3BA6yoZPn/GU7zl3RDZfxs9QQdZaIcg==
+    - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-test
+      created_at: "2026-01-12T15:49:48Z"
+      enc: AQICAHhRVR5bK8ZYKFTKNNSHhEFksAVIRCiMf5uovRP3zJDkeAFoMr3X9NE1emnjv7dPLReMAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxGIkxhuSZecPXOjbAgEQgDtKIJDmCjArvUR79kdmiS6/KjzguJbVsfs0fBgiJZ/BLVmBVzUiQ9fO9HvcwPTOF8rHA1kz6USPhmBSxA==
       aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-test
+      created_at: "2026-01-12T15:49:48Z"
+      enc: AQICAHj/7o5ejG2naYXXtV0msJC+UCEv8bGhFxVAE5it/FT42wG/hszzTI7suLqOYmXNFyXTAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM4W6xb7Tm4JiCfD3xAgEQgDsJw3SujEQIDc6EnUG79oVPM+CtjLt1aiAea82u8pYvv34tuvPlBwuYgzHfySZ0DahyGNyeECblkVWomA==
+      aws_profile: ""
+  lastmodified: "2026-01-12T15:50:05Z"
+  mac: ENC[AES256_GCM,data:waISJhutyyT4V90DnG5l0Y4LGa7DIPH5rTujJcID4TuzoOfQulNeuw+XYASNK+2iLydGGNYthf22ZM+dnVY5dFlSW/r51u9GSzK4/Hf//xgPBpBNLix26aBXvaoZRaE9C064WFi9AQoZB5c68eprpuIfpLuKbe9HIYGB9MnZ8Ec=,iv:I6dsl/4EeKtQNkI55xK+vmkxzp6B/fWYXNJjIJH+er4=,tag:uejVq+KynO2uh8VKECzOPw==,type:str]
   unencrypted_regex: /nonsensitive/
+  mac_only_encrypted: true
   version: 3.11.0
