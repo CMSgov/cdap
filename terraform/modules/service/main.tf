@@ -1,6 +1,7 @@
 locals {
   service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
+  container_name    = var.container_name_override != null ? var.container_name_override : var.platform.service
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -13,7 +14,7 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
   container_definitions = nonsensitive(jsonencode([
     {
-      name                   = local.service_name
+      name                   = local.container_name
       image                  = var.image
       readonlyRootFilesystem = true
       portMappings           = var.port_mappings
@@ -78,13 +79,13 @@ resource "aws_ecs_service" "this" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = aws_service_discovery_http_namespace.service-discovery.arn
+    namespace = var.cluster_service_connect_namespace_arn
     service {
-      discovery_name = "service-discovery-service"
-      port_name      = var.port_mappings.name
+      discovery_name = "ecs-service-discovery-service"
+      port_name      = var.port_mappings[0].name
       client_alias {
         dns_name = "service-connect-client"
-        port     = var.port_mappings.containerPort
+        port     = var.port_mappings[0].containerPort
       }
     }
   }
