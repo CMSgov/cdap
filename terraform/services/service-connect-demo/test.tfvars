@@ -16,9 +16,9 @@ private_subnet_ids = [
 # Public Subnet IDs for Load Balancers
 # Replace with your actual public subnet IDs
 public_subnet_ids = [
-  "subnet-abcdef0123456789a",
-  "subnet-abcdef0123456789b",
-  "subnet-abcdef0123456789c"
+  "subnet-0626ed98a921efee0",
+  "subnet-07f988f48aa18c6c8",
+  "subnet-03948d4372e37165d"
 ]
 
 # Cloud Map Namespace for Service Connect

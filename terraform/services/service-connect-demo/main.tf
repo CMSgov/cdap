@@ -204,9 +204,9 @@ resource "aws_cloudwatch_log_group" "frontend_service" {
   }
 }
 
-# ===========================
-# Load Balancer for API Service
-# ===========================
+# # ===========================
+# # Target group Load Balancer for front end Service
+# # ===========================
 
 resource "aws_lb_target_group" "cdap_api" {
   name        = "cdap-api-tg"
@@ -251,11 +251,11 @@ module "backend_service" {
 
   force_new_deployment = local.force_api_deployment
 
-  load_balancers = [{
-    target_group_arn = aws_lb_target_group.cdap_api.arn
-    container_name   = local.service
-    container_port   = local.container_port
-  }]
+  # load_balancers = [{
+  #   target_group_arn = aws_lb_target_group.cdap_api.arn
+  #   container_name   = local.service
+  #   container_port   = local.container_port
+  # }]
 
   mount_points = [
     {
