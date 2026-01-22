@@ -6,10 +6,6 @@ locals {
   }
 }
 
-data "aws_caller_identity" "this" {}
-
-data "aws_region" "primary" {}
-
 data "aws_acm_certificate" "issued" {
   domain   = var.domain_name
   statuses = ["ISSUED"]
@@ -214,6 +210,6 @@ resource "aws_cloudwatch_log_delivery" "this" {
   delivery_destination_arn = aws_cloudwatch_log_delivery_destination.this.arn
 
   s3_delivery_configuration {
-    suffix_path = "/AWSLogs/${data.aws_caller_identity.this.account_id}/Cloudfront/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
+    suffix_path = "/AWSLogs/${var.platform.aws_caller_identity.account_id}/Cloudfront/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
   }
 }
