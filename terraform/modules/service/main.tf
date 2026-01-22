@@ -63,10 +63,6 @@ resource "aws_ecs_task_definition" "this" {
   }
 }
 
-resource "aws_service_discovery_http_namespace" "service-discovery" {
-  name = "service-discovery"
-}
-
 resource "aws_ecs_service" "this" {
   name                 = local.service_name_full
   cluster              = var.cluster_arn
