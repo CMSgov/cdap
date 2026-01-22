@@ -105,13 +105,13 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 data "aws_iam_account_alias" "current" {}
 
 data "aws_s3_bucket" "bucket_access_logs" {
-  bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.name}"
+  bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.region}"
 }
 
 resource "aws_s3_bucket_logging" "this" {
   bucket        = aws_s3_bucket.this.id
   target_bucket = data.aws_s3_bucket.bucket_access_logs.id
-  target_prefix = "/AWSLogs/${data.aws_iam_account_alias.current.account_id}/S3/${aws_s3_bucket.this.name}/"
+  target_prefix = "AWSLogs/${data.aws_caller_identity.this.account_id}/S3/"
   target_object_key_format {
     partitioned_prefix {
       partition_date_source = "EventTime"
