@@ -73,7 +73,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | An externally managed domain that points to this distribution. A matching ACM certificate must already be issued. | `string` | n/a | yes |
-| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | `any` | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | <pre>object({<br/>    app                   = string,<br/>    env                   = string,<br/>    ssm                   = any,<br/>    splunk_logging_bucket = any,<br/>    aws_caller_identity   = any,<br/>  })</pre> | n/a | yes |
 | <a name="input_redirects"></a> [redirects](#input\_redirects) | Map of redirects to be passed to the CloudFront redirects function. | `map(string)` | n/a | yes |
 | <a name="input_allowed_ips_list"></a> [allowed\_ips\_list](#input\_allowed\_ips\_list) | Repositories using sops leave this blank. After sops migration, deprecate this variable. The IPs that firewall allows to access service. | `list(string)` | `[]` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
