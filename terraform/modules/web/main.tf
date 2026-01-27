@@ -175,7 +175,7 @@ resource "aws_wafv2_ip_set" "this" {
   description        = "IP set with access to ${var.domain_name}"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses          = sensitive(try(var.platform.ssm["${var.service}"].waf_ip_allow_list, var.allowed_ips_list))
+  addresses          = var.allowed_ips_list
 }
 
 module "firewall" {
