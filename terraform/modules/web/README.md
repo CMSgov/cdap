@@ -1,7 +1,8 @@
 # CDAP Web Module
 
-This module creates a CloudFront distribution and origin access control intended for use with the AB2D, BCDA and DPC static websites. 
-This module assumes an S3 bucket as the origin has already been created. This module currently assumes a single domain with an already issued certificate. 
+This module creates a CloudFront distribution including all necessary resources for operability except creation of certificates and CNAMES/domains.  
+Modifications to the Cloudfront distribution name changes need to be registered with DNS management, currently managed by CMS.
+An IP allow list must be set using sops and stored in /{team}/{env}/{service}/{waf_ip_allow_list}. 
 
 A sample usage is as follows    :
 
@@ -14,32 +15,6 @@ module "platform" {
   env         = "prod"
   root_module = ""
   service     = "bcda"
-}
-
-module web_acl {
-  source  = "github.com/CMSgov/cdap//terraform/modules/firewall?ref=<hash>"
-
-  app           = module.platform.app
-  content_type  = "APPLICATION_JSON"
-  env           = module.platform.env
-  name          = "samplewebacl"
-  scope         = "CLOUDFRONT"
-}
-
-module origin_bucket {
-  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=<hash>"
-  
-  app   = module.platform.app
-  env   = module.platform.env
-  name  = "origin"
-}
-
-module logging_bucket {
-  source  = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=<hash>"
-  
-  app   = module.platform.app
-  env   = module.platform.env
-  name  = "logging"
 }
 
 resource "aws_acm_certificate" "cert" {
@@ -57,11 +32,8 @@ resource "aws_acm_certificate" "cert" {
 
 module "web" {
   source = "../modules/web"
-
-  certificate     = aws_acm_certificate.cert
-  origin_bucket   = module.origin_bucket
+  domain_name = "bcda.cms.gov"
   platform        = module.platform
-  web_acl         = module.web_acl
   
   redirects = {
     "/value1" = "/redirect1",
@@ -100,13 +72,15 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_logging_bucket"></a> [logging\_bucket](#input\_logging\_bucket) | Object representing the logging S3 bucket. | <pre>object({<br/>    arn = string<br/>  })</pre> | n/a | yes |
-| <a name="input_origin_bucket"></a> [origin\_bucket](#input\_origin\_bucket) | Object representing the origin S3 bucket. | <pre>object({<br/>    bucket_regional_domain_name = string,<br/>  })</pre> | n/a | yes |
-| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | <pre>object({<br/>    app = string,<br/>    env = string<br/>  })</pre> | n/a | yes |
+| <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | An externally managed domain that points to this distribution. A matching ACM certificate must already be issued. | `string` | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | <pre>object({<br/>    app                   = string,<br/>    env                   = string,<br/>    ssm                   = any,<br/>    splunk_logging_bucket = any,<br/>    aws_caller_identity   = any,<br/>  })</pre> | n/a | yes |
 | <a name="input_redirects"></a> [redirects](#input\_redirects) | Map of redirects to be passed to the CloudFront redirects function. | `map(string)` | n/a | yes |
-| <a name="input_web_acl"></a> [web\_acl](#input\_web\_acl) | Object representing the associated WAF acl. | <pre>object({<br/>    arn = string<br/>  })</pre> | n/a | yes |
-| <a name="input_certificate"></a> [certificate](#input\_certificate) | Object representing the website certificate. | <pre>object({<br/>    arn         = string<br/>    domain_name = string<br/>  })</pre> | `null` | no |
+| <a name="input_allowed_ips_list"></a> [allowed\_ips\_list](#input\_allowed\_ips\_list) | Repositories using sops leave this blank. After sops migration, deprecate this variable. The IPs that firewall allows to access service. | `list(string)` | `[]` | no |
 | <a name="input_enabled"></a> [enabled](#input\_enabled) | Whether the distribution is enabled to accept end user requests for content. | `bool` | `true` | no |
+| <a name="input_existing_ip_sets"></a> [existing\_ip\_sets](#input\_existing\_ip\_sets) | Optional. Attaches existing IP sets to the firewall. Favor a dedicated allowed list over existing IP sets. | `list(any)` | `[]` | no |
+| <a name="input_s3_origin_id"></a> [s3\_origin\_id](#input\_s3\_origin\_id) | Variable to manage existing s3 origins without recreation. All new instances of this module can leave the default. | `string` | `"s3_origin"` | no |
+| <a name="input_service"></a> [service](#input\_service) | Friendly name for this service. Do not include app, env. | `string` | `"static-site"` | no |
+| <a name="input_waf_ip_allow_list_keyname"></a> [waf\_ip\_allow\_list\_keyname](#input\_waf\_ip\_allow\_list\_keyname) | The friendly name used to store the IP allow list in sops and ssm. Do not include full path construction. | `string` | `"waf_ip_allow_list"` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -115,7 +89,10 @@ No requirements.
 -->
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_firewall"></a> [firewall](#module\_firewall) | ../firewall | n/a |
+| <a name="module_origin_bucket"></a> [origin\_bucket](#module\_origin\_bucket) | ../bucket | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -129,9 +106,14 @@ No modules.
 | [aws_cloudfront_distribution.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution) | resource |
 | [aws_cloudfront_function.redirects](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_function) | resource |
 | [aws_cloudfront_origin_access_control.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_origin_access_control) | resource |
+| [aws_cloudfront_response_headers_policy.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_response_headers_policy) | resource |
 | [aws_cloudwatch_log_delivery.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery) | resource |
 | [aws_cloudwatch_log_delivery_destination.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery_destination) | resource |
 | [aws_cloudwatch_log_delivery_source.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_delivery_source) | resource |
+| [aws_s3_bucket_policy.allow_cloudfront_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
+| [aws_wafv2_ip_set.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_ip_set) | resource |
+| [aws_acm_certificate.issued](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/acm_certificate) | data source |
+| [aws_iam_policy_document.allow_cloudfront_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
