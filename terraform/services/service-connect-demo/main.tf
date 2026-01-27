@@ -205,11 +205,36 @@ resource "aws_cloudwatch_log_group" "frontend_service" {
 }
 
 # ===========================
-# Load Balancer for API Service
+# Load Balancer for Backend Service
 # ===========================
 
-resource "aws_lb_target_group" "cdap_api" {
-  name        = "cdap-api-tg"
+resource "aws_lb" "backend" {
+  name               = "sc-backend-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb.id]
+  subnets            = var.public_subnet_ids # Use public subnets for internet-facing ALB
+
+  enable_deletion_protection = false
+
+  tags = {
+    Name = "backend-alb"
+  }
+}
+
+resource "aws_lb_listener" "backend" {
+  load_balancer_arn = aws_lb.backend.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+}
+
+resource "aws_lb_target_group" "backend" {
+  name        = "cdap-backend-tg"
   port        = local.container_port
   protocol    = "HTTP"
   target_type = "ip"
@@ -226,7 +251,7 @@ resource "aws_lb_target_group" "cdap_api" {
   }
 
   tags = {
-    Name = "cdap-api-target-group"
+    Name = "cdap-backend-target-group"
   }
 }
 
@@ -251,7 +276,7 @@ module "backend_service" {
   force_new_deployment = local.force_api_deployment
 
   load_balancers = [{
-    target_group_arn = aws_lb_target_group.cdap_api.arn
+    target_group_arn = aws_lb_target_group.backend.arn
     container_name   = local.service
     container_port   = local.container_port
   }]
@@ -501,7 +526,7 @@ module "frontend_service" {
   force_new_deployment = local.force_api_deployment
 
   load_balancers = [{
-    target_group_arn = aws_lb_target_group.cdap_api.arn
+    target_group_arn = aws_lb_target_group.frontend.arn
     container_name   = local.service
     container_port   = local.container_port
   }]

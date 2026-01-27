@@ -2,11 +2,6 @@ locals {
   service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
   container_name    = var.container_name_override != null ? var.container_name_override : var.platform.service
-  name_prefix = "cdap-${var.platform.env}-${local.service_name}"
-}
-
-resource "aws_service_discovery_http_namespace" "ecs-service-discovery" {
-  name = "${local.name_prefix}-ecs-service-discovery"
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -80,7 +75,7 @@ resource "aws_ecs_service" "this" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = aws_service_discovery_http_namespace.ecs-service-discovery.arn
+    namespace = "arn:aws:servicediscovery:us-east-1:539247469933:namespace/ns-fsnhpeorze262a2c"
     service {
       discovery_name = "ecs-service-discovery-service"
       port_name      = var.port_mappings[0].name
