@@ -5,13 +5,7 @@ variable "domain_name" {
 
 variable "platform" {
   description = "Object representing the CDAP plaform module."
-  type = object({
-    app                   = string,
-    env                   = string,
-    ssm                   = any,
-    splunk_logging_bucket = any,
-    aws_caller_identity   = any,
-  })
+  type        = any
 }
 
 variable "service" {
@@ -31,13 +25,8 @@ variable "enabled" {
   type        = bool
 }
 
-variable "waf_ip_allow_list_keyname" {
-  default     = "waf_ip_allow_list"
-  description = "The friendly name used to store the IP allow list in sops and ssm. Do not include full path construction."
-  type        = string
-}
-
 variable "allowed_ips_list" {
+  sensitive   = true
   default     = []
   description = "Repositories using sops leave this blank. After sops migration, deprecate this variable. The IPs that firewall allows to access service."
   type        = list(string)

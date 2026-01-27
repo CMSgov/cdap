@@ -66,6 +66,11 @@ resource "aws_s3_bucket_policy" "allow_cloudfront_access" {
   policy = data.aws_iam_policy_document.allow_cloudfront_access.json
 }
 
+data "aws_wafv2_web_acl" "this" {
+  scope = "CLOUDFRONT"
+  name  = "SamQuickACLEnforcingV2"
+}
+
 # Cloudfront core
 resource "aws_cloudfront_distribution" "this" {
   origin {
@@ -80,7 +85,7 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = "index.html"
   http_version        = "http2and3"
   is_ipv6_enabled     = true
-  web_acl_id          = module.firewall.arn
+  web_acl_id          = data.aws_wafv2_web_acl.this.arn
 
   restrictions {
     geo_restriction {
@@ -175,7 +180,7 @@ resource "aws_wafv2_ip_set" "this" {
   description        = "IP set with access to ${var.domain_name}"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
-  addresses          = var.allowed_ips_list
+  addresses          = sensitive(var.allowed_ips_list)
 }
 
 module "firewall" {
