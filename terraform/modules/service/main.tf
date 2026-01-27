@@ -80,7 +80,7 @@ resource "aws_ecs_service" "this" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = var.cluster_service_connect_namespace_arn
+    namespace = aws_service_discovery_http_namespace.ecs-service-discovery.arn
     service {
       discovery_name = "ecs-service-discovery-service"
       port_name      = var.port_mappings[0].name
