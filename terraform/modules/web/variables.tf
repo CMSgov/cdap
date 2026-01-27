@@ -28,7 +28,7 @@ variable "enabled" {
 variable "allowed_ips_list" {
   sensitive   = true
   default     = []
-  description = "Repositories using sops leave this blank. After sops migration, deprecate this variable. The IPs that firewall allows to access service."
+  description = "The IPs that firewall allows to access service. Please treat these values as sensitive."
   type        = list(string)
 }
 
