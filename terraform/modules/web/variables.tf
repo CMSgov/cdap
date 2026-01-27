@@ -45,7 +45,7 @@ variable "allowed_ips_list" {
 
 variable "existing_ip_sets" {
   default     = []
-  description = "Optional. Attaches existing IP sets to the firewall. Favor a dedicated allowed list over existing IP sets."
+  description = "Optional. Provide ARN. Attaches existing IP sets to the firewall. Favor a dedicated allowed list over existing IP sets."
   type        = list(any)
 }
 
