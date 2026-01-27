@@ -2,6 +2,11 @@ locals {
   service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
   container_name    = var.container_name_override != null ? var.container_name_override : var.platform.service
+  name_prefix = "cdap-${var.platform.env}-${local.service_name}"
+}
+
+resource "aws_service_discovery_http_namespace" "ecs-service-discovery" {
+  name = "${local.name_prefix}-ecs-service-discovery"
 }
 
 resource "aws_ecs_task_definition" "this" {

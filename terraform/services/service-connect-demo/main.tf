@@ -288,6 +288,26 @@ resource "aws_ecs_task_definition" "backend" {
       name  = local.service
       image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
 
+      mount_points = [
+        {
+          "containerPath" = "/var/log",
+          "sourceVolume"  = "var_log",
+        },
+        {
+          "sourceVolume" : "nginx-cache",
+          "containerPath" : "/var/cache/nginx"
+        },
+      ]
+
+      volumes = [
+        {
+          name = "nginx-cache"
+        },
+        {
+          name = "var_log"
+        },
+      ]
+
       portMappings = [
         {
           name          = "backend-port"
@@ -345,6 +365,26 @@ resource "aws_ecs_task_definition" "frontend" {
     {
       name  = local.service
       image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
+
+      mount_points = [
+        {
+          "containerPath" = "/var/log",
+          "sourceVolume"  = "var_log",
+        },
+        {
+          "sourceVolume" : "nginx-cache",
+          "containerPath" : "/var/cache/nginx"
+        },
+      ]
+
+      volumes = [
+        {
+          name = "nginx-cache"
+        },
+        {
+          name = "var_log"
+        },
+      ]
 
       portMappings = [
         {
