@@ -13,7 +13,7 @@ locals {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1448_implement_service_connect"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1448_test_service_connect"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = "cdap"
@@ -23,8 +23,8 @@ module "platform" {
 }
 
 module "cluster" {
-  source                = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=plt-1448_implement_service_connect"
-  cluster_name_override = "jjr-microservices-cluster"
+  source                = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=plt-1448_test_service_connect"
+  cluster_name_override = "jjr2-microservices-cluster"
   platform              = module.platform
 }
 
@@ -138,9 +138,9 @@ resource "aws_security_group" "load_balancer" {
   ingress {
     description = "HTTP from internet"
     from_port   = 80
-    to_port     = 80
+    to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [data.aws_vpc.selected.cidr_block]
   }
 
   egress {
@@ -156,31 +156,31 @@ resource "aws_security_group" "load_balancer" {
   }
 }
 
-resource "aws_security_group" "alb" {
-  name        = "jjr-frontend-alb-sg"
-  description = "Security group for frontend ALB"
-  vpc_id      = var.vpc_id
-
-  ingress {
-    description = "HTTP from internet"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    description = "All outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "frontend-alb-sg"
-  }
-}
+# resource "aws_security_group" "alb" {
+#   name        = "jjr-frontend-alb-sg"
+#   description = "Security group for frontend ALB"
+#   vpc_id      = var.vpc_id
+#
+#   ingress {
+#     description = "HTTP from internet"
+#     from_port   = 80
+#     to_port     = 8080
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+#
+#   egress {
+#     description = "All outbound"
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+#
+#   tags = {
+#     Name = "frontend-alb-sg"
+#   }
+# }
 
 # ===========================
 # CloudWatch Log Groups
@@ -212,7 +212,7 @@ resource "aws_lb" "backend" {
   name               = "sc-backend-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
+  security_groups    = [aws_security_group.load_balancer.id]
   subnets            = var.public_subnet_ids # Use public subnets for internet-facing ALB
 
   enable_deletion_protection = false
@@ -258,9 +258,48 @@ resource "aws_lb_target_group" "backend" {
 # ===========================
 # Backend Service (using module)
 # ===========================
+#
+# module "backend_service" {
+#   source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
+#   service_name_override                 = "backend-service"
+#   platform                              = module.platform
+#   cluster_arn                           = module.cluster.this.arn
+#   cluster_service_connect_namespace_arn = ""
+#   image                                 = local.api_image_uri
+#   cpu                                   = local.ecs_task_def_cpu_api
+#   memory                                = local.ecs_task_def_memory_api
+#   desired_count                         = local.api_desired_instances
+#   port_mappings                         = var.port_mappings
+#   security_groups                       = [aws_security_group.ecs_tasks.id, aws_security_group.load_balancer.id]
+#   task_role_arn                         = aws_iam_role.ecs_task_role.arn
+#
+#   force_new_deployment = local.force_api_deployment
+#
+#   load_balancers = [{
+#     target_group_arn = aws_lb_target_group.backend.arn
+#     container_name   = local.service
+#     container_port   = local.container_port
+#   }]
+#
+#   mount_points = [
+#     {
+#       "containerPath" = "/var/log",
+#       "readOnly"      = false,
+#       "sourceVolume"  = "var_log",
+#     },
+#   ]
+#
+#   volumes = [
+#     {
+#       name     = "var_log"
+#       readOnly = false,
+#     },
+#   ]
+#
+# }
 
 module "backend_service" {
-  source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
+  source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_test_service_connect"
   service_name_override                 = "backend-service"
   platform                              = module.platform
   cluster_arn                           = module.cluster.this.arn
@@ -291,9 +330,11 @@ module "backend_service" {
 
   volumes = [
     {
-      name = "var_log"
+      name     = "var_log"
+      readOnly = false,
     },
   ]
+
 }
 
 # ===========================
@@ -311,8 +352,8 @@ resource "aws_ecs_task_definition" "backend" {
 
   container_definitions = jsonencode([
     {
-      name  = local.service
-      image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
+      name                   = local.service
+      image                  = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
       readonlyRootFilesystem = false
 
       mount_points = [
@@ -330,17 +371,44 @@ resource "aws_ecs_task_definition" "backend" {
 
       volumes = [
         {
-          name = "nginx-cache"
+          name     = "nginx-cache"
+          readOnly = false
         },
         {
-          name = "var_log"
+          name     = "var_log"
+          readOnly = false
         },
       ]
+
+      linuxParameters = {
+        tmpfs = [
+          {
+            containerPath = "/var/log/nginx",
+            mountOptions  = ["rw"],
+            size          = 50
+          },
+          {
+            mountOptions  = ["rw"],
+            containerPath = "/run",
+            size          = 10
+          },
+          {
+            mountOptions  = ["rw"],
+            containerPath = "/var/cache/nginx",
+            size          = 10
+          },
+          {
+            mountOptions  = ["rw"],
+            containerPath = "/tmp",
+            size          = 10
+          }
+        ]
+      }
 
       portMappings = [
         {
           name          = "backend-port"
-          containerPort = 80
+          containerPort = 8080
           protocol      = "tcp"
           appProtocol   = "http"
         }
@@ -363,7 +431,7 @@ resource "aws_ecs_task_definition" "backend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+        command     = ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3

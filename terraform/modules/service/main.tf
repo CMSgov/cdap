@@ -16,7 +16,6 @@ resource "aws_ecs_task_definition" "this" {
     {
       name                   = local.container_name
       image                  = var.image
-      # readonlyRootFilesystem = true
       portMappings           = var.port_mappings
       mountPoints            = var.mount_points
       secrets                = var.container_secrets
@@ -73,18 +72,18 @@ resource "aws_ecs_service" "this" {
   force_new_deployment = var.force_new_deployment
   propagate_tags       = "SERVICE"
 
-  service_connect_configuration {
-    enabled   = true
-    namespace = "arn:aws:servicediscovery:us-east-1:539247469933:namespace/ns-fsnhpeorze262a2c"
-    service {
-      discovery_name = "ecs-service-discovery-service"
-      port_name      = var.port_mappings[0].name
-      client_alias {
-        dns_name = "service-connect-client"
-        port     = var.port_mappings[0].containerPort
-      }
-    }
-  }
+  # service_connect_configuration {
+  #   enabled   = true
+  #   namespace = "arn:aws:servicediscovery:us-east-1:539247469933:namespace/ns-fsnhpeorze262a2c"
+  #   service {
+  #     discovery_name = "ecs-service-discovery-service"
+  #     port_name      = var.port_mappings[0].name
+  #     client_alias {
+  #       dns_name = "service-connect-client"
+  #       port     = var.port_mappings[0].containerPort
+  #     }
+  #   }
+  # }
 
   network_configuration {
     subnets          = keys(var.platform.private_subnets)
