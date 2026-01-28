@@ -3,10 +3,11 @@ variable "cluster_arn" {
   type        = string
 }
 
-# variable "cluster_service_connect_namespace_arn" {
-#   description = "The Service Connect discovery namespace arn."
-#   type        = string
-# }
+variable "cluster_service_connect_namespace_arn" {
+  description = "The Service Connect discovery namespace arn."
+  type        = string
+  default = null
+}
 
 variable "container_environment" {
   description = "The environment variables to pass to the container"

@@ -21,12 +21,12 @@ module "platform" {
   root_module = "https://github.com/CMSgov/cdap/tree/plt-1448_test_service_connect/terraform/services/service-connect-demo"
   service     = local.service
 }
-
-module "cluster" {
-  source                = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=plt-1448_test_service_connect"
-  cluster_name_override = "jjr2-microservices-cluster"
-  platform              = module.platform
-}
+#
+# module "cluster" {
+#   source                = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=plt-1448_test_service_connect"
+#   cluster_name_override = "jjr2-microservices-cluster"
+#   platform              = module.platform
+# }
 
 # ===========================
 # Data Sources
@@ -182,27 +182,6 @@ resource "aws_security_group" "load_balancer" {
 #   }
 # }
 
-# ===========================
-# CloudWatch Log Groups
-# ===========================
-
-resource "aws_cloudwatch_log_group" "backend_service" {
-  name              = "/ecs/jjr-backend-service"
-  retention_in_days = 7
-
-  tags = {
-    Name = "backend-service-logs"
-  }
-}
-
-# resource "aws_cloudwatch_log_group" "frontend_service" {
-#   name              = "/ecs/jjr-frontend-service"
-#   retention_in_days = 7
-#
-#   tags = {
-#     Name = "frontend-service-logs"
-#   }
-# }
 
 # ===========================
 # Load Balancer for Backend Service
@@ -255,62 +234,25 @@ resource "aws_lb_target_group" "backend" {
   }
 }
 
-# ===========================
-# Backend Service (using module)
-# ===========================
-#
-# module "backend_service" {
-#   source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
-#   service_name_override                 = "backend-service"
-#   platform                              = module.platform
-#   cluster_arn                           = module.cluster.this.arn
-#   cluster_service_connect_namespace_arn = ""
-#   image                                 = local.api_image_uri
-#   cpu                                   = local.ecs_task_def_cpu_api
-#   memory                                = local.ecs_task_def_memory_api
-#   desired_count                         = local.api_desired_instances
-#   port_mappings                         = var.port_mappings
-#   security_groups                       = [aws_security_group.ecs_tasks.id, aws_security_group.load_balancer.id]
-#   task_role_arn                         = aws_iam_role.ecs_task_role.arn
-#
-#   force_new_deployment = local.force_api_deployment
-#
-#   load_balancers = [{
-#     target_group_arn = aws_lb_target_group.backend.arn
-#     container_name   = local.service
-#     container_port   = local.container_port
-#   }]
-#
-#   mount_points = [
-#     {
-#       "containerPath" = "/var/log",
-#       "readOnly"      = false,
-#       "sourceVolume"  = "var_log",
-#     },
-#   ]
-#
-#   volumes = [
-#     {
-#       name     = "var_log"
-#       readOnly = false,
-#     },
-#   ]
-#
-# }
-
 module "backend_service" {
-  source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_test_service_connect"
-  service_name_override                 = "backend-service"
-  platform                              = module.platform
-  cluster_arn                           = module.cluster.this.arn
-  image                                 = local.api_image_uri
-  cpu                                   = local.ecs_task_def_cpu_api
-  memory                                = local.ecs_task_def_memory_api
-  desired_count                         = local.api_desired_instances
-  port_mappings                         = var.port_mappings
-  security_groups                       = [aws_security_group.ecs_tasks.id, aws_security_group.load_balancer.id]
-  task_role_arn                         = aws_iam_role.ecs_task_role.arn
-
+  source                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_test_service_connect"
+  service_name_override = "backend-service"
+  platform              = module.platform
+  cluster_arn           = module.cluster.this.arn
+  image                 = local.api_image_uri
+  cpu                   = local.ecs_task_def_cpu_api
+  memory                = local.ecs_task_def_memory_api
+  desired_count         = local.api_desired_instances
+  security_groups       = [aws_security_group.ecs_tasks.id, aws_security_group.load_balancer.id]
+  task_role_arn         = aws_iam_role.ecs_task_role.arn
+  port_mappings = [
+    {
+      name          = "backend-port"
+      containerPort = 8080
+      protocol      = "tcp"
+      appProtocol   = "http"
+    }
+  ]
   force_new_deployment = local.force_api_deployment
 
   load_balancers = [{
@@ -321,302 +263,26 @@ module "backend_service" {
 
   mount_points = [
     {
-      "containerPath" = "/var/log",
+      "containerPath" = "/var/log/*",
       "readOnly"      = false,
       "sourceVolume"  = "var_log",
+    },
+    {
+      "sourceVolume" : "nginx-cache",
+      "readOnly" = false,
+      "containerPath" : "/var/cache/nginx/*"
     },
   ]
 
   volumes = [
     {
+      name     = "nginx-cache"
+      readOnly = false
+    },
+    {
       name     = "var_log"
-      readOnly = false,
+      readOnly = false
     },
   ]
 
 }
-
-# ===========================
-# Backend Service Task Definition
-# ===========================
-
-resource "aws_ecs_task_definition" "backend" {
-  family                   = "backend-service"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn            = aws_iam_role.ecs_task_role.arn
-
-  container_definitions = jsonencode([
-    {
-      name                   = local.service
-      image                  = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
-      readonlyRootFilesystem = false
-
-      mount_points = [
-        {
-          "containerPath" = "/var/log/*",
-          "readOnly"      = false,
-          "sourceVolume"  = "var_log",
-        },
-        {
-          "sourceVolume" : "nginx-cache",
-          "readOnly" = false,
-          "containerPath" : "/var/cache/nginx/*"
-        },
-      ]
-
-      volumes = [
-        {
-          name     = "nginx-cache"
-          readOnly = false
-        },
-        {
-          name     = "var_log"
-          readOnly = false
-        },
-      ]
-
-      linuxParameters = {
-        tmpfs = [
-          {
-            containerPath = "/var/log/nginx",
-            mountOptions  = ["rw"],
-            size          = 50
-          },
-          {
-            mountOptions  = ["rw"],
-            containerPath = "/run",
-            size          = 10
-          },
-          {
-            mountOptions  = ["rw"],
-            containerPath = "/var/cache/nginx",
-            size          = 10
-          },
-          {
-            mountOptions  = ["rw"],
-            containerPath = "/tmp",
-            size          = 10
-          }
-        ]
-      }
-
-      portMappings = [
-        {
-          name          = "backend-port"
-          containerPort = 8080
-          protocol      = "tcp"
-          appProtocol   = "http"
-        }
-      ]
-
-      environment = [
-        {
-          name  = "SERVICE_NAME"
-          value = "backend"
-        }
-      ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.backend_service.name
-          "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "backend"
-        }
-      }
-
-      healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
-        interval    = 30
-        timeout     = 5
-        retries     = 3
-        startPeriod = 60
-      }
-    }
-  ])
-
-  tags = {
-    Name = "backend-service-task"
-  }
-}
-
-# # ===========================
-# # Frontend Service Task Definition
-# # ===========================
-#
-# resource "aws_ecs_task_definition" "frontend" {
-#   family                   = "frontend-service"
-#   network_mode             = "awsvpc"
-#   requires_compatibilities = ["FARGATE"]
-#   cpu                      = "256"
-#   memory                   = "512"
-#   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-#   task_role_arn            = aws_iam_role.ecs_task_role.arn
-#
-#   container_definitions = jsonencode([
-#     {
-#       name  = local.service
-#       image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
-#
-#       mount_points = [
-#         {
-#           "containerPath" = "/var/log",
-#           "sourceVolume"  = "var_log",
-#         },
-#         {
-#           "sourceVolume" : "nginx-cache",
-#           "containerPath" : "/var/cache/nginx"
-#         },
-#       ]
-#
-#       volumes = [
-#         {
-#           name = "nginx-cache"
-#         },
-#         {
-#           name = "var_log"
-#         },
-#       ]
-#
-#       portMappings = [
-#         {
-#           name          = "frontend-port"
-#           containerPort = 8080
-#           protocol      = "tcp"
-#           appProtocol   = "http"
-#         }
-#       ]
-#
-#       environment = [
-#         {
-#           name  = "SERVICE_NAME"
-#           value = "frontend"
-#         },
-#         {
-#           name  = "BACKEND_URL"
-#           value = "http://backend:80"
-#         }
-#       ]
-#
-#       logConfiguration = {
-#         logDriver = "awslogs"
-#         options = {
-#           "awslogs-group"         = aws_cloudwatch_log_group.frontend_service.name
-#           "awslogs-region"        = var.aws_region
-#           "awslogs-stream-prefix" = "frontend"
-#         }
-#       }
-#
-#       healthCheck = {
-#         command     = ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
-#         interval    = 30
-#         timeout     = 5
-#         retries     = 3
-#         startPeriod = 60
-#       }
-#     }
-#   ])
-#
-#   tags = {
-#     Name = "frontend-service-task"
-#   }
-# }
-#
-# # ===========================
-# # Application Load Balancer for Frontend
-# # ===========================
-#
-# resource "aws_lb" "frontend" {
-#   name               = "sc-frontend-alb"
-#   internal           = false
-#   load_balancer_type = "application"
-#   security_groups    = [aws_security_group.alb.id]
-#   subnets            = var.public_subnet_ids # Use public subnets for internet-facing ALB
-#
-#   enable_deletion_protection = false
-#
-#   tags = {
-#     Name = "frontend-alb"
-#   }
-# }
-#
-# resource "aws_lb_target_group" "frontend" {
-#   name        = "sc-frontend-tg"
-#   port        = 8080
-#   protocol    = "HTTP"
-#   target_type = "ip"
-#   vpc_id      = var.vpc_id
-#
-#   health_check {
-#     enabled             = true
-#     healthy_threshold   = 2
-#     unhealthy_threshold = 2
-#     timeout             = 5
-#     interval            = 30
-#     path                = "/"
-#     protocol            = "HTTP"
-#   }
-#
-#   tags = {
-#     Name = "frontend-target-group"
-#   }
-# }
-#
-# resource "aws_lb_listener" "frontend" {
-#   load_balancer_arn = aws_lb.frontend.arn
-#   port              = "80"
-#   protocol          = "HTTP"
-#
-#   default_action {
-#     type             = "forward"
-#     target_group_arn = aws_lb_target_group.frontend.arn
-#   }
-# }
-#
-# # ===========================
-# # Frontend ECS Service with ALB from module
-# # ===========================
-# module "frontend_service" {
-#   source                                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_implement_service_connect"
-#   service_name_override                 = "frontend-service"
-#   platform                              = module.platform
-#   cluster_arn                           = module.cluster.this.arn
-#   cluster_service_connect_namespace_arn = module.cluster.service_connect_namespace.arn
-#   image                                 = local.api_image_uri
-#   cpu                                   = local.ecs_task_def_cpu_api
-#   memory                                = local.ecs_task_def_memory_api
-#   desired_count                         = local.api_desired_instances
-#   port_mappings                         = var.port_mappings
-#   security_groups                       = [aws_security_group.ecs_tasks.id, aws_security_group.load_balancer.id]
-#   task_role_arn                         = aws_iam_role.ecs_task_role.arn
-#
-#   force_new_deployment = local.force_api_deployment
-#
-#   load_balancers = [{
-#     target_group_arn = aws_lb_target_group.frontend.arn
-#     container_name   = local.service
-#     container_port   = local.container_port
-#   }]
-#
-#   mount_points = [
-#     {
-#       "containerPath" = "/var/log",
-#       "sourceVolume"  = "var_log",
-#     },
-#   ]
-#
-#   volumes = [
-#     {
-#       name = "var_log"
-#     },
-#   ]
-#
-#   depends_on = [
-#     aws_lb_listener.frontend,
-#     module.backend_service
-#   ]
-# }
