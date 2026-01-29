@@ -1,3 +1,11 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.81.0"
+    }
+  }
+}
 # ===========================
 # ECS Service Connect Setup
 # ===========================
@@ -21,12 +29,6 @@ module "platform" {
   root_module = "https://github.com/CMSgov/cdap/tree/plt-1448_test_service_connect/terraform/services/service-connect-demo"
   service     = local.service
 }
-#
-# module "cluster" {
-#   source                = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=plt-1448_test_service_connect"
-#   cluster_name_override = "jjr2-microservices-cluster"
-#   platform              = module.platform
-# }
 
 # ===========================
 # Data Sources
@@ -156,33 +158,6 @@ resource "aws_security_group" "load_balancer" {
   }
 }
 
-# resource "aws_security_group" "alb" {
-#   name        = "jjr-frontend-alb-sg"
-#   description = "Security group for frontend ALB"
-#   vpc_id      = var.vpc_id
-#
-#   ingress {
-#     description = "HTTP from internet"
-#     from_port   = 80
-#     to_port     = 8080
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-#
-#   egress {
-#     description = "All outbound"
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-#
-#   tags = {
-#     Name = "frontend-alb-sg"
-#   }
-# }
-
-
 # ===========================
 # Load Balancer for Backend Service
 # ===========================
@@ -234,11 +209,15 @@ resource "aws_lb_target_group" "backend" {
   }
 }
 
+data "aws_ecs_cluster" "demo_cluster" {
+  cluster_name = "jjr2-microservices-cluster"
+}
+
 module "backend_service" {
   source                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_test_service_connect"
   service_name_override = "backend-service"
   platform              = module.platform
-  cluster_arn           = module.cluster.this.arn
+  cluster_arn           = data.aws_ecs_cluster.demo_cluster.arn
   image                 = local.api_image_uri
   cpu                   = local.ecs_task_def_cpu_api
   memory                = local.ecs_task_def_memory_api

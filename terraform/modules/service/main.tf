@@ -14,12 +14,12 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
   container_definitions = nonsensitive(jsonencode([
     {
-      name                   = local.container_name
-      image                  = var.image
-      portMappings           = var.port_mappings
-      mountPoints            = var.mount_points
-      secrets                = var.container_secrets
-      environment            = var.container_environment
+      name         = local.container_name
+      image        = var.image
+      portMappings = var.port_mappings
+      mountPoints  = var.mount_points
+      secrets      = var.container_secrets
+      environment  = var.container_environment
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -62,7 +62,12 @@ resource "aws_ecs_task_definition" "this" {
   }
 }
 
-data "aws_service_discovery_http_namespace" "service_connect" {
+data "aws_service_discovery_http_namespace" "cluster-service_discovery-namespace" {
+  name = basename(var.cluster_arn)
+}
+
+data "aws_ecs_cluster" "cluster" {
+  cluster_name = var.cluster_arn
 }
 
 resource "aws_ecs_service" "this" {
@@ -77,7 +82,7 @@ resource "aws_ecs_service" "this" {
 
   service_connect_configuration {
     enabled   = true
-    namespace = data.aws_service_discovery_http_namespace.service_connect.arn
+    namespace = data.aws_service_discovery_http_namespace.cluster-service_discovery-namespace.arn
     service {
       discovery_name = "ecs-service-discovery-service"
       port_name      = var.port_mappings[0].name
