@@ -3,6 +3,12 @@ variable "cluster_arn" {
   type        = string
 }
 
+variable "cluster_service_connect_namespace_arn" {
+  description = "The Service Connect discovery namespace arn."
+  type        = string
+  default = null
+}
+
 variable "container_environment" {
   description = "The environment variables to pass to the container"
   type = list(object({
@@ -26,10 +32,10 @@ variable "cpu" {
   type        = number
 }
 
-variable "health_check_grace_period_seconds" {
+variable "container_name_override" {
+  description = "Desired container name for the ecs task.  Defaults to local.service_name."
+  type        = string
   default     = null
-  description = "Seconds to ignore failing load balancer health checks on newly instantiated tasks to prevent premature shutdown, up to 2147483647. Only valid for services configured to use load balancers."
-  type        = number
 }
 
 variable "desired_count" {
@@ -48,6 +54,24 @@ variable "force_new_deployment" {
   description = "When *changed* to `true`, trigger a new deployment of the ECS Service even when a deployment wouldn't otherwise be triggered by other changes. **Note**: This has no effect when the value is `false`, changed to `false`, or set to `true` between consecutive applies."
   type        = bool
   default     = false
+}
+
+variable "health_check" {
+  description = "Health check that monitors the service."
+  type = object({
+    command     = list(string),
+    interval    = optional(number),
+    retries     = optional(number),
+    startPeriod = optional(number),
+    timeout     = optional(number)
+  })
+  default = null
+}
+
+variable "health_check_grace_period_seconds" {
+  default     = null
+  description = "Seconds to ignore failing load balancer health checks on newly instantiated tasks to prevent premature shutdown, up to 2147483647. Only valid for services configured to use load balancers."
+  type        = number
 }
 
 variable "image" {
@@ -103,18 +127,6 @@ variable "port_mappings" {
     name               = optional(string)
     protocol           = optional(string)
   }))
-  default = null
-}
-
-variable "health_check" {
-  description = "Health check that monitors the service."
-  type = object({
-    command     = list(string),
-    interval    = optional(number),
-    retries     = optional(number),
-    startPeriod = optional(number),
-    timeout     = optional(number)
-  })
   default = null
 }
 

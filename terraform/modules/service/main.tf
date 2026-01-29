@@ -1,6 +1,7 @@
 locals {
   service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
+  container_name    = var.container_name_override != null ? var.container_name_override : var.platform.service
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -13,13 +14,12 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
   container_definitions = nonsensitive(jsonencode([
     {
-      name                   = local.service_name
-      image                  = var.image
-      readonlyRootFilesystem = true
-      portMappings           = var.port_mappings
-      mountPoints            = var.mount_points
-      secrets                = var.container_secrets
-      environment            = var.container_environment
+      name         = local.container_name
+      image        = var.image
+      portMappings = var.port_mappings
+      mountPoints  = var.mount_points
+      secrets      = var.container_secrets
+      environment  = var.container_environment
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -62,6 +62,14 @@ resource "aws_ecs_task_definition" "this" {
   }
 }
 
+data "aws_service_discovery_http_namespace" "cluster-service_discovery-namespace" {
+  name = basename(var.cluster_arn)
+}
+
+data "aws_ecs_cluster" "cluster" {
+  cluster_name = var.cluster_arn
+}
+
 resource "aws_ecs_service" "this" {
   name                 = local.service_name_full
   cluster              = var.cluster_arn
@@ -71,6 +79,19 @@ resource "aws_ecs_service" "this" {
   platform_version     = "1.4.0"
   force_new_deployment = var.force_new_deployment
   propagate_tags       = "SERVICE"
+
+  service_connect_configuration {
+    enabled   = true
+    namespace = data.aws_service_discovery_http_namespace.cluster-service_discovery-namespace.arn
+    service {
+      discovery_name = "ecs-service-discovery-service"
+      port_name      = var.port_mappings[0].name
+      client_alias {
+        dns_name = "service-connect-client"
+        port     = var.port_mappings[0].containerPort
+      }
+    }
+  }
 
   network_configuration {
     subnets          = var.subnets == null ? keys(var.platform.private_subnets) : var.subnets

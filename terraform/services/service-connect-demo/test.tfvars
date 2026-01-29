@@ -1,0 +1,36 @@
+# AWS Region
+# Specify the AWS region where resources will be deployed
+aws_region = "us-east-1"
+
+# VPC Configuration
+# Replace with your actual VPC ID
+vpc_id = "vpc-07cac3327db239c92"
+
+# Private Subnet IDs for ECS Tasks
+# Replace with your actual private subnet IDs
+private_subnet_ids = [
+  "subnet-0c46ebc2dad32d964",
+  "subnet-0f26c81d2b603e918",
+  "subnet-0c9276af7df0a20eb"
+]
+
+# Public Subnet IDs for Load Balancers
+# Replace with your actual public subnet IDs
+public_subnet_ids = [
+  "subnet-0626ed98a921efee0",
+  "subnet-07f988f48aa18c6c8",
+  "subnet-03948d4372e37165d"
+]
+
+# Port Mappings for Container
+# Example configuration - adjust based on your application needs
+port_mappings = [
+  {
+    name               = "app-port"
+    containerPort      = 8080
+    hostPort           = 8080
+    protocol           = "tcp"
+    appProtocol        = "http"
+    containerPortRange = null
+  }
+]
