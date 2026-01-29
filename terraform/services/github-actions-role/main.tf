@@ -204,6 +204,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ecs:DescribeServices",
       "ecs:DescribeTaskDefinition",
       "ecs:DescribeTasks",
+      "ecs:ListClusters",
       "ecs:ListTaskDefinitions",
       "ecs:ListTasks",
       "ecs:RegisterTaskDefinition",
