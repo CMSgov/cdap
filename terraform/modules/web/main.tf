@@ -175,7 +175,6 @@ resource "aws_cloudfront_response_headers_policy" "this" {
 
 # WAF and firewall
 resource "aws_wafv2_ip_set" "this" {
-  # There is no IP blocking in Prod for the Static Site
   name               = "${local.naming_prefix}-${var.service}"
   description        = "IP set with access to ${var.domain_name}"
   scope              = "CLOUDFRONT"
