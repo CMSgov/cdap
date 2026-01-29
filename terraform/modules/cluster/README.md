@@ -32,7 +32,7 @@ No requirements.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 
 ## Modules
 
@@ -43,13 +43,14 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_ecs_cluster.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster) | resource |
+| [aws_service_discovery_http_namespace.cluster_service_connect_namespace](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/service_discovery_http_namespace) | resource |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_cluster_name_override"></a> [cluster\_name\_override](#input\_cluster\_name\_override) | Name of the ecs cluster. | `string` | `null` | no |
-| <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | `any` | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | <pre>object({<br/>    app = string,<br/>    env = string,<br/>    kms_alias_primary = object({<br/>      target_key_arn = string<br/>    }),<br/>    service          = string,<br/>    is_ephemeral_env = string<br/>  })</pre> | n/a | yes |
 
 ## Outputs
 
