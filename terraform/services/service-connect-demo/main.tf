@@ -215,15 +215,11 @@ resource "aws_lb_target_group" "backend" {
   }
 }
 
-data "aws_ecs_cluster" "demo_cluster" {
-  cluster_name = "jjr2-microservices-cluster"
-}
-
 module "backend_service" {
   source                = "github.com/CMSgov/cdap//terraform/modules/service?ref=plt-1448_test_service_connect"
   service_name_override = "backend-service"
   platform              = module.platform
-  cluster_arn           = data.aws_ecs_cluster.demo_cluster.arn
+  cluster_arn           = module.cluster.this.arn
   image                 = local.api_image_uri
   cpu                   = local.ecs_task_def_cpu_api
   memory                = local.ecs_task_def_memory_api
