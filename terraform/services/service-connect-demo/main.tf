@@ -30,6 +30,12 @@ module "platform" {
   service     = local.service
 }
 
+module "cluster" {
+  source                = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=plt-1448_test_service_connect"
+  cluster_name_override = "plt-1448-microservices-cluster"
+  platform              = module.platform
+}
+
 # ===========================
 # Data Sources
 # ===========================
