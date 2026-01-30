@@ -183,7 +183,7 @@ resource "aws_wafv2_ip_set" "this" {
 }
 
 module "firewall" {
-  source       = "../firewall"
+  source       = "github.com/CMSgov/cdap//terraform/modules/firewall?ref=5525d2439d724a24588412b3faaa2d2d6f4c2552"
   name         = local.naming_prefix
   app          = var.platform.app
   env          = var.platform.env
