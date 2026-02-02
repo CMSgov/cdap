@@ -8,12 +8,6 @@ variable "platform" {
   type        = any
 }
 
-variable "service" {
-  description = "Friendly name for this service. Do not include app, env."
-  default     = "static-site"
-  type        = string
-}
-
 variable "redirects" {
   description = "Map of redirects to be passed to the CloudFront redirects function."
   type        = map(string)
