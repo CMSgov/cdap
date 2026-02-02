@@ -232,7 +232,7 @@ resource "aws_lb" "backend" {
 
 resource "aws_lb_listener" "backend" {
   load_balancer_arn = aws_lb.backend.arn
-  port              = "80"
+  port              = "8080"
   protocol          = "HTTP"
 
   default_action {
@@ -357,7 +357,7 @@ resource "aws_ecs_task_definition" "frontend" {
       portMappings = [
         {
           name          = "frontend-port"
-          containerPort = 80
+          containerPort = 8080
           protocol      = "tcp"
           appProtocol   = "http"
         }
@@ -370,7 +370,7 @@ resource "aws_ecs_task_definition" "frontend" {
         },
         {
           name  = "FRONTEND_URL"
-          value = "http://frontend:80"
+          value = "http://frontend:8080"
         }
       ]
 
@@ -384,7 +384,7 @@ resource "aws_ecs_task_definition" "frontend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+        command     = ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
@@ -463,7 +463,7 @@ module "frontend_service" {
   port_mappings = [
     {
       name          = "frontend-port"
-      containerPort = 80
+      containerPort = 8080
       protocol      = "tcp"
       appProtocol   = "http"
     }
