@@ -4,6 +4,12 @@ locals {
   container_name    = var.container_name_override != null ? var.container_name_override : var.platform.service
 }
 
+resource "random_string" "unique_suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
 resource "aws_ecs_task_definition" "this" {
   family                   = local.service_name_full
   network_mode             = "awsvpc"
@@ -84,7 +90,7 @@ resource "aws_ecs_service" "this" {
     enabled   = true
     namespace = data.aws_service_discovery_http_namespace.cluster-service_discovery-namespace.arn
     service {
-      discovery_name = "ecs-sc-discovery ${local.service_name_full}"
+      discovery_name = "ecs-sc-discovery-${random_string.unique_suffix}"
       port_name      = var.port_mappings[0].name
       client_alias {
         dns_name = local.service_name_full
