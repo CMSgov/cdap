@@ -1,0 +1,41 @@
+name: tf-module-test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'terraform/modules/**'
+
+concurrency:
+  group: tf-module-test
+
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  apply:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
+      - uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
+      - uses: cmsgov/cdap/actions/setup-sops@84a6bcee5b70d63c44f8fec4f9b542cb5ec29a54
+      - uses: cmsgov/cdap/actions/setup-yq@328406d6e1d435b4e3da598bcdab22e576c3945e
+      - uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-test-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47
+        id: changed-dirs
+        with:
+          files: |
+            terraform/modules/**
+          dir_names: 'true'
+      - run: scripts/tf-module-test
+        env:
+          APP: cdap
+          ENV: test
+          CHANGED_DIRS: ${{ steps.changed-dirs.outputs.all_changed_files }}

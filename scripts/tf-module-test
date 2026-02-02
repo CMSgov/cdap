@@ -1,0 +1,40 @@
+#!/bin/bash
+# Run tests on tf modules. Used in the tf-module-test workflow.
+set -e
+
+repo_root="$(git rev-parse --show-toplevel)"
+script_dir="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")")"
+job_error=false
+temp_plan_out=$(mktemp)
+APPLY=true
+
+for dir in $CHANGED_DIRS; do
+  dir_absolute="$repo_root/$dir"
+  [ ! -d "$dir_absolute/test" ] && echo "No directory found at $dir. Skipping" && continue
+  cd "$dir_absolute"
+  [ ! -f "test/test.sh" ] && echo "No test.sh file found in $dir/test. Skipping" && continue
+  dir=$dir/test
+
+  source $script_dir/lib/tofu-init-plan-apply.sh
+
+  # The test.sh script must use test_warning, test_error, and job_error
+  # variables and "continue" as done in tofu lib scripts rather than erroring
+  # out to allow for looping through dirs.
+  test_warning=""
+  test_error=""
+  echo "::group::$dir test"
+  source test.sh
+  echo "::endgroup::"
+  if [ -n "$test_warning" ]; then
+    echo "::warning::$test_warning"
+  fi
+  if [ -n "$test_error" ]; then
+    echo "::error::$test_error"
+  fi
+
+  source $script_dir/lib/tofu-destroy.sh
+done
+
+if [ "$job_error" == "true" ]; then
+  exit 1
+fi
