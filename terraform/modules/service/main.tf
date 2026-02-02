@@ -87,7 +87,7 @@ resource "aws_ecs_service" "this" {
       discovery_name = "ecs-service-discovery-service"
       port_name      = var.port_mappings[0].name
       client_alias {
-        dns_name = "service-connect-client"
+        dns_name = local.service_name_full
         port     = var.port_mappings[0].containerPort
       }
     }
