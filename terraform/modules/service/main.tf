@@ -90,7 +90,7 @@ resource "aws_ecs_service" "this" {
     enabled   = true
     namespace = data.aws_service_discovery_http_namespace.cluster-service_discovery-namespace.arn
     service {
-      discovery_name = "ecs-sc-discovery-${random_string.unique_suffix}"
+      discovery_name = "ecs-sc-discovery-${random_string.unique_suffix.result}"
       port_name      = var.port_mappings[0].name
       client_alias {
         dns_name = local.service_name_full
