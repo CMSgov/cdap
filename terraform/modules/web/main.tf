@@ -1,5 +1,5 @@
 locals {
-  naming_prefix = "${var.platform.app}-${var.platform.env}-${var.service}"
+  naming_prefix = "${var.platform.app}-${var.platform.env}-${var.platform.service}"
   caching_policy = {
     CachingDisabled  = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     CachingOptimized = "658327ea-f89d-4fab-a63d-7e88639e58f6"
