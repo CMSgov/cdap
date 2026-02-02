@@ -175,7 +175,7 @@ resource "aws_cloudfront_response_headers_policy" "this" {
 
 # WAF and firewall
 resource "aws_wafv2_ip_set" "this" {
-  name               = "${local.naming_prefix}-${var.service}"
+  name               = local.naming_prefix
   description        = "IP set with access to ${var.domain_name}"
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
