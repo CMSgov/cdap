@@ -4,7 +4,7 @@
 /cdap/${env}/common/nonsensitive/security-events/severity-list: CRITICAL,HIGH,MEDIUM
 /cdap/${env}/common/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
 /cdap/${env}/common/sensitive/artifactory/password: ENC[AES256_GCM,data:O87T1Y7qQNbEytR3pG1K7pHVX8F7OEz2CZ+0Uo/E2E1XNb6PSs9iAVnROC9Mio3uv9KRNHdWxt6wytfcil0JyA==,iv:lOneSA9kmP6ycjsXDb1PTBwTEmw0+svXk1ksQ5kP8oQ=,tag:tdAqOs6oTvgCg9DPsf/g1Q==,type:str]
-/cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:8noBiZvVlFkdcpTDq2YlP4yLtQehkB6yGtzZz2m8ADkLFcF4ZhrFrIwH2wMEUehgGBTDmqD97Pxdxj6F3bV+eNRIS9ejZIyLqNMkxr3C,iv:C5D0ZjoogaAjjS32JSpmHm18xAJ+qi+A1P3XLLYGbx0=,tag:+g9/T0GXgOsXUoHirc1JEA==,type:str]
+/cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:o7UVib5gThT48CJ8tyTPMUHzVFHqb/xP1tW9zI5ENGV1OlQrqTI0f18/Mfommm9KP7HfHGA3Z0XdtgoJ22DUBNPiRoNm5nwXWaSvrhZvlA==,iv:fWwjDLnbfsNek8kRdCVSQ37pNpH4gTaoWLnqtdmTyiE=,tag:dMFzHbiWtKa5d+0d31OaPQ==,type:str]
 /cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:eZucMWrzVWvl2q9cwCRXQfv809VF+ZTSFPthaTAX6yuZxrkmNkLqkKtiWCM=,iv:KQnKCOfRf4nfmhT4qrhUuFlmZqrC2DuhXSgVaxuYf4c=,tag:3q328+okWudtm6/7LTiSGQ==,type:str]
 sops:
   kms:
