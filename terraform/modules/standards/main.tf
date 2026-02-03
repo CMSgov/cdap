@@ -23,7 +23,7 @@ data "aws_region" "secondary" {
 }
 
 data "aws_region" "current" {}
-trimmed_string = trimsuffix(trimprefix(local.original_string, "us-"), "-1")
+
 data "aws_caller_identity" "this" {}
 
 data "aws_iam_policy" "permissions_boundary" {
