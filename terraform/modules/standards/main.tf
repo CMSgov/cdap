@@ -5,7 +5,7 @@ locals {
   service         = var.service
   cdap_vpc_env    = contains(["sandbox", "prod"], local.env) ? "prod" : "test"
   cdap_vpc_region = replace(trimprefix(data.aws_region.current.name, "us-"), "/-[0-9]+$/", "")
-  cdap_vpc_name   = "cdap-${local.cdap_vpc_env}-${local.cdap_vpc_region}"
+  cdap_vpc_name   = "cdap-${local.cdap_vpc_region}-${local.cdap_vpc_env}"
 
   static_tags = {
     application    = local.app
@@ -30,8 +30,6 @@ data "aws_iam_policy" "permissions_boundary" {
   name = "ct-ado-poweruser-permissions-boundary-policy"
 }
 
-locals {
-}
 
 data "aws_vpc" "mgmt_vpc" {
   filter {
