@@ -1,11 +1,11 @@
 locals {
-  app             = var.app
-  env             = var.env
-  root_module     = var.root_module
-  service         = var.service
-  cdap_vpc_env    = contains(["sandbox", "prod"], local.env) ? "prod" : "test"
-  cdap_vpc_region = replace(trimprefix(data.aws_region.current.name, "us-"), "/-[0-9]+$/", "")
-  cdap_vpc_name   = "cdap-${local.cdap_vpc_region}-${local.cdap_vpc_env}"
+  app           = var.app
+  env           = var.env
+  root_module   = var.root_module
+  service       = var.service
+  account_env   = contains(["sandbox", "prod"], local.env) ? "prod" : "non-prod"
+  region_dir    = regex("east|west", data.aws_region.current.name)
+  cdap_vpc_name = "cdap-${local.region_dir}-${local.account_env == "prod" ? "prod" : "test"}"
 
   static_tags = {
     application    = local.app
@@ -31,7 +31,7 @@ data "aws_iam_policy" "permissions_boundary" {
 }
 
 
-data "aws_vpc" "mgmt_vpc" {
+data "aws_vpc" "cdap_vpc" {
   filter {
     name   = "tag:Name"
     values = [local.cdap_vpc_name]

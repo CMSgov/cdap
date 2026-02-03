@@ -84,7 +84,7 @@ resource "aws_vpc_security_group_ingress_rule" "remote_management_allow_all" {
 resource "aws_vpc_security_group_ingress_rule" "allow_cdap_mgmt" {
   security_group_id = aws_security_group.remote_management.id
 
-  description = "Allow all traffic from ${module.standards.mgmt_vpc.id} VPC"
-  cidr_ipv4   = cidrsubnet(module.standards.mgmt_vpc.cidr_block, 4, 1)
+  description = "Allow all traffic from ${module.standards.cdap_vpc.id} VPC"
+  cidr_ipv4   = module.standards.cdap_vpc.cidr_block
   ip_protocol = -1
 }

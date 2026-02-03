@@ -52,8 +52,8 @@ output "default_permissions_boundary" {
   value       = data.aws_iam_policy.permissions_boundary
 }
 
-output "mgmt_vpc" {
+output "cdap_vpc" {
   description = "Default permissions boundary [aws_iam_policy data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy#attribute-reference)"
   sensitive   = false
-  value       = data.aws_vpc.mgmt_vpc
+  value       = data.aws_vpc.cdap_vpc
 }
