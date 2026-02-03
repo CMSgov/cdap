@@ -5,7 +5,7 @@ locals {
   service         = var.service
   cdap_vpc_env    = contains(["sandbox", "prod"], local.env) ? "prod" : "test"
   cdap_vpc_region = replace(trimprefix(data.aws_region.current.name, "us-"), "/-[0-9]+$/", "")
-  cdap_vpc_name   = "cdap-${cdap_vpc_env}-${cdap_vpc_region}"
+  cdap_vpc_name   = "cdap-${local.cdap_vpc_env}-${local.cdap_vpc_region}"
 
   static_tags = {
     application    = local.app
