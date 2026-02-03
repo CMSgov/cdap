@@ -1,10 +1,10 @@
 module "standards" {
-  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=7ef3b977c9676269e286e05e9695f940fc177e90"
+  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=97d4159001b0896ae29ebc475fbd0ef651b8c0d2"
   providers   = { aws = aws, aws.secondary = aws.secondary }
   app         = var.app
   env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/kms-keys"
-  service     = "kms-keys"
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/security-groups"
+  service     = "security-groups"
 }
 
 data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
