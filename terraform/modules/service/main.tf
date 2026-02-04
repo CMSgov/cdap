@@ -262,7 +262,7 @@ data "aws_iam_policy_document" "kms" {
 resource "aws_iam_policy" "service_connect_kms" {
   name        = "service-connect-kms-policy"
   path        = "/delegatedadmin/developer/"
-  description = "Permissions for the ${module.platform.env} ${local.service} Service's Service Connect Role to use the ${module.platform.env} CMK"
+  description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use the ${var.platform.env} CMK"
   policy      = data.aws_iam_policy_document.kms.json
 }
 
