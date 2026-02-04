@@ -8,9 +8,9 @@ A sample usage is as follows:
 
 ```
 module "web" {
-  app              = module.platform.app
-  env              = module.platform.env
-  service          = module.platform.service
+  source           = "github.com/CMSgov/cdap//terraform/modules/web?ref=<hash>"
+  
+  platform         = module.platform
   domain_name      = aws_acm_certificate.cert.domain_name
   allowed_ips_list = sensitive(var.platform.ssm["waf_ip_allow_list"])
   
