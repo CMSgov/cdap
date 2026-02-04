@@ -81,7 +81,7 @@ resource "aws_vpc_security_group_ingress_rule" "remote_management_allow_all" {
   ip_protocol = -1
 }
 
-resource "aws_vpc_security_group_ingress_rule" "allow_cdap_mgmt" {
+resource "aws_vpc_security_group_ingress_rule" "allow_cdap_vpc" {
   security_group_id = aws_security_group.remote_management.id
 
   description = "Allow all traffic from ${module.standards.cdap_vpc.id} VPC"

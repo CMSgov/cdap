@@ -19,4 +19,3 @@ terraform {
     key = "security-groups/terraform.tfstate"
   }
 }
-

@@ -53,7 +53,7 @@ output "default_permissions_boundary" {
 }
 
 output "cdap_vpc" {
-  description = "Default permissions boundary [aws_iam_policy data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy#attribute-reference)"
+  description = "The CDAP VPC used to remotely manage the VPC hosting this platform."
   sensitive   = false
   value       = data.aws_vpc.cdap_vpc
 }
