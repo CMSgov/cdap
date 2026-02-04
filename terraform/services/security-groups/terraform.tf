@@ -13,7 +13,6 @@ provider "aws" {
   }
 }
 
-
 terraform {
   backend "s3" {
     key = "security-groups/terraform.tfstate"
