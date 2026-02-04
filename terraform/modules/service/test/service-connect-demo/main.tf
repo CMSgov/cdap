@@ -39,7 +39,6 @@ module "cluster" {
 # ===========================
 # Data Sources
 # ===========================
-
 data "aws_vpc" "selected" {
   id = var.vpc_id
 }
@@ -108,6 +107,7 @@ resource "aws_iam_role_policy" "ecs_task_policy" {
   })
 }
 
+
 # ===========================
 # Security Groups
 # ===========================
@@ -163,32 +163,6 @@ resource "aws_security_group" "load_balancer" {
     Name = "load-balancer-sg"
   }
 }
-
-# resource "aws_security_group" "alb" {
-#   name        = "jjr-frontend-alb-sg"
-#   description = "Security group for frontend ALB"
-#   vpc_id      = var.vpc_id
-#
-#   ingress {
-#     description = "HTTP from internet"
-#     from_port   = 80
-#     to_port     = 8080
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-#
-#   egress {
-#     description = "All outbound"
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-#
-#   tags = {
-#     Name = "frontend-alb-sg"
-#   }
-# }
 
 # ===========================
 # CloudWatch Log Groups
@@ -270,7 +244,7 @@ module "backend_service" {
   cluster_arn           = module.cluster.this.arn
   cpu                   = local.ecs_task_def_cpu_api
   memory                = local.ecs_task_def_memory_api
-  image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
+  image                 = local.api_image_uri
   desired_count         = local.api_desired_instances
   security_groups       = [aws_security_group.ecs_tasks.id, aws_security_group.load_balancer.id]
   task_role_arn         = aws_iam_role.ecs_task_role.arn
@@ -286,7 +260,7 @@ module "backend_service" {
 
   load_balancers = [{
     target_group_arn = aws_lb_target_group.backend.arn
-    container_name   = local.service
+    container_name   = "backend"
     container_port   = local.container_port
   }]
 
@@ -316,87 +290,87 @@ module "backend_service" {
 
 }
 
-# ===========================
-# Frontend Service Task Definition
-# ===========================
-
-resource "aws_ecs_task_definition" "frontend" {
-  family                   = "frontend-service"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn            = aws_iam_role.ecs_task_role.arn
-
-  container_definitions = jsonencode([
-    {
-      name  = local.service
-      image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
-
-      mount_points = [
-        {
-          "containerPath" = "/var/log",
-          "sourceVolume"  = "var_log",
-        },
-        {
-          "sourceVolume" : "nginx-cache",
-          "containerPath" : "/var/cache/nginx"
-        },
-      ]
-
-      volumes = [
-        {
-          name = "nginx-cache"
-        },
-        {
-          name = "var_log"
-        },
-      ]
-
-      portMappings = [
-        {
-          name          = "frontend-port"
-          containerPort = 8080
-          protocol      = "tcp"
-          appProtocol   = "http"
-        }
-      ]
-
-      environment = [
-        {
-          name  = "SERVICE_NAME"
-          value = "frontend"
-        },
-        {
-          name  = "FRONTEND_URL"
-          value = "http://frontend:8080"
-        }
-      ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.frontend_service.name
-          "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "frontend"
-        }
-      }
-
-      healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
-        interval    = 30
-        timeout     = 5
-        retries     = 3
-        startPeriod = 60
-      }
-    }
-  ])
-
-  tags = {
-    Name = "frontend-service-task"
-  }
-}
+# # ===========================
+# # Frontend Service Task Definition
+# # ===========================
+#
+# resource "aws_ecs_task_definition" "frontend" {
+#   family                   = "frontend-service"
+#   network_mode             = "awsvpc"
+#   requires_compatibilities = ["FARGATE"]
+#   cpu                      = "256"
+#   memory                   = "512"
+#   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+#   task_role_arn            = aws_iam_role.ecs_task_role.arn
+#
+#   container_definitions = jsonencode([
+#     {
+#       name  = "frontend"
+#       image = local.api_image_uri
+#
+#       mount_points = [
+#         {
+#           "containerPath" = "/var/log",
+#           "sourceVolume"  = "var_log",
+#         },
+#         {
+#           "sourceVolume" : "nginx-cache",
+#           "containerPath" : "/var/cache/nginx"
+#         },
+#       ]
+#
+#       volumes = [
+#         {
+#           name = "nginx-cache"
+#         },
+#         {
+#           name = "var_log"
+#         },
+#       ]
+#
+#       portMappings = [
+#         {
+#           name          = "frontend-port"
+#           containerPort = 8080
+#           protocol      = "tcp"
+#           appProtocol   = "http"
+#         }
+#       ]
+#
+#       environment = [
+#         {
+#           name  = "SERVICE_NAME"
+#           value = "frontend"
+#         },
+#         {
+#           name  = "FRONTEND_URL"
+#           value = "http://frontend:8080"
+#         }
+#       ]
+#
+#       logConfiguration = {
+#         logDriver = "awslogs"
+#         options = {
+#           "awslogs-group"         = aws_cloudwatch_log_group.frontend_service.name
+#           "awslogs-region"        = var.aws_region
+#           "awslogs-stream-prefix" = "frontend"
+#         }
+#       }
+#
+#       healthCheck = {
+#         command     = ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
+#         interval    = 30
+#         timeout     = 5
+#         retries     = 3
+#         startPeriod = 60
+#       }
+#     }
+#   ])
+#
+#   tags = {
+#     Name = "frontend-service-task"
+#   }
+# }
 
 # ===========================
 # Application Load Balancer for Frontend
@@ -456,7 +430,7 @@ module "frontend_service" {
   cluster_arn           = module.cluster.this.arn
   cpu                   = local.ecs_task_def_cpu_api
   memory                = local.ecs_task_def_memory_api
-  image = "539247469933.dkr.ecr.us-east-1.amazonaws.com/testing/nginx:latest"
+  image                 = local.api_image_uri
   desired_count         = local.api_desired_instances
   security_groups       = [aws_security_group.ecs_tasks.id, aws_security_group.load_balancer.id]
   task_role_arn         = aws_iam_role.ecs_task_role.arn
@@ -471,9 +445,9 @@ module "frontend_service" {
   force_new_deployment = local.force_api_deployment
 
   load_balancers = [{
-    target_group_arn = aws_lb_target_group.backend.arn
-    container_name   = local.service
+    target_group_arn = aws_lb_target_group.frontend.arn
     container_port   = local.container_port
+    container_name   = "frontend-service"
   }]
 
   mount_points = [
