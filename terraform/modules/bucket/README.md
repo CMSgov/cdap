@@ -8,7 +8,7 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.25.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -32,7 +32,6 @@ No requirements.
 | <a name="input_env"></a> [env](#input\_env) | The application environment (dev, test, sandbox, prod, mgmt) | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Name for the S3 bucket | `string` | n/a | yes |
 | <a name="input_additional_bucket_policy"></a> [additional\_bucket\_policy](#input\_additional\_bucket\_policy) | An additional bucket policy to be merged with the default. | `any` | `null` | no |
-| <a name="input_cross_account_read_roles"></a> [cross\_account\_read\_roles](#input\_cross\_account\_read\_roles) | Roles in other accounts that need read access to this S3 bucket | `list(any)` | `[]` | no |
 | <a name="input_ssm_parameter"></a> [ssm\_parameter](#input\_ssm\_parameter) | SSM Parameter path for bucket output | `string` | `null` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
