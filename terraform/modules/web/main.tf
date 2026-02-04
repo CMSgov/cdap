@@ -146,7 +146,7 @@ resource "aws_cloudfront_function" "redirects" {
 
 # S3 origin for distribution
 module "origin_bucket" {
-  source = "../bucket"
+  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=5525d2439d724a24588412b3faaa2d2d6f4c2552"
   app    = var.platform.app
   env    = var.platform.env
   name   = var.domain_name
