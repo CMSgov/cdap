@@ -1,3 +1,9 @@
+variable "additional_bucket_policy" {
+  default     = null
+  description = "An additional bucket policy to be merged with the default."
+  type        = any
+}
+
 variable "app" {
   description = "The application name (ab2d, bcda, dpc, cdap)"
   type        = string
@@ -5,6 +11,12 @@ variable "app" {
     condition     = contains(["ab2d", "bcda", "dpc", "cdap"], var.app)
     error_message = "Valid value for app is ab2d, bcda, dpc, or cdap."
   }
+}
+
+variable "cross_account_read_roles" {
+  description = "Roles in other accounts that need read access to this S3 bucket"
+  type        = list(any)
+  default     = []
 }
 
 variable "env" {
@@ -19,12 +31,6 @@ variable "env" {
 variable "name" {
   description = "Name for the S3 bucket"
   type        = string
-}
-
-variable "cross_account_read_roles" {
-  description = "Roles in other accounts that need read access to this S3 bucket"
-  type        = list(any)
-  default     = []
 }
 
 variable "ssm_parameter" {

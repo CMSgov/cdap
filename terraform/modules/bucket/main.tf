@@ -23,7 +23,7 @@ data "aws_kms_alias" "kms_key" {
   name = "alias/${var.app}-${var.env}"
 }
 
-data "aws_iam_policy_document" "this" {
+data "aws_iam_policy_document" "default" {
   statement {
     sid = "AllowSSLRequestsOnly"
 
@@ -73,6 +73,41 @@ data "aws_iam_policy_document" "this" {
       ]
     }
   }
+
+  # Bucket policy to allow promotion of artifacts by deploy roles in upper environments
+  dynamic "statement" {
+    for_each = length(var.cross_account_read_roles) > 0 ? [1] : []
+    content {
+      sid = "CrossAccountRead"
+
+      principals {
+        type        = "AWS"
+        identifiers = var.cross_account_read_roles
+      }
+
+      actions = [
+        "s3:GetObject",
+        "s3:GetObjectTagging",
+        "s3:GetObjectVersion",
+        "s3:GetObjectVersionTagging",
+        "s3:ListBucket",
+      ]
+
+      resources = [
+        aws_s3_bucket.this.arn,
+        "${aws_s3_bucket.this.arn}/*",
+      ]
+    }
+  }
+
+}
+
+data "aws_iam_policy_document" "this" {
+  source_policy_documents = (
+    var.additional_bucket_policy == null ?
+    [data.aws_iam_policy_document.default.json] :
+    [data.aws_iam_policy_document.default.json, var.additional_bucket_policy.json]
+  )
 }
 
 resource "aws_s3_bucket_policy" "this" {
