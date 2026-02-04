@@ -3,7 +3,7 @@ locals {
   env           = var.env
   root_module   = var.root_module
   service       = var.service
-  account_env   = contains(["sandbox", "prod"], local.env) ? "prod" : "non-prod"
+  account_env   = contains(["sandbox", "prod", "mgmt"], local.env) ? "prod" : "non-prod"
   region_dir    = regex("east|west", data.aws_region.this.name)
   cdap_vpc_name = "cdap-${local.region_dir}-${local.account_env == "prod" ? "prod" : "test"}"
 
