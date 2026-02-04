@@ -68,7 +68,7 @@ No requirements.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_firewall"></a> [firewall](#module\_firewall) | github.com/CMSgov/cdap//terraform/modules/firewall | 5525d2439d724a24588412b3faaa2d2d6f4c2552 |
+| <a name="module_firewall"></a> [firewall](#module\_firewall) | ../firewall | n/a |
 | <a name="module_origin_bucket"></a> [origin\_bucket](#module\_origin\_bucket) | ../bucket | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
