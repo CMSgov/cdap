@@ -243,10 +243,6 @@ resource "aws_iam_role" "service_connect" {
   force_detach_policies = true
 }
 
-data "aws_kms_alias" "kms_key" {
-  name = "alias/cdap-${var.platform.env}"
-}
-
 data "aws_iam_policy_document" "kms" {
   statement {
     sid = "AllowEnvCMKAccess"
