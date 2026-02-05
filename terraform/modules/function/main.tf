@@ -149,7 +149,7 @@ data "aws_ssm_parameter" "prod_account_id" {
 }
 
 module "zip_bucket" {
-  source = "../bucket"
+  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=abb49c537178515ed053ee2ca00311fd7632968f"
 
   app = var.app
   env = var.env
@@ -213,6 +213,8 @@ resource "aws_lambda_function" "this" {
   runtime       = var.runtime
   timeout       = var.timeout
   memory_size   = var.memory_size
+
+  layers = var.layer_arns
 
   tracing_config {
     mode = "Active"
