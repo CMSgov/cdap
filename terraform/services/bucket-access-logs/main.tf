@@ -114,7 +114,7 @@ resource "aws_s3_bucket_object_lock_configuration" "bucket_access_logs" {
 
   rule {
     default_retention {
-      mode  = "COMPLIANCE"
+      mode  = "GOVERNANCE"
       years = 6
     }
   }
