@@ -88,8 +88,8 @@ output "public_subnets" {
   value       = data.aws_subnet.public
 }
 
-output "logging_bucket" {
-  description = "The designated access log bucket [aws_s3_bucket data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket#attribute-reference) for the current environment"
+output "access_logging_bucket" {
+  description = "The designated bucket to store and push bucket access logs [aws_s3_bucket data source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket#attribute-reference) for the current environment"
   sensitive   = false
   value       = data.aws_s3_bucket.access_logs
 }

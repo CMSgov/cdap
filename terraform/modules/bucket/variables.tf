@@ -21,6 +21,12 @@ variable "name" {
   type        = string
 }
 
+variable "existing_bucket_name" {
+  description = "Do not set for new buckets. For any existing buckets that do not conform to naming convention, this will be used as the bucket prefix."
+  type        = string
+  default     = null
+}
+
 variable "cross_account_read_roles" {
   description = "Roles in other accounts that need read access to this S3 bucket"
   type        = list(any)
