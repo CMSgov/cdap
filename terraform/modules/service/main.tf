@@ -184,7 +184,7 @@ data "aws_iam_policy_document" "service_connect_pca" {
 
   statement {
     sid       = "AllowGetAndIssueCertificate"
-    actions   = ["acm-pca:GetCertificate", "acm-pca:IssueCertificate"]
+    actions   = ["acm-pca:GetCertificateAuthorityCsr","acm-pca:GetCertificate", "acm-pca:IssueCertificate"]
     resources = [data.aws_acmpca_certificate_authority.pace.arn]
   }
 }
