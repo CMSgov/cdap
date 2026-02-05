@@ -209,7 +209,7 @@ data "aws_iam_policy_document" "service_connect_secrets_manager" {
       "secretsmanager:RotateSecret",
       "secretsmanager:UpdateSecretVersionStage"
     ]
-    resources = ["arn:aws:secretsmanager:${var.platform.region_name}:${data.aws_caller_identity.current.account_id}:secret:ecs-sc!*"]
+    resources = ["arn:aws:secretsmanager:${var.platform.primary_region.name}:${data.aws_caller_identity.current.account_id}:secret:ecs-sc!*"]
   }
 }
 
