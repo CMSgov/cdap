@@ -108,3 +108,14 @@ resource "aws_ssm_parameter" "bucket_access_logs" {
   type        = "String"
   description = "S3 bucket for storing access logs from other buckets"
 }
+
+resource "aws_s3_bucket_object_lock_configuration" "bucket_access_logs" {
+  bucket = aws_s3_bucket.bucket_access_logs.id
+
+  rule {
+    default_retention {
+      mode  = "COMPLIANCE"
+      years = 6
+    }
+  }
+}
