@@ -52,7 +52,7 @@ data "aws_iam_policy_document" "ssl_only" {
 data "aws_iam_policy_document" "this" {
   source_policy_documents = concat(
     [data.aws_iam_policy_document.ssl_only.json],
-    var.additional_bucket_policies
+    var.additional_bucket_policies,
   )
 }
 
