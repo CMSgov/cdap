@@ -235,6 +235,14 @@ data "aws_iam_policy_document" "service_assume_role" {
   }
 }
 
+resource "aws_iam_role" "service_connect" {
+  name                  = "service-connect"
+  path                  = "/delegatedadmin/developer/"
+  permissions_boundary  = data.aws_iam_policy.permissions_boundary.arn
+  assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ecs"].json
+  force_detach_policies = true
+}
+
 data "aws_iam_policy_document" "kms" {
   statement {
     sid = "AllowEnvCMKAccess"
@@ -265,6 +273,6 @@ resource "aws_iam_role_policy_attachment" "service_connect" {
     secrets_manager = aws_iam_policy.service_connect_secrets_manager.arn
   }
 
-  role       = aws_iam_role.execution[count.index].arn
+  role       = aws_iam_role.service_connect.arn
   policy_arn = each.value
 }
