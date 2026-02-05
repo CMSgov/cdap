@@ -50,10 +50,9 @@ data "aws_iam_policy_document" "default" {
 }
 
 data "aws_iam_policy_document" "this" {
-  source_policy_documents = (
-    var.additional_bucket_policy == null ?
-    [data.aws_iam_policy_document.default.json] :
-    [data.aws_iam_policy_document.default.json, var.additional_bucket_policy.json]
+  source_policy_documents = concat(
+    data.aws_iam_policy_document.default.json,
+    var.additional_bucket_policies
   )
 }
 

@@ -1,7 +1,7 @@
-variable "additional_bucket_policy" {
-  default     = null
-  description = "An additional bucket policy to be merged with the default."
-  type        = any
+variable "additional_bucket_policies" {
+  default     = []
+  description = "A list of additional bucket policies to be merged with the default."
+  type        = list(string)
 }
 
 variable "app" {
