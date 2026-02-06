@@ -51,3 +51,9 @@ output "default_permissions_boundary" {
   sensitive   = false
   value       = data.aws_iam_policy.permissions_boundary
 }
+
+output "cdap_vpc" {
+  description = "The CDAP VPC used to remotely manage the VPC hosting this platform."
+  sensitive   = false
+  value       = data.aws_vpc.cdap_vpc
+}
