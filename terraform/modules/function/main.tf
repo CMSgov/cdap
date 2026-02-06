@@ -149,7 +149,7 @@ data "aws_ssm_parameter" "prod_account_id" {
 }
 
 module "zip_bucket" {
-  source = "../bucket"
+  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=abb49c537178515ed053ee2ca00311fd7632968f"
 
   app = var.app
   env = var.env
@@ -207,12 +207,15 @@ resource "aws_lambda_function" "this" {
   function_name = var.name
   s3_key        = "function.zip"
   s3_bucket     = module.zip_bucket.id
+  s3_object_version = var.source_code_version
   kms_key_arn   = data.aws_kms_alias.kms_key.target_key_arn
   role          = aws_iam_role.function.arn
   handler       = var.handler
   runtime       = var.runtime
   timeout       = var.timeout
   memory_size   = var.memory_size
+
+  layers = var.layer_arns
 
   tracing_config {
     mode = "Active"

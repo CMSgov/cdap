@@ -79,3 +79,15 @@ variable "extra_kms_key_arns" {
   default     = []
   description = "Optional list of additional KMS key ARNs the Lambda can use"
 }
+
+variable "layer_arns" {
+  type        = list(string)
+  default     = []
+  description = "Optional list of layer arns"
+}
+
+variable "source_code_version" {
+  description = "S3 object version"
+  type        = string
+  default     = null
+}
