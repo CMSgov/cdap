@@ -176,7 +176,7 @@ data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
 module "zip_bucket" {
   source = "../bucket"
 
-  additional_bucket_policies = var.env == "test" ? [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy] : []
+  additional_bucket_policies = var.env == "test" ? [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy.json] : []
   app                        = var.app
   env                        = var.env
   name                       = "${var.name}-function"
