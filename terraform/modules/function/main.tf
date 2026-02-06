@@ -174,7 +174,7 @@ data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
 }
 
 module "zip_bucket" {
-  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=787224b7527d796b7a7706b9b8412d02a065d945"
+  source = "../bucket"
 
   additional_bucket_policies = [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy]
   app                        = var.app
@@ -202,14 +202,14 @@ resource "aws_s3_object" "empty_function_zip" {
 }
 
 module "vpc" {
-  source = "github.com/CMSgov/cdap//terraform/modules/vpc?ref=787224b7527d796b7a7706b9b8412d02a065d945"
+  source = "../vpc"
 
   app = var.app
   env = var.env
 }
 
 module "subnets" {
-  source = "github.com/CMSgov/cdap//terraform/modules/subnets?ref=787224b7527d796b7a7706b9b8412d02a065d945"
+  source = "../subnets"
 
   vpc_id = module.vpc.id
 }

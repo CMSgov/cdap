@@ -61,7 +61,7 @@ locals {
 }
 
 module "opt_out_import_function" {
-  source = "github.com/CMSgov/cdap//terraform/modules/function?ref=787224b7527d796b7a7706b9b8412d02a065d945"
+  source = "github.com/CMSgov/cdap//terraform/modules/function?ref=jscott/PLT-1592"
 
   app = var.app
   env = var.env
