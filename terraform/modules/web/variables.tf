@@ -3,24 +3,9 @@ variable "domain_name" {
   type        = string
 }
 
-variable "origin_bucket" {
-  description = "Object representing the origin S3 bucket."
-  type = object({
-    bucket_regional_domain_name = string,
-    arn                         = string,
-    id                          = string
-  })
-}
-
 variable "platform" {
   description = "Object representing the CDAP plaform module."
-  type = object({
-    app = string,
-    env = string,
-    splunk_logging_bucket = object({
-      arn = string
-    })
-  })
+  type        = any
 }
 
 variable "redirects" {
@@ -28,17 +13,23 @@ variable "redirects" {
   type        = map(string)
 }
 
-variable "web_acl" {
-  description = "Object representing the associated WAF acl."
-  type = object({
-    arn = string
-  })
-}
-
 variable "enabled" {
   default     = true
   description = "Whether the distribution is enabled to accept end user requests for content."
   type        = bool
+}
+
+variable "allowed_ips_list" {
+  sensitive   = true
+  default     = []
+  description = "The IPs that firewall allows to access service. Please treat these values as sensitive."
+  type        = list(string)
+}
+
+variable "existing_ip_sets" {
+  default     = []
+  description = "Optional. Provide ARN. Attaches existing IP sets to the firewall. Favor a dedicated allowed list over existing IP sets."
+  type        = list(any)
 }
 
 variable "s3_origin_id" {
