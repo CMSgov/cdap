@@ -176,16 +176,11 @@ data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
 module "zip_bucket" {
   source = "../bucket"
 
-  additional_bucket_policies = [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy]
+  additional_bucket_policies = var.env == "test" ? [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy] : []
   app                        = var.app
   env                        = var.env
   name                       = "${var.name}-function"
   ssm_parameter              = "/${var.app}/${var.env}/${var.name}-bucket"
-
-  cross_account_read_roles = var.env == "test" ? [
-    "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
-    "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-sandbox-github-actions",
-  ] : []
 }
 
 resource "aws_s3_object" "empty_function_zip" {
