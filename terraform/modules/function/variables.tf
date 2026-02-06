@@ -86,8 +86,8 @@ variable "layer_arns" {
   description = "Optional list of layer arns"
 }
 
-variable "source_code_hash" {
-  description = "Something to change if you want autodeploy"
+variable "source_code_version" {
+  description = "S3 object version"
   type        = string
-  default     = "VVfOlz+F6sN0Becz76MdIaBXBN9GQ5tOpEneNOc9emI="
+  default     = null
 }

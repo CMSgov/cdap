@@ -207,7 +207,7 @@ resource "aws_lambda_function" "this" {
   function_name = var.name
   s3_key        = "function.zip"
   s3_bucket     = module.zip_bucket.id
-  code_sha256   = var.source_code_hash
+  s3_object_version = var.source_code_version
   kms_key_arn   = data.aws_kms_alias.kms_key.target_key_arn
   role          = aws_iam_role.function.arn
   handler       = var.handler
