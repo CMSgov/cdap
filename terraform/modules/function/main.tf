@@ -132,12 +132,6 @@ resource "aws_iam_role_policy" "extra_policies" {
   policy = each.value
 }
 
-# Get prod and sbx account IDs in the test environment for cross-account roles
-data "aws_ssm_parameter" "prod_account" {
-  count = var.env == "test" ? 1 : 0
-  name  = "/prod/account-id"
-}
-
 data "aws_ssm_parameter" "sbx_account" {
   count = var.env == "test" ? 1 : 0
   name  = "/prod/account-id"
@@ -149,6 +143,8 @@ data "aws_ssm_parameter" "prod_account_id" {
 }
 
 data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
+  count = var.env == "test" ? 1 : 0
+
   statement {
     actions = [
       "s3:GetObject",
@@ -170,13 +166,15 @@ data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
       module.zip_bucket.arn,
       "${module.zip_bucket.arn}/*",
     ]
+
+    sid = "CrossAccountRead"
   }
 }
 
 module "zip_bucket" {
   source = "../bucket"
 
-  additional_bucket_policies = var.env == "test" ? [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy.json] : []
+  additional_bucket_policies = var.env == "test" ? [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy[0].json] : []
   app                        = var.app
   env                        = var.env
   name                       = "${var.name}-function"
