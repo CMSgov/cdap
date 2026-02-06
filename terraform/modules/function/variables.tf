@@ -89,5 +89,5 @@ variable "layer_arns" {
 variable "source_code_hash" {
   description = "Something to change if you want autodeploy"
   type        = string
-  default     = null
+  default     = "VVfOlz+F6sN0Becz76MdIaBXBN9GQ5tOpEneNOc9emI="
 }
