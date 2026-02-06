@@ -29,7 +29,7 @@ data "aws_iam_policy_document" "kms_access" {
 }
 
 module "admin_create_aco_creds_function" {
-  source = "../../modules/function"
+  source = "github.com/CMSgov/cdap//terraform/modules/function?ref=jscott/PLT-1592"
 
   app = var.app
   env = var.env

@@ -17,7 +17,7 @@ data "aws_kms_alias" "environment_key" {
 }
 
 module "api_waf_sync_function" {
-  source = "../../modules/function"
+  source = "github.com/CMSgov/cdap//terraform/modules/function?ref=jscott/PLT-1592"
 
   app = var.app
   env = var.env
