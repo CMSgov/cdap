@@ -148,18 +148,44 @@ data "aws_ssm_parameter" "prod_account_id" {
   name  = "/prod/account-id"
 }
 
+data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectTagging",
+      "s3:GetObjectVersion",
+      "s3:GetObjectVersionTagging",
+      "s3:ListBucket",
+    ]
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
+        "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-sandbox-github-actions",
+      ]
+    }
+
+    resources = [
+      module.zip_bucket.arn,
+      "${module.zip_bucket.arn}/*",
+    ]
+  }
+}
+
 module "zip_bucket" {
-  source = "../bucket"
+  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=787224b7527d796b7a7706b9b8412d02a065d945"
 
-  app = var.app
-  env = var.env
+  additional_bucket_policies = [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy]
+  app                        = var.app
+  env                        = var.env
+  name                       = "${var.name}-function"
+  ssm_parameter              = "/${var.app}/${var.env}/${var.name}-bucket"
 
-  name = "${var.name}-function"
   cross_account_read_roles = var.env == "test" ? [
     "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
     "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-sandbox-github-actions",
   ] : []
-  ssm_parameter = "/${var.app}/${var.env}/${var.name}-bucket"
 }
 
 resource "aws_s3_object" "empty_function_zip" {
@@ -176,14 +202,14 @@ resource "aws_s3_object" "empty_function_zip" {
 }
 
 module "vpc" {
-  source = "../vpc"
+  source = "github.com/CMSgov/cdap//terraform/modules/vpc?ref=787224b7527d796b7a7706b9b8412d02a065d945"
 
   app = var.app
   env = var.env
 }
 
 module "subnets" {
-  source = "../subnets"
+  source = "github.com/CMSgov/cdap//terraform/modules/subnets?ref=787224b7527d796b7a7706b9b8412d02a065d945"
 
   vpc_id = module.vpc.id
 }
