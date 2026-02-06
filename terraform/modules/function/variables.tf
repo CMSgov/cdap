@@ -85,3 +85,9 @@ variable "layer_arns" {
   default     = []
   description = "Optional list of layer arns"
 }
+
+variable "source_code_hash" {
+  description = "Something to change if you want autodeploy"
+  type        = string
+  default     = "dummy_function_hash"
+}
