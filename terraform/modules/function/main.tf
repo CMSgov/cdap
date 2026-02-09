@@ -203,17 +203,17 @@ resource "aws_security_group" "function" {
 }
 
 resource "aws_lambda_function" "this" {
-  description   = var.description
-  function_name = var.name
-  s3_key        = "function.zip"
-  s3_bucket     = module.zip_bucket.id
+  description       = var.description
+  function_name     = var.name
+  s3_key            = "function.zip"
+  s3_bucket         = module.zip_bucket.id
   s3_object_version = var.source_code_version
-  kms_key_arn   = data.aws_kms_alias.kms_key.target_key_arn
-  role          = aws_iam_role.function.arn
-  handler       = var.handler
-  runtime       = var.runtime
-  timeout       = var.timeout
-  memory_size   = var.memory_size
+  kms_key_arn       = data.aws_kms_alias.kms_key.target_key_arn
+  role              = aws_iam_role.function.arn
+  handler           = var.handler
+  runtime           = var.runtime
+  timeout           = var.timeout
+  memory_size       = var.memory_size
 
   layers = var.layer_arns
 
