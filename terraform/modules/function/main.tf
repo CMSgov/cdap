@@ -228,8 +228,7 @@ resource "aws_lambda_function" "this" {
   runtime           = var.runtime
   timeout           = var.timeout
   memory_size       = var.memory_size
-
-  layers = var.layer_arns
+  layers            = var.layer_arns
 
   tracing_config {
     mode = "Active"
