@@ -132,34 +132,48 @@ resource "aws_iam_role_policy" "extra_policies" {
   policy = each.value
 }
 
-# Get prod and sbx account IDs in the test environment for cross-account roles
-data "aws_ssm_parameter" "prod_account" {
-  count = var.env == "test" ? 1 : 0
-  name  = "/prod/account-id"
-}
-
-data "aws_ssm_parameter" "sbx_account" {
-  count = var.env == "test" ? 1 : 0
-  name  = "/prod/account-id"
-}
-
 data "aws_ssm_parameter" "prod_account_id" {
   count = var.env == "test" ? 1 : 0
   name  = "/prod/account-id"
 }
 
+data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
+  count = var.env == "test" ? 1 : 0
+
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectTagging",
+      "s3:GetObjectVersion",
+      "s3:GetObjectVersionTagging",
+      "s3:ListBucket",
+    ]
+
+    principals {
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
+        "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-sandbox-github-actions",
+      ]
+    }
+
+    resources = [
+      module.zip_bucket.arn,
+      "${module.zip_bucket.arn}/*",
+    ]
+
+    sid = "CrossAccountRead"
+  }
+}
+
 module "zip_bucket" {
   source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=abb49c537178515ed053ee2ca00311fd7632968f"
 
-  app = var.app
-  env = var.env
-
-  name = "${var.name}-function"
-  cross_account_read_roles = var.env == "test" ? [
-    "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
-    "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-sandbox-github-actions",
-  ] : []
-  ssm_parameter = "/${var.app}/${var.env}/${var.name}-bucket"
+  additional_bucket_policies = var.env == "test" ? [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy[0].json] : []
+  app                        = var.app
+  env                        = var.env
+  name                       = "${var.name}-function"
+  ssm_parameter              = "/${var.app}/${var.env}/${var.name}-bucket"
 }
 
 resource "aws_s3_object" "empty_function_zip" {
