@@ -167,7 +167,7 @@ data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
 }
 
 module "zip_bucket" {
-  source = "github.com/CMSgov/cdap//terraform/modules/bucket?ref=abb49c537178515ed053ee2ca00311fd7632968f"
+  source = "../bucket"
 
   additional_bucket_policies = var.env == "test" ? [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy[0].json] : []
   app                        = var.app
