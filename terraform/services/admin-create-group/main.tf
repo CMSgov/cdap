@@ -9,7 +9,7 @@ data "aws_kms_alias" "bcda_app_config_kms_key" {
 }
 
 module "admin_create_group_function" {
-  source = "../../modules/function"
+  source = "github.com/CMSgov/cdap//terraform/modules/function?ref=2f21bef1de2d6fd1326e7106699250f610f4c66c"
 
   app = var.app
   env = var.env

@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "assume_bucket_role" {
 }
 
 module "cclf_import_function" {
-  source = "../../modules/function"
+  source = "github.com/CMSgov/cdap//terraform/modules/function?ref=2f21bef1de2d6fd1326e7106699250f610f4c66c"
 
   app = var.app
   env = var.env
