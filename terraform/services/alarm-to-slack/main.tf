@@ -5,7 +5,7 @@ locals {
 data "aws_caller_identity" "current" {}
 
 module "sns_to_slack_function" {
-  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=e37e99cef05ea7c779e6ea188fc29b13387bd2b5"
+  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=jscott/PLT-1563"
 
   app = var.app
   env = var.env

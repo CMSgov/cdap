@@ -4,6 +4,9 @@ locals {
     bcda = [
       "repo:CMSgov/bcda-app:*",
     ]
+    cdap = [
+      "repo:CMSgov/cdap:*",
+    ]
     dpc = [
       "repo:CMSgov/dpc-app:*",
     ]
