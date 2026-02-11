@@ -1,3 +1,12 @@
+module "standards" {
+  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=408fbd0c53b85d09a71d5c573de779bde5ae08e6"
+  providers   = { aws = aws, aws.secondary = aws.secondary }
+  app         = var.app
+  env         = var.env
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/security-groups"
+  service     = "security-groups"
+}
+
 data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
   name = "/cdap/sensitive/mgmt-vpc/cidr"
 }
@@ -69,5 +78,13 @@ resource "aws_vpc_security_group_ingress_rule" "remote_management_allow_all" {
 
   description = "Allow all traffic from CDAP management VPC"
   cidr_ipv4   = data.aws_ssm_parameter.cdap_mgmt_vpc_cidr.value
+  ip_protocol = -1
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_cdap_vpc" {
+  security_group_id = aws_security_group.remote_management.id
+
+  description = "Allow all traffic from ${module.standards.cdap_vpc.id} VPC"
+  cidr_ipv4   = module.standards.cdap_vpc.cidr_block
   ip_protocol = -1
 }
