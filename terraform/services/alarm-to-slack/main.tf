@@ -24,7 +24,7 @@ module "sns_to_slack_function" {
 }
 
 module "sns_to_slack_queue" {
-  source = "github.com/CMSgov/cdap/terraform/modules/queue?ref=e37e99cef05ea7c779e6ea188fc29b13387bd2b5"
+  source = "github.com/CMSgov/cdap/terraform/modules/queue?ref=jscott/PLT-1563"
 
   app           = var.app
   env           = var.env
