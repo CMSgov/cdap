@@ -157,7 +157,7 @@ data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
       type = "AWS"
       identifiers = [
         "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
-        var.app == "cdap" ? null : "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-sandbox-github-actions",
+        "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-${var.app == "cdap" ? "mgmt" : "sandbox"}-github-actions",
       ]
     }
 
