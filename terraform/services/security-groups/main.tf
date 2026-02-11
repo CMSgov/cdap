@@ -1,5 +1,5 @@
 module "standards" {
-  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=408fbd0c53b85d09a71d5c573de779bde5ae08e6"
+  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=85036477992f8ce7e574cbdfcfd5f4c549dfc92d"
   providers   = { aws = aws, aws.secondary = aws.secondary }
   app         = var.app
   env         = var.env
