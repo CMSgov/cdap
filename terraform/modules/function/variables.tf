@@ -87,7 +87,7 @@ variable "layer_arns" {
 }
 
 variable "source_code_version" {
-  description = "S3 object version"
+  description = "Optional S3 object version of function.zip uploaded to module's zip_bucket."
   type        = string
   default     = null
 }
