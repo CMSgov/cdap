@@ -86,7 +86,7 @@ resource "aws_ecs_service" "this" {
   force_new_deployment = var.force_new_deployment
   propagate_tags       = "SERVICE"
 
-  service_connect_configuration {
+  service_connect_demo_configuration {
     enabled   = true
     namespace = data.aws_service_discovery_http_namespace.cluster-service_discovery-namespace.arn
     service {
@@ -175,7 +175,7 @@ resource "aws_iam_role_policy" "execution" {
   policy = data.aws_iam_policy_document.execution[0].json
 }
 
-data "aws_iam_policy_document" "service_connect_pca" {
+data "aws_iam_policy_document" "service_connect_demo_pca" {
   statement {
     sid       = "AllowDescribePCA"
     actions   = ["acm-pca:DescribeCertificateAuthority"]
@@ -189,14 +189,14 @@ data "aws_iam_policy_document" "service_connect_pca" {
   }
 }
 
-resource "aws_iam_policy" "service_connect_pca" {
+resource "aws_iam_policy" "service_connect_demo_pca" {
   name        = "${local.service_name}-service-connect-pca-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env}-${local.service_name} Service's Service Connect Role to use the PACE Private CA."
-  policy      = data.aws_iam_policy_document.service_connect_pca.json
+  policy      = data.aws_iam_policy_document.service_connect_demo_pca.json
 }
 
-data "aws_iam_policy_document" "service_connect_secrets_manager" {
+data "aws_iam_policy_document" "service_connect_demo_secrets_manager" {
   statement {
     actions = [
       "secretsmanager:CreateSecret",
@@ -213,11 +213,11 @@ data "aws_iam_policy_document" "service_connect_secrets_manager" {
   }
 }
 
-resource "aws_iam_policy" "service_connect_secrets_manager" {
+resource "aws_iam_policy" "service_connect_demo_secrets_manager" {
   name        = "service-connect-secrets-manager-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use Secrets Manager for Service Connect related Secrets."
-  policy      = data.aws_iam_policy_document.service_connect_secrets_manager.json
+  policy      = data.aws_iam_policy_document.service_connect_demo_secrets_manager.json
 }
 
 data "aws_iam_policy" "permissions_boundary" {
@@ -245,14 +245,7 @@ resource "aws_iam_role" "service-connect" {
 
 data "aws_iam_policy_document" "kms" {
   statement {
-    sid    = "AllowEnvCMKAccess"
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::539247469933:role/service-connect"]
-    }
-
+    sid = "AllowEnvCMKAccess"
     actions = [
       "kms:Decrypt",
       "kms:GenerateDataKey*",
@@ -260,39 +253,15 @@ data "aws_iam_policy_document" "kms" {
       "kms:DescribeKey",
       "kms:CreateGrant",
       "kms:ListGrants",
-      "kms:RevokeGrant"
-    ]
-
-    resources = ["*"]
-  }
-
-  statement {
-    sid    = "AllowECSServiceConnectTLS"
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["ecs.amazonaws.com"]
-    }
-
-    actions = [
+      "kms:RevokeGrant",
       "kms:GenerateDataKeyPair",
       "kms:GenerateDataKeyPairWithoutPlaintext",
-      "kms:Decrypt",
-      "kms:CreateGrant"
     ]
-
-    resources = ["*"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "kms:ViaService"
-      values   = ["ecs.us-east-1.amazonaws.com"]
-    }
+    resources = [data.aws_kms_alias.kms_key.arn]
   }
 }
 
-resource "aws_iam_policy" "service_connect_kms" {
+resource "aws_iam_policy" "service_connect_demo_kms" {
   name        = "service-connect-kms-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use the ${var.platform.env} CMK"
@@ -301,9 +270,9 @@ resource "aws_iam_policy" "service_connect_kms" {
 
 resource "aws_iam_role_policy_attachment" "service-connect" {
   for_each = {
-    kms             = aws_iam_policy.service_connect_kms.arn
-    pca             = aws_iam_policy.service_connect_pca.arn
-    secrets_manager = aws_iam_policy.service_connect_secrets_manager.arn
+    kms             = aws_iam_policy.service_connect_demo_kms.arn
+    pca             = aws_iam_policy.service_connect_demo_pca.arn
+    secrets_manager = aws_iam_policy.service_connect_demo_secrets_manager.arn
   }
 
   role       = aws_iam_role.service-connect.arn
