@@ -179,13 +179,13 @@ data "aws_iam_policy_document" "service_connect_pca" {
   statement {
     sid       = "AllowDescribePCA"
     actions   = ["acm-pca:DescribeCertificateAuthority"]
-    resources = [data.aws_acmpca_certificate_authority.pace.arn]
+    resources = [one(data.aws_ram_resource_share.pace_ca.resource_arns)]
   }
 
   statement {
     sid       = "AllowGetAndIssueCertificate"
     actions   = ["acm-pca:GetCertificateAuthorityCsr","acm-pca:GetCertificate", "acm-pca:IssueCertificate"]
-    resources = [data.aws_acmpca_certificate_authority.pace.arn]
+    resources = [one(data.aws_ram_resource_share.pace_ca.resource_arns)]
   }
 }
 
