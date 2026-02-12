@@ -148,3 +148,8 @@ output "splunk_logging_bucket" {
   description = "Bucket created by the CMS Hybrid Cloud team where logs are ingested into Splunk"
   value       = data.aws_s3_bucket.logs_to_splunk
 }
+
+output "sns_topic_slack_alarms" {
+  description = "SNS topic managed by CDAP for alarm action that publishes to Slack"
+  value       = data.aws_sns_topic.cloudwatch_alarms
+}
