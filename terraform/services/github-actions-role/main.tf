@@ -157,6 +157,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ec2:CreateKeyPair",
       "ec2:CreateLaunchTemplateVersion",
       "ec2:CreateSecurityGroup",
+      "ec2:CreateTags",
+      "ec2:DeleteTags",
       "ec2:DeleteKeyPair",
       "ec2:DeleteSecurityGroup",
       "ec2:DescribeAccountAttributes",
