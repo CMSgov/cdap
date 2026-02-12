@@ -245,7 +245,14 @@ resource "aws_iam_role" "service-connect" {
 
 data "aws_iam_policy_document" "kms" {
   statement {
-    sid = "AllowEnvCMKAccess"
+    sid    = "AllowEnvCMKAccess"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::539247469933:role/service-connect"]
+    }
+
     actions = [
       "kms:Decrypt",
       "kms:GenerateDataKey*",
@@ -255,14 +262,16 @@ data "aws_iam_policy_document" "kms" {
       "kms:ListGrants",
       "kms:RevokeGrant"
     ]
-    resources = [data.aws_kms_alias.kms_key.arn]
-  },
+
+    resources = ["*"]
+  }
+
   statement {
     sid    = "AllowECSServiceConnectTLS"
     effect = "Allow"
 
     principals {
-      type = "Service"
+      type        = "Service"
       identifiers = ["ecs.amazonaws.com"]
     }
 
@@ -278,7 +287,7 @@ data "aws_iam_policy_document" "kms" {
     condition {
       test     = "StringEquals"
       variable = "kms:ViaService"
-      values = ["ecs.us-east-1.amazonaws.com"]
+      values   = ["ecs.us-east-1.amazonaws.com"]
     }
   }
 }
