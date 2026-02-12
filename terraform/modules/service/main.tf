@@ -101,7 +101,7 @@ resource "aws_ecs_service" "this" {
         role_arn = aws_iam_role.service_connect.arn
 
         issuer_cert_authority {
-          aws_pca_authority_arn = data.aws_acmpca_certificate_authority.pace.arn
+          aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
         }
       }
     }
