@@ -86,7 +86,7 @@ resource "aws_ecs_service" "this" {
   force_new_deployment = var.force_new_deployment
   propagate_tags       = "SERVICE"
 
-  service_connect_demo_configuration {
+  service_connect_configuration {
     enabled   = true
     namespace = data.aws_service_discovery_http_namespace.cluster-service_discovery-namespace.arn
     service {
@@ -235,8 +235,8 @@ data "aws_iam_policy_document" "service_assume_role" {
   }
 }
 
-resource "aws_iam_role" "service-connect" {
-  name                  = "service-connect"
+resource "aws_iam_role" "service-connect-demo" {
+  name                  = "service-connect-demo"
   path                  = "/delegatedadmin/developer/"
   permissions_boundary  = data.aws_iam_policy.permissions_boundary.arn
   assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ecs"].json
@@ -268,13 +268,13 @@ resource "aws_iam_policy" "service_connect_demo_kms" {
   policy      = data.aws_iam_policy_document.kms.json
 }
 
-resource "aws_iam_role_policy_attachment" "service-connect" {
+resource "aws_iam_role_policy_attachment" "service-connect-demo" {
   for_each = {
     kms             = aws_iam_policy.service_connect_demo_kms.arn
     pca             = aws_iam_policy.service_connect_demo_pca.arn
     secrets_manager = aws_iam_policy.service_connect_demo_secrets_manager.arn
   }
 
-  role       = aws_iam_role.service-connect.arn
+  role       = aws_iam_role.service-connect-demo.arn
   policy_arn = each.value
 }
