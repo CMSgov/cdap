@@ -256,6 +256,30 @@ data "aws_iam_policy_document" "kms" {
       "kms:RevokeGrant"
     ]
     resources = [data.aws_kms_alias.kms_key.arn]
+  },
+  statement {
+    sid    = "AllowECSServiceConnectTLS"
+    effect = "Allow"
+
+    principals {
+      type = "Service"
+      identifiers = ["ecs.amazonaws.com"]
+    }
+
+    actions = [
+      "kms:GenerateDataKeyPair",
+      "kms:GenerateDataKeyPairWithoutPlaintext",
+      "kms:Decrypt",
+      "kms:CreateGrant"
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values = ["ecs.us-east-1.amazonaws.com"]
+    }
   }
 }
 
