@@ -439,6 +439,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:PutLifecycleConfiguration",
       "s3:ListBucket",
       "s3:GetObject",
+      "s3:GetObjectTagging",
       "s3:PutObject",
       "s3:DeleteObject"
     ]
@@ -457,6 +458,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
   statement {
     actions = [
       "sqs:CreateQueue",
+      "sqs:GetQueueAttributes",
       "sqs:SetQueueAttributes"
     ]
     resources = ["*"]
