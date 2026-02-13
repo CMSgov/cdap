@@ -356,6 +356,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "lambda:GetFunctionCodeSigningConfig",
       "lambda:GetPolicy",
       "lambda:GetFunction",
+      "lambda:ListTags",
       "lambda:ListVersionsByFunction",
       "lambda:GetEventSourceMapping",
       "lambda:UpdateFunctionConfiguration",
@@ -459,6 +460,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
     actions = [
       "sqs:CreateQueue",
       "sqs:GetQueueAttributes",
+      "sqs:ListQueueAttributes",
+      "sqs:ListQueueTags",
       "sqs:SetQueueAttributes"
     ]
     resources = ["*"]
