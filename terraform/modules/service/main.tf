@@ -214,7 +214,7 @@ data "aws_iam_policy_document" "service_connect_demo_secrets_manager" {
 }
 
 resource "aws_iam_policy" "service_connect_demo_secrets_manager" {
-  name        = "service-connect-secrets-manager-policy"
+  name        = "${local.service_name}-service-connect-secrets-manager-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use Secrets Manager for Service Connect related Secrets."
   policy      = data.aws_iam_policy_document.service_connect_demo_secrets_manager.json
@@ -236,7 +236,7 @@ data "aws_iam_policy_document" "service_assume_role" {
 }
 
 resource "aws_iam_role" "service-connect-demo" {
-  name                  = "service-connect-demo"
+  name                  = "${local.service_name}-service-connect-demo"
   path                  = "/delegatedadmin/developer/"
   permissions_boundary  = data.aws_iam_policy.permissions_boundary.arn
   assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ecs"].json
@@ -262,7 +262,7 @@ data "aws_iam_policy_document" "kms" {
 }
 
 resource "aws_iam_policy" "service_connect_demo_kms" {
-  name        = "service-connect-kms-policy"
+  name        = "${local.service_name}-service-connect-kms-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use the ${var.platform.env} CMK"
   policy      = data.aws_iam_policy_document.kms.json
