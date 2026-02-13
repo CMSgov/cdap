@@ -1,9 +1,9 @@
 variable "app" {
-  description = "The application name (bcda)"
+  description = "The application name (bcda, cdap)"
   type        = string
   validation {
-    condition     = contains(["bcda"], var.app)
-    error_message = "Valid value for app is bcda"
+    condition     = contains(["bcda", "cdap"], var.app)
+    error_message = "Valid values for app are bcda, cdap."
   }
 }
 
@@ -12,6 +12,6 @@ variable "env" {
   type        = string
   validation {
     condition     = contains(["test", "prod"], var.env)
-    error_message = "Valid value for env is test, prod."
+    error_message = "Valid values for env are test, prod."
   }
 }
