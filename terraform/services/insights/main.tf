@@ -1,6 +1,6 @@
 locals {
-  app            = "cdap"
-  env            = "mgmt"
+  app            = "dasg-insights"
+  env            = "prod"
   service        = "insights"
   service_prefix = "${local.app}-${local.env}-${local.service}"
   account_id     = module.standards.aws_caller_identity.id
@@ -23,7 +23,7 @@ module "standards" {
 
   app         = local.app
   env         = local.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/insights/mgmt"
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/insights"
   service     = local.service
   providers   = { aws = aws, aws.secondary = aws.secondary }
 }
