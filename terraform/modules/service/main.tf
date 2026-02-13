@@ -249,7 +249,7 @@ data "aws_iam_policy_document" "kms" {
       "kms:GenerateDataKeyPair",
       "kms:GenerateDataKeyPairWithoutPlaintext",
     ]
-    resources = [data.aws_kms_alias.kms_key.arn]
+    resources = [*]
   }
 }
 
