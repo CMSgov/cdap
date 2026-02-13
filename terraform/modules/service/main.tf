@@ -266,6 +266,6 @@ resource "aws_iam_role_policy_attachment" "service-connect" {
     secrets_manager = aws_iam_policy.service_connect_secrets_manager.arn
   }
 
-  role       = aws_iam_role.service-connect.arn
+  role       = aws_iam_role.service-connect.name
   policy_arn = each.value
 }
