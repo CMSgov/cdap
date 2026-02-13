@@ -219,7 +219,7 @@ resource "aws_iam_policy" "service_connect_secrets_manager" {
 }
 
 data "aws_iam_policy_document" "service_assume_role" {
-  for_each = toset(["ecs-tasks", "ecs"])
+  for_each = toset(["ecs-tasks", "ecs", "ECSServiceConnectForTLS"])
   statement {
     actions = ["sts:AssumeRole"]
     principals {
@@ -231,7 +231,7 @@ data "aws_iam_policy_document" "service_assume_role" {
 
 resource "aws_iam_role" "service-connect" {
   name                  = "${local.service_name_full}-service-connect"
-  assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ecs"].json
+  assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ECSServiceConnectForTLS"].json
   force_detach_policies = true
 }
 
