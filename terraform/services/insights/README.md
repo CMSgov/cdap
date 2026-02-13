@@ -12,7 +12,7 @@ This root module configures the fundamental platform resources in the AWS DASG I
 This module is intended to serve the single `mgmt` environment. Initialization is done through the following:
 
 ```sh
-tofu init -backend-config="../../../backends/cdap-insights-mgmt.s3.hcl"
+tofu init -backend-config="../../../backends/insights-mgmt.s3.hcl"
 ```
 
 <!-- BEGIN_TF_DOCS -->

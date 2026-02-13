@@ -1,1 +1,1 @@
-TARGET_ENVS="insights-prod"
+TARGET_ENVS="insights-mgmt"
