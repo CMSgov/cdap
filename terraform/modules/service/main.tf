@@ -98,7 +98,7 @@ resource "aws_ecs_service" "this" {
       }
       tls {
         kms_key  = data.aws_kms_alias.kms_key.arn
-        role_arn = aws_iam_role.service-connect-demo.arn
+        role_arn = var.execution_role_arn != null ? var.execution_role_arn: aws_iam_role.execution[0].arn
 
         issuer_cert_authority {
           aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
@@ -256,13 +256,13 @@ resource "aws_iam_policy" "service_connect_kms" {
   policy      = data.aws_iam_policy_document.kms.json
 }
 
-resource "aws_iam_role_policy_attachment" "service-connect-demo" {
+resource "aws_iam_role_policy_attachment" "service-connect" {
   for_each = {
     kms             = aws_iam_policy.service_connect_kms.arn
     pca             = aws_iam_policy.service_connect_pca.arn
     secrets_manager = aws_iam_policy.service_connect_secrets_manager.arn
   }
 
-  role       = aws_iam_role.execution.arn
+  role       = var.execution_role_arn != null ? var.execution_role_arn: aws_iam_role.execution[0].arn
   policy_arn = each.value
 }
