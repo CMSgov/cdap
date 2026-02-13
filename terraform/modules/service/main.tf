@@ -236,7 +236,7 @@ data "aws_iam_policy_document" "service_assume_role" {
 }
 
 resource "aws_iam_role" "service-connect-demo" {
-  name                  = "${local.service_name}-service-connect-demo"
+  name                  = "${local.service_name}serviceconnect"
   path                  = "/delegatedadmin/developer/"
   permissions_boundary  = data.aws_iam_policy.permissions_boundary.arn
   assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ecs"].json
