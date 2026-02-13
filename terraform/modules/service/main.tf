@@ -233,7 +233,6 @@ data "aws_iam_policy_document" "service_assume_role" {
 
 resource "aws_iam_role" "service-connect" {
   name                  = "${random_string.unique_suffix.result}serviceconnect"
-  path                  = "/delegatedadmin/developer"
   assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ecs"].json
   force_detach_policies = true
 }
