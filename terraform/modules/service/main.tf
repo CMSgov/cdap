@@ -98,7 +98,7 @@ resource "aws_ecs_service" "this" {
       }
       tls {
         kms_key  = data.aws_kms_alias.kms_key.arn
-        role_arn = aws_iam_role.service-connect-demo.arn
+        role_arn = aws_iam_role.service-connect.arn
 
         issuer_cert_authority {
           aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
@@ -190,7 +190,7 @@ data "aws_iam_policy_document" "service_connect_pca" {
 }
 
 resource "aws_iam_policy" "service_connect_pca" {
-  name        = "${local.service_name}-service-connect-pca-policy"
+  name        = "${random_string.unique_suffix.result}-service-connect-pca-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env}-${local.service_name} Service's Service Connect Role to use the PACE Private CA."
   policy      = data.aws_iam_policy_document.service_connect_pca.json
@@ -214,7 +214,7 @@ data "aws_iam_policy_document" "service_connect_secrets_manager" {
 }
 
 resource "aws_iam_policy" "service_connect_secrets_manager" {
-  name        = "${local.service_name}-service-connect-secrets-manager-policy"
+  name        = "${random_string.unique_suffix.result}-service-connect-secrets-manager-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use Secrets Manager for Service Connect related Secrets."
   policy      = data.aws_iam_policy_document.service_connect_secrets_manager.json
@@ -232,7 +232,7 @@ data "aws_iam_policy_document" "service_assume_role" {
 }
 
 resource "aws_iam_role" "service-connect" {
-  name                  = "${local.service_name}serviceconnect"
+  name                  = "${random_string.unique_suffix.result}-service-connect"
   path                  = "/delegatedadmin/developer/"
   assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ecs"].json
   force_detach_policies = true
@@ -257,13 +257,13 @@ data "aws_iam_policy_document" "kms" {
 }
 
 resource "aws_iam_policy" "service_connect_kms" {
-  name        = "${local.service_name}-service-connect-kms-policy"
+  name        = "${random_string.unique_suffix.result}-service-connect-kms-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use the ${var.platform.env} CMK"
   policy      = data.aws_iam_policy_document.kms.json
 }
 
-resource "aws_iam_role_policy_attachment" "service-connect-demo" {
+resource "aws_iam_role_policy_attachment" "service-connect" {
   for_each = {
     kms             = aws_iam_policy.service_connect_kms.arn
     pca             = aws_iam_policy.service_connect_pca.arn
