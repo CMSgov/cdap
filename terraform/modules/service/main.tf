@@ -191,7 +191,6 @@ data "aws_iam_policy_document" "service_connect_pca" {
 
 resource "aws_iam_policy" "service_connect_pca" {
   name        = "${random_string.unique_suffix.result}-service-connect-pca-policy"
-  path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env}-${local.service_name} Service's Service Connect Role to use the PACE Private CA."
   policy      = data.aws_iam_policy_document.service_connect_pca.json
 }
@@ -215,7 +214,6 @@ data "aws_iam_policy_document" "service_connect_secrets_manager" {
 
 resource "aws_iam_policy" "service_connect_secrets_manager" {
   name        = "${random_string.unique_suffix.result}-service-connect-secrets-manager-policy"
-  path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use Secrets Manager for Service Connect related Secrets."
   policy      = data.aws_iam_policy_document.service_connect_secrets_manager.json
 }
@@ -232,7 +230,7 @@ data "aws_iam_policy_document" "service_assume_role" {
 }
 
 resource "aws_iam_role" "service-connect" {
-  name                  = "${random_string.unique_suffix.result}serviceconnect"
+  name                  = "${local.service_name_full}-service-connect"
   assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ecs"].json
   force_detach_policies = true
 }
@@ -257,7 +255,6 @@ data "aws_iam_policy_document" "kms" {
 
 resource "aws_iam_policy" "service_connect_kms" {
   name        = "${random_string.unique_suffix.result}-service-connect-kms-policy"
-  path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use the ${var.platform.env} CMK"
   policy      = data.aws_iam_policy_document.kms.json
 }
