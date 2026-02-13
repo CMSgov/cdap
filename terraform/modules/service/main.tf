@@ -175,7 +175,7 @@ resource "aws_iam_role_policy" "execution" {
   policy = data.aws_iam_policy_document.execution[0].json
 }
 
-data "aws_iam_policy_document" "service_connect_demo_pca" {
+data "aws_iam_policy_document" "service_connect_pca" {
   statement {
     sid       = "AllowDescribePCA"
     actions   = ["acm-pca:DescribeCertificateAuthority"]
@@ -189,14 +189,14 @@ data "aws_iam_policy_document" "service_connect_demo_pca" {
   }
 }
 
-resource "aws_iam_policy" "service_connect_demo_pca" {
+resource "aws_iam_policy" "service_connect_pca" {
   name        = "${local.service_name}-service-connect-pca-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env}-${local.service_name} Service's Service Connect Role to use the PACE Private CA."
-  policy      = data.aws_iam_policy_document.service_connect_demo_pca.json
+  policy      = data.aws_iam_policy_document.service_connect_pca.json
 }
 
-data "aws_iam_policy_document" "service_connect_demo_secrets_manager" {
+data "aws_iam_policy_document" "service_connect_secrets_manager" {
   statement {
     actions = [
       "secretsmanager:CreateSecret",
@@ -213,15 +213,11 @@ data "aws_iam_policy_document" "service_connect_demo_secrets_manager" {
   }
 }
 
-resource "aws_iam_policy" "service_connect_demo_secrets_manager" {
+resource "aws_iam_policy" "service_connect_secrets_manager" {
   name        = "${local.service_name}-service-connect-secrets-manager-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use Secrets Manager for Service Connect related Secrets."
-  policy      = data.aws_iam_policy_document.service_connect_demo_secrets_manager.json
-}
-
-data "aws_iam_policy" "permissions_boundary" {
-  name = "ct-ado-poweruser-permissions-boundary-policy"
+  policy      = data.aws_iam_policy_document.service_connect_secrets_manager.json
 }
 
 data "aws_iam_policy_document" "service_assume_role" {
@@ -233,14 +229,6 @@ data "aws_iam_policy_document" "service_assume_role" {
       identifiers = ["${each.value}.amazonaws.com"]
     }
   }
-}
-
-resource "aws_iam_role" "service-connect-demo" {
-  name                  = "${local.service_name}serviceconnect"
-  path                  = "/delegatedadmin/developer/"
-  permissions_boundary  = data.aws_iam_policy.permissions_boundary.arn
-  assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ecs"].json
-  force_detach_policies = true
 }
 
 data "aws_iam_policy_document" "kms" {
@@ -261,7 +249,7 @@ data "aws_iam_policy_document" "kms" {
   }
 }
 
-resource "aws_iam_policy" "service_connect_demo_kms" {
+resource "aws_iam_policy" "service_connect_kms" {
   name        = "${local.service_name}-service-connect-kms-policy"
   path        = "/delegatedadmin/developer/"
   description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use the ${var.platform.env} CMK"
@@ -270,11 +258,11 @@ resource "aws_iam_policy" "service_connect_demo_kms" {
 
 resource "aws_iam_role_policy_attachment" "service-connect-demo" {
   for_each = {
-    kms             = aws_iam_policy.service_connect_demo_kms.arn
-    pca             = aws_iam_policy.service_connect_demo_pca.arn
-    secrets_manager = aws_iam_policy.service_connect_demo_secrets_manager.arn
+    kms             = aws_iam_policy.service_connect_kms.arn
+    pca             = aws_iam_policy.service_connect_pca.arn
+    secrets_manager = aws_iam_policy.service_connect_secrets_manager.arn
   }
 
-  role       = aws_iam_role.service-connect-demo.arn
+  role       = aws_iam_role.execution.arn
   policy_arn = each.value
 }
