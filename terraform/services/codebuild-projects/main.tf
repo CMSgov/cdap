@@ -1,5 +1,5 @@
 locals {
-  repos = [
+  x86_repos = [
     "ab2d",
     "ab2d-website",
     "bcda-app",
@@ -9,6 +9,10 @@ locals {
     "dpc-app",
     "dpc-ops",
     "dpc-static-site",
+  ]
+
+  arm64_repos = [
+    "bcda-app",
   ]
 }
 
@@ -60,7 +64,7 @@ resource "aws_iam_role_policy_attachment" "ssm_read_only" {
 }
 
 resource "aws_codebuild_project" "this" {
-  for_each = toset(local.repos)
+  for_each = toset(local.x86_repos)
 
   name         = each.key
   description  = "Codebuild project for ${each.key}"
@@ -112,9 +116,69 @@ resource "aws_codebuild_project" "this" {
 }
 
 resource "aws_codebuild_webhook" "this" {
-  for_each = toset(local.repos)
+  for_each = toset(local.x86_repos)
 
   project_name = each.key
+  build_type   = "BUILD"
+  filter_group {
+    filter {
+      type    = "EVENT"
+      pattern = "WORKFLOW_JOB_QUEUED"
+    }
+  }
+}
+
+
+# ARM64 Configurations
+resource "aws_codebuild_project" "arm64" {
+  for_each = toset(local.arm64_repos)
+
+  name         = "${each.key}-arm64"
+  description  = "Codebuild project for ${each.key} using arm64"
+  service_role = aws_iam_role.codebuild.arn
+
+  artifacts {
+    type = "NO_ARTIFACTS"
+  }
+
+  environment {
+    compute_type                = "BUILD_GENERAL1_SMALL"
+    image                       = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
+    type                        = "LINUX_CONTAINER"
+    image_pull_credentials_type = "CODEBUILD"
+    privileged_mode             = true
+  }
+
+  vpc_config {
+    vpc_id  = module.vpc.id
+    subnets = module.subnets.ids
+    security_group_ids = [
+      data.aws_security_group.security_tools.id,
+      data.aws_security_group.security_validation_egress.id
+    ]
+  }
+
+  logs_config {
+    cloudwatch_logs {
+      status = "ENABLED"
+    }
+  }
+
+  source {
+    type            = "GITHUB"
+    location        = "https://github.com/CMSgov/${each.key}"
+    git_clone_depth = 1
+
+    git_submodules_config {
+      fetch_submodules = false
+    }
+  }
+}
+
+resource "aws_codebuild_webhook" "arm64" {
+  for_each = toset(local.arm64_repos)
+
+  project_name = "${each.key}-arm64"
   build_type   = "BUILD"
   filter_group {
     filter {
