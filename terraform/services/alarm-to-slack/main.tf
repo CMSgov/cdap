@@ -5,7 +5,7 @@ locals {
 data "aws_caller_identity" "current" {}
 
 module "sns_to_slack_function" {
-  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=jscott/PLT-1563"
+  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=b177921621c97d02dc4a21f830e4532147aa0749"
 
   app = var.app
   env = var.env
@@ -24,7 +24,7 @@ module "sns_to_slack_function" {
 }
 
 module "sns_to_slack_queue" {
-  source = "github.com/CMSgov/cdap/terraform/modules/queue?ref=jscott/PLT-1563"
+  source = "github.com/CMSgov/cdap/terraform/modules/queue?ref=b177921621c97d02dc4a21f830e4532147aa0749"
 
   app           = var.app
   env           = var.env
