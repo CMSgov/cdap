@@ -1,1 +1,1 @@
-TARGET_ENVS=account
+TARGET_ENVS="bcda-test bcda-prod cdap-test cdap-prod"
