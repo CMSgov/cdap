@@ -15,7 +15,6 @@ from (
 			END AS max_benes
 		from jobs
 			join job_keys jk ON jk.job_id = jobs.id
-		where jobs.created_at > DATE(NOW() - interval '1 year')
 	) sub
 group by sub.job_id
 order by sub.job_id;
