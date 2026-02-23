@@ -343,6 +343,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "iam:ListPolicyVersions",
       "iam:ListRolePolicies",
       "iam:PutRolePolicy",
+      "iam:TagRole",
       "iam:UpdateAssumeRolePolicy",
       "iam:UpdateOpenIDConnectProviderThumbprint"
     ]
@@ -435,6 +436,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:PutBucketNotification",
       "s3:PutBucketOwnershipControls",
       "s3:PutBucketPolicy",
+      "s3:PutBucketTagging",
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
@@ -462,7 +464,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "sqs:GetQueueAttributes",
       "sqs:ListQueueAttributes",
       "sqs:ListQueueTags",
-      "sqs:SetQueueAttributes"
+      "sqs:SetQueueAttributes",
+      "sqs:TagQueue"
     ]
     resources = ["*"]
   }
