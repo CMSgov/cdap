@@ -1,4 +1,5 @@
 -- Number of beneficiaries per job request
+-- Tracking: We used to track for last one year, now tracking all job data
 -- NO PHI/PII allowed!
 CREATE OR REPLACE VIEW bcda_prod_beneficiaries_per_job AS
 select sub.job_id,

@@ -1,5 +1,6 @@
 -- Onboarded production entities with zero data requests (in acos but no row in jobs).
 -- Only non-terminated entities. NO PHI/PII allowed!
+-- Tracking: Total onboarded entities with zero data requests
 CREATE OR REPLACE VIEW bcda_prod_onboarded_entities_zero_requests AS
 SELECT acos.cms_id
 FROM acos

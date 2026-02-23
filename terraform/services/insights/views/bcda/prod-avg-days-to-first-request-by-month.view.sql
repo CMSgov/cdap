@@ -1,5 +1,6 @@
 -- Number of days from ACO onboarding (acos.created_at) to first job request.
 -- Only acos with at least one job are included
+-- Tracking: Average number of days to make first call (after onboarding process)
 -- NO PHI/PII allowed!
 CREATE OR REPLACE VIEW bcda_prod_days_to_first_request AS
 SELECT acos.cms_id, acos.created_at AS onboarding_date,

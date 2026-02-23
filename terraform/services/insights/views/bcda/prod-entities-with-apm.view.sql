@@ -1,6 +1,7 @@
 -- All production entities from acos with CMS ID, alternative payment model, and termination_date.
 -- NO PHI/PII allowed! Consumer may filter by termination_date IS NULL for active only.
 -- Model names from bcda-app/conf/configs/prod.yml (match order: more specific first).
+-- Tracking: Entities with Production Access , SSP Entities with Production Access, ACO Reach Entities with Production Access, KCC Entities with Production Access
 CREATE OR REPLACE VIEW bcda_prod_entities_with_apm AS
 SELECT acos.cms_id,
     CASE
