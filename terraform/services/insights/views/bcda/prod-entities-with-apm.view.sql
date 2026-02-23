@@ -19,4 +19,5 @@ SELECT acos.cms_id,
     END AS alternative_payment_model,
     (acos.termination_details->>'TerminationDate')::timestamptz AS termination_date
 FROM acos
-WHERE acos.cms_id IS NOT NULL;
+WHERE acos.cms_id IS NOT NULL
+    AND acos.cms_id !~ '^(A999|V99|E999|DA999|K999)';
