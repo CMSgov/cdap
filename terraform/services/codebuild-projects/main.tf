@@ -144,7 +144,7 @@ resource "aws_codebuild_project" "arm64" {
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
     image                       = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
-    type                        = "LINUX_CONTAINER"
+    type                        = "ARM_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
     privileged_mode             = true
   }
