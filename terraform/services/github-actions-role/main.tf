@@ -343,6 +343,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "iam:ListPolicyVersions",
       "iam:ListRolePolicies",
       "iam:PutRolePolicy",
+      "iam:TagRole",
       "iam:UpdateAssumeRolePolicy",
       "iam:UpdateOpenIDConnectProviderThumbprint"
     ]
@@ -356,6 +357,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "lambda:GetFunctionCodeSigningConfig",
       "lambda:GetPolicy",
       "lambda:GetFunction",
+      "lambda:ListTags",
       "lambda:ListVersionsByFunction",
       "lambda:GetEventSourceMapping",
       "lambda:UpdateFunctionConfiguration",
@@ -434,11 +436,13 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:PutBucketNotification",
       "s3:PutBucketOwnershipControls",
       "s3:PutBucketPolicy",
+      "s3:PutBucketTagging",
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
       "s3:ListBucket",
       "s3:GetObject",
+      "s3:GetObjectTagging",
       "s3:PutObject",
       "s3:DeleteObject"
     ]
@@ -457,7 +461,11 @@ data "aws_iam_policy_document" "github_actions_policy" {
   statement {
     actions = [
       "sqs:CreateQueue",
-      "sqs:SetQueueAttributes"
+      "sqs:GetQueueAttributes",
+      "sqs:ListQueueAttributes",
+      "sqs:ListQueueTags",
+      "sqs:SetQueueAttributes",
+      "sqs:TagQueue"
     ]
     resources = ["*"]
   }
