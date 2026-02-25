@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-AWS_REGION="${AWS_REGION:us-east-1}"
+AWS_REGION="${AWS_REGION:=us-east-1}"
 RETENTION_DAYS="${RETENTION_DAYS:-180}"
 DRY_RUN="${DRY_RUN:-true}"
 
@@ -11,10 +11,16 @@ PLAN_FILE="retention-plan-${DATE_TAG}.sh"
 REPORT_FILE="retention-report-${DATE_TAG}.csv"
 
 PROCESSED=0
-IGNORED_CMS=0
+IGNORED_CMS=()
 UPDATED=()
 SKIPPED=()
 IGNORED=()
+
+if [[ "$DRY_RUN" == "true" ]]; then
+  echo "#!/usr/bin/env bash" > "$PLAN_FILE"
+  echo "set -euo pipefail" >> $PLAN_FILE
+  echo "" >> "$PLAN_FILE"
+fi
 
 echo "REGION: $AWS_REGION"
 echo "Target retention: "
@@ -23,73 +29,82 @@ echo "Plan file: $PLAN_FILE"
 echo "Report file: $REPORT_FILE"
 echo "--------------------------------------"
 
-aws logs describe-log-groups \
-    --region "$AWS_REGION"
-    --query 'logGroups[*].[logGroupName, retentionInDays]' \
-    --output text |
-while read -r NAME RETENTION; do
-    ((PROCESSED++))
-    LOWER_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
-    echo "Working on $LOWER_NAME"
+LOG_GROUPS_JSON=$(aws logs describe-log-groups --region "$AWS_REGION" --output json)
+while IFS=$'\t' read -r NAME RETENTION; do
 
-    if [[ "$LOWER_NAME" == *dev* ]] \
-      [[ "$LOWER_NAME" == *test* ]]
+    ((PROCESSED++))
+
+    LOWER_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
+    echo "Evaluating: $LOWER_NAME"
+
+    if [[ "$LOWER_NAME" == *dev* ]] || \
+      [[ "$LOWER_NAME" == *test* ]] || \
       [[ "$LOWER_NAME" == *sandbox* ]]; then
         IGNORED+=("$NAME")
-        echo "ignored ${LOWER_NAME}"
+        echo "IGNORING (uncovered environment) ${LOWER_NAME}"
         continue
     fi
 
     if echo "$LOWER_NAME" | grep -iq "cms-cloud"; then
-        ((IGNORED_CMS++))
-        echo "ignored ${LOWER_NAME}"
+        IGNORED_CMS+=("$NAME")
+        echo "IGNORING (cms managed) ${LOWER_NAME}"
         continue
     fi
 
-    if [[ "$RETENTION" == "None" ]]; then
+    if [[ "$RETENTION" == "null" ]]; then
         RETENTION=0
     fi
 
     if [[ "$RETENTION" -ge "$RETENTION_DAYS" ]]; then
         SKIPPED+=("$NAME")
-        echo "skipped ${LOWER_NAME}"
+        echo "SKIPPING (retention sufficient) ${LOWER_NAME} "
         continue
     fi
 
-    echo "Updating: $NAME (current: ${RETENTION:-unset})"
     CMD=(
       aws logs put-retention-policy \
-        --region "$AWS_REGION" \
-        --log-group-name "$NAME" \
-        --retention-in-days "$RETENTION_DAYS"
+      --log-group-name "$LOWER_NAME" \
+      --retention-in-days "$RETENTION"
     )
 
-    if [[ "DRY_RUN" == "true" ]]; then
+    if [[ "$DRY_RUN" == "true" ]]; then
       printf '%q ' "${CMD[@]}" >> "$PLAN_FILE"
       echo >> "$PLAN_FILE"
     else
-      read -p "Run retention update for: $NAME (current: ${RETENTION:-unset})? [y/N] " CONFIRM
+      read -p "Run retention update for: $LOWER_NAME (current: ${RETENTION:-unset})? [y/N] " CONFIRM
       if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
         if "${CMD[@]}"; then
-          echo "Updated $NAME"
+          echo "UPDATED $LOWER_NAME"
+          UPDATED+=("$LOWER_NAME")
         else
-          echo "Error updating $NAME"
+          echo "Error updating $LOWER_NAME"
         fi
       else
-        echo "SKIPPED $NAME"
+        echo "SKIPPING: $LOWER_NAME"
+        SKIPPED+=("$LOWER_NAME")
+      fi
     fi
 
-    UPDATED+=("$NAME")
-done
+
+done < <(jq -r '.logGroups[] | "\(.logGroupName)\t\(.retentionInDays // "null")"' <<< "$LOG_GROUPS_JSON")
+
+# Summary #
 
 echo "----------------------"
-echo "Updated: $UPDATED"
-for name in "${UPDATED}"; do echo "updated,$name\n"; done
+echo "ALL UPDATED: (${#UPDATED[@]})"
+printf " %s\n" "${UPDATED[@]:-}"
 
-echo "Updated: $IGNORED"
-for name in "${IGNORED}"; do echo "updated,$name\n"; done
+echo "----------------------"
+echo "ALL SKIPPED: (${#SKIPPED[@]})"
+printf " %s\n" "${SKIPPED[@]:-}"
 
-echo "Updated: $SKIPPED"
-for name in "${SKIPPED}"; do echo "updated,$name"; done
+echo "----------------------"
+echo "CMS MANAGED AND IGNORED: (${#IGNORED_CMS[@]})"
+printf " %s\n" "${IGNORED_CMS[@]:-}"
 
-echo "Ignored (cms-cloud managed): $IGNORED_CMS"
+
+echo "----------------------"
+echo "ALL IGNORED: (${#IGNORED[@]})"
+printf " %s\n" "${IGNORED[@]:-}"
+
+echo "total processed: $PROCESSED"
