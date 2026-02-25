@@ -13,6 +13,7 @@ locals {
 
   arm64_repos = [
     "bcda-app",
+    "bcda-ssas-app"
   ]
 }
 
