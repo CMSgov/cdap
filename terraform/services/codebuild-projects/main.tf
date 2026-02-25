@@ -13,6 +13,7 @@ locals {
 
   arm64_repos = [
     "bcda-app",
+    "bcda-ssas-app"
   ]
 }
 
@@ -143,7 +144,7 @@ resource "aws_codebuild_project" "arm64" {
 
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
+    image                       = "aws/codebuild/amazonlinux-aarch64-standard:3.0"
     type                        = "ARM_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
     privileged_mode             = true
@@ -176,9 +177,9 @@ resource "aws_codebuild_project" "arm64" {
 }
 
 resource "aws_codebuild_webhook" "arm64" {
-  for_each = toset(local.arm64_repos)
+  for_each = aws_codebuild_project.arm64
 
-  project_name = "${each.key}-arm64"
+  project_name = each.value["name"]
   build_type   = "BUILD"
   filter_group {
     filter {
