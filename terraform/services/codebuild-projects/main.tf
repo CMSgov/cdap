@@ -176,9 +176,9 @@ resource "aws_codebuild_project" "arm64" {
 }
 
 resource "aws_codebuild_webhook" "arm64" {
-  for_each = toset(local.arm64_repos)
+  for_each = aws_codebuild_project.arm64
 
-  project_name = "${each.key}-arm64"
+  project_name = each.value["name"]
   build_type   = "BUILD"
   filter_group {
     filter {
