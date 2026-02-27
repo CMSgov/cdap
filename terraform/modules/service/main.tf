@@ -35,7 +35,7 @@ resource "aws_ecs_task_definition" "this" {
 
   runtime_platform {
     operating_system_family = "LINUX"
-    cpu_architecture = var.cpu_architecture
+    cpu_architecture        = var.cpu_architecture
   }
 
   dynamic "volume" {
