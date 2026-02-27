@@ -33,6 +33,11 @@ resource "aws_ecs_task_definition" "this" {
     }
   ]))
 
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = var.cpu_architecture
+  }
+
   dynamic "volume" {
     for_each = var.volumes != null ? toset(var.volumes) : toset([])
 
