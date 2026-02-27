@@ -55,6 +55,12 @@ variable "image" {
   type        = string
 }
 
+variable "cpu_architecture" {
+  description = "The cpu architecture needed."
+  type        = string
+  default     = "X86_64"
+}
+
 variable "load_balancers" {
   description = "Load balancer(s) for use by the AWS ECS service."
   type = list(object({
