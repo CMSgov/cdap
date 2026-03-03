@@ -16,6 +16,27 @@ UPDATED=()
 SKIPPED=()
 IGNORED=()
 
+# These log groups are excluded because their values are set via Terraform.
+# Defined explicitly because some Terraform managed log groups do not have retention set via Terraform
+EXCLUSION_LIST=(
+  "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_job_data"
+  "/aws/kinesisfirehose/bfd-insights-bcda-prod-bfd-insights-get_stale_pending_jobs"
+  "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_active_acos"
+  "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_stale_cclf_imports"
+  "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_num_benes_per_aco"
+  "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_suppression_metrics"
+  "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_num_days_to_make_first_request"
+  "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_acos_with_expired_credentials"
+  "aws/kinesisfirehose/bfd-insights-bcda-prod-get_job_data"
+  "/aws/lambda/insights_data_sampler_prod"
+  "/aws/lambda/ab2d-prod-audit"
+  "/aws/lambda/ab2d-sandbox-audit"
+  "/aws/lambda/ab2d-test-audit"
+  "/aws/lambda/ab2d-dev-audit"
+  "/aws/events/ecs/dpc-prod-backend"
+  "/aws/events/ecs/dpc-prod-frontend"
+)
+
 if [[ "$DRY_RUN" == "true" ]]; then
   echo "#!/usr/bin/env bash" > "$PLAN_FILE"
   echo "set -euo pipefail" >> $PLAN_FILE
@@ -44,6 +65,13 @@ while IFS=$'\t' read -r NAME RETENTION; do
         echo "IGNORING (uncovered environment) ${LOWER_NAME}"
         continue
     fi
+
+    for excluded_group_name in "${EXCLUSION_LIST[@]}"; do
+      if [[ "$excluded_group_name" == "$LOWER_NAME" ]]; then
+        found=true
+        break # Exit the loop once a match is found
+      fi
+    done
 
     if echo "$LOWER_NAME" | grep -iq "cms-cloud"; then
         IGNORED_CMS+=("$NAME")
