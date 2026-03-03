@@ -15,6 +15,7 @@ IGNORED_CMS=()
 UPDATED=()
 SKIPPED=()
 IGNORED=()
+TF_MAINTAINED=()
 
 # These log groups are excluded because their values are set via Terraform.
 # Defined explicitly because some Terraform managed log groups do not have retention set via Terraform
@@ -68,7 +69,7 @@ while IFS=$'\t' read -r NAME RETENTION; do
 
     for excluded_group_name in "${EXCLUSION_LIST[@]}"; do
       if [[ "$excluded_group_name" == "$LOWER_NAME" ]]; then
-        found=true
+        TF_MAINTAINED+=("$NAME")
         break # Exit the loop once a match is found
       fi
     done
@@ -123,13 +124,16 @@ echo "ALL UPDATED: (${#UPDATED[@]})"
 printf " %s\n" "${UPDATED[@]:-}"
 
 echo "----------------------"
-echo "ALL SKIPPED: (${#SKIPPED[@]})"
+echo "MAINTAINED BY TF AND SKIPPED: (${#TF_MAINTAINED[@]})"
+printf " %s\n" "${TF_MAINTAINED[@]:-}"
+
+echo "----------------------"
+echo "ALL OTHERS SKIPPED: (${#SKIPPED[@]})"
 printf " %s\n" "${SKIPPED[@]:-}"
 
 echo "----------------------"
 echo "CMS MANAGED AND IGNORED: (${#IGNORED_CMS[@]})"
 printf " %s\n" "${IGNORED_CMS[@]:-}"
-
 
 echo "----------------------"
 echo "ALL IGNORED: (${#IGNORED[@]})"
