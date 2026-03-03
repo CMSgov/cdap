@@ -35,7 +35,7 @@ module "vpc" {
 module "subnets" {
   source = "../../modules/subnets"
 
-  vpc_id = module.vpc.id
+  vpc_id = var.app == "bcda" ? module.vpc.id : module.standards.cdap_vpc.id
   use    = "private"
 }
 
