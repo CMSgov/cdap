@@ -1,5 +1,8 @@
 locals {
-  x86_repos = [
+  arm64_image = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
+  x86_image   = "aws/codebuild/amazonlinux-x86_64-standard:5.0"
+
+  repos = [
     "ab2d",
     "ab2d-website",
     "bcda-app",
@@ -10,17 +13,13 @@ locals {
     "dpc-ops",
     "dpc-static-site",
   ]
-
-  arm64_repos = [
-    "bcda-app",
-  ]
 }
 
 module "standards" {
   source = "../../modules/standards"
 
   app         = "cdap"
-  env         = "mgmt"
+  env         = var.app == "bcda" ? "mgmt" : var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/codebuild-projects"
   service     = "codebuild-projects"
   providers   = { aws = aws, aws.secondary = aws.secondary }
@@ -30,7 +29,7 @@ module "vpc" {
   source = "../../modules/vpc"
 
   app = "cdap"
-  env = "mgmt"
+  env = var.app == "bcda" ? "mgmt" : var.env
 }
 
 module "subnets" {
@@ -64,7 +63,7 @@ resource "aws_iam_role_policy_attachment" "ssm_read_only" {
 }
 
 resource "aws_codebuild_project" "this" {
-  for_each = toset(local.x86_repos)
+  for_each = toset(local.repos)
 
   name         = each.key
   description  = "Codebuild project for ${each.key}"
@@ -76,14 +75,14 @@ resource "aws_codebuild_project" "this" {
 
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux-x86_64-standard:5.0"
-    type                        = "LINUX_CONTAINER"
+    image                       = var.app == "bcda" ? local.x86_image : local.arm64_image
+    type                        = var.app == "bcda" ? "LINUX_CONTAINER" : "ARM_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
     privileged_mode             = true
   }
 
   vpc_config {
-    vpc_id  = module.vpc.id
+    vpc_id  = var.app == "bcda" ? module.vpc.id : module.standards.cdap_vpc.id
     subnets = module.subnets.ids
     security_group_ids = [
       data.aws_security_group.security_tools.id,
@@ -116,7 +115,7 @@ resource "aws_codebuild_project" "this" {
 }
 
 resource "aws_codebuild_webhook" "this" {
-  for_each = toset(local.x86_repos)
+  for_each = toset(local.repos)
 
   project_name = each.key
   build_type   = "BUILD"
@@ -128,62 +127,3 @@ resource "aws_codebuild_webhook" "this" {
   }
 }
 
-
-# ARM64 Configurations
-resource "aws_codebuild_project" "arm64" {
-  for_each = toset(local.arm64_repos)
-
-  name         = "${each.key}-arm64"
-  description  = "Codebuild project for ${each.key} using arm64"
-  service_role = aws_iam_role.codebuild.arn
-
-  artifacts {
-    type = "NO_ARTIFACTS"
-  }
-
-  environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
-    type                        = "ARM_CONTAINER"
-    image_pull_credentials_type = "CODEBUILD"
-    privileged_mode             = true
-  }
-
-  vpc_config {
-    vpc_id  = module.vpc.id
-    subnets = module.subnets.ids
-    security_group_ids = [
-      data.aws_security_group.security_tools.id,
-      data.aws_security_group.security_validation_egress.id
-    ]
-  }
-
-  logs_config {
-    cloudwatch_logs {
-      status = "ENABLED"
-    }
-  }
-
-  source {
-    type            = "GITHUB"
-    location        = "https://github.com/CMSgov/${each.key}"
-    git_clone_depth = 1
-
-    git_submodules_config {
-      fetch_submodules = false
-    }
-  }
-}
-
-resource "aws_codebuild_webhook" "arm64" {
-  for_each = toset(local.arm64_repos)
-
-  project_name = "${each.key}-arm64"
-  build_type   = "BUILD"
-  filter_group {
-    filter {
-      type    = "EVENT"
-      pattern = "WORKFLOW_JOB_QUEUED"
-    }
-  }
-}
