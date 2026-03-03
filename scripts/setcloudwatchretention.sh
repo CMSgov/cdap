@@ -62,14 +62,14 @@ while IFS=$'\t' read -r NAME RETENTION; do
     if [[ "$LOWER_NAME" == *dev* ]] || \
       [[ "$LOWER_NAME" == *test* ]] || \
       [[ "$LOWER_NAME" == *sandbox* ]]; then
-        IGNORED+=("$NAME")
+        IGNORED+=("$NAME $RETENTION")
         echo "IGNORING (uncovered environment) ${LOWER_NAME}"
         continue
     fi
 
     for excluded_group_name in "${EXCLUSION_LIST[@]}"; do
       if [[ "$excluded_group_name" == "$LOWER_NAME" ]]; then
-        TF_MAINTAINED+=("$NAME")
+        TF_MAINTAINED+=("$NAME $RETENTION")
         break # Exit the loop once a match is found
       fi
     done
@@ -85,7 +85,7 @@ while IFS=$'\t' read -r NAME RETENTION; do
     fi
 
     if [[ "$RETENTION" -ge "$RETENTION_DAYS" ]]; then
-        SKIPPED+=("$NAME")
+        SKIPPED+=("$NAME $RETENTION")
         echo "SKIPPING (retention sufficient) ${LOWER_NAME} "
         continue
     fi
