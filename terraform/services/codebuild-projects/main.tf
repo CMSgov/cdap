@@ -1,6 +1,7 @@
 locals {
   arm64_image = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
   x86_image   = "aws/codebuild/amazonlinux-x86_64-standard:5.0"
+  account_env = var.app == "cdap" ? (var.env == "prod" || var.env == "sandbox" ? "prod" : "non-prod") : "prod-cdap-mgmt"
 
   repos = [
     "ab2d",
@@ -37,6 +38,24 @@ module "subnets" {
 
   vpc_id = var.app == "bcda" ? module.vpc.id : module.standards.cdap_vpc.id
   use    = "private"
+}
+
+resource "aws_security_group" "codebuild_project" {
+  for_each = toset(local.repos)
+
+  name = "${each.key}-codebuild-project"
+
+  description = "For the ${var.account_env} ${each.key}"
+  vpc_id      = module.vpc.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
+  security_group_id = aws_security_group.codebuild_project.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 0
+  ip_protocol = "tcp"
+  to_port     = 0
 }
 
 resource "aws_iam_role" "codebuild" {
@@ -86,7 +105,7 @@ resource "aws_codebuild_project" "this" {
     subnets = module.subnets.ids
     security_group_ids = [
       data.aws_security_group.security_tools.id,
-      data.aws_security_group.security_validation_egress.id
+      aws_security_group.codebuild_project.id
     ]
   }
 
