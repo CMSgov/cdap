@@ -36,17 +36,21 @@ def parse_image_ref(image_uri):
     return last_component, 'latest'
 
 
-def get_images_to_delete(images, protected_refs):
+def get_images_to_delete(client, repo_name, protected_refs):
     """
-    Returns images eligible for deletion:
+    Fetches all images for repo_name and returns those eligible for deletion:
     1. Not referenced in protected_refs,
     2. Outside the KEEP_COUNT newest
     3. Older than MAX_AGE_DAYS.
     """
     cutoff = datetime.now(timezone.utc) - timedelta(days=MAX_AGE_DAYS)
 
-    candidates = []
+    images = []
+    paginator = client.get_paginator('describe_images')
+    for page in paginator.paginate(repositoryName=repo_name):
+        images.extend(page['imageDetails'])
 
+    candidates = []
     for img in images:
         digest = img['imageDigest']
         tags = img.get('imageTags', [])
@@ -89,14 +93,6 @@ def get_protected_image_refs(client):
     return refs
 
 
-def get_all_images(client, repo_name):
-    images = []
-    paginator = client.get_paginator('describe_images')
-    for page in paginator.paginate(repositoryName=repo_name):
-        images.extend(page['imageDetails'])
-    return images
-
-
 def delete_images(client, repo_name, images):
     image_ids = [{'imageDigest': img['imageDigest']} for img in images]
     for i in range(0, len(image_ids), 100):
@@ -123,8 +119,7 @@ def lambda_handler(event, context):
 
     for repo in repos:
         try:
-            images = get_all_images(ecr_client, repo)
-            to_delete = get_images_to_delete(images, protected_refs)
+            to_delete = get_images_to_delete(ecr_client, repo, protected_refs)
 
             if len(to_delete):
                 delete_images(ecr_client, repo, to_delete)

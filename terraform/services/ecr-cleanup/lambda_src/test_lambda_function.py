@@ -34,36 +34,44 @@ def make_image(digest, tags, days_ago):
     }
 
 
+def _make_ecr_client_mock(images):
+    mock_ecr = MagicMock()
+    mock_paginator = MagicMock()
+    mock_paginator.paginate.return_value = iter([{'imageDetails': images}])
+    mock_ecr.get_paginator.return_value = mock_paginator
+    return mock_ecr
+
+
 def test_protected_image_is_never_deleted():
     images = [make_image('sha256:protected', ['v1.0'], days_ago=60)]
-    assert lambda_function.get_images_to_delete(images, {'v1.0'}) == []
+    assert lambda_function.get_images_to_delete(_make_ecr_client_mock(images), 'dpc-attribution', {'v1.0'}) == []
 
 
 def test_protected_by_digest():
     images = [make_image('sha256:abc', [], days_ago=60)]
-    assert lambda_function.get_images_to_delete(images, {'sha256:abc'}) == []
+    assert lambda_function.get_images_to_delete(_make_ecr_client_mock(images), 'dpc-attribution', {'sha256:abc'}) == []
 
 
 def test_keep_count_respected():
     images = [make_image(f'sha256:{i}', [f'v{i}'], days_ago=i * 5) for i in range(1, 8)]
-    assert len(lambda_function.get_images_to_delete(images, set())) <= 2
+    assert len(lambda_function.get_images_to_delete(_make_ecr_client_mock(images), 'dpc-attribution', set())) <= 2
 
 
-def test_recent_images_beyond_keep_count_are_skipped():
+def test_recent_images_still_kept():
     images = [make_image(f'sha256:{i}', [f'v{i}'], days_ago=i) for i in range(1, 8)]
-    assert lambda_function.get_images_to_delete(images, set()) == []
+    assert lambda_function.get_images_to_delete(_make_ecr_client_mock(images), 'dpc-attribution', set()) == []
 
 
-def test_old_images_beyond_keep_count_are_deleted():
+def test_old_images_deleted():
     keep = [make_image(f'sha256:keep{i}', [f'new{i}'], days_ago=i) for i in range(1, 6)]
     old = [make_image('sha256:old1', ['old1'], days_ago=45)]
-    to_delete = lambda_function.get_images_to_delete(keep + old, set())
+    to_delete = lambda_function.get_images_to_delete(_make_ecr_client_mock(keep + old), 'dpc-attribution', set())
     assert len(to_delete) == 1
     assert to_delete[0]['imageDigest'] == 'sha256:old1'
 
 
-def test_empty_repo():
-    assert lambda_function.get_images_to_delete([], set()) == []
+def test_no_images_for_repo():
+    assert lambda_function.get_images_to_delete(_make_ecr_client_mock([]), 'dpc-attribution', set()) == []
 
 
 def test_get_repo_list():
