@@ -76,8 +76,9 @@ def test_no_images_for_repo():
 
 def test_get_repo_list():
     mock_ssm = MagicMock()
-    mock_ssm.get_parameter.return_value = {'Parameter': {'Value': 'dpc-attribution,dpc-api'}}
+    mock_ssm.get_parameter.return_value = {'Parameter': {'Value': '["dpc-attribution", "dpc-api"]'}}
     assert lambda_function.get_repo_list(mock_ssm, '/test/param') == ['dpc-attribution', 'dpc-api']
+    mock_ssm.get_parameter.assert_called_once_with(Name='/test/param', WithDecryption=True)
 
 
 def _make_ecs_mock(task_def_arns, container_images):

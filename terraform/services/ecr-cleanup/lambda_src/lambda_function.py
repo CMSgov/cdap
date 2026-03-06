@@ -66,11 +66,12 @@ def get_images_to_delete(client, repo_name, protected_refs):
 
 def get_repo_list(client, ssm_param_name):
     """
-    Read an SSM StringList parameter and return a list of ECR repository names.
+    Read an SSM SecureString parameter and return a list of ECR repository names.
+    Note: this uses SecureString to maintain compatible with existing SOPS mechanism for managing parameters.
     """
-    response = client.get_parameter(Name=ssm_param_name)
+    response = client.get_parameter(Name=ssm_param_name, WithDecryption=True)
     value = response['Parameter']['Value']
-    return [r.strip() for r in value.split(',') if r.strip()]
+    return json.loads(value)
 
 
 def get_protected_image_refs(client):
