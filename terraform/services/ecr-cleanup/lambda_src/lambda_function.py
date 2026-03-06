@@ -135,7 +135,7 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
 
     protected_refs = get_protected_image_refs(ecs_client)
     log({'msg': 'Built protected image set from ECS task definitions',
-         'repos': list(opted_in)})
+         'repos': list(protected_refs)})
 
     for repo in all_repos:
         try:
