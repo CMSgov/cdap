@@ -6,7 +6,8 @@ data "aws_security_group" "security_tools" {
 }
 
 data "aws_security_group" "security_validation_egress" {
-  vpc_id = var.app == "bcda" ? module.vpc.id : module.standards.cdap_vpc.id
+  count  = var.app == "bcda" ? 1 : 0
+  vpc_id = module.vpc.id
   name   = "cms-cloud-security-validation-egress"
 }
 

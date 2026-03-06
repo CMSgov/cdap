@@ -1,7 +1,7 @@
 locals {
   arm64_image               = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
   x86_image                 = "aws/codebuild/amazonlinux-x86_64-standard:5.0"
-  account_env_suffix        = var.app == "cdap" ? (var.env == "prod" || var.env == "sandbox" ? "-prod" : "-non-prod") : ""
+  account_env_suffix        = var.app == "cdap" ? (var.env == "prod" || var.env == "sandbox" ? "prod" : "non-prod") : ""
   arm64_changeover_projects = var.app == "bcda" ? ["bcda-app", "bcda-ssas-app"] : []
 
   repos = [
@@ -14,11 +14,6 @@ locals {
     "dpc-app",
     "dpc-ops",
     "dpc-static-site",
-  ]
-
-  arm64_evaluation_repos = [
-    "bcda-app",
-    "bcda-ssas-app"
   ]
 }
 
@@ -47,16 +42,17 @@ module "subnets" {
 }
 
 resource "aws_security_group" "codebuild_project" {
-  for_each = toset(local.repos)
+  for_each = var.app == "cdap" ? toset(local.repos) : toset([])
 
-  name = "${each.key}-codebuild-project"
+  name = "${each.key}-${local.account_env_suffix}-codebuild-project"
 
   description = "For the ${local.account_env_suffix} ${each.key}"
   vpc_id      = module.vpc.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
-  for_each          = toset(local.repos)
+  for_each = aws_security_group.codebuild_project
+
   security_group_id = aws_security_group.codebuild_project[each.key].id
 
   cidr_ipv4   = "0.0.0.0/0"
@@ -89,9 +85,9 @@ resource "aws_iam_role_policy_attachment" "ssm_read_only" {
 }
 
 resource "aws_codebuild_project" "this" {
-  for_each = toset(local.repos)
+  for_each = var.app == "bcda" ? toset(local.repos) : toset([])
 
-  name         = "${each.key}${local.account_env_suffix}"
+  name         = each.key
   description  = "Codebuild project for ${each.key}"
   service_role = aws_iam_role.codebuild.arn
 
@@ -101,16 +97,19 @@ resource "aws_codebuild_project" "this" {
 
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = var.app == "bcda" ? local.x86_image : local.arm64_image
-    type                        = var.app == "bcda" ? "LINUX_CONTAINER" : "ARM_CONTAINER"
+    image                       = local.x86_image
+    type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
     privileged_mode             = true
   }
 
   vpc_config {
-    vpc_id             = var.app == "bcda" ? module.vpc.id : module.standards.cdap_vpc.id
-    subnets            = module.subnets.ids
-    security_group_ids = local.codebuild_project_security_group_ids
+    vpc_id  = module.vpc.id
+    subnets = module.subnets.ids
+    security_group_ids = [
+      data.aws_security_group.security_tools.id,
+      data.aws_security_group.security_validation_egress[0].id
+    ]
   }
 
   logs_config {
@@ -138,7 +137,7 @@ resource "aws_codebuild_project" "this" {
 }
 
 resource "aws_codebuild_webhook" "this" {
-  for_each = toset(local.repos)
+  for_each = aws_codebuild_project.this
 
   project_name = "${each.key}${local.account_env_suffix}"
   build_type   = "BUILD"
@@ -150,12 +149,11 @@ resource "aws_codebuild_webhook" "this" {
   }
 }
 
-
 # ARM64 Configurations that were established before migrating towards a cdap-test and cdap-prod managed codebuild project
-# Moving from these will require code change in bcda-app and bcda-ssas-app 
-      
+# Moving from these will require code change in bcda-app and bcda-ssas-app
+
 resource "aws_codebuild_project" "arm64" {
-  for_each = toset(local.arm64_evaluation_repos)
+  for_each = var.app == "bcda" ? toset(local.arm64_changeover_projects) : toset([])
 
   name         = "${each.key}-arm64"
   description  = "Codebuild project for ${each.key} using arm64"
@@ -178,7 +176,7 @@ resource "aws_codebuild_project" "arm64" {
     subnets = module.subnets.ids
     security_group_ids = [
       data.aws_security_group.security_tools.id,
-      data.aws_security_group.security_validation_egress.id
+      data.aws_security_group.security_validation_egress[0].id
     ]
   }
 
@@ -211,3 +209,73 @@ resource "aws_codebuild_webhook" "arm64" {
     }
   }
 }
+
+
+## Create cdap-test and cdap-prod resources separately for direct deprecation of old resources by block deletion without more code change
+
+resource "aws_codebuild_project" "per_repo" {
+  for_each = var.app == "cdap" ? toset(local.repos) : toset([])
+
+  name         = "${each.key}-${local.account_env_suffix}"
+  description  = "Codebuild project for ${each.key}"
+  service_role = aws_iam_role.codebuild.arn
+
+  artifacts {
+    type = "NO_ARTIFACTS"
+  }
+
+  environment {
+    compute_type                = "BUILD_GENERAL1_SMALL"
+    image                       = local.arm64_image
+    type                        = "ARM_CONTAINER"
+    image_pull_credentials_type = "CODEBUILD"
+    privileged_mode             = true
+  }
+
+  vpc_config {
+    vpc_id  = module.standards.cdap_vpc.id
+    subnets = module.subnets.ids
+    security_group_ids = [
+      data.aws_security_group.security_tools.id,
+      aws_security_group.codebuild_project[each.key].id
+    ]
+  }
+
+  logs_config {
+    cloudwatch_logs {
+      status = "ENABLED"
+    }
+  }
+
+  source {
+    type            = "GITHUB"
+    location        = "https://github.com/CMSgov/${each.key}"
+    git_clone_depth = 1
+
+    git_submodules_config {
+      fetch_submodules = false
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [
+      build_timeout,
+      environment[0].compute_type
+    ]
+  }
+}
+
+resource "aws_codebuild_webhook" "per_repo" {
+  for_each = aws_codebuild_project.per_repo
+
+  project_name = "${each.key}-${local.account_env_suffix}"
+  build_type   = "BUILD"
+  filter_group {
+    filter {
+      type    = "EVENT"
+      pattern = "WORKFLOW_JOB_QUEUED"
+    }
+  }
+}
+
+
