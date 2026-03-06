@@ -15,6 +15,11 @@ locals {
     "dpc-ops",
     "dpc-static-site",
   ]
+
+  arm64_evaluation_repos = [
+    "bcda-app",
+    "bcda-ssas-app"
+  ]
 }
 
 module "standards" {
@@ -145,13 +150,15 @@ resource "aws_codebuild_webhook" "this" {
   }
 }
 
-### Remove upon full changeover to prod and non-prod codebuild runners
 
-resource "aws_codebuild_project" "bcda_changeover_webhook" {
-  for_each = toset(local.arm64_changeover_projects)
+# ARM64 Configurations that were established before migrating towards a cdap-test and cdap-prod managed codebuild project
+# Moving from these will require code change in bcda-app and bcda-ssas-app 
+      
+resource "aws_codebuild_project" "arm64" {
+  for_each = toset(local.arm64_evaluation_repos)
 
   name         = "${each.key}-arm64"
-  description  = "Codebuild project for ${each.key}"
+  description  = "Codebuild project for ${each.key} using arm64"
   service_role = aws_iam_role.codebuild.arn
 
   artifacts {
@@ -160,7 +167,7 @@ resource "aws_codebuild_project" "bcda_changeover_webhook" {
 
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = local.arm64_image
+    image                       = "aws/codebuild/amazonlinux-aarch64-standard:3.0"
     type                        = "ARM_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
     privileged_mode             = true
@@ -171,7 +178,7 @@ resource "aws_codebuild_project" "bcda_changeover_webhook" {
     subnets = module.subnets.ids
     security_group_ids = [
       data.aws_security_group.security_tools.id,
-      aws_security_group.codebuild_project[each.key].id
+      data.aws_security_group.security_validation_egress.id
     ]
   }
 
@@ -190,19 +197,12 @@ resource "aws_codebuild_project" "bcda_changeover_webhook" {
       fetch_submodules = false
     }
   }
-
-  lifecycle {
-    ignore_changes = [
-      build_timeout,
-      environment[0].compute_type
-    ]
-  }
 }
 
-resource "aws_codebuild_webhook" "bcda_changeover_webhook" {
-  for_each = toset(local.arm64_changeover_projects)
+resource "aws_codebuild_webhook" "arm64" {
+  for_each = aws_codebuild_project.arm64
 
-  project_name = "${each.key}-arm64"
+  project_name = each.value["name"]
   build_type   = "BUILD"
   filter_group {
     filter {
@@ -211,4 +211,3 @@ resource "aws_codebuild_webhook" "bcda_changeover_webhook" {
     }
   }
 }
-
