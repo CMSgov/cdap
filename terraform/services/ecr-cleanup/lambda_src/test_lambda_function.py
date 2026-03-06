@@ -125,9 +125,18 @@ def _setup_handler_mocks(mock_ssm, mock_ecs, mock_ecr, repos=None,
             for img in task_images
         ]
 
-    ecr_paginator = MagicMock()
-    ecr_paginator.paginate.return_value = iter([{'imageDetails': ecr_images or []}])
-    mock_ecr.get_paginator.return_value = ecr_paginator
+    opted_in = repos or ['dpc-attribution']
+    repos_page = [{'repositoryName': r} for r in opted_in]
+
+    def ecr_paginator_side_effect(operation):
+        pager = MagicMock()
+        if operation == 'describe_repositories':
+            pager.paginate.return_value = iter([{'repositories': repos_page}])
+        else:
+            pager.paginate.return_value = iter([{'imageDetails': ecr_images or []}])
+        return pager
+
+    mock_ecr.get_paginator.side_effect = ecr_paginator_side_effect
 
 
 def test_lambda_handler_deletes_old_unprotected_images(mock_boto3_clients):

@@ -74,6 +74,17 @@ def get_repo_list(client, ssm_param_name):
     return json.loads(value)
 
 
+def get_all_repos(client, app):  # pylint: disable=missing-function-docstring
+    repos = set()
+    paginator = client.get_paginator('describe_repositories')
+    for page in paginator.paginate():
+        for repo in page['repositories']:
+            name = repo['repositoryName']
+            if name.startswith(f'{app}-'):
+                repos.add(name)
+    return repos
+
+
 def get_protected_image_refs(client):
     """
     Return a set of all image tags and digests referenced by any ACTIVE ECS task definition.
@@ -100,6 +111,10 @@ def delete_images(client, repo_name, images):  # pylint: disable=missing-functio
         batch = image_ids[i:i + 100]
         client.batch_delete_image(repositoryName=repo_name, imageIds=batch)
 
+def log_images_for_deletion(repo, images):  # pylint: disable=missing-function-docstring
+    for img in images:
+        log({'msg': 'Would delete image (not opted in)', 'repo': repo,
+             'digest': img['imageDigest']})
 
 def lambda_handler(event, context):  # pylint: disable=unused-argument
     """
@@ -107,24 +122,30 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
     Reads configured repos from SSM, which are opted in for lambda to clean up.
     Reviews active ECS task definitions, then deletes eligible images that
     are old enough and no longer running.
+    For repos associated with the app but not opted in, logs images that would
+    be deleted without taking action.
     """
     ssm_param = f"/{os.environ['APP']}/{os.environ['ENV']}/ecr-cleanup/repos"
 
-    repos = get_repo_list(ssm_client, ssm_param)
-    if not repos:
-        log({'msg': 'No repositories configured, nothing to do'})
-        return
+    opted_in = set(get_repo_list(ssm_client, ssm_param))
+    all_repos = get_all_repos(ecr_client, os.environ['APP'])
+    log({'msg': 'Collected repository list for app',
+         'app': os.environ['APP'],
+         'repos': list(all_repos)})
 
-    log({'msg': 'Building protected image set from ECS task definitions', 'repos': repos})
     protected_refs = get_protected_image_refs(ecs_client)
+    log({'msg': 'Built protected image set from ECS task definitions',
+         'repos': list(opted_in)})
 
-    for repo in repos:
+    for repo in all_repos:
         try:
             to_delete = get_images_to_delete(ecr_client, repo, protected_refs)
 
             if len(to_delete):
-                delete_images(ecr_client, repo, to_delete)
-
-            log({'msg': 'Cleanup complete', 'repo': repo, 'deleted': len(to_delete)})
+                if repo in opted_in:
+                    delete_images(ecr_client, repo, to_delete)
+                else:
+                    log_images_for_deletion(repo, to_delete)
+            log({'msg': f'Cleanup complete for repo: {repo}'})
         except ClientError as e:
             log({'msg': f'Error processing repo {repo}: {e}', 'repo': repo})

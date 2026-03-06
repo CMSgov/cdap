@@ -10,6 +10,7 @@ data "aws_iam_policy_document" "ecr_cleanup" {
     sid = "ECRAccess"
     actions = [
       "ecr:DescribeImages",
+      "ecr:DescribeRepositories",
       "ecr:BatchDeleteImage",
     ]
     resources = [
