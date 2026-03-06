@@ -16,12 +16,12 @@ ecs_client = boto3.client('ecs')
 ecr_client = boto3.client('ecr')
 
 
-def log(data):
+def log(data):  # pylint: disable=missing-function-docstring
     data['time'] = datetime.now(timezone.utc).isoformat()
     print(json.dumps(data, default=str))
 
 
-def parse_image_ref(image_uri):
+def parse_image_ref(image_uri):  # pylint: disable=missing-function-docstring
     if '@' in image_uri:
         repo_part, digest = image_uri.split('@', 1)
         repo_name = repo_part.split('/')[-1]
@@ -67,7 +67,7 @@ def get_images_to_delete(client, repo_name, protected_refs):
 def get_repo_list(client, ssm_param_name):
     """
     Read an SSM SecureString parameter and return a list of ECR repository names.
-    Note: this uses SecureString to maintain compatible with existing SOPS mechanism for managing parameters.
+    Note: this uses SecureString to maintain compatibility with the existing SOPS mechanism.
     """
     response = client.get_parameter(Name=ssm_param_name, WithDecryption=True)
     value = response['Parameter']['Value']
@@ -94,21 +94,21 @@ def get_protected_image_refs(client):
     return refs
 
 
-def delete_images(client, repo_name, images):
+def delete_images(client, repo_name, images):  # pylint: disable=missing-function-docstring
     image_ids = [{'imageDigest': img['imageDigest']} for img in images]
     for i in range(0, len(image_ids), 100):
         batch = image_ids[i:i + 100]
         client.batch_delete_image(repositoryName=repo_name, imageIds=batch)
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, context):  # pylint: disable=unused-argument
     """
     Main entry point for lambda function.
     Reads configured repos from SSM, which are opted in for lambda to clean up.
     Reviews active ECS task definitions, then deletes eligible images that
     are old enough and no longer running.
     """
-    ssm_param = "/{}/{}/ecr-cleanup/repos".format(os.environ['APP'], os.environ['ENV'])
+    ssm_param = f"/{os.environ['APP']}/{os.environ['ENV']}/ecr-cleanup/repos"
 
     repos = get_repo_list(ssm_client, ssm_param)
     if not repos:

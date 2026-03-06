@@ -111,9 +111,10 @@ def mock_boto3_clients():
         yield mock_ssm, mock_ecs, mock_ecr
 
 
-def _setup_handler_mocks(mock_ssm, mock_ecs, mock_ecr, repo='dpc-attribution',
+def _setup_handler_mocks(mock_ssm, mock_ecs, mock_ecr, repos=None,
                          task_def_arns=None, task_images=None, ecr_images=None):
-    mock_ssm.get_parameter.return_value = {'Parameter': {'Value': repo}}
+    import json
+    mock_ssm.get_parameter.return_value = {'Parameter': {'Value': json.dumps(repos or ['dpc-attribution'])}}
 
     ecs_paginator = MagicMock()
     ecs_paginator.paginate.return_value = iter([{'taskDefinitionArns': task_def_arns or []}])
