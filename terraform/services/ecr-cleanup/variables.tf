@@ -15,3 +15,8 @@ variable "env" {
     error_message = "Valid values for env are dev, test, sandbox, prod."
   }
 }
+
+variable "repo_list" {
+  description = "List of ECR repository names to clean up nightly"
+  type        = list(string)
+}

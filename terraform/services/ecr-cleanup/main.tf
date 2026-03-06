@@ -37,13 +37,9 @@ data "aws_iam_policy_document" "ecr_cleanup" {
 
 resource "aws_ssm_parameter" "repo_list" {
   name        = "/${var.app}/${var.env}/ecr-cleanup/repos"
-  type        = "StringList"
+  type        = "SecureString"
   description = "Comma-separated list of ECR repository names to clean up"
-  value       = "placeholder"
-
-  lifecycle {
-    ignore_changes = [value]
-  }
+  value       = join(",", var.repo_list)
 }
 
 module "ecr_cleanup_function" {
