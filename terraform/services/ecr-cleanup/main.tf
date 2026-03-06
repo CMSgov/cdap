@@ -39,7 +39,7 @@ resource "aws_ssm_parameter" "repo_list" {
   name        = "/${var.app}/${var.env}/ecr-cleanup/repos"
   type        = "SecureString"
   description = "Comma-separated list of ECR repository names to clean up"
-  value       = join(",", var.repo_list)
+  value       = jsonencode(var.repo_list)
 }
 
 data "archive_file" "ecr_cleanup" {
@@ -71,7 +71,6 @@ module "ecr_cleanup_function" {
     ENV = var.env
   }
 
-  source_code_version = aws_s3_object.ecr_cleanup_zip.version_id
 }
 
 resource "aws_s3_object" "ecr_cleanup_zip" {
@@ -79,4 +78,16 @@ resource "aws_s3_object" "ecr_cleanup_zip" {
   key    = "function.zip"
   source = data.archive_file.ecr_cleanup.output_path
   etag   = data.archive_file.ecr_cleanup.output_md5
+}
+
+resource "null_resource" "deploy_lambda" {
+  triggers = {
+    zip_hash = data.archive_file.ecr_cleanup.output_base64sha256
+  }
+
+  provisioner "local-exec" {
+    command = "aws lambda update-function-code --function-name ${module.ecr_cleanup_function.name} --s3-bucket ${module.ecr_cleanup_function.zip_bucket} --s3-key function.zip --region ${data.aws_region.current.name}"
+  }
+
+  depends_on = [aws_s3_object.ecr_cleanup_zip]
 }
