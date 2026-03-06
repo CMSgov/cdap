@@ -1,11 +1,12 @@
 data "aws_caller_identity" "current" {}
 
 data "aws_security_group" "security_tools" {
-  vpc_id = module.vpc.id
+  vpc_id = var.app == "bcda" ? module.vpc.id : module.standards.cdap_vpc.id
   name   = "cmscloud-security-tools"
 }
 
 data "aws_security_group" "security_validation_egress" {
+  count  = var.app == "bcda" ? 1 : 0
   vpc_id = module.vpc.id
   name   = "cms-cloud-security-validation-egress"
 }
