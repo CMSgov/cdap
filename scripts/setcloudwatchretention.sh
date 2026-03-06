@@ -59,13 +59,7 @@ while IFS=$'\t' read -r NAME RETENTION; do
     LOWER_NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
     echo "Evaluating: $LOWER_NAME"
 
-    if [[ "$LOWER_NAME" == *dev* ]] || \
-      [[ "$LOWER_NAME" == *test* ]] || \
-      [[ "$LOWER_NAME" == *sandbox* ]]; then
-        IGNORED+=("$NAME $RETENTION")
-        echo "IGNORING (uncovered environment) ${LOWER_NAME}"
-        continue
-    fi
+    EXCLUDE=false
 
     for excluded_group_name in "${EXCLUSION_LIST[@]}"; do
       if [[ "$excluded_group_name" == "$LOWER_NAME" ]]; then
@@ -76,6 +70,14 @@ while IFS=$'\t' read -r NAME RETENTION; do
 
     if [[ "$EXCLUDE" == true ]] ; then
         TF_MAINTAINED+=("$NAME $RETENTION")
+        continue
+    fi
+
+    if [[ "$LOWER_NAME" == *dev* ]] || \
+      [[ "$LOWER_NAME" == *test* ]] || \
+      [[ "$LOWER_NAME" == *sandbox* ]]; then
+        IGNORED+=("$NAME $RETENTION")
+        echo "IGNORING (uncovered environment) ${LOWER_NAME}"
         continue
     fi
 
