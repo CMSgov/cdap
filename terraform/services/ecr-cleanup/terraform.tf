@@ -1,3 +1,5 @@
+provider "archive" {}
+
 provider "aws" {
   default_tags {
     tags = {

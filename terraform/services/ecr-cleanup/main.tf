@@ -42,6 +42,12 @@ resource "aws_ssm_parameter" "repo_list" {
   value       = join(",", var.repo_list)
 }
 
+data "archive_file" "ecr_cleanup" {
+  type        = "zip"
+  source_file = "${path.module}/lambda_src/lambda_function.py"
+  output_path = "${path.module}/function.zip"
+}
+
 module "ecr_cleanup_function" {
   source = "github.com/CMSgov/cdap/terraform/modules/function?ref=b177921621c97d02dc4a21f830e4532147aa0749"
 
@@ -64,4 +70,13 @@ module "ecr_cleanup_function" {
     APP = var.app
     ENV = var.env
   }
+
+  source_code_version = aws_s3_object.ecr_cleanup_zip.version_id
+}
+
+resource "aws_s3_object" "ecr_cleanup_zip" {
+  bucket = module.ecr_cleanup_function.zip_bucket
+  key    = "function.zip"
+  source = data.archive_file.ecr_cleanup.output_path
+  etag   = data.archive_file.ecr_cleanup.output_md5
 }
