@@ -69,10 +69,15 @@ while IFS=$'\t' read -r NAME RETENTION; do
 
     for excluded_group_name in "${EXCLUSION_LIST[@]}"; do
       if [[ "$excluded_group_name" == "$LOWER_NAME" ]]; then
-        TF_MAINTAINED+=("$NAME $RETENTION")
+        EXCLUDE=true
         break # Exit the loop once a match is found
       fi
     done
+
+    if [[ "$EXCLUDE" == true ]] ; then
+        TF_MAINTAINED+=("$NAME $RETENTION")
+        continue
+    fi
 
     if echo "$LOWER_NAME" | grep -iq "cms-cloud"; then
         IGNORED_CMS+=("$NAME")
