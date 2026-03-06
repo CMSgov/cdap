@@ -5,6 +5,11 @@ data "aws_security_group" "security_tools" {
   name   = "cmscloud-security-tools"
 }
 
+data "aws_security_group" "security_validation_egress" {
+  vpc_id = var.app == "bcda" ? module.vpc.id : module.standards.cdap_vpc.id
+  name   = "cms-cloud-security-validation-egress"
+}
+
 data "aws_iam_policy" "developer_boundary_policy" {
   name = "developer-boundary-policy"
 }
