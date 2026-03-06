@@ -19,4 +19,5 @@ variable "env" {
 variable "repo_list" {
   description = "List of ECR repository names to clean up nightly"
   type        = list(string)
+  default     = []
 }
