@@ -1,5 +1,5 @@
 """
-Cleans up old ECR images while protecting images referenced by active ECS task definitions.
+Cleans up old ECR images while protecting images referenced by currently running ECS tasks.
 """
 
 from datetime import datetime, timedelta, timezone
@@ -10,18 +10,22 @@ from botocore.exceptions import ClientError
 
 KEEP_COUNT = 5
 MAX_AGE_DAYS = 30
+AWS_BATCH_SIZE = 100
 
 ssm_client = boto3.client('ssm')
 ecs_client = boto3.client('ecs')
 ecr_client = boto3.client('ecr')
 
 
-def log(data):  # pylint: disable=missing-function-docstring
+def log(data):
+    """Adds a UTC timestamp to data and prints it as a JSON log line."""
     data['time'] = datetime.now(timezone.utc).isoformat()
     print(json.dumps(data, default=str))
 
 
-def parse_image_ref(image_uri):  # pylint: disable=missing-function-docstring
+def parse_image_ref(image_uri):
+    """Parses an ECR image URI and returns a (repo_name, ref) tuple
+    where ref is a digest, tag, or 'latest'."""
     if '@' in image_uri:
         repo_part, digest = image_uri.split('@', 1)
         repo_name = repo_part.split('/')[-1]
@@ -74,7 +78,8 @@ def get_repo_list(client, ssm_param_name):
     return json.loads(value)
 
 
-def get_all_repos(client, app):  # pylint: disable=missing-function-docstring
+def get_all_repos(client, app):
+    """Returns all ECR repository names that belong to the given app prefix."""
     repos = set()
     paginator = client.get_paginator('describe_repositories')
     for page in paginator.paginate():
@@ -87,31 +92,44 @@ def get_all_repos(client, app):  # pylint: disable=missing-function-docstring
 
 def get_protected_image_refs(client):
     """
-    Return a set of all image tags and digests referenced by any ACTIVE ECS task definition.
+    Return a set of all image tags and digests referenced by currently RUNNING ECS tasks.
     """
     refs = set()
 
-    paginator = client.get_paginator('list_task_definitions')
-    for page in paginator.paginate(status='ACTIVE'):
-        for arn in page['taskDefinitionArns']:
+    cluster_arns = []
+    for page in client.get_paginator('list_clusters').paginate():
+        cluster_arns.extend(page['clusterArns'])
+
+    for cluster_arn in cluster_arns:
+        task_arns = []
+        for page in client.get_paginator('list_tasks').paginate(
+            cluster=cluster_arn, desiredStatus='RUNNING'
+        ):
+            task_arns.extend(page['taskArns'])
+
+        for i in range(0, len(task_arns), AWS_BATCH_SIZE):
+            batch = task_arns[i:i + AWS_BATCH_SIZE]
             try:
-                resp = client.describe_task_definition(taskDefinition=arn)
-                for container in resp['taskDefinition'].get('containerDefinitions', []):
-                    _, ref = parse_image_ref(container.get('image', ''))
-                    refs.add(ref)
+                resp = client.describe_tasks(cluster=cluster_arn, tasks=batch)
+                for task in resp['tasks']:
+                    for container in task.get('containers', []):
+                        _, ref = parse_image_ref(container.get('image', ''))
+                        refs.add(ref)
             except ClientError as e:
-                log({'msg': f'Error describing task definition {arn}: {e}'})
+                log({'msg': f'Error describing tasks in cluster {cluster_arn}: {e}'})
 
     return refs
 
 
-def delete_images(client, repo_name, images):  # pylint: disable=missing-function-docstring
+def delete_images(client, repo_name, images):
+    """Deletes the given images from the ECR repository in batches."""
     image_ids = [{'imageDigest': img['imageDigest']} for img in images]
-    for i in range(0, len(image_ids), 100):
-        batch = image_ids[i:i + 100]
+    for i in range(0, len(image_ids), AWS_BATCH_SIZE):
+        batch = image_ids[i:i + AWS_BATCH_SIZE]
         client.batch_delete_image(repositoryName=repo_name, imageIds=batch)
 
-def log_images_for_deletion(repo, images):  # pylint: disable=missing-function-docstring
+def log_images_for_deletion(repo, images):
+    """Logs images that would be deleted if the repo were opted in."""
     for img in images:
         log({'msg': 'Would delete image (not opted in)', 'repo': repo,
              'digest': img['imageDigest']})
@@ -134,7 +152,7 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
          'repos': list(all_repos)})
 
     protected_refs = get_protected_image_refs(ecs_client)
-    log({'msg': 'Built protected image set from ECS task definitions',
+    log({'msg': 'Built protected image set from running ECS tasks',
          'repos': list(protected_refs)})
 
     for repo in all_repos:
