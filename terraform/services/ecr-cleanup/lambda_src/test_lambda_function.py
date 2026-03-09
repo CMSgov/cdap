@@ -60,7 +60,7 @@ def _make_ecr_client_mock(images):
     return mock_ecr
 
 
-def test_protected_image_is_never_deleted():
+def test_protected_by_tag():
     """Image referenced by tag in protected_refs is not deleted even if old."""
     images = [_make_image('sha256:protected', ['v1.0'], EXPIRED_DATETIME)]
     result = lambda_function.get_images_to_delete(
