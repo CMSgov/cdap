@@ -9,7 +9,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 KEEP_COUNT = 5
-MAX_AGE_DAYS = 30
+MAX_AGE_DAYS = 14
 AWS_BATCH_SIZE = 100
 
 ssm_client = boto3.client('ssm')
