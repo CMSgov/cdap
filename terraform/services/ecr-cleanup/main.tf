@@ -3,9 +3,7 @@ locals {
 
   repo_list_by_app_env = {
     dpc = {
-      dev     = ["dpc-web-admin", "dpc-web-portal"]
       test    = ["dpc-web-admin", "dpc-web-portal"]
-      sandbox = []
       prod    = []
     }
   }
