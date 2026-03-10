@@ -1,7 +1,6 @@
 locals {
   arm64_image               = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
   x86_image                 = "aws/codebuild/amazonlinux-x86_64-standard:5.0"
-  account_env_suffix        = var.app == "cdap" ? (var.env == "prod" || var.env == "sandbox" ? "prod" : "non-prod") : ""
   arm64_changeover_projects = var.app == "bcda" ? ["bcda-app", "bcda-ssas-app"] : []
 
   repos = [
@@ -27,39 +26,7 @@ module "standards" {
   providers   = { aws = aws, aws.secondary = aws.secondary }
 }
 
-module "vpc" {
-  source = "../../modules/vpc"
-
-  app = "cdap"
-  env = var.app == "bcda" ? "mgmt" : var.env
-}
-
-module "subnets" {
-  source = "../../modules/subnets"
-
-  vpc_id = var.app == "bcda" ? module.vpc.id : module.standards.cdap_vpc.id
-  use    = "private"
-}
-
-resource "aws_security_group" "codebuild_project" {
-  for_each = var.app == "cdap" ? toset(local.repos) : toset([])
-
-  name = "${each.key}-${local.account_env_suffix}-codebuild-project"
-
-  description = "For the ${local.account_env_suffix} ${each.key}"
-  vpc_id      = module.vpc.id
-}
-
-resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
-  for_each = aws_security_group.codebuild_project
-
-  security_group_id = aws_security_group.codebuild_project[each.key].id
-
-  cidr_ipv4   = "0.0.0.0/0"
-  from_port   = 0
-  ip_protocol = "tcp"
-  to_port     = 0
-}
+# IAM
 
 resource "aws_iam_role" "codebuild" {
   name                 = "codebuild-runner"
@@ -84,6 +51,46 @@ resource "aws_iam_role_policy_attachment" "ssm_read_only" {
   policy_arn = data.aws_iam_policy.ssm_read_only.arn
 }
 
+# Network
+resource "aws_security_group" "codebuild_project" {
+  for_each = var.app == "cdap" ? toset(local.repos) : toset([])
+
+  name = "${each.key}-${module.standards.account_env_suffix}-codebuild-project"
+
+  description = "For the ${module.standards.account_env_suffix} ${each.key}"
+  vpc_id      = module.standards.cdap_vpc.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
+  for_each = aws_security_group.codebuild_project
+
+  security_group_id = aws_security_group.codebuild_project[each.key].id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 0
+  ip_protocol = "tcp"
+  to_port     = 0
+}
+
+# TODO: To deprecate cdap-mgmt runners remove conditional logic for vpc_id and set to use standards module only.
+module "subnets" {
+  source = "../../modules/subnets"
+
+  vpc_id = var.app == "bcda" ? module.vpc[0].id : module.standards.cdap_vpc.id
+  use    = "private"
+}
+
+## TO DO: Delete cdap-mgmt codebuilder runners that are managed through bcda-prod terraform and use the cdap-mgmt VPC.
+## Remove all blocks from here until the "per_repo" resource instantiations
+module "vpc" {
+  count  = var.app == "bcda" ? 1 : 0
+  source = "../../modules/vpc"
+
+  app = "cdap"
+  env = "mgmt"
+}
+
+
 resource "aws_codebuild_project" "this" {
   for_each = var.app == "bcda" ? toset(local.repos) : toset([])
 
@@ -104,7 +111,7 @@ resource "aws_codebuild_project" "this" {
   }
 
   vpc_config {
-    vpc_id  = module.vpc.id
+    vpc_id  = module.vpc[0].id
     subnets = module.subnets.ids
     security_group_ids = [
       data.aws_security_group.security_tools.id,
@@ -139,7 +146,7 @@ resource "aws_codebuild_project" "this" {
 resource "aws_codebuild_webhook" "this" {
   for_each = aws_codebuild_project.this
 
-  project_name = "${each.key}${local.account_env_suffix}"
+  project_name = each.key
   build_type   = "BUILD"
   filter_group {
     filter {
@@ -172,7 +179,7 @@ resource "aws_codebuild_project" "arm64" {
   }
 
   vpc_config {
-    vpc_id  = module.vpc.id
+    vpc_id  = module.vpc[0].id
     subnets = module.subnets.ids
     security_group_ids = [
       data.aws_security_group.security_tools.id,
@@ -210,13 +217,13 @@ resource "aws_codebuild_webhook" "arm64" {
   }
 }
 
-
-## Create cdap-test and cdap-prod resources separately for direct deprecation of old resources by block deletion without more code change
+## Maintain the following after cdap-mgmt deprecation:
+# Create cdap-test and cdap-prod resources separately for direct deprecation of old resources by block deletion without more code change
 
 resource "aws_codebuild_project" "per_repo" {
   for_each = var.app == "cdap" ? toset(local.repos) : toset([])
 
-  name         = "${each.key}-${local.account_env_suffix}"
+  name         = "${each.key}-${module.standards.account_env_suffix}"
   description  = "Codebuild project for ${each.key}"
   service_role = aws_iam_role.codebuild.arn
 
@@ -268,7 +275,7 @@ resource "aws_codebuild_project" "per_repo" {
 resource "aws_codebuild_webhook" "per_repo" {
   for_each = aws_codebuild_project.per_repo
 
-  project_name = "${each.key}-${local.account_env_suffix}"
+  project_name = "${each.key}-${module.standards.account_env_suffix}"
   build_type   = "BUILD"
   filter_group {
     filter {
