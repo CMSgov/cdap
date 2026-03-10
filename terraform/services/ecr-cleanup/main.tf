@@ -28,8 +28,9 @@ data "aws_iam_policy_document" "ecr_cleanup" {
   statement {
     sid = "ECSReadAccess"
     actions = [
-      "ecs:ListTaskDefinitions",
-      "ecs:DescribeTaskDefinition",
+      "ecs:ListClusters",
+      "ecs:ListTasks",
+      "ecs:DescribeTasks",
     ]
     resources = ["*"]
   }
