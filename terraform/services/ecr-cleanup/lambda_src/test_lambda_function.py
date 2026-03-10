@@ -30,6 +30,11 @@ EXPIRED_DATETIME = datetime.now(timezone.utc) - timedelta(days=MAX_AGE_DAYS + 15
         "sha256:87654321",
     ),
     (
+        f"{ECR_REGISTRY}/dpc-attribution:my-tag",
+        "dpc-attribution",
+        "my-tag",
+    ),
+    (
         "dpc-attribution",
         "dpc-attribution",
         "latest",
@@ -123,6 +128,31 @@ def test_no_images_for_repo():
         _make_ecr_client_mock([]), 'dpc-attribution', set()
     )
     assert result == []
+
+
+def test_delete_images_single_image():
+    """A single image is deleted with one batch_delete_image call."""
+    mock_ecr = MagicMock()
+    one_old_image = [_make_image('sha256:abc', [], EXPIRED_DATETIME)]
+    lambda_function.delete_images(mock_ecr, 'dpc-attribution', one_old_image)
+    mock_ecr.batch_delete_image.assert_called_once_with(
+        repositoryName='dpc-attribution',
+        imageIds=[{'imageDigest': 'sha256:abc'}],
+    )
+
+
+def test_delete_images_multiple_batches():
+    """Images exceeding AWS_BATCH_SIZE are sent in multiple batch_delete_image calls."""
+    mock_ecr = MagicMock()
+    num_ecr_images = lambda_function.AWS_BATCH_SIZE + 1
+    old_images = [_make_image(f'sha256:{i}', [], EXPIRED_DATETIME) for i in range(num_ecr_images)]
+    lambda_function.delete_images(mock_ecr, 'dpc-attribution', old_images)
+    assert mock_ecr.batch_delete_image.call_count == 2
+    first_call_ids = mock_ecr.batch_delete_image.call_args_list[0].kwargs['imageIds']
+    second_call_ids = mock_ecr.batch_delete_image.call_args_list[1].kwargs['imageIds']
+    assert len(first_call_ids) == lambda_function.AWS_BATCH_SIZE
+    assert len(second_call_ids) == 1
+
 
 
 def test_get_repo_list():
