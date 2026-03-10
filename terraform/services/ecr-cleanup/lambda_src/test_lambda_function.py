@@ -203,9 +203,11 @@ def mock_boto3_clients():
 
 
 def _setup_handler_mocks(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        mock_ssm, mock_ecs, mock_ecr, opted_in_repos=['dpc-attribution'],
+        mock_ssm, mock_ecs, mock_ecr, opted_in_repos=None,
         cluster_arns=None, task_arns=None, task_images=None, ecr_images=None):
     """Configures SSM, ECS, and ECR client mocks for lambda_handler integration tests."""
+    if opted_in_repos is None:
+        opted_in_repos = ['dpc-attribution']
     mock_ssm.get_parameter.return_value = {
         'Parameter': {'Value': json.dumps(opted_in_repos)}
     }
