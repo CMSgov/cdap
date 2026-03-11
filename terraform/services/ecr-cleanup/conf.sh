@@ -1,1 +1,1 @@
-TARGET_ENVS="dpc-test dpc-prod"
+TARGET_ENVS="cdap-test cdap-prod"
