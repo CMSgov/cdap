@@ -8,10 +8,21 @@ locals {
     }
   }
 }
+module "standards" {
+  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=####"
+  providers   = { aws = aws, aws.secondary = aws.secondary }
+  app         = "cdap"
+  env         = var.env
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/ecr-cleanup"
+  service     = ecr-cleanup
+}
 
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
-
+data "aws_ecr_repository" "service" {
+  for_each = toset(var.repositories[module.standards.env])
+  name = each.key
+}
 data "aws_iam_policy_document" "ecr_cleanup" {
   statement {
     sid = "ECRAccess"
