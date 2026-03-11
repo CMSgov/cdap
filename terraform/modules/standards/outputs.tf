@@ -40,6 +40,12 @@ output "env" {
   value       = local.env
 }
 
+output "account_env_suffix" {
+  description = "[\"prod\" or \"non-prod\"] The AWS account shorthand to distinguish environment hierarchy."
+  sensitive   = false
+  value       = (var.env == "prod" || var.env == "sandbox") ? "prod" : "non-prod"
+}
+
 output "default_tags" {
   description = "Map of tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags`"
   sensitive   = false
