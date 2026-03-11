@@ -14,7 +14,7 @@ data "aws_ecr_repository" "repos" {
 
 data "aws_iam_policy_document" "ecr_access_policy" {
   statement {
-    sid     = "ECRListRepositories"
+    sid = "ECRListRepositories"
     actions = [
       "ecr:DescribeImages",
       "ecr:DescribeRepositories"
@@ -55,9 +55,9 @@ data "aws_iam_policy_document" "ssm_access_policy" {
 
 data "aws_iam_policy_document" "ecr_cleanup" {
   source_policy_documents = [
-      data.aws_iam_policy_document.ecr_access_policy.json,
-      data.aws_iam_policy_document.ecs_access_policy.json,
-      data.aws_iam_policy_document.ssm_access_policy.json,
+    data.aws_iam_policy_document.ecr_access_policy.json,
+    data.aws_iam_policy_document.ecs_access_policy.json,
+    data.aws_iam_policy_document.ssm_access_policy.json,
   ]
 }
 
