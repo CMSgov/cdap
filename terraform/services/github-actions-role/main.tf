@@ -135,6 +135,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
   statement {
     actions = [
       "codebuild:CreateInvalidation",
+      "codebuild:CreateProject",
       "codebuild:CreateWebhook",
       "codebuild:DeleteProject",
       "codebuild:DeleteWebhook",
