@@ -131,6 +131,19 @@ data "aws_iam_policy_document" "github_actions_policy" {
     ]
     resources = ["*"]
   }
+  # Codebuild
+  statement {
+    actions = [
+      "codebuild:CreateInvalidation",
+      "codebuild:CreateWebhook",
+      "codebuild:DeleteProject",
+      "codebuild:DeleteWebhook",
+      "codebuild:ListProjects",
+      "codebuild:UpdateProject",
+      "codebuild:UpdateWebhook"
+    ]
+    resources = ["*"]
+  }
   # CloudFront
   statement {
     actions = [
