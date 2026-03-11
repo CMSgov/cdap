@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
+from botocore.exceptions import ClientError
 
 import lambda_function
 from lambda_function import KEEP_COUNT, MAX_AGE_DAYS
@@ -161,6 +162,19 @@ def test_get_repo_list():
     mock_ssm.get_parameter.return_value = {'Parameter': {'Value': '["dpc-attribution", "dpc-api"]'}}
     assert lambda_function.get_repo_list(mock_ssm, '/test/param') == ['dpc-attribution', 'dpc-api']
     mock_ssm.get_parameter.assert_called_once_with(Name='/test/param', WithDecryption=True)
+
+
+def test_get_repo_list_parameter_not_found():
+    """Returns an empty list when the SSM parameter does not exist."""
+    mock_ssm = MagicMock()
+    failed_to_find_message = {
+        "Error": {
+            "Code": "ParameterNotFound",
+            "Message": "Parameter not found",
+        }
+    }
+    mock_ssm.get_parameter.side_effect = ClientError(failed_to_find_message, "get_parameter")
+    assert lambda_function.get_repo_list(mock_ssm, '/param/not/found') == []
 
 
 def _make_ecs_mock(cluster_arns, task_arns, container_images):

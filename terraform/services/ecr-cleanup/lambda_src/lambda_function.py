@@ -73,8 +73,11 @@ def get_repo_list(client, ssm_param_name):
     Read an SSM SecureString parameter and return a list of ECR repository names.
     Note: this uses SecureString to maintain compatibility with the existing SOPS mechanism.
     """
-    response = client.get_parameter(Name=ssm_param_name, WithDecryption=True)
-    value = response['Parameter']['Value']
+    try:
+        response = client.get_parameter(Name=ssm_param_name, WithDecryption=True)
+        value = response['Parameter']['Value']
+    except ClientError:
+        value = "[]"
     return json.loads(value)
 
 
