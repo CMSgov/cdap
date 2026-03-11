@@ -15,15 +15,17 @@ data "aws_ecr_repository" "repos" {
 data "aws_iam_policy_document" "ecr_access_policy" {
   statement {
     sid     = "ECRListRepositories"
-    actions = ["ecr:DescribeRepositories"]
+    actions = [
+      "ecr:DescribeImages",
+      "ecr:DescribeRepositories"
+    ]
     resources = ["*"]
   }
 
   statement {
     sid = "ECRImageAccess"
     actions = [
-      "ecr:DescribeImages",
-      "ecr:BatchDeleteImage",
+      "ecr:BatchDeleteImage"
     ]
     resources = values(data.aws_ecr_repository.repos)[*].arn
   }
