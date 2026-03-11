@@ -3,25 +3,16 @@ locals {
 
   repo_list_by_env = {
     test = ["dpc-web-admin", "dpc-web-portal"]
-    prod = []
+    prod = ["dpc-web-portal"]
   }
 }
-module "standards" {
-  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=####"
-  providers   = { aws = aws, aws.secondary = aws.secondary }
-  app         = "cdap"
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/ecr-cleanup"
-  service     = ecr-cleanup
+
+data "aws_ecr_repository" "repos" {
+  for_each = toset(local.repo_list_by_env[var.env])
+  name     = each.key
 }
 
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-data "aws_ecr_repository" "service" {
-  for_each = toset(var.repositories[module.standards.env])
-  name = each.key
-}
-data "aws_iam_policy_document" "ecr_cleanup" {
+data "aws_iam_policy_document" "ecr_access_policy" {
   statement {
     sid = "ECRAccess"
     actions = [
@@ -29,11 +20,11 @@ data "aws_iam_policy_document" "ecr_cleanup" {
       "ecr:DescribeRepositories",
       "ecr:BatchDeleteImage",
     ]
-    resources = [
-      "arn:aws:ecr:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:repository/*"
-    ]
+    resources = values(data.aws_ecr_repository.repos)[*].arn
   }
+}
 
+data "aws_iam_policy_document" "ecs_access_policy" {
   statement {
     sid = "ECSReadAccess"
     actions = [
@@ -43,14 +34,24 @@ data "aws_iam_policy_document" "ecr_cleanup" {
     ]
     resources = ["*"]
   }
+}
 
+data "aws_iam_policy_document" "ssm_access_policy" {
   statement {
     sid     = "SSMAccess"
     actions = ["ssm:GetParameter"]
     resources = [
-      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${var.app}/${var.env}/ecr-cleanup/*"
+      aws_ssm_parameter.repo_list.arn
     ]
   }
+}
+
+data "aws_iam_policy_document" "ecr_cleanup" {
+  source_policy_documents = [
+      data.aws_iam_policy_document.ecr_access_policy.json,
+      data.aws_iam_policy_document.ecs_access_policy.json,
+      data.aws_iam_policy_document.ssm_access_policy.json,
+  ]
 }
 
 resource "aws_ssm_parameter" "repo_list" {
@@ -104,7 +105,7 @@ resource "null_resource" "deploy_lambda" {
   }
 
   provisioner "local-exec" {
-    command = "aws lambda update-function-code --function-name ${module.ecr_cleanup_function.name} --s3-bucket ${module.ecr_cleanup_function.zip_bucket} --s3-key function.zip --region ${data.aws_region.current.name}"
+    command = "aws lambda update-function-code --function-name ${module.ecr_cleanup_function.name} --s3-bucket ${module.ecr_cleanup_function.zip_bucket} --s3-key function.zip"
   }
 
   depends_on = [aws_s3_object.ecr_cleanup_zip]

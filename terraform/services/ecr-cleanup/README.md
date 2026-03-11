@@ -9,7 +9,7 @@ The executable for this lambda is in lambda_src. It must pass both pylint and py
 ### Run the tests
 ```bash
 cd lambda_src
-python -m venv venv && source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 pip install pylint pytest
 pylint lambda_function.py
