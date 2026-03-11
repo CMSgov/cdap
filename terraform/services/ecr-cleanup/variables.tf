@@ -1,9 +1,9 @@
 variable "app" {
-  description = "The application name is supported (dpc)"
+  description = "The application name is supported (cdap)"
   type        = string
   validation {
-    condition     = contains(["dpc"], var.app)
-    error_message = "Valid values for app is only dpc."
+    condition     = contains(["cdap"], var.app)
+    error_message = "Valid values for app is only cdap."
   }
 }
 

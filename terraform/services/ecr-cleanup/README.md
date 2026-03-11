@@ -26,8 +26,8 @@ Pass in a backend file when running terraform init. Example:
 
 ```bash
 export AWS_REGION=us-east-1
-tofu init -backend-config=../../backends/dpc-test.s3.tfbackend
-tofu apply -var app=dpc -var env=test 
+tofu init -backend-config=../../backends/cdap-test.s3.tfbackend
+tofu apply -var app=cdap -var env=test 
 ```
 
 
