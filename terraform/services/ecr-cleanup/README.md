@@ -29,3 +29,9 @@ export AWS_REGION=us-east-1
 tofu init -backend-config=../../backends/dpc-test.s3.tfbackend
 tofu apply -var app=dpc -var env=test 
 ```
+
+
+## Manually invoking
+```bash
+aws lambda invoke --function-name dpc-test-ecr-cleanup --region us-east-1 response.json
+```
