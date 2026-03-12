@@ -2,9 +2,11 @@
 Cleans up old ECR images while protecting images referenced by currently running ECS tasks.
 """
 
+import dataclasses
 from datetime import datetime, timedelta, timezone
 import json
 import os
+
 import boto3
 from botocore.exceptions import ClientError
 
@@ -15,6 +17,9 @@ AWS_BATCH_SIZE = 100
 ssm_client = boto3.client('ssm')
 ecs_client = boto3.client('ecs')
 ecr_client = boto3.client('ecr')
+
+DELETE = 'to_delete'
+PROTECT = 'to_protect'
 
 
 def log(data):
@@ -47,25 +52,20 @@ def get_images_to_delete(client, repo_name, protected_refs):
     2. Outside the KEEP_COUNT newest
     3. Older than MAX_AGE_DAYS.
     """
-    cutoff = datetime.now(timezone.utc) - timedelta(days=MAX_AGE_DAYS)
-
     images = []
     paginator = client.get_paginator('describe_images')
     for page in paginator.paginate(repositoryName=repo_name):
-        images.extend(page['imageDetails'])
+        for image in page['imageDetails']:
+            images.append(Image(image))
 
-    candidates = []
     for img in images:
-        digest = img['imageDigest']
-        tags = img.get('imageTags', [])
-        if digest not in protected_refs and not any(tag in protected_refs for tag in tags):
-            candidates.append(img)
+        if img.digest in protected_refs or any(tag in protected_refs for tag in img.tags):
+            img.status = PROTECT
 
-    candidates.sort(key=lambda x: x['imagePushedAt'], reverse=True)
+    for strategy, *args in REPO_STRATEGIES[repo_name]:
+        STRATEGIES[strategy](images, *args)
 
-    remainder = candidates[KEEP_COUNT:]
-
-    return [img for img in remainder if img['imagePushedAt'] < cutoff]
+    return [img for img in images if img.status == 'to_delete']
 
 
 def get_repo_list(client, ssm_param_name):
@@ -138,7 +138,7 @@ def log_images_for_deletion(repo, images):
         log({'msg': 'Would delete image (not opted in)', 'repo': repo,
              'digest': img['imageDigest']})
 
-def lambda_handler(event, context):  # pylint: disable=unused-argument
+def lambda_handler(_, __):
     """
     Main entry point for lambda function.
     Reads configured repos from SSM, which are opted in for lambda to clean up.
@@ -171,3 +171,68 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
             log({'msg': f'Cleanup complete for repo: {repo}'})
         except ClientError as e:
             log({'msg': f'Error processing repo {repo}: {e}', 'repo': repo})
+
+@dataclasses.dataclass
+class Image:
+    """
+    Data class for holding relevant information about an image.
+    """
+    def __init__(self, data):
+        self.digest = data['imageDigest']
+        self.tags = data['imageTags']
+        self.pushed_at = data['imagePushedAt']
+        self.status = None
+
+    def __lt__(self, other):
+        return self.pushed_at < other.pushed_at
+
+def matching_images(images, prefix):
+    """ Returns images whose status has not been set and have a tag that starts with prefix. """
+    valid_images = []
+    for image in images:
+        if image.status:
+            continue
+        for tag in image.tags:
+            if tag.startswith(prefix):
+                valid_images.append(image)
+                break
+    return valid_images
+
+def count_image_strategy(images, prefix, count):
+    """ Marks images to delete or protect based on pushed date and count. """
+    relevant_images = matching_images(images, prefix)
+    for index, image in enumerate(sorted(relevant_images, reverse=True)):
+        if index < count:
+            image.status = PROTECT
+        else:
+            image.status = DELETE
+
+def delete_days_older_than_strategy(images, prefix, days):
+    """ Marks images to delete or protect based on cutoff date. """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    relevant_images = matching_images(images, prefix)
+    for image in relevant_images:
+        if image.pushed_at < cutoff:
+            image.status = PROTECT
+        else:
+            image.status = DELETE
+
+REPO_STRATEGIES = {
+    'dpc-attribution': [
+        ['count_image', 'rls-r', 5,],
+        ['delete_days_older_than', '', 14,],
+    ]
+}
+
+STRATEGIES = {
+    'count_image': count_image_strategy,
+    'delete_days_older_than': delete_days_older_than_strategy,
+}
+
+def run():
+    protected = get_protected_image_refs(ecs_client)
+    for image in get_images_to_delete(ecr_client, 'dpc-attribution', protected):
+        print(image.tags)
+
+if __name__ == '__main__':
+    run()
