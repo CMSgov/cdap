@@ -210,6 +210,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ecr:DescribeRepositories",
       "ecr:GetAuthorizationToken",
       "ecr:InitiateLayerUpload",
+      "ecr:ListTagsForResource",
       "ecr:PutImage",
       "ecr:UploadLayerPart"
     ]
@@ -274,6 +275,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
   statement {
     actions = [
       "events:DescribeRule",
+      "events:ListTagsForResource",
       "events:ListTargetsByRule",
       "events:PutRule",
       "events:PutTargets"
