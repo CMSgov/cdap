@@ -356,6 +356,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "iam:ListPolicies",
       "iam:ListPolicyVersions",
       "iam:ListRolePolicies",
+      "iam:PassRole",
       "iam:PutRolePolicy",
       "iam:TagRole",
       "iam:UpdateAssumeRolePolicy",
