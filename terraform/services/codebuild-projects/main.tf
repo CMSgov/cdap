@@ -72,6 +72,19 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
   to_port     = 0
 }
 
+# GitHub Permissions ; note the connection must be manually transitioned from "Pending" state using the AWS Console.
+
+resource "aws_codeconnections_connection" "github" {
+  name          = module.standards.account_env_suffix
+  provider_type = "GitHub"
+}
+
+resource "aws_codebuild_source_credential" "github" {
+  auth_type   = "CODECONNECTIONS"
+  server_type = "GITHUB"
+  token       = aws_codeconnections_connection.github.arn
+}
+
 # TODO: To deprecate cdap-mgmt runners remove conditional logic for vpc_id and set to use standards module only.
 module "subnets" {
   source = "../../modules/subnets"
@@ -154,6 +167,8 @@ resource "aws_codebuild_webhook" "this" {
       pattern = "WORKFLOW_JOB_QUEUED"
     }
   }
+
+  depends_on = [aws_codebuild_source_credential.github]
 }
 
 # ARM64 Configurations that were established before migrating towards a cdap-test and cdap-prod managed codebuild project
@@ -264,25 +279,15 @@ resource "aws_codebuild_project" "per_repo" {
     }
   }
 
+
   lifecycle {
     ignore_changes = [
       build_timeout,
       environment[0].compute_type
     ]
   }
+  depends_on = [aws_codebuild_source_credential.github]
 }
 
-resource "aws_codebuild_webhook" "per_repo" {
-  for_each = aws_codebuild_project.per_repo
-
-  project_name = "${each.key}-${module.standards.account_env_suffix}"
-  build_type   = "BUILD"
-  filter_group {
-    filter {
-      type    = "EVENT"
-      pattern = "WORKFLOW_JOB_QUEUED"
-    }
-  }
-}
 
 

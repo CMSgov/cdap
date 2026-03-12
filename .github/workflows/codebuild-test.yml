@@ -1,0 +1,21 @@
+name: Codebuild Smoke Test
+
+on:
+  push:
+    paths:
+      - 'terraform/services/codebuild-projects'
+
+jobs:
+  smoke-test:
+    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Basic smoke test
+        run: |
+          echo "✅ Workflow triggered on branch: ${{ github.ref_name }}"
+          echo "📦 Repo: ${{ github.repository }}"
+          echo "🔖 Commit: ${{ github.sha }}"
+          ls -la
