@@ -3,7 +3,7 @@ name: Codebuild Smoke Test
 on:
   push:
     paths:
-      - 'terraform/services/codebuild-projects'
+      - 'terraform/services/codebuild-projects/**'
 
 jobs:
   smoke-test:
