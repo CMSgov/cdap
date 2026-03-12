@@ -77,6 +77,38 @@ variable "memory" {
   type        = number
 }
 
+variable "enable_service_connect" {
+  description = "Whether to enable ECS Service Connect"
+  type        = bool
+  default     = false # Keeps all existing teams unaffected
+}
+
+variable "service_connect_namespace" {
+  description = "AWS Cloud Map namespace ARN or name for Service Connect"
+  type        = string
+  default     = null
+}
+
+variable "service_connect_services" {
+  description = "List of Service Connect service port mappings"
+  type = list(object({
+    port_name      = string
+    port           = number
+    dns_name       = optional(string)
+    discovery_name = optional(string)
+  }))
+  default = []
+}
+
+variable "service_connect_log_configuration" {
+  description = "Optional log configuration for the Service Connect proxy sidecar"
+  type = object({
+    log_driver = string
+    options    = map(string)
+  })
+  default = null
+}
+
 variable "mount_points" {
   description = "The mount points for data volumes in your container"
   type = list(object({

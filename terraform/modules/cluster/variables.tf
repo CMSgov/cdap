@@ -16,3 +16,9 @@ variable "cluster_name_override" {
   type        = string
   default     = null
 }
+
+variable "enable_service_connect" {
+  description = "Whether to enable ECS Service Connect and create a Cloud Map namespace"
+  type        = bool
+  default     = false
+}

@@ -92,6 +92,35 @@ resource "aws_ecs_service" "this" {
     }
   }
 
+  dynamic "service_connect_configuration" {
+    for_each = var.enable_service_connect ? [1] : []
+    content {
+      enabled   = true
+      namespace = var.service_connect_namespace
+
+      dynamic "service" {
+        for_each = var.service_connect_services
+        content {
+          port_name      = service.value.port_name
+          discovery_name = lookup(service.value, "discovery_name", null)
+
+          client_alias {
+            port     = service.value.port
+            dns_name = lookup(service.value, "dns_name", null)
+          }
+        }
+      }
+
+      dynamic "log_configuration" {
+        for_each = var.service_connect_log_configuration != null ? [var.service_connect_log_configuration] : []
+        content {
+          log_driver = log_configuration.value.log_driver
+          options    = log_configuration.value.options
+        }
+      }
+    }
+  }
+
   deployment_minimum_healthy_percent = 100
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 }
