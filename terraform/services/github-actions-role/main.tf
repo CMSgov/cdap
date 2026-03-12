@@ -134,13 +134,16 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # Codebuild
   statement {
     actions = [
+      "codebuild:BatchGetProjects",
       "codebuild:CreateInvalidation",
       "codebuild:CreateProject",
       "codebuild:CreateWebhook",
       "codebuild:DeleteProject",
       "codebuild:DeleteWebhook",
+      "codebuild:ListCuratedEnvironmentImages",
       "codebuild:ListProjects",
       "codebuild:UpdateProject",
+      "codebuild:UpdateProjectVisibility",
       "codebuild:UpdateWebhook"
     ]
     resources = ["*"]
