@@ -76,8 +76,9 @@ def get_repo_list(client, ssm_param_name):
     try:
         response = client.get_parameter(Name=ssm_param_name, WithDecryption=True)
         value = response['Parameter']['Value']
-    except ClientError:
+    except ClientError as e:
         value = "[]"
+        log({'msg': f'Failed to retrieve parameter {ssm_param_name}: {e}'})
     return json.loads(value)
 
 
