@@ -60,20 +60,15 @@ def _make_ecr_client_mock(images):
 
 def _test_images():
     """ Creates six Images:
-          3 that match the default 'v' prefix, ordered newest to oldest
-          3 that do not match the default 'v' prefix, ordered newest to oldest
-          
+          3 that match the default 'v' prefix, ordered newest to oldest, one day apart
+          3 that do not match the default 'v' prefix, ordered newest to oldest, one day apart
     """
     images = []
     for i in range(3):
         pushed_at = datetime.now(timezone.utc) - timedelta(days=i, minutes=15)
-        image = _make_image(f'sha256:{i}', [f'v{i}'], pushed_at)
-        images.append(image)
-    for i in range(3):
-        pushed_at = datetime.now(timezone.utc) - timedelta(days=i)
-        image = _make_image(f'sha256:{i + 3}', [f'not_v{i}'], pushed_at)
-        images.append(image)
-    return images
+        images.append(_make_image(f'sha256:{i}', [f'v{i}'], pushed_at))
+        images.append(_make_image(f'sha256:{i + 3}', [f'not_v{i}'], pushed_at))
+    return sorted(images, key=lambda x: x.digest)
 
 def test_count_image_strategy():
     """ Make sure count image stragy correctly marks images for matching prefixes. """
@@ -125,8 +120,8 @@ def test_get_images_to_delete():
     result_digests = { image.digest for image in result }
     assert images[2].digest in result_digests
     assert images[5].digest in result_digests
-    assert result[0].digest != pb_tag_digest
-    assert result[0].digest != pb_digest_digest
+    assert pb_tag_digest not in result_digests
+    assert pb_digest_digest not in result_digests
 
 @pytest.mark.parametrize("strategies, expected_count", [
     (
@@ -140,8 +135,8 @@ def test_get_images_to_delete():
 ])
 def test_get_images_to_delete_strategy_order(strategies, expected_count):
     """
-    Tests that images protected by an early strategy are not deleted by a later strategy, and
-    that images deleted by an early strategy are not protected by a later strategy.
+    Tests that images protected by an early strategy are not deleted by a later strategy,
+    and that images deleted by an early strategy are not protected by a later strategy.
     """
     image_digest = 'sha256:image'
     image = _make_image(image_digest, ['v1'], EXPIRED_DATETIME)
