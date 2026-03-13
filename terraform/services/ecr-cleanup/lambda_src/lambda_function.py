@@ -6,7 +6,6 @@ import dataclasses
 from datetime import datetime, timedelta, timezone
 import json
 import os
-
 import boto3
 from botocore.exceptions import ClientError
 
@@ -65,7 +64,7 @@ def get_images_to_delete(client, repo_name, protected_refs):
     for strategy, *args in REPO_STRATEGIES[repo_name]:
         STRATEGIES[strategy](images, *args)
 
-    return [img for img in images if img.status == 'to_delete']
+    return [img for img in images if img.status == DELETE]
 
 
 def get_repo_list(client, ssm_param_name):

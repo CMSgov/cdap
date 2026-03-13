@@ -131,6 +131,23 @@ data "aws_iam_policy_document" "github_actions_policy" {
     ]
     resources = ["*"]
   }
+  # Codebuild
+  statement {
+    actions = [
+      "codebuild:BatchGetProjects",
+      "codebuild:CreateInvalidation",
+      "codebuild:CreateProject",
+      "codebuild:CreateWebhook",
+      "codebuild:DeleteProject",
+      "codebuild:DeleteWebhook",
+      "codebuild:ListCuratedEnvironmentImages",
+      "codebuild:ListProjects",
+      "codebuild:UpdateProject",
+      "codebuild:UpdateProjectVisibility",
+      "codebuild:UpdateWebhook"
+    ]
+    resources = ["*"]
+  }
   # CloudFront
   statement {
     actions = [
@@ -344,6 +361,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "iam:ListPolicies",
       "iam:ListPolicyVersions",
       "iam:ListRolePolicies",
+      "iam:PassRole",
       "iam:PutRolePolicy",
       "iam:TagRole",
       "iam:UpdateAssumeRolePolicy",
