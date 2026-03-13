@@ -2,19 +2,23 @@
 Cleans up old ECR images while protecting images referenced by currently running ECS tasks.
 """
 
+from argparse import ArgumentParser
 from datetime import datetime, timedelta, timezone
 import json
 import os
+import sys
+
 import boto3
 from botocore.exceptions import ClientError
 
-KEEP_COUNT = 5
-MAX_AGE_DAYS = 30
 AWS_BATCH_SIZE = 100
 
 ssm_client = boto3.client('ssm')
 ecs_client = boto3.client('ecs')
 ecr_client = boto3.client('ecr')
+
+DELETE = 'to_delete'
+PROTECT = 'to_protect'
 
 
 def log(data):
@@ -40,32 +44,28 @@ def parse_image_ref(image_uri):
     return last_component, 'latest'
 
 
-def get_images_to_delete(client, repo_name, protected_refs):
+def get_images_to_delete(client, repo_name, strategies, protected_refs):
     """
     Fetches all images for repo_name and returns those eligible for deletion:
     1. Not referenced in protected_refs,
     2. Outside the KEEP_COUNT newest
     3. Older than MAX_AGE_DAYS.
     """
-    cutoff = datetime.now(timezone.utc) - timedelta(days=MAX_AGE_DAYS)
-
     images = []
     paginator = client.get_paginator('describe_images')
     for page in paginator.paginate(repositoryName=repo_name):
-        images.extend(page['imageDetails'])
+        for image in page['imageDetails']:
+            images.append(Image(image))
 
-    candidates = []
     for img in images:
-        digest = img['imageDigest']
-        tags = img.get('imageTags', [])
-        if digest not in protected_refs and not any(tag in protected_refs for tag in tags):
-            candidates.append(img)
+        if img.digest in protected_refs or \
+           img.tags and any(tag in protected_refs for tag in img.tags):
+            img.status = PROTECT
 
-    candidates.sort(key=lambda x: x['imagePushedAt'], reverse=True)
+    for strategy_name, *args in strategies:
+        STRATEGIES[strategy_name](images, *args)
 
-    remainder = candidates[KEEP_COUNT:]
-
-    return [img for img in remainder if img['imagePushedAt'] < cutoff]
+    return [img for img in images if img.status == DELETE]
 
 
 def get_repo_list(client, ssm_param_name):
@@ -80,18 +80,6 @@ def get_repo_list(client, ssm_param_name):
         value = "[]"
         log({'msg': f'Failed to retrieve parameter {ssm_param_name}: {e}'})
     return json.loads(value)
-
-
-def get_all_repos(client, app):
-    """Returns all ECR repository names that belong to the given app prefix."""
-    repos = set()
-    paginator = client.get_paginator('describe_repositories')
-    for page in paginator.paginate():
-        for repo in page['repositories']:
-            name = repo['repositoryName']
-            if name.startswith(f'{app}-'):
-                repos.add(name)
-    return repos
 
 
 def get_protected_image_refs(client):
@@ -127,7 +115,7 @@ def get_protected_image_refs(client):
 
 def delete_images(client, repo_name, images):
     """Deletes the given images from the ECR repository in batches."""
-    image_ids = [{'imageDigest': img['imageDigest']} for img in images]
+    image_ids = [{'imageDigest': img.digest} for img in images]
     for i in range(0, len(image_ids), AWS_BATCH_SIZE):
         batch = image_ids[i:i + AWS_BATCH_SIZE]
         client.batch_delete_image(repositoryName=repo_name, imageIds=batch)
@@ -136,9 +124,9 @@ def log_images_for_deletion(repo, images):
     """Logs images that would be deleted if the repo were opted in."""
     for img in images:
         log({'msg': 'Would delete image (not opted in)', 'repo': repo,
-             'digest': img['imageDigest']})
+             'digest': img.digest})
 
-def lambda_handler(event, context):  # pylint: disable=unused-argument
+def lambda_handler(_, __):
     """
     Main entry point for lambda function.
     Reads configured repos from SSM, which are opted in for lambda to clean up.
@@ -150,24 +138,108 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
     ssm_param = f"/{os.environ['APP']}/{os.environ['ENV']}/ecr-cleanup/repos"
 
     opted_in = set(get_repo_list(ssm_client, ssm_param))
-    all_repos = get_all_repos(ecr_client, os.environ['APP'])
-    log({'msg': 'Collected repository list for app',
-         'app': os.environ['APP'],
-         'repos': list(all_repos)})
 
     protected_refs = get_protected_image_refs(ecs_client)
     log({'msg': 'Built protected image set from running ECS tasks',
          'repos': list(protected_refs)})
 
-    for repo in all_repos:
+    for repo_name, strategies in REPO_STRATEGIES.items():
         try:
-            to_delete = get_images_to_delete(ecr_client, repo, protected_refs)
+            to_delete = get_images_to_delete(ecr_client, repo_name, strategies, protected_refs)
 
             if len(to_delete):
-                if repo in opted_in:
-                    delete_images(ecr_client, repo, to_delete)
+                if repo_name in opted_in:
+                    delete_images(ecr_client, repo_name, to_delete)
                 else:
-                    log_images_for_deletion(repo, to_delete)
-            log({'msg': f'Cleanup complete for repo: {repo}'})
+                    log_images_for_deletion(repo_name, to_delete)
+            log({'msg': f'Cleanup complete for repo: {repo_name}'})
         except ClientError as e:
-            log({'msg': f'Error processing repo {repo}: {e}', 'repo': repo})
+            log({'msg': f'Error processing repo {repo_name}: {e}', 'repo': repo_name})
+
+class Image:
+    """
+    Data class for holding relevant information about an image.
+    """
+    def __init__(self, data):
+        self.data = data
+        self.digest = data['imageDigest']
+        self.tags = data.get('imageTags')
+        self.pushed_at = data['imagePushedAt']
+        self.status = None
+
+    def __lt__(self, other):
+        return self.pushed_at < other.pushed_at
+    def __repr__(self):
+        return f'{self.tags}, {self.pushed_at}, {self.status}'
+
+def matching_images(images, prefix):
+    """ Returns images whose status has not been set and have a tag that starts with prefix. """
+    valid_images = []
+    for image in images:
+        if image.status:
+            continue
+        if prefix is None or image.tags is None:
+            if prefix == image.tags:
+                valid_images.append(image)
+            continue
+        for tag in image.tags:
+            if tag.startswith(prefix):
+                valid_images.append(image)
+                break
+    return valid_images
+
+def count_image_strategy(images, prefix, count):
+    """ Marks images to delete or protect based on pushed date and count. """
+    relevant_images = matching_images(images, prefix)
+    for index, image in enumerate(sorted(relevant_images, reverse=True)):
+        if index < count:
+            image.status = PROTECT
+        else:
+            image.status = DELETE
+
+def days_older_than_strategy(images, prefix, days):
+    """ Marks images to delete or protect based on cutoff date. """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    relevant_images = matching_images(images, prefix)
+    for image in relevant_images:
+        if image.pushed_at > cutoff:
+            image.status = PROTECT
+        else:
+            image.status = DELETE
+
+DPC_STRATEGIES = (
+    ('count_image', 'rls-r', 5,),
+    ('days_older_than', '', 14,),
+    ('days_older_than', None, 14,),
+)
+
+REPO_STRATEGIES = {
+    'dpc-aggregation': DPC_STRATEGIES,
+    'dpc-api': DPC_STRATEGIES,
+    'dpc-attribution': DPC_STRATEGIES,
+    'dpc-web': DPC_STRATEGIES,
+    'dpc-web-admin': DPC_STRATEGIES,
+    'dpc-web-portal': DPC_STRATEGIES,
+}
+
+STRATEGIES = {
+    'count_image': count_image_strategy,
+    'days_older_than': days_older_than_strategy,
+}
+
+
+def run(args):
+    """ Prints tags of (or digest of untagged) images that would be deleted. """
+    repo = args.repo
+    if not repo in  REPO_STRATEGIES:
+        print(f'{repo} not configured')
+        sys.exit(1)
+    protected = get_protected_image_refs(ecs_client)
+    for image in get_images_to_delete(ecr_client, repo, REPO_STRATEGIES[repo], protected):
+        print(image.tags or image.digest)
+
+
+if __name__ == '__main__':
+    parser = ArgumentParser(description='Prints tags of images that would be deleted')
+    parser.add_argument('repo', help='repository to analyze')
+    run(parser.parse_args())
