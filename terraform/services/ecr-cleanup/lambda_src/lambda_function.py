@@ -2,9 +2,12 @@
 Cleans up old ECR images while protecting images referenced by currently running ECS tasks.
 """
 
+from argparse import ArgumentParser
 from datetime import datetime, timedelta, timezone
 import json
 import os
+import sys
+
 import boto3
 from botocore.exceptions import ClientError
 
@@ -55,7 +58,8 @@ def get_images_to_delete(client, repo_name, strategies, protected_refs):
             images.append(Image(image))
 
     for img in images:
-        if img.digest in protected_refs or any(tag in protected_refs for tag in img.tags):
+        if img.digest in protected_refs or \
+           img.tags and any(tag in protected_refs for tag in img.tags):
             img.status = PROTECT
 
     for strategy_name, *args in strategies:
@@ -159,7 +163,7 @@ class Image:
     def __init__(self, data):
         self.data = data
         self.digest = data['imageDigest']
-        self.tags = data['imageTags']
+        self.tags = data.get('imageTags')
         self.pushed_at = data['imagePushedAt']
         self.status = None
 
@@ -173,6 +177,10 @@ def matching_images(images, prefix):
     valid_images = []
     for image in images:
         if image.status:
+            continue
+        if prefix is None or image.tags is None:
+            if prefix == image.tags:
+                valid_images.append(image)
             continue
         for tag in image.tags:
             if tag.startswith(prefix):
@@ -202,6 +210,7 @@ def days_older_than_strategy(images, prefix, days):
 DPC_STRATEGIES = (
     ('count_image', 'rls-r', 5,),
     ('days_older_than', '', 14,),
+    ('days_older_than', None, 14,),
 )
 
 REPO_STRATEGIES = {
@@ -217,3 +226,20 @@ STRATEGIES = {
     'count_image': count_image_strategy,
     'days_older_than': days_older_than_strategy,
 }
+
+
+def run(args):
+    """ Prints tags of (or digest of untagged) images that would be deleted. """
+    repo = args.repo
+    if not repo in  REPO_STRATEGIES:
+        print(f'{repo} not configured')
+        sys.exit(1)
+    protected = get_protected_image_refs(ecs_client)
+    for image in get_images_to_delete(ecr_client, repo, REPO_STRATEGIES[repo], protected):
+        print(image.tags or image.digest)
+
+
+if __name__ == '__main__':
+    parser = ArgumentParser(description='Prints tags of images that would be deleted')
+    parser.add_argument('repo', help='repository to analyze')
+    run(parser.parse_args())

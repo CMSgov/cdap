@@ -1,6 +1,7 @@
 """
 Unit tests for ECR cleanup Lambda.
 """
+
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -43,12 +44,14 @@ def test_parse_image_ref(uri, expected_repo, expected_ref):
 
 def _make_image(digest, tags, pushed_at):
     """Builds an Image with the given digest, tags, and push timestamp."""
-    return lambda_function.Image({
+    data = {
         'imageDigest': digest,
-        'imageTags': tags,
         'imagePushedAt': pushed_at,
-    })
+    }
+    if tags:
+        data['imageTags'] = tags
 
+    return lambda_function.Image(data)
 def _make_ecr_client_mock(images):
     """Creates a mock ECR client that returns the given image data from describe_images."""
     mock_ecr = MagicMock()
@@ -69,6 +72,24 @@ def _test_images():
         images.append(_make_image(f'sha256:{i}', [f'v{i}'], pushed_at))
         images.append(_make_image(f'sha256:{i + 3}', [f'not_v{i}'], pushed_at))
     return sorted(images, key=lambda x: x.digest)
+
+@pytest.mark.parametrize("tags,prefix,includes", [
+    (('v1',), 'v', True,),
+    (('a', 'b', 'c',), 'b', True,),
+    (('anything',), '', True,),
+    (None, None, True,),
+    (('not_v',), 'v', False,),
+    (('a', 'b', 'c',), 'd', False,),
+    (('',), None, False,),
+    (None, '', False,),
+])
+def test_matching_images(tags, prefix, includes):
+    """ Make sure matching_images follows expectations. """
+    image = _make_image('sha256:1', tags, EXPIRED_DATETIME)
+    if includes:
+        assert image in lambda_function.matching_images((image,), prefix)
+    else:
+        assert image not in lambda_function.matching_images((image,), prefix)
 
 def test_count_image_strategy():
     """ Make sure count image stragy correctly marks images for matching prefixes. """
@@ -122,6 +143,18 @@ def test_get_images_to_delete():
     assert images[5].digest in result_digests
     assert pb_tag_digest not in result_digests
     assert pb_digest_digest not in result_digests
+
+def test_get_images_to_delete_none_prefix():
+    """ Make sure get_images_to_delete can handle untagged image. """
+    image_digest = 'sha256:image'
+    image = _make_image(image_digest, None, EXPIRED_DATETIME)
+    strategy = ('days_older_than', None, 14,)
+
+    result = lambda_function.get_images_to_delete(
+        _make_ecr_client_mock((image,)), 'some-repo', (strategy,), (),
+    )
+    assert len(result) == 1
+
 
 @pytest.mark.parametrize("strategies, expected_count", [
     (
