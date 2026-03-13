@@ -92,7 +92,7 @@ def test_matching_images(tags, prefix, includes):
         assert image not in lambda_function.matching_images((image,), prefix)
 
 def test_count_image_strategy():
-    """ Make sure count image stragy correctly marks images for matching prefixes. """
+    """ Make sure count image strategy correctly marks images for matching prefixes. """
     images = _test_images()
 
     lambda_function.count_image_strategy(images, 'v', 1)
@@ -105,7 +105,7 @@ def test_count_image_strategy():
             assert image.status is None
 
 def test_days_older_than_strategy():
-    """ Make sure count image stragy correctly marks images for matching prefixes. """
+    """ Make sure count image strategy correctly marks images for matching prefixes. """
     images = _test_images()
 
     lambda_function.days_older_than_strategy(images, 'v', 2)
