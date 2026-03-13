@@ -35,15 +35,15 @@ data "aws_iam_policy_document" "assume_role" {
 data "aws_iam_policy_document" "codebuild" {
 
   # CodeConnection
-  statement {
-    sid    = "AllowCodeConnection"
-    effect = "Allow"
-    actions = [
-      "codeconnections:UseConnection",
-      "codestar-connections:UseConnection"
-    ]
-    resources = [aws_codeconnections_connection.github.arn]
-  }
+  #   statement {
+  #     sid    = "AllowCodeConnection"
+  #     effect = "Allow"
+  #     actions = [
+  #       "codeconnections:UseConnection",
+  #       "codestar-connections:UseConnection"
+  #     ]
+  #     resources = [aws_codeconnections_connection.github.arn]
+  #   }
 
   # Logs
   statement {
