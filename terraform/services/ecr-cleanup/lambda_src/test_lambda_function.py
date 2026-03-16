@@ -52,6 +52,7 @@ def _make_image(digest, tags, pushed_at):
         data['imageTags'] = tags
 
     return lambda_function.Image(data)
+
 def _make_ecr_client_mock(images):
     """Creates a mock ECR client that returns the given image data from describe_images."""
     mock_ecr = MagicMock()
@@ -73,7 +74,7 @@ def _test_images():
         images.append(_make_image(f'sha256:{i + 3}', [f'not_v{i}'], pushed_at))
     return sorted(images, key=lambda x: x.digest)
 
-@pytest.mark.parametrize("tags,prefix,includes", [
+@pytest.mark.parametrize("tags,prefix,matches", [
     (('v1',), 'v', True,),
     (('a', 'b', 'c',), 'b', True,),
     (('anything',), '', True,),
@@ -83,13 +84,13 @@ def _test_images():
     (('',), None, False,),
     (None, '', False,),
 ])
-def test_matching_images(tags, prefix, includes):
-    """ Make sure matching_images follows expectations. """
+def test_images_matching_prefix(tags, prefix, matches):
+    """ Make sure images_matching_prefix follows expectations. """
     image = _make_image('sha256:1', tags, EXPIRED_DATETIME)
-    if includes:
-        assert image in lambda_function.matching_images((image,), prefix)
+    if matches:
+        assert image in lambda_function.images_matching_prefix((image,), prefix)
     else:
-        assert image not in lambda_function.matching_images((image,), prefix)
+        assert image not in lambda_function.images_matching_prefix((image,), prefix)
 
 def test_count_image_strategy():
     """ Make sure count image strategy correctly marks images for matching prefixes. """

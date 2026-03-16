@@ -183,29 +183,30 @@ class Image:
 
     def __lt__(self, other):
         return self.pushed_at < other.pushed_at
+
     def __repr__(self):
         return f'{self.tags}, {self.pushed_at}, {self.status}'
 
-def matching_images(images, prefix):
+def images_matching_prefix(images, prefix):
     """ Returns images whose status has not been set and have a tag that starts with prefix. """
-    valid_images = []
+    matching_images = []
     for image in images:
         if image.status:
             continue
         if prefix is None or image.tags is None:
             if prefix == image.tags:
-                valid_images.append(image)
+                matching_images.append(image)
             continue
         for tag in image.tags:
             if tag.startswith(prefix):
-                valid_images.append(image)
+                matching_images.append(image)
                 break
-    return valid_images
+    return matching_images
 
 def count_image_strategy(images, prefix, count):
     """ Marks images to delete or protect based on pushed date and count. """
-    relevant_images = matching_images(images, prefix)
-    for index, image in enumerate(sorted(relevant_images, reverse=True)):
+    matching_images = images_matching_prefix(images, prefix)
+    for index, image in enumerate(sorted(matching_images, reverse=True)):
         if index < count:
             image.set_status(PROTECT)
         else:
@@ -214,8 +215,8 @@ def count_image_strategy(images, prefix, count):
 def days_older_than_strategy(images, prefix, days):
     """ Marks images to delete or protect based on cutoff date. """
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    relevant_images = matching_images(images, prefix)
-    for image in relevant_images:
+    matching_images = images_matching_prefix(images, prefix)
+    for image in matching_images:
         if image.pushed_at > cutoff:
             image.set_status(PROTECT)
         else:
