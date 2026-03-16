@@ -72,13 +72,6 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
   to_port     = -1
 }
 
-# GitHub Permissions ; note the connection must be manually transitioned from "Pending" state using the AWS Console.
-
-resource "aws_codeconnections_connection" "github" {
-  name          = module.standards.account_env_suffix
-  provider_type = "GitHub"
-}
-
 resource "aws_codebuild_source_credential" "github" {
   for_each    = var.app == "cdap" ? toset([var.env]) : toset([])
   auth_type   = "PERSONAL_ACCESS_TOKEN"
