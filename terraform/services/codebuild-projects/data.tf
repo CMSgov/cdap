@@ -1,4 +1,4 @@
-# TODO: Remove this for each as we can assume the only environment is CDAP
+# TODO: To Deprecate cdap mgmt remove this for each as we can assume the only environment is CDAP
 data "aws_ssm_parameter" "github_token" {
   for_each = var.app == "cdap" ? toset([var.env]) : toset([])
   name     = "/cdap/${var.env}/codebuild-projects/sensitive/github-token"
