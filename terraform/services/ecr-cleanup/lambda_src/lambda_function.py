@@ -60,10 +60,10 @@ def get_images_to_delete(client, repo_name, strategies, protected_refs):
     for img in images:
         if img.digest in protected_refs or \
            img.tags and any(tag in protected_refs for tag in img.tags):
-            img.status = PROTECT
+            img.set_status(PROTECT)
 
-    for strategy_name, *args in strategies:
-        STRATEGIES[strategy_name](images, *args)
+    for strategy, *args in strategies:
+        strategy(images, *args)
 
     return [img for img in images if img.status == DELETE]
 
@@ -165,7 +165,21 @@ class Image:
         self.digest = data['imageDigest']
         self.tags = data.get('imageTags')
         self.pushed_at = data['imagePushedAt']
-        self.status = None
+        self._status = None
+
+    @property
+    def status(self):
+        """ The current status of the image. """
+        return self._status
+
+    def set_status(self, status):
+        """ Sets the status to a valid value unless status has already been set. """
+        if self._status:
+            log({'msg': f"Attempt to set non-null status '{self._status}' to '{status}'"})
+        elif status not in (DELETE, PROTECT,):
+            log({'msg': f"Attempt to set status to invalid value '{status}'"})
+        else:
+            self._status = status
 
     def __lt__(self, other):
         return self.pushed_at < other.pushed_at
@@ -193,9 +207,9 @@ def count_image_strategy(images, prefix, count):
     relevant_images = matching_images(images, prefix)
     for index, image in enumerate(sorted(relevant_images, reverse=True)):
         if index < count:
-            image.status = PROTECT
+            image.set_status(PROTECT)
         else:
-            image.status = DELETE
+            image.set_status(DELETE)
 
 def days_older_than_strategy(images, prefix, days):
     """ Marks images to delete or protect based on cutoff date. """
@@ -203,14 +217,14 @@ def days_older_than_strategy(images, prefix, days):
     relevant_images = matching_images(images, prefix)
     for image in relevant_images:
         if image.pushed_at > cutoff:
-            image.status = PROTECT
+            image.set_status(PROTECT)
         else:
-            image.status = DELETE
+            image.set_status(DELETE)
 
 DPC_STRATEGIES = (
-    ('count_image', 'rls-r', 5,),
-    ('days_older_than', '', 14,),
-    ('days_older_than', None, 14,),
+    (count_image_strategy, 'rls-r', 5,),
+    (days_older_than_strategy, '', 14,),
+    (days_older_than_strategy, None, 14,),
 )
 
 REPO_STRATEGIES = {
@@ -222,21 +236,18 @@ REPO_STRATEGIES = {
     'dpc-web-portal': DPC_STRATEGIES,
 }
 
-STRATEGIES = {
-    'count_image': count_image_strategy,
-    'days_older_than': days_older_than_strategy,
-}
-
-
 def run(args):
     """ Prints tags of (or digest of untagged) images that would be deleted. """
     repo = args.repo
-    if not repo in  REPO_STRATEGIES:
+    if repo != 'all' and repo not in REPO_STRATEGIES:
         print(f'{repo} not configured')
         sys.exit(1)
     protected = get_protected_image_refs(ecs_client)
-    for image in get_images_to_delete(ecr_client, repo, REPO_STRATEGIES[repo], protected):
-        print(image.tags or image.digest)
+    for repo_name, strategies in REPO_STRATEGIES.items():
+        if repo in ('all', repo_name):
+            print(repo_name)
+            for image in get_images_to_delete(ecr_client, repo_name, strategies, protected):
+                print(f'  {image.tags or image.digest}')
 
 
 if __name__ == '__main__':

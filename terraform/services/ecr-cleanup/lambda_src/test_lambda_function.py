@@ -127,8 +127,8 @@ def test_get_images_to_delete():
     images.append(pb_tag_image)
     images.append(pb_digest_image)
     strategies = (
-        ('days_older_than', 'not_v', 2),
-        ('count_image', 'v', 2),
+        (lambda_function.days_older_than_strategy, 'not_v', 2),
+        (lambda_function.count_image_strategy, 'v', 2),
     )
 
     result = lambda_function.get_images_to_delete(
@@ -148,7 +148,7 @@ def test_get_images_to_delete_none_prefix():
     """ Make sure get_images_to_delete can handle untagged image. """
     image_digest = 'sha256:image'
     image = _make_image(image_digest, None, EXPIRED_DATETIME)
-    strategy = ('days_older_than', None, 14,)
+    strategy = (lambda_function.days_older_than_strategy, None, 14,)
 
     result = lambda_function.get_images_to_delete(
         _make_ecr_client_mock((image,)), 'some-repo', (strategy,), (),
@@ -158,11 +158,13 @@ def test_get_images_to_delete_none_prefix():
 
 @pytest.mark.parametrize("strategies, expected_count", [
     (
-        (('count_image', 'v', 2), ('days_older_than', 'v', 2),),
+        ((lambda_function.count_image_strategy, 'v', 2),
+         (lambda_function.days_older_than_strategy, 'v', 2),),
         0,
     ),
     (
-        (('days_older_than', 'v', 2), ('count_image', 'v', 2),),
+        ((lambda_function.days_older_than_strategy, 'v', 2),
+         (lambda_function.count_image_strategy, 'v', 2),),
         1,
     ),
 ])
@@ -328,3 +330,18 @@ def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
     with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test'}):
         lambda_function.lambda_handler({}, None)
     mock_ecr.batch_delete_image.assert_not_called()
+
+@pytest.mark.parametrize("existing,new,expected", [
+    ( None, None, None,),
+    ( None, lambda_function.PROTECT, lambda_function.PROTECT,),
+    ( None, lambda_function.DELETE, lambda_function.DELETE,),
+    ( None, 'invalid', None,),
+    ( lambda_function.PROTECT, lambda_function.DELETE, lambda_function.PROTECT,),
+])
+def test_set_status(existing, new, expected):
+    """ Test iamge status not overwritten or set to invalid value. """
+    image = _make_image(None, None, None)
+    if existing:
+        image.set_status(existing)
+    image.set_status(new)
+    assert image.status == expected
