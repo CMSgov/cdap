@@ -3,6 +3,7 @@ Cleans up old ECR images while protecting images referenced by currently running
 """
 
 from argparse import ArgumentParser
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 import json
 import os
@@ -40,8 +41,7 @@ def parse_image_ref(image_uri):
     if ':' in last_component:
         repo_name, tag = last_component.rsplit(':', 1)
         return repo_name, tag
-
-    return last_component, 'latest'
+    return last_component, None
 
 
 def get_images_to_delete(client, repo_name, strategies, protected_refs):
@@ -57,11 +57,19 @@ def get_images_to_delete(client, repo_name, strategies, protected_refs):
         for image in page['imageDetails']:
             images.append(Image(image))
 
+    if not images:
+        return images
+
+    # Protext running images
     for img in images:
         if img.digest in protected_refs or \
            img.tags and any(tag in protected_refs for tag in img.tags):
             img.set_status(PROTECT)
+    if None in protected_refs:
+        latest = sorted(images, reverse=True)[0]
+        latest.set_status(PROTECT)
 
+    # Apply lifecycle strategies
     for strategy, *args in strategies:
         strategy(images, *args)
 
@@ -86,31 +94,38 @@ def get_protected_image_refs(client):
     """
     Return a set of all image tags and digests referenced by currently RUNNING ECS tasks.
     """
-    refs = set()
+    refs = defaultdict(set)
 
     cluster_arns = []
     for page in client.get_paginator('list_clusters').paginate():
         cluster_arns.extend(page['clusterArns'])
 
     for cluster_arn in cluster_arns:
-        task_arns = []
-        for page in client.get_paginator('list_tasks').paginate(
-            cluster=cluster_arn, desiredStatus='RUNNING'
-        ):
-            task_arns.extend(page['taskArns'])
-
-        for i in range(0, len(task_arns), AWS_BATCH_SIZE):
-            batch = task_arns[i:i + AWS_BATCH_SIZE]
-            try:
-                resp = client.describe_tasks(cluster=cluster_arn, tasks=batch)
-                for task in resp['tasks']:
-                    for container in task.get('containers', []):
-                        _, ref = parse_image_ref(container.get('image', ''))
-                        refs.add(ref)
-            except ClientError as e:
-                log({'msg': f'Error describing tasks in cluster {cluster_arn}: {e}'})
-
+        add_protected_image_refs_in_cluster(client, cluster_arn, refs)
     return refs
+
+
+def add_protected_image_refs_in_cluster(client, cluster_arn, refs):
+    """ Add the image refs running in a cluster. """
+    task_arns = []
+    for page in client.get_paginator('list_tasks').paginate(
+            cluster=cluster_arn, desiredStatus='RUNNING'
+    ):
+        task_arns.extend(page['taskArns'])
+
+    for i in range(0, len(task_arns), AWS_BATCH_SIZE):
+        batch = task_arns[i:i + AWS_BATCH_SIZE]
+        try:
+            resp = client.describe_tasks(cluster=cluster_arn, tasks=batch)
+            for task in resp['tasks']:
+                try:
+                    for container in task['containers']:
+                        repo, ref = parse_image_ref(container['image'])
+                        refs[repo].add(ref)
+                except KeyError:
+                    pass # Nothing to do if no containers or no image
+        except ClientError as e:
+            log({'msg': f'Error describing tasks in cluster {cluster_arn}: {e}'})
 
 
 def delete_images(client, repo_name, images):
@@ -145,9 +160,12 @@ def lambda_handler(_, __):
 
     for repo_name, strategies in REPO_STRATEGIES.items():
         try:
-            to_delete = get_images_to_delete(ecr_client, repo_name, strategies, protected_refs)
+            to_delete = get_images_to_delete(ecr_client,
+                                             repo_name,
+                                             strategies,
+                                             protected_refs[repo_name])
 
-            if len(to_delete):
+            if to_delete:
                 if repo_name in opted_in:
                     delete_images(ecr_client, repo_name, to_delete)
                 else:

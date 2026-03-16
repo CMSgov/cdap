@@ -33,7 +33,7 @@ EXPIRED_DATETIME = datetime.now(timezone.utc) - timedelta(days=200)
     (
         "dpc-attribution",
         "dpc-attribution",
-        "latest",
+        None,
     ),
 ])
 def test_parse_image_ref(uri, expected_repo, expected_ref):
@@ -156,7 +156,6 @@ def test_get_images_to_delete_none_prefix():
     )
     assert len(result) == 1
 
-
 @pytest.mark.parametrize("strategies, expected_count", [
     (
         ((lambda_function.count_image_strategy, 'v', 2),
@@ -181,6 +180,19 @@ def test_get_images_to_delete_strategy_order(strategies, expected_count):
         _make_ecr_client_mock((image,)), 'some-repo', strategies, (),
     )
     assert len(result) == expected_count
+
+def test_get_images_to_delete_protect_untagged_task_definition():
+    """ Make sure to protect the 'latest' image if running task definition not have tag. """
+    image_count = 4
+    images = [ _make_image(f'sha265:{i}', f'v{i}',datetime.now(timezone.utc) - timedelta(days=i))
+                           for i in range(image_count) ]
+    strategy = (lambda_function.days_older_than_strategy, '', -1,)
+
+    result = lambda_function.get_images_to_delete(
+        _make_ecr_client_mock(images), 'some-repo', (strategy,), (None,),
+    )
+    assert len(result) == image_count - 1
+    assert images[0].digest not in [image.digest for image in result]
 
 def test_no_images_for_repo():
     """Returns an empty list when the repo has no images."""
@@ -230,8 +242,8 @@ def test_get_repo_list_parameter_not_found():
     mock_ssm.get_parameter.side_effect = ClientError(failed_to_find_message, "get_parameter")
     assert lambda_function.get_repo_list(mock_ssm, '/param/not/found') == []
 
-def _make_ecs_mock(cluster_arns, task_arns, container_images):
-    """Creates a mock ECS client returning the given clusters, tasks, and container images."""
+def _make_ecs_mock(cluster_arns, task_arns, task_definitions):
+    """Creates a mock ECS client returning the given clusters, tasks, and task definitions."""
     mock_ecs = MagicMock()
 
     def paginator_side_effect(operation):
@@ -244,19 +256,29 @@ def _make_ecs_mock(cluster_arns, task_arns, container_images):
 
     mock_ecs.get_paginator.side_effect = paginator_side_effect
     mock_ecs.describe_tasks.return_value = {
-        'tasks': [{'containers': [{'image': img}]} for img in container_images]
+        'tasks': task_definitions
     }
     return mock_ecs
 
-def test_get_protected_image_refs():
+@pytest.mark.parametrize("task_definitions, expected", [
+    ([{'containers': [{'image': f'{ECR_REGISTRY}/dpc-attribution:v1.0'}]},
+      {'containers': [{'image': f'{ECR_REGISTRY}/dpc-attribution:v2.0'}]},],
+     {'dpc-attribution': {'v1.0', 'v2.0'},},),
+    ([{'containers': [{'image': f'{ECR_REGISTRY}/dpc-attribution'},],},],
+     {'dpc-attribution': {None},},),
+    ([{'containers': [{'not_image_key': 'not_image',},],},],
+     {},),
+    ([{'not_containers': 'not_container'},],
+     {},),
+])
+def test_get_protected_image_refs(task_definitions, expected):
     """Tags from running task containers are returned as protected refs."""
     mock_ecs = _make_ecs_mock(
         cluster_arns=[CLUSTER_ARN],
         task_arns=[f'{CLUSTER_ARN}/task1', f'{CLUSTER_ARN}/task2'],
-        container_images=[f'{ECR_REGISTRY}/dpc-attribution:v1.0',
-                          f'{ECR_REGISTRY}/dpc-attribution:v2.0'],
+        task_definitions=task_definitions
     )
-    assert lambda_function.get_protected_image_refs(mock_ecs) == {'v1.0', 'v2.0'}
+    assert lambda_function.get_protected_image_refs(mock_ecs) == expected
 
 @pytest.fixture(autouse=True)
 def mock_boto3_clients():
