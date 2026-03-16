@@ -1,3 +1,8 @@
+data "aws_ssm_parameter" "github_token" {
+  for_each = var.app == "cdap" ? toset([var.env]) : toset([])
+  name     = "/cdap/${var.env}/codebuild-projects/sensitive/github-token"
+}
+
 data "aws_security_group" "security_tools" {
   vpc_id = var.app == "bcda" ? module.vpc[0].id : module.standards.cdap_vpc.id
   name   = "cmscloud-security-tools"
@@ -35,15 +40,15 @@ data "aws_iam_policy_document" "assume_role" {
 data "aws_iam_policy_document" "codebuild" {
 
   # CodeConnection
-  #   statement {
-  #     sid    = "AllowCodeConnection"
-  #     effect = "Allow"
-  #     actions = [
-  #       "codeconnections:UseConnection",
-  #       "codestar-connections:UseConnection"
-  #     ]
-  #     resources = [aws_codeconnections_connection.github.arn]
-  #   }
+  statement {
+    sid    = "AllowCodeConnection"
+    effect = "Allow"
+    actions = [
+      "codeconnections:UseConnection",
+      "codestar-connections:UseConnection"
+    ]
+    resources = [aws_codeconnections_connection.github.arn]
+  }
 
   # Logs
   statement {
@@ -96,7 +101,6 @@ data "aws_iam_policy_document" "codebuild" {
       "ec2:DeleteNetworkInterface",
       "ec2:DescribeDhcpOptions",
       "ec2:DescribeNetworkInterfaces",
-      #       "ec2:DescribeSubnets",
       "ec2:DescribeSecurityGroups",
       "ec2:DescribeVpcs",
     ]

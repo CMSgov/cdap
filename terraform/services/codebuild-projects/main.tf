@@ -16,21 +16,6 @@ locals {
   ]
 }
 
-module "platform" {
-  # Ensure `ref` in the following line is pinned to something static
-  # e.g. a known branch, commit hash, or tag from **this repository**
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=b991a02f3f39958223289638d6163d7ffceccfe2"
-  providers = { aws = aws, aws.secondary = aws.secondary }
-
-  app         = var.app
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/codebuild-projects"
-  service     = "codebuild-projects"
-  ssm_root_map = {
-    secrets = "/cdap/${var.env}/codebuild-projects"
-  }
-}
-
 module "standards" {
   source = "../../modules/standards"
 
@@ -89,15 +74,16 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
 
 # GitHub Permissions ; note the connection must be manually transitioned from "Pending" state using the AWS Console.
 
-# resource "aws_codeconnections_connection" "github" {
-#   name          = module.standards.account_env_suffix
-#   provider_type = "GitHub"
-# }
+resource "aws_codeconnections_connection" "github" {
+  name          = module.standards.account_env_suffix
+  provider_type = "GitHub"
+}
 
 resource "aws_codebuild_source_credential" "github" {
+  for_each    = var.app == "cdap" ? toset([var.env]) : toset([])
   auth_type   = "PERSONAL_ACCESS_TOKEN"
   server_type = "GITHUB"
-  token       = module.platform.ssm.secrets.github-token
+  token       = sensitive(data.aws_ssm_parameter.github_token[var.env].value)
 }
 
 # TODO: To deprecate cdap-mgmt runners remove conditional logic for vpc_id and set to use standards module only.
