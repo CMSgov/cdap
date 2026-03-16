@@ -7,7 +7,7 @@ on:
 
 jobs:
   smoke-test:
-    runs-on: codebuild-cdap-${{ contains(fromJSON('["dev", "test"]'), matrix.env) && '-non-prod' || 'prod'}}${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-cdap-${{ contains(fromJSON('["dev", "test"]'), matrix.env) && 'non-prod' || 'prod'}}${{github.run_id}}-${{github.run_attempt}}
     strategy:
       matrix:
         env: [dev, test, sandbox, prod]
