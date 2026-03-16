@@ -1,0 +1,29 @@
+name: Codebuild Smoke Test
+
+on:
+  push:
+    paths:
+      - 'terraform/services/codebuild-projects/**'
+
+jobs:
+  smoke-test:
+    runs-on: codebuild-cdap-${{ contains(fromJSON('["dev", "test"]'), matrix.env) && 'non-prod' || 'prod'}}-${{github.run_id}}-${{github.run_attempt}}
+    strategy:
+      matrix:
+        env: [dev, test, sandbox, prod]
+        include:
+          - env: dev
+          - env: test
+          - env: prod
+          - env: sandbox
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Basic smoke test
+        run: |
+          echo "✅ Workflow triggered on branch: ${{ github.ref_name }}"
+          echo "📦 Repo: ${{ github.repository }}"
+          echo "🔖 Commit: ${{ github.sha }}"
+          ls -la
