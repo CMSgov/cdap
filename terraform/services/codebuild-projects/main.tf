@@ -1,5 +1,5 @@
 locals {
-  arm64_image               = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
+  arm64_image               = "aws/codebuild/amazonlinux2-aarch64-standard:3.0"
   x86_image                 = "aws/codebuild/amazonlinux-x86_64-standard:5.0"
   arm64_changeover_projects = var.app == "bcda" ? ["bcda-app", "bcda-ssas-app"] : []
 
@@ -67,9 +67,9 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
   security_group_id = aws_security_group.codebuild_project[each.key].id
 
   cidr_ipv4   = "0.0.0.0/0"
-  from_port   = 0
-  ip_protocol = "tcp"
-  to_port     = 0
+  from_port   = -1
+  ip_protocol = "-1"
+  to_port     = -1
 }
 
 # GitHub Permissions ; note the connection must be manually transitioned from "Pending" state using the AWS Console.
