@@ -6,16 +6,17 @@ runs:
     - shell: bash
       run: |
         VERSION=v4.7.6
+        CPU_ARCHITECTURE="Linux_arm64"
         TMPDIR=$(mktemp -d)
         cd $TMPDIR
         curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_checksums.txt
-        curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_Linux_x86_64.tar.gz
+        curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_${CPU_ARCHITECTURE}.tar.gz
 
         if cosign version > /dev/null; then
           curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_checksums.txt.sig
           curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_checksums.txt.pem
-          curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_Linux_x86_64.tar.gz.sig
-          curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_Linux_x86_64.tar.gz.pem
+          curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_${CPU_ARCHITECTURE}.tar.gz.sig
+          curl -SsLO https://github.com/tofuutils/tenv/releases/download/${VERSION}/tenv_${VERSION}_${CPU_ARCHITECTURE}.tar.gz.pem
           cosign \
             verify-blob \
             --certificate-identity "https://github.com/tofuutils/tenv/.github/workflows/release.yml@refs/tags/${VERSION}" \
@@ -27,10 +28,10 @@ runs:
           cosign \
             verify-blob \
             --certificate-identity "https://github.com/tofuutils/tenv/.github/workflows/release.yml@refs/tags/${VERSION}" \
-            --signature "tenv_${VERSION}_Linux_x86_64.tar.gz.sig" \
-            --certificate "tenv_${VERSION}_Linux_x86_64.tar.gz.pem" \
+            --signature "tenv_${VERSION}_${CPU_ARCHITECTURE}.tar.gz.sig" \
+            --certificate "tenv_${VERSION}_${CPU_ARCHITECTURE}.tar.gz.pem" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-            "tenv_${VERSION}_Linux_x86_64.tar.gz"
+            "tenv_${VERSION}_${CPU_ARCHITECTURE}.tar.gz"
           TENV_ASSET_CHECK=$?
           if [ "$TENV_SIG_CHECK" -eq "0" ] && [ "$TENV_ASSET_CHECK" -eq "0" ]; then
             echo "signatures verified"
@@ -44,8 +45,8 @@ runs:
 
         if shasum -a 256 -c "tenv_${VERSION}_checksums.txt" --ignore-missing; then
           echo "checksums checked, installing tenv"
-          tar xf tenv_${VERSION}_Linux_x86_64.tar.gz
-          rm tenv_${VERSION}_Linux_x86_64.tar.gz
+          tar xf tenv_${VERSION}_${CPU_ARCHITECTURE}.tar.gz
+          rm tenv_${VERSION}_${CPU_ARCHITECTURE}.tar.gz
           cd - > /dev/null
           mv $TMPDIR $HOME/.tenv
           echo "PATH=$HOME/.tenv:$PATH" >> "$GITHUB_ENV"
