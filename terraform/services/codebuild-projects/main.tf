@@ -1,5 +1,5 @@
 locals {
-  arm64_image               = "aws/codebuild/amazonlinux2-aarch64-standard:2.0"
+  arm64_image               = "aws/codebuild/amazonlinux2-aarch64-standard:3.0"
   x86_image                 = "aws/codebuild/amazonlinux-x86_64-standard:5.0"
   arm64_changeover_projects = var.app == "bcda" ? ["bcda-app", "bcda-ssas-app"] : []
 
@@ -67,9 +67,16 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
   security_group_id = aws_security_group.codebuild_project[each.key].id
 
   cidr_ipv4   = "0.0.0.0/0"
-  from_port   = 0
-  ip_protocol = "tcp"
-  to_port     = 0
+  ip_protocol = "-1"
+  from_port   = -1
+  to_port     = -1
+}
+
+resource "aws_codebuild_source_credential" "github" {
+  for_each    = var.app == "cdap" ? toset([var.env]) : toset([])
+  auth_type   = "PERSONAL_ACCESS_TOKEN"
+  server_type = "GITHUB"
+  token       = sensitive(data.aws_ssm_parameter.github_token[var.env].value)
 }
 
 # TODO: To deprecate cdap-mgmt runners remove conditional logic for vpc_id and set to use standards module only.
@@ -154,6 +161,8 @@ resource "aws_codebuild_webhook" "this" {
       pattern = "WORKFLOW_JOB_QUEUED"
     }
   }
+
+  depends_on = [aws_codebuild_source_credential.github]
 }
 
 # ARM64 Configurations that were established before migrating towards a cdap-test and cdap-prod managed codebuild project
@@ -264,12 +273,14 @@ resource "aws_codebuild_project" "per_repo" {
     }
   }
 
+
   lifecycle {
     ignore_changes = [
       build_timeout,
       environment[0].compute_type
     ]
   }
+  depends_on = [aws_codebuild_source_credential.github]
 }
 
 resource "aws_codebuild_webhook" "per_repo" {
@@ -283,6 +294,6 @@ resource "aws_codebuild_webhook" "per_repo" {
       pattern = "WORKFLOW_JOB_QUEUED"
     }
   }
+
+  depends_on = [aws_codebuild_source_credential.github]
 }
-
-
