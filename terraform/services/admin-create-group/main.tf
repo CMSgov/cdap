@@ -18,7 +18,7 @@ module "admin_create_group_function" {
   description = "Creates a group for the supplied CMS ID."
 
   handler = "bootstrap"
-  runtime = "provided.al2"
+  runtime = "provided.al2023"
 
   memory_size = local.memory_size
 
