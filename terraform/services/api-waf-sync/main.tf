@@ -26,7 +26,7 @@ module "api_waf_sync_function" {
   description = "Synchronizes the IP whitelist in ${var.app} with the WAF IP Set"
 
   handler = "bootstrap"
-  runtime = "provided.al2"
+  runtime = "provided.al2023ap"
 
   function_role_inline_policies = {
     waf-access = data.aws_iam_policy_document.aws_waf_access.json
