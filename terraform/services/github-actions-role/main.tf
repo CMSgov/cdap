@@ -324,7 +324,6 @@ data "aws_iam_policy_document" "github_actions_policy" {
         data.aws_kms_alias.bcda_insights_data_sampler[*].target_key_arn,
       ) : [],
       var.app == "dpc" ? concat(
-        [for key in data.aws_kms_alias.dpc_cloudwatch_keys : key.target_key_arn],
         data.aws_kms_alias.dpc_app_config[*].target_key_arn,
         data.aws_kms_alias.dpc_ecr[*].target_key_arn
       ) : []
@@ -461,6 +460,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
+      "s3:PutObjectTagging",
       "s3:ListBucket",
       "s3:GetObject",
       "s3:GetObjectTagging",
