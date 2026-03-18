@@ -21,7 +21,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-cdap-${{ github.ref_name =='main' && 'prod' || 'non-prod' }}-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     strategy:
       fail-fast: false
       matrix:
@@ -51,7 +51,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-cdap-${{ github.ref_name =='main' && 'prod' || 'non-prod' }}-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
     if: failure()
     needs: [apply]
     steps:
