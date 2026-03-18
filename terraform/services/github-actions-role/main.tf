@@ -142,6 +142,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "codebuild:DeleteWebhook",
       "codebuild:ListCuratedEnvironmentImages",
       "codebuild:ListProjects",
+      "codebuild:ListSourceCredentials",
       "codebuild:UpdateProject",
       "codebuild:UpdateProjectVisibility",
       "codebuild:UpdateWebhook"
