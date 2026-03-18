@@ -15,7 +15,7 @@ defaults:
 
 jobs:
   check:
-    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-cdap-${{ github.ref_name =='main' && 'prod' || 'non-prod' }}-${{github.run_id}}-${{github.run_attempt}}
     steps:
       - uses: actions/checkout@0b65099ef9232cfa2dfd4eea89cf8b9fa6052013 # v5.0.0
       - uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
