@@ -277,9 +277,12 @@ data "aws_iam_policy_document" "github_actions_policy" {
     actions = [
       "events:DescribeRule",
       "events:ListTagsForResource",
+      "events:ListTagsForResource",
       "events:ListTargetsByRule",
       "events:PutRule",
-      "events:PutTargets"
+      "events:PutTargets",
+      "events:TagResource",
+      "events:UntagResource"
     ]
     resources = ["*"]
   }
