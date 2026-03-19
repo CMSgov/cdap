@@ -206,6 +206,11 @@ def lambda_handler(_, __):
         else:
             log_images_for_deletion(repo_name, to_delete)
         log({'msg': f'Cleanup complete for repo: {repo_name}', 'repo': repo_name})
+    log({
+        'msg': 'ECR cleanup lambda completed',
+        'app': os.environ['APP'],
+        'env': os.environ['ENV'],
+    })
 
 def run(args):
     """ Prints tags of (or digest of untagged) images that would be deleted. """
