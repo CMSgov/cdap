@@ -171,3 +171,8 @@ def lambda_handler(event, context):  # pylint: disable=unused-argument
             log({'msg': f'Cleanup complete for repo: {repo}'})
         except ClientError as e:
             log({'msg': f'Error processing repo {repo}: {e}', 'repo': repo})
+    log({
+        'msg': 'ECR cleanup lambda completed',
+        'app': os.environ['APP'],
+        'env': os.environ['ENV'],
+    })
