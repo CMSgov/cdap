@@ -3,7 +3,7 @@ Cleans up old ECR images while protecting images referenced by currently running
 """
 
 from argparse import ArgumentParser
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import json
 import os
 import sys
@@ -11,21 +11,18 @@ import sys
 import boto3
 from botocore.exceptions import ClientError
 
+from strategies import DELETE, PROTECT, REPO_STRATEGIES
+
 AWS_BATCH_SIZE = 100
 
 ssm_client = boto3.client('ssm')
 ecs_client = boto3.client('ecs')
 ecr_client = boto3.client('ecr')
 
-DELETE = 'to_delete'
-PROTECT = 'to_protect'
-
-
 def log(data):
     """Adds a UTC timestamp to data and prints it as a JSON log line."""
     data['time'] = datetime.now(timezone.utc).isoformat()
     print(json.dumps(data, default=str))
-
 
 def parse_image_ref(image_uri):
     """Parses an ECR image URI and returns a (repo_name, ref) tuple
@@ -126,6 +123,20 @@ def log_images_for_deletion(repo, images):
         log({'msg': 'Would delete image (not opted in)', 'repo': repo,
              'digest': img.digest})
 
+def deleteable_images(repo='all'):
+    protected_refs = get_protected_image_refs(ecs_client)
+    log({'msg': 'Built protected image set from running ECS tasks',
+         'repos': list(protected_refs)})
+
+    to_delete = {}
+    for repo_name, strategies in REPO_STRATEGIES.items():
+        if repo in ('all', repo_name):
+            try:
+                to_delete[repo_name] = get_images_to_delete(ecr_client, repo_name, strategies, protected_refs)
+            except ClientError as e:
+                log({'msg': f'Error processing repo {repo_name}: {e}', 'repo': repo_name})
+    return to_delete
+    
 def lambda_handler(_, __):
     """
     Main entry point for lambda function.
@@ -139,14 +150,8 @@ def lambda_handler(_, __):
 
     opted_in = set(get_repo_list(ssm_client, ssm_param))
 
-    protected_refs = get_protected_image_refs(ecs_client)
-    log({'msg': 'Built protected image set from running ECS tasks',
-         'repos': list(protected_refs)})
-
-    for repo_name, strategies in REPO_STRATEGIES.items():
+    for repo_name, to_delete in deleteable_images().items():
         try:
-            to_delete = get_images_to_delete(ecr_client, repo_name, strategies, protected_refs)
-
             if len(to_delete):
                 if repo_name in opted_in:
                     delete_images(ecr_client, repo_name, to_delete)
@@ -175,9 +180,9 @@ class Image:
     def set_status(self, status):
         """ Sets the status to a valid value unless status has already been set. """
         if self._status:
-            log({'msg': f"Attempt to set non-null status '{self._status}' to '{status}'"})
+            log({'msg': f"Attempt to set non-null status '{self._status}' to '{status}' (ignoring)"})
         elif status not in (DELETE, PROTECT,):
-            log({'msg': f"Attempt to set status to invalid value '{status}'"})
+            log({'msg': f"Attempt to set status to invalid value '{status}' (ignoring)"})
         else:
             self._status = status
 
@@ -187,92 +192,16 @@ class Image:
     def __repr__(self):
         return f'{self.tags}, {self.pushed_at}, {self.status}'
 
-def images_matching_prefix(images, prefix):
-    """ Returns images whose status has not been set and have a tag that starts with prefix. """
-    matching_images = []
-    for image in images:
-        if image.status:
-            continue
-        if prefix is None or image.tags is None:
-            if prefix == image.tags:
-                matching_images.append(image)
-            continue
-        for tag in image.tags:
-            if tag.startswith(prefix):
-                matching_images.append(image)
-                break
-    return matching_images
-
-def count_image_strategy(images, tag_prefix, count):
-    """
-    Marks images to delete or protect based on pushed date and count.
-    Only applies to images with a tag that starts with 'tag_prefix'.
-    Will not apply to any images that have been marked for deletion or
-    protection by another strategy.
-
-    Arguments:
-    images     -- a sequence of all images in a given repository
-    tag_prefix -- matcher for images that should be affected by this strategy
-                  use '' to match all tagged images
-                  use None to match untagged images
-    count      -- maximum number of images to protect from deletion
-    """
-    matching_images = images_matching_prefix(images, tag_prefix)
-    for index, image in enumerate(sorted(matching_images, reverse=True)):
-        if index < count:
-            image.set_status(PROTECT)
-        else:
-            image.set_status(DELETE)
-
-def days_older_than_strategy(images, tag_prefix, days):
-    """
-    Marks images to delete or protect based on cutoff date.
-    Only applies to images with a tag that starts with 'tag_prefix'.
-    Will not apply to any images that have been marked for deletion or
-    protection by another strategy.
-
-    Arguments:
-    images     -- a sequence of all images in a given repository
-    tag_prefix -- matcher for images that should be affected by this strategy
-                  use '' to match all tagged images
-                  use None to match untagged images
-    count      -- number of days ago, after which images will be deleted
-    """
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
-    matching_images = images_matching_prefix(images, tag_prefix)
-    for image in matching_images:
-        if image.pushed_at > cutoff:
-            image.set_status(PROTECT)
-        else:
-            image.set_status(DELETE)
-
-DPC_STRATEGIES = (
-    (count_image_strategy, 'rls-r', 5,),
-    (days_older_than_strategy, '', 14,),
-    (days_older_than_strategy, None, 14,),
-)
-
-REPO_STRATEGIES = {
-    'dpc-aggregation': DPC_STRATEGIES,
-    'dpc-api': DPC_STRATEGIES,
-    'dpc-attribution': DPC_STRATEGIES,
-    'dpc-web': DPC_STRATEGIES,
-    'dpc-web-admin': DPC_STRATEGIES,
-    'dpc-web-portal': DPC_STRATEGIES,
-}
-
 def run(args):
     """ Prints tags of (or digest of untagged) images that would be deleted. """
     repo = args.repo
     if repo != 'all' and repo not in REPO_STRATEGIES:
         print(f'{repo} not configured')
         sys.exit(1)
-    protected = get_protected_image_refs(ecs_client)
-    for repo_name, strategies in REPO_STRATEGIES.items():
-        if repo in ('all', repo_name):
-            print(repo_name)
-            for image in get_images_to_delete(ecr_client, repo_name, strategies, protected):
-                print(f'  {image.tags or image.digest}')
+    for repo_name, deleteable in deleteable_images(repo).items():
+        print(repo_name)
+        for image in deleteable:
+            print(f'  {image.tags or image.digest}')
 
 
 if __name__ == '__main__':
