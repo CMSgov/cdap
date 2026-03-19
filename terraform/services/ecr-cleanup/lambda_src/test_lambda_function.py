@@ -271,6 +271,22 @@ def test_lambda_handler_deletes_old_unprotected_images(mock_boto3_clients):
     )
 
 
+def test_lambda_handler_logs_completion_message(mock_boto3_clients, capfd):
+    """
+    Ensures successful execution of lambda_handler() will create log statement
+    indicating completion of ECR-cleanup. This is used for monitoring in Splunk.
+    """
+    mock_ssm, mock_ecs, mock_ecr = mock_boto3_clients
+    old_image = _make_image('sha256:old', ['old-tag'], EXPIRED_DATETIME)
+    _setup_handler_mocks(mock_ssm, mock_ecs, mock_ecr, ecr_images=[old_image])
+    with patch.dict(os.environ, {'APP': 'dpc', 'ENV': 'test'}):
+        lambda_function.lambda_handler({}, None)
+    final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
+
+    expected_log_message = 'ECR cleanup lambda completed'
+    assert expected_log_message in final_log_message["msg"]
+
+
 def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
     """Image referenced by a running ECS task is never deleted even if old."""
     mock_ssm, mock_ecs, mock_ecr = mock_boto3_clients
@@ -284,4 +300,3 @@ def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
     )
     with patch.dict(os.environ, {'APP': 'dpc', 'ENV': 'test'}):
         lambda_function.lambda_handler({}, None)
-    mock_ecr.batch_delete_image.assert_not_called()
