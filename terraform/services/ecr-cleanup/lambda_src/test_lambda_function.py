@@ -139,12 +139,52 @@ def test_get_images_to_delete_from_repo_strategy_order(strategy_list, expected_c
     )
     assert len(result) == expected_count
 
-def test_no_images_for_repo():
+def test_get_images_to_delete_from_repo_no_images_for_repo():
     """Returns an empty list when the repo has no images."""
     result = lambda_function.get_images_to_delete_from_repo(
         _make_ecr_client_mock([]), 'dpc-attribution', set(), set()
     )
     assert result == []
+
+def test_get_images_to_delete_all():
+    """
+    Make sure all repos are hit.
+    """
+    with patch('lambda_function.get_images_to_delete_from_repo') as mock_from_repo:
+        lambda_function.get_images_to_delete(strategies.REPO_STRATEGIES)
+    assert mock_from_repo.call_count == len(strategies.REPO_STRATEGIES)
+
+def test_get_images_to_delete_single(mock_boto3_clients):
+    """
+    Make sure only single repo is hit.
+    """
+    repo_name = 'test-repo'
+    strategy_list = (
+        (strategies.days_older_than_strategy, 'not_v', 2),
+        (strategies.count_image_strategy, 'v', 2),
+    )
+
+    strategy_dict = {repo_name: strategy_list}
+    with patch('lambda_function.get_images_to_delete_from_repo') as mock_from_repo:
+        lambda_function.get_images_to_delete(strategy_dict)
+    assert mock_from_repo.call_count == 1
+    mock_from_repo.assert_called_once_with(
+        mock_boto3_clients[-1],
+        repo_name,
+        strategy_list,
+        set(),
+    )
+
+def test_get_images_to_delete_on_error():
+    """
+    Make sure get_images_to_delete_from_repo does not call get_images_to_delete_from_repo
+    if error getting protected images.
+    """
+    with patch('lambda_function.get_images_to_delete_from_repo') as mock_from_repo, \
+         patch('lambda_function.get_protected_image_refs',
+               side_effect=ClientError({}, 'get_paginator')):
+        lambda_function.get_images_to_delete(strategies.REPO_STRATEGIES)
+    assert mock_from_repo.call_count == 0
 
 def test_delete_images_single_image():
     """A single image is deleted with one batch_delete_image call."""
@@ -220,6 +260,13 @@ def test_get_protected_image_refs():
                           f'{ECR_REGISTRY}/dpc-attribution:v2.0'],
     )
     assert lambda_function.get_protected_image_refs(mock_ecs) == {'v1.0', 'v2.0'}
+
+def test_get_protected_image_refs_on_error():
+    """Tags from running task containers are returned as protected refs."""
+    mock_ecs = MagicMock()
+    mock_ecs.get_paginator.side_effect = ClientError({}, 'get_paginator')
+    with pytest.raises(ClientError):
+        lambda_function.get_protected_image_refs(mock_ecs)
 
 @pytest.fixture(autouse=True)
 def mock_boto3_clients():

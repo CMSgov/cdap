@@ -100,7 +100,7 @@ def get_images_to_delete_from_repo(client, repo_name, strategies, protected_refs
 
     return [img for img in images if img.status == DELETE]
 
-def get_images_to_delete(repo='all'):
+def get_images_to_delete(repo_strategies) -> dict[str, list[Image]]:
     """
     Returns images to delete from either a single repository or all repositories
     in strategies.REPO_STRATEGIES.
@@ -108,21 +108,25 @@ def get_images_to_delete(repo='all'):
     Arguments:
     repo -- the specifc repository to fetch images from or 'all' for all
     """
-    protected_refs = get_protected_image_refs(ecs_client)
+    try:
+        protected_refs = get_protected_image_refs(ecs_client)
+    except ClientError as e:
+        log({'msg': f'Unable to retrieve protected_refs: {e}'})
+        return []
+
     log({'msg': 'Built protected image set from running ECS tasks',
          'repos': list(protected_refs)})
 
     to_delete = {}
-    for repo_name, strategies in REPO_STRATEGIES.items():
-        if repo in ('all', repo_name,):
-            try:
-                to_delete[repo_name] = get_images_to_delete_from_repo(ecr_client,
-                                                                      repo_name,
-                                                                      strategies,
-                                                                      protected_refs)
-            except ClientError as e:
-                log({'msg': f'Error retrieving images from repo {repo_name}: {e}',
-                     'repo': repo_name})
+    for repo_name, strategies in repo_strategies.items():
+        try:
+            to_delete[repo_name] = get_images_to_delete_from_repo(ecr_client,
+                                                                  repo_name,
+                                                                  strategies,
+                                                                  protected_refs)
+        except ClientError as e:
+            log({'msg': f'Error retrieving images from repo {repo_name}: {e}',
+                 'repo': repo_name})
     return to_delete
 
 def get_repo_list(client, ssm_param_name):
@@ -158,15 +162,11 @@ def get_protected_image_refs(client):
 
         for i in range(0, len(task_arns), AWS_BATCH_SIZE):
             batch = task_arns[i:i + AWS_BATCH_SIZE]
-            try:
-                resp = client.describe_tasks(cluster=cluster_arn, tasks=batch)
-                for task in resp['tasks']:
-                    for container in task.get('containers', []):
-                        _, ref = parse_image_ref(container.get('image', ''))
-                        refs.add(ref)
-            except ClientError as e:
-                log({'msg': f'Error describing tasks in cluster {cluster_arn}: {e}'})
-
+            resp = client.describe_tasks(cluster=cluster_arn, tasks=batch)
+            for task in resp['tasks']:
+                for container in task.get('containers', []):
+                    _, ref = parse_image_ref(container.get('image', ''))
+                    refs.add(ref)
     return refs
 
 
@@ -196,7 +196,7 @@ def lambda_handler(_, __):
 
     opted_in = set(get_repo_list(ssm_client, ssm_param))
 
-    for repo_name, to_delete in get_images_to_delete().items():
+    for repo_name, to_delete in get_images_to_delete(REPO_STRATEGIES).items():
         if repo_name in opted_in:
             try:
                 delete_images(ecr_client, repo_name, to_delete)
@@ -209,10 +209,14 @@ def lambda_handler(_, __):
 def run(args):
     """ Prints tags of (or digest of untagged) images that would be deleted. """
     repo = args.repo
-    if repo != 'all' and repo not in REPO_STRATEGIES:
+    if repo == 'all':
+        to_delete = get_images_to_delete(REPO_STRATEGIES)
+    elif repo in REPO_STRATEGIES:
+        to_delete = get_images_to_delete({repo: REPO_STRATEGIES[repo]})
+    else:
         print(f'{repo} not configured')
         sys.exit(1)
-    for repo_name, deleteable in get_images_to_delete(repo).items():
+    for repo_name, deleteable in to_delete.items():
         print(repo_name)
         for image in deleteable:
             print(f'  {image.tags or image.digest}')
