@@ -11,6 +11,7 @@ import pytest
 from botocore.exceptions import ClientError
 
 import lambda_function
+import strategies
 
 # pytest fixtures are referenced by parameter name, which pylint flags as redefining outer scope
 # pylint: disable=redefined-outer-name
@@ -88,20 +89,20 @@ def test_images_matching_prefix(tags, prefix, matches):
     """ Make sure images_matching_prefix follows expectations. """
     image = _make_image('sha256:1', tags, EXPIRED_DATETIME)
     if matches:
-        assert image in lambda_function.images_matching_prefix((image,), prefix)
+        assert image in strategies.images_matching_prefix((image,), prefix)
     else:
-        assert image not in lambda_function.images_matching_prefix((image,), prefix)
+        assert image not in strategies.images_matching_prefix((image,), prefix)
 
 def test_count_image_strategy():
     """ Make sure count image strategy correctly marks images for matching prefixes. """
     images = _test_images()
 
-    lambda_function.count_image_strategy(images, 'v', 1)
+    strategies.count_image_strategy(images, 'v', 1)
     for index, image in enumerate(images):
         if index == 0:
-            assert image.status == lambda_function.PROTECT
+            assert image.status == strategies.PROTECT
         elif 1 <= index <= 2:
-            assert image.status == lambda_function.DELETE
+            assert image.status == strategies.DELETE
         else:
             assert image.status is None
 
@@ -109,12 +110,12 @@ def test_days_older_than_strategy():
     """ Make sure count image strategy correctly marks images for matching prefixes. """
     images = _test_images()
 
-    lambda_function.days_older_than_strategy(images, 'v', 2)
+    strategies.days_older_than_strategy(images, 'v', 2)
     for index, image in enumerate(images):
         if index < 2:
-            assert image.status == lambda_function.PROTECT
+            assert image.status == strategies.PROTECT
         elif index == 2:
-            assert image.status == lambda_function.DELETE
+            assert image.status == strategies.DELETE
         else:
             assert image.status is None
 
@@ -127,15 +128,15 @@ def test_get_images_to_delete():
     images = _test_images()
     images.append(pb_tag_image)
     images.append(pb_digest_image)
-    strategies = (
-        (lambda_function.days_older_than_strategy, 'not_v', 2),
-        (lambda_function.count_image_strategy, 'v', 2),
+    strategy_list = (
+        (strategies.days_older_than_strategy, 'not_v', 2),
+        (strategies.count_image_strategy, 'v', 2),
     )
 
     result = lambda_function.get_images_to_delete(
         _make_ecr_client_mock(images),
         'some-repo',
-        strategies,
+        strategy_list,
         pb_tag_image.tags + [pb_digest_image.digest,],
     )
     assert len(result) == 2
@@ -149,26 +150,26 @@ def test_get_images_to_delete_none_prefix():
     """ Make sure get_images_to_delete can handle untagged image. """
     image_digest = 'sha256:image'
     image = _make_image(image_digest, None, EXPIRED_DATETIME)
-    strategy = (lambda_function.days_older_than_strategy, None, 14,)
+    strategy = (strategies.days_older_than_strategy, None, 14,)
 
     result = lambda_function.get_images_to_delete(
         _make_ecr_client_mock((image,)), 'some-repo', (strategy,), (),
     )
     assert len(result) == 1
 
-@pytest.mark.parametrize("strategies, expected_count", [
+@pytest.mark.parametrize("strategy_list, expected_count", [
     (
-        ((lambda_function.count_image_strategy, 'v', 2),
-         (lambda_function.days_older_than_strategy, 'v', 2),),
+        ((strategies.count_image_strategy, 'v', 2),
+         (strategies.days_older_than_strategy, 'v', 2),),
         0,
     ),
     (
-        ((lambda_function.days_older_than_strategy, 'v', 2),
-         (lambda_function.count_image_strategy, 'v', 2),),
+        ((strategies.days_older_than_strategy, 'v', 2),
+         (strategies.count_image_strategy, 'v', 2),),
         1,
     ),
 ])
-def test_get_images_to_delete_strategy_order(strategies, expected_count):
+def test_get_images_to_delete_strategy_order(strategy_list, expected_count):
     """
     Tests that images protected by an early strategy are not deleted by a later strategy,
     and that images deleted by an early strategy are not protected by a later strategy.
@@ -177,7 +178,7 @@ def test_get_images_to_delete_strategy_order(strategies, expected_count):
     image = _make_image(image_digest, ['v1'], EXPIRED_DATETIME)
 
     result = lambda_function.get_images_to_delete(
-        _make_ecr_client_mock((image,)), 'some-repo', strategies, (),
+        _make_ecr_client_mock((image,)), 'some-repo', strategy_list, (),
     )
     assert len(result) == expected_count
 
@@ -186,7 +187,7 @@ def test_get_images_to_delete_protect_untagged_task_definition():
     image_count = 4
     images = [ _make_image(f'sha265:{i}', f'v{i}',datetime.now(timezone.utc) - timedelta(days=i))
                            for i in range(image_count) ]
-    strategy = (lambda_function.days_older_than_strategy, '', -1,)
+    strategy = (strategies.days_older_than_strategy, '', -1,)
 
     result = lambda_function.get_images_to_delete(
         _make_ecr_client_mock(images), 'some-repo', (strategy,), (None,),
@@ -356,10 +357,10 @@ def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
 
 @pytest.mark.parametrize("existing,new,expected", [
     ( None, None, None,),
-    ( None, lambda_function.PROTECT, lambda_function.PROTECT,),
-    ( None, lambda_function.DELETE, lambda_function.DELETE,),
+    ( None, strategies.PROTECT, strategies.PROTECT,),
+    ( None, strategies.DELETE, strategies.DELETE,),
     ( None, 'invalid', None,),
-    ( lambda_function.PROTECT, lambda_function.DELETE, lambda_function.PROTECT,),
+    ( strategies.PROTECT, strategies.DELETE, strategies.PROTECT,),
 ])
 def test_set_status(existing, new, expected):
     """ Test iamge status not overwritten or set to invalid value. """
