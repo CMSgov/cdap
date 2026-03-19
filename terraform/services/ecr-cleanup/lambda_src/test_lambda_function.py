@@ -169,6 +169,7 @@ def test_delete_images_multiple_batches():
     assert len(second_call_ids) == 1
 
 def test_delete_images_empty_list():
+    """ Makes sure delete_images does not throw error on empty list. """
     mock_ecr = MagicMock()
     lambda_function.delete_images(mock_ecr, 'some-repo', [])
     mock_ecr.batch_delete_image.assert_not_called()

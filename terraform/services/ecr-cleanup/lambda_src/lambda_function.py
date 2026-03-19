@@ -38,9 +38,9 @@ class Image:
     def set_status(self, status):
         """ Sets the status to a valid value unless status has already been set. """
         if self._status:
-            log({'msg': f"Attempt to set non-null status '{self._status}' to '{status}' (ignoring)"})
+            log({'msg': f"Attempt to set non-null status '{self._status}' to '{status}'"})
         elif status not in (DELETE, PROTECT,):
-            log({'msg': f"Attempt to set status to invalid value '{status}' (ignoring)"})
+            log({'msg': f"Attempt to set status to invalid value '{status}'"})
         else:
             self._status = status
 
@@ -75,9 +75,15 @@ def parse_image_ref(image_uri):
 def get_images_to_delete_from_repo(client, repo_name, strategies, protected_refs):
     """
     Fetches all images for repo_name and returns those eligible for deletion:
-    1. Not referenced in protected_refs,
-    2. Outside the KEEP_COUNT newest
-    3. Older than MAX_AGE_DAYS.
+    1. Not referenced in protected_refs
+    2. Marked for deletion by a strategy
+
+    Arguments:
+    client         -- an ecr client
+    repo_name      -- name of repository to check
+    strategies     -- sequence of strategies for protecting/deleting images
+    protected_refs -- sequence of image references that should not be deleted
+
     """
     images = []
     paginator = client.get_paginator('describe_images')
@@ -96,6 +102,13 @@ def get_images_to_delete_from_repo(client, repo_name, strategies, protected_refs
     return [img for img in images if img.status == DELETE]
 
 def get_images_to_delete(repo='all'):
+    """
+    Returns images to delete from either a single repository or all repositories
+    in strategies.REPO_STRATEGIES.
+
+    Arguments:
+    repo -- the specifc repository to fetch images from or 'all' for all
+    """
     protected_refs = get_protected_image_refs(ecs_client)
     log({'msg': 'Built protected image set from running ECS tasks',
          'repos': list(protected_refs)})
@@ -109,7 +122,8 @@ def get_images_to_delete(repo='all'):
                                                                       strategies,
                                                                       protected_refs)
             except ClientError as e:
-                log({'msg': f'Error retrieving images from repo {repo_name}: {e}', 'repo': repo_name})
+                log({'msg': f'Error retrieving images from repo {repo_name}: {e}',
+                     'repo': repo_name})
     return to_delete
 
 def get_repo_list(client, ssm_param_name):
