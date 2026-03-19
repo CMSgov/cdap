@@ -83,7 +83,6 @@ def get_images_to_delete_from_repo(client, repo_name, strategies, protected_refs
     repo_name      -- name of repository to check
     strategies     -- sequence of strategies for protecting/deleting images
     protected_refs -- sequence of image references that should not be deleted
-
     """
     images = []
     paginator = client.get_paginator('describe_images')
@@ -217,7 +216,6 @@ def run(args):
         print(repo_name)
         for image in deleteable:
             print(f'  {image.tags or image.digest}')
-
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Prints tags of images that would be deleted')
