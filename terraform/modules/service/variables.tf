@@ -58,7 +58,7 @@ variable "image" {
 variable "cpu_architecture" {
   description = "The cpu architecture needed."
   type        = string
-  default     = "X86_64"
+  default     = "ARM64"
 }
 
 variable "load_balancers" {

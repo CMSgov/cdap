@@ -136,7 +136,7 @@ def deleteable_images(repo='all'):
             except ClientError as e:
                 log({'msg': f'Error processing repo {repo_name}: {e}', 'repo': repo_name})
     return to_delete
-    
+
 def lambda_handler(_, __):
     """
     Main entry point for lambda function.
