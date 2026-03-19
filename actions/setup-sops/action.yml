@@ -7,7 +7,7 @@ runs:
       shell: bash
       run: |
         # Configuration
-        SOPS_VERSION="v3.12.0" # Specify the desired SOPS version
+        SOPS_VERSION="v3.12.2" # Specify the desired SOPS version
         ARCH="arm64"           # Set the architecture
         OS="linux"             # Set the operating system
         TMPDIR=$(mktemp -d)
