@@ -38,7 +38,7 @@ module "admin_create_aco_creds_function" {
   description = "Finds and Creates ACO Credentials for passed in ACO ID and IP addresses"
 
   handler = "bootstrap"
-  runtime = "provided.al2"
+  runtime = "provided.al2023"
 
   memory_size = local.memory_size
 
