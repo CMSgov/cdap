@@ -18,7 +18,7 @@ module "admin_create_aco_function" {
   description = "Creates an ACO for BCDA."
 
   handler = "bootstrap"
-  runtime = "provided.al2"
+  runtime = "provided.al2023"
 
   memory_size = local.memory_size
 
