@@ -180,12 +180,12 @@ def add_protected_image_refs_in_cluster(client, cluster_arn, refs):
         try:
             resp = client.describe_tasks(cluster=cluster_arn, tasks=batch)
             for task in resp['tasks']:
-                try:
-                    for container in task['containers']:
+                for container in task.get('containers', []):
+                    try:
                         repo, ref = parse_image_ref(container['image'])
                         refs[repo].add(ref)
-                except KeyError:
-                    pass # Nothing to do if no containers or no image
+                    except KeyError:
+                        pass # Nothing to do if no image
         except ClientError as e:
             log({'msg': f'Error describing tasks in cluster {cluster_arn}: {e}'})
 

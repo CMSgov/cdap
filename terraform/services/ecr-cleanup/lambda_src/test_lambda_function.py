@@ -276,6 +276,9 @@ def _make_ecs_mock(cluster_arns, task_arns, task_definitions):
      {'dpc-attribution': {None},},),
     ([{'containers': [{'not_image_key': 'not_image',},],},],
      {},),
+    ([{'containers': [{'not_image_key': 'not_image'}]},
+      {'containers': [{'image': f'{ECR_REGISTRY}/dpc-attribution:v1.0'}]},],
+     {'dpc-attribution': {'v1.0'},},),
     ([{'not_containers': 'not_container'},],
      {},),
 ])
