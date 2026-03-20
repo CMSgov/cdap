@@ -20,6 +20,37 @@ ssm_client = boto3.client('ssm')
 ecs_client = boto3.client('ecs')
 ecr_client = boto3.client('ecr')
 
+class Image:
+    """
+    Utility class for holding relevant information about an image.
+    """
+    def __init__(self, data):
+        self.data = data
+        self.digest = data['imageDigest']
+        self.tags = data.get('imageTags')
+        self.pushed_at = data['imagePushedAt']
+        self._status = None
+
+    @property
+    def status(self):
+        """ The current status of the image. """
+        return self._status
+
+    def set_status(self, status):
+        """ Sets the status to a valid value unless status has already been set. """
+        if self._status:
+            log({'msg': f"Attempt to set non-null status '{self._status}' to '{status}'"})
+        elif status not in (DELETE, PROTECT,):
+            log({'msg': f"Attempt to set status to invalid value '{status}'"})
+        else:
+            self._status = status
+
+    def __lt__(self, other):
+        return self.pushed_at < other.pushed_at
+
+    def __repr__(self):
+        return f'{self.tags}, {self.pushed_at}, {self.status}'
+
 def log(data):
     """Adds a UTC timestamp to data and prints it as a JSON log line."""
     data['time'] = datetime.now(timezone.utc).isoformat()
@@ -41,14 +72,19 @@ def parse_image_ref(image_uri):
     return last_component, None
 
 
-def get_images_to_delete(client, repo_name, strategies, protected_refs):
+def get_images_to_delete_from_repo(client, repo_name, strategies, protected_refs):
     """
     Fetches all images for repo_name and returns those eligible for deletion:
-    1. Not referenced in protected_refs,
-    2. Outside the KEEP_COUNT newest
-    3. Older than MAX_AGE_DAYS.
+    1. Not referenced in protected_refs
+    2. Marked for deletion by a strategy
+
+    Arguments:
+    client         -- an ecr client
+    repo_name      -- name of repository to check
+    strategies     -- sequence of strategies for protecting/deleting images
+    protected_refs -- sequence of image references that should not be deleted
     """
-    print(protected_refs)
+
     images = []
     paginator = client.get_paginator('describe_images')
     for page in paginator.paginate(repositoryName=repo_name):
@@ -58,7 +94,7 @@ def get_images_to_delete(client, repo_name, strategies, protected_refs):
     if not images:
         return images
 
-    # Protext running images
+    # Protect running images
     for img in images:
         if img.digest in protected_refs or \
            img.tags and any(tag in protected_refs for tag in img.tags):
@@ -73,6 +109,34 @@ def get_images_to_delete(client, repo_name, strategies, protected_refs):
 
     return [img for img in images if img.status == DELETE]
 
+def get_images_to_delete(repo_strategies) -> dict[str, list[Image]]:
+    """
+    Returns images to delete from either a single repository or all repositories
+    in strategies.REPO_STRATEGIES.
+
+    Arguments:
+    repo -- the specifc repository to fetch images from or 'all' for all
+    """
+    try:
+        protected_refs = get_protected_image_refs(ecs_client)
+    except ClientError as e:
+        log({'msg': f'Unable to retrieve protected_refs: {e}'})
+        return []
+
+    log({'msg': 'Built protected image set from running ECS tasks',
+         'repos': list(protected_refs)})
+
+    to_delete = {}
+    for repo_name, strategies in repo_strategies.items():
+        try:
+            to_delete[repo_name] = get_images_to_delete_from_repo(ecr_client,
+                                                                  repo_name,
+                                                                  strategies,
+                                                                  protected_refs[repo_name])
+        except ClientError as e:
+            log({'msg': f'Error retrieving images from repo {repo_name}: {e}',
+                 'repo': repo_name})
+    return to_delete
 
 def get_repo_list(client, ssm_param_name):
     """
@@ -139,23 +203,6 @@ def log_images_for_deletion(repo, images):
         log({'msg': 'Would delete image (not opted in)', 'repo': repo,
              'digest': img.digest})
 
-def deleteable_images(repo='all'):
-    protected_refs = get_protected_image_refs(ecs_client)
-    log({'msg': 'Built protected image set from running ECS tasks',
-         'repos': protected_refs})
-
-    to_delete = {}
-    for repo_name, strategies in REPO_STRATEGIES.items():
-        if repo in ('all', repo_name):
-            try:
-                to_delete[repo_name] = get_images_to_delete(ecr_client,
-                                                            repo_name,
-                                                            strategies,
-                                                            protected_refs[repo_name])
-            except ClientError as e:
-                log({'msg': f'Error processing repo {repo_name}: {e}', 'repo': repo_name})
-    return to_delete
-
 def lambda_handler(_, __):
     """
     Main entry point for lambda function.
@@ -169,59 +216,30 @@ def lambda_handler(_, __):
 
     opted_in = set(get_repo_list(ssm_client, ssm_param))
 
-    for repo_name, to_delete in deleteable_images().items():
-        try:
-            if len(to_delete):
-                if repo_name in opted_in:
-                    delete_images(ecr_client, repo_name, to_delete)
-                else:
-                    log_images_for_deletion(repo_name, to_delete)
-            log({'msg': f'Cleanup complete for repo: {repo_name}'})
-        except ClientError as e:
-            log({'msg': f'Error processing repo {repo_name}: {e}', 'repo': repo_name})
-
-class Image:
-    """
-    Data class for holding relevant information about an image.
-    """
-    def __init__(self, data):
-        self.data = data
-        self.digest = data['imageDigest']
-        self.tags = data.get('imageTags')
-        self.pushed_at = data['imagePushedAt']
-        self._status = None
-
-    @property
-    def status(self):
-        """ The current status of the image. """
-        return self._status
-
-    def set_status(self, status):
-        """ Sets the status to a valid value unless status has already been set. """
-        if self._status:
-            log({'msg': f"Attempt to set non-null status '{self._status}' to '{status}' (ignoring)"})
-        elif status not in (DELETE, PROTECT,):
-            log({'msg': f"Attempt to set status to invalid value '{status}' (ignoring)"})
+    for repo_name, to_delete in get_images_to_delete(REPO_STRATEGIES).items():
+        if repo_name in opted_in:
+            try:
+                delete_images(ecr_client, repo_name, to_delete)
+            except ClientError as e:
+                log({'msg': f'Error deleting images from repo {repo_name}: {e}', 'repo': repo_name})
         else:
-            self._status = status
-
-    def __lt__(self, other):
-        return self.pushed_at < other.pushed_at
-
-    def __repr__(self):
-        return f'{self.tags}, {self.pushed_at}, {self.status}'
+            log_images_for_deletion(repo_name, to_delete)
+        log({'msg': f'Cleanup complete for repo: {repo_name}', 'repo': repo_name})
 
 def run(args):
     """ Prints tags of (or digest of untagged) images that would be deleted. """
     repo = args.repo
-    if repo != 'all' and repo not in REPO_STRATEGIES:
+    if repo == 'all':
+        to_delete = get_images_to_delete(REPO_STRATEGIES)
+    elif repo in REPO_STRATEGIES:
+        to_delete = get_images_to_delete({repo: REPO_STRATEGIES[repo]})
+    else:
         print(f'{repo} not configured')
         sys.exit(1)
-    for repo_name, deleteable in deleteable_images(repo).items():
+    for repo_name, deleteable in to_delete.items():
         print(repo_name)
         for image in deleteable:
             print(f'  {image.tags or image.digest}')
-
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Prints tags of images that would be deleted')

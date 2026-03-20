@@ -1,5 +1,5 @@
 """
-Strategies to use for makking images for deletion.
+Strategies to use for marking images for deletion.
 """
 
 from datetime import datetime, timedelta, timezone

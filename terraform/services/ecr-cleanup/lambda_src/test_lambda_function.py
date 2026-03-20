@@ -43,7 +43,7 @@ def test_parse_image_ref(uri, expected_repo, expected_ref):
     assert repo == expected_repo
     assert ref == expected_ref
 
-def _make_image(digest, tags, pushed_at):
+def make_image(digest, tags, pushed_at):
     """Builds an Image with the given digest, tags, and push timestamp."""
     data = {
         'imageDigest': digest,
@@ -63,7 +63,7 @@ def _make_ecr_client_mock(images):
     mock_ecr.get_paginator.return_value = mock_paginator
     return mock_ecr
 
-def _test_images():
+def make_test_images():
     """ Creates six Images:
           3 that match the default 'v' prefix, ordered newest to oldest, one day apart
           3 that do not match the default 'v' prefix, ordered newest to oldest, one day apart
@@ -71,61 +71,17 @@ def _test_images():
     images = []
     for i in range(3):
         pushed_at = datetime.now(timezone.utc) - timedelta(days=i, minutes=15)
-        images.append(_make_image(f'sha256:{i}', [f'v{i}'], pushed_at))
-        images.append(_make_image(f'sha256:{i + 3}', [f'not_v{i}'], pushed_at))
+        images.append(make_image(f'sha256:{i}', [f'v{i}'], pushed_at))
+        images.append(make_image(f'sha256:{i + 3}', [f'not_v{i}'], pushed_at))
     return sorted(images, key=lambda x: x.digest)
 
-@pytest.mark.parametrize("tags,prefix,matches", [
-    (('v1',), 'v', True,),
-    (('a', 'b', 'c',), 'b', True,),
-    (('anything',), '', True,),
-    (None, None, True,),
-    (('not_v',), 'v', False,),
-    (('a', 'b', 'c',), 'd', False,),
-    (('',), None, False,),
-    (None, '', False,),
-])
-def test_images_matching_prefix(tags, prefix, matches):
-    """ Make sure images_matching_prefix follows expectations. """
-    image = _make_image('sha256:1', tags, EXPIRED_DATETIME)
-    if matches:
-        assert image in strategies.images_matching_prefix((image,), prefix)
-    else:
-        assert image not in strategies.images_matching_prefix((image,), prefix)
-
-def test_count_image_strategy():
-    """ Make sure count image strategy correctly marks images for matching prefixes. """
-    images = _test_images()
-
-    strategies.count_image_strategy(images, 'v', 1)
-    for index, image in enumerate(images):
-        if index == 0:
-            assert image.status == strategies.PROTECT
-        elif 1 <= index <= 2:
-            assert image.status == strategies.DELETE
-        else:
-            assert image.status is None
-
-def test_days_older_than_strategy():
-    """ Make sure count image strategy correctly marks images for matching prefixes. """
-    images = _test_images()
-
-    strategies.days_older_than_strategy(images, 'v', 2)
-    for index, image in enumerate(images):
-        if index < 2:
-            assert image.status == strategies.PROTECT
-        elif index == 2:
-            assert image.status == strategies.DELETE
-        else:
-            assert image.status is None
-
-def test_get_images_to_delete():
+def test_get_images_to_delete_from_repo():
     """ Tests base functionality of get images to delete. """
     pb_tag_digest = 'sha256:protected_by_tag'
     pb_digest_digest = 'sha256:protected_by_digest'
-    pb_tag_image = _make_image(pb_tag_digest, ['vpbtag'], EXPIRED_DATETIME)
-    pb_digest_image = _make_image(pb_digest_digest, ['vpbdigest'], EXPIRED_DATETIME)
-    images = _test_images()
+    pb_tag_image = make_image(pb_tag_digest, ['vpbtag'], EXPIRED_DATETIME)
+    pb_digest_image = make_image(pb_digest_digest, ['vpbdigest'], EXPIRED_DATETIME)
+    images = make_test_images()
     images.append(pb_tag_image)
     images.append(pb_digest_image)
     strategy_list = (
@@ -133,7 +89,7 @@ def test_get_images_to_delete():
         (strategies.count_image_strategy, 'v', 2),
     )
 
-    result = lambda_function.get_images_to_delete(
+    result = lambda_function.get_images_to_delete_from_repo(
         _make_ecr_client_mock(images),
         'some-repo',
         strategy_list,
@@ -146,16 +102,17 @@ def test_get_images_to_delete():
     assert pb_tag_digest not in result_digests
     assert pb_digest_digest not in result_digests
 
-def test_get_images_to_delete_none_prefix():
-    """ Make sure get_images_to_delete can handle untagged image. """
+def test_get_images_to_delete_from_repo_none_prefix():
+    """ Make sure get_images_to_delete_from_repo can handle untagged image. """
     image_digest = 'sha256:image'
-    image = _make_image(image_digest, None, EXPIRED_DATETIME)
+    image = make_image(image_digest, None, EXPIRED_DATETIME)
     strategy = (strategies.days_older_than_strategy, None, 14,)
 
-    result = lambda_function.get_images_to_delete(
+    result = lambda_function.get_images_to_delete_from_repo(
         _make_ecr_client_mock((image,)), 'some-repo', (strategy,), (),
     )
     assert len(result) == 1
+    assert result[0].digest == image_digest
 
 @pytest.mark.parametrize("strategy_list, expected_count", [
     (
@@ -169,15 +126,15 @@ def test_get_images_to_delete_none_prefix():
         1,
     ),
 ])
-def test_get_images_to_delete_strategy_order(strategy_list, expected_count):
+def test_get_images_to_delete_from_repo_strategy_order(strategy_list, expected_count):
     """
     Tests that images protected by an early strategy are not deleted by a later strategy,
     and that images deleted by an early strategy are not protected by a later strategy.
     """
     image_digest = 'sha256:image'
-    image = _make_image(image_digest, ['v1'], EXPIRED_DATETIME)
+    image = make_image(image_digest, ['v1'], EXPIRED_DATETIME)
 
-    result = lambda_function.get_images_to_delete(
+    result = lambda_function.get_images_to_delete_from_repo(
         _make_ecr_client_mock((image,)), 'some-repo', strategy_list, (),
     )
     assert len(result) == expected_count
@@ -185,27 +142,71 @@ def test_get_images_to_delete_strategy_order(strategy_list, expected_count):
 def test_get_images_to_delete_protect_untagged_task_definition():
     """ Make sure to protect the 'latest' image if running task definition not have tag. """
     image_count = 4
-    images = [ _make_image(f'sha265:{i}', f'v{i}',datetime.now(timezone.utc) - timedelta(days=i))
+    images = [ make_image(f'sha265:{i}', f'v{i}',datetime.now(timezone.utc) - timedelta(days=i))
                            for i in range(image_count) ]
-    strategy = (strategies.days_older_than_strategy, '', -1,)
+    def delete_all_strategy(images):
+        for image in images:
+            if image.status:
+                continue
+            image.set_status(strategies.DELETE)
 
-    result = lambda_function.get_images_to_delete(
-        _make_ecr_client_mock(images), 'some-repo', (strategy,), (None,),
+    result = lambda_function.get_images_to_delete_from_repo(
+        _make_ecr_client_mock(images), 'some-repo', ((delete_all_strategy,),), (None,),
     )
     assert len(result) == image_count - 1
     assert images[0].digest not in [image.digest for image in result]
 
-def test_no_images_for_repo():
+def test_get_images_to_delete_from_repo_no_images_for_repo():
     """Returns an empty list when the repo has no images."""
-    result = lambda_function.get_images_to_delete(
+    result = lambda_function.get_images_to_delete_from_repo(
         _make_ecr_client_mock([]), 'dpc-attribution', set(), set()
     )
     assert result == []
 
+def test_get_images_to_delete_all():
+    """
+    Make sure all repos are hit.
+    """
+    with patch('lambda_function.get_images_to_delete_from_repo') as mock_from_repo:
+        lambda_function.get_images_to_delete(strategies.REPO_STRATEGIES)
+    assert mock_from_repo.call_count == len(strategies.REPO_STRATEGIES)
+
+def test_get_images_to_delete_single(mock_boto3_clients):
+    """
+    Make sure only single repo is hit.
+    """
+    repo_name = 'test-repo'
+    strategy_list = (
+        (strategies.days_older_than_strategy, 'not_v', 2),
+        (strategies.count_image_strategy, 'v', 2),
+    )
+
+    strategy_dict = {repo_name: strategy_list}
+    with patch('lambda_function.get_images_to_delete_from_repo') as mock_from_repo:
+        lambda_function.get_images_to_delete(strategy_dict)
+    assert mock_from_repo.call_count == 1
+    mock_from_repo.assert_called_once_with(
+        mock_boto3_clients[-1],
+        repo_name,
+        strategy_list,
+        set(),
+    )
+
+def test_get_images_to_delete_on_error():
+    """
+    Make sure get_images_to_delete_from_repo does not call get_images_to_delete_from_repo
+    if error getting protected images.
+    """
+    with patch('lambda_function.get_images_to_delete_from_repo') as mock_from_repo, \
+         patch('lambda_function.get_protected_image_refs',
+               side_effect=ClientError({}, 'get_paginator')):
+        lambda_function.get_images_to_delete(strategies.REPO_STRATEGIES)
+    assert mock_from_repo.call_count == 0
+
 def test_delete_images_single_image():
     """A single image is deleted with one batch_delete_image call."""
     mock_ecr = MagicMock()
-    one_old_image = [_make_image('sha256:abc', [], None)]
+    one_old_image = [make_image('sha256:abc', [], None)]
     lambda_function.delete_images(mock_ecr, 'dpc-attribution', one_old_image)
     mock_ecr.batch_delete_image.assert_called_once_with(
         repositoryName='dpc-attribution',
@@ -216,13 +217,19 @@ def test_delete_images_multiple_batches():
     """Images exceeding AWS_BATCH_SIZE are sent in multiple batch_delete_image calls."""
     mock_ecr = MagicMock()
     num_ecr_images = lambda_function.AWS_BATCH_SIZE + 1
-    old_images = [_make_image(f'sha256:{i}', [], None) for i in range(num_ecr_images)]
+    old_images = [make_image(f'sha256:{i}', [], None) for i in range(num_ecr_images)]
     lambda_function.delete_images(mock_ecr, 'dpc-attribution', old_images)
     assert mock_ecr.batch_delete_image.call_count == 2
     first_call_ids = mock_ecr.batch_delete_image.call_args_list[0].kwargs['imageIds']
     second_call_ids = mock_ecr.batch_delete_image.call_args_list[1].kwargs['imageIds']
     assert len(first_call_ids) == lambda_function.AWS_BATCH_SIZE
     assert len(second_call_ids) == 1
+
+def test_delete_images_empty_list():
+    """ Makes sure delete_images does not throw error on empty list. """
+    mock_ecr = MagicMock()
+    lambda_function.delete_images(mock_ecr, 'some-repo', [])
+    mock_ecr.batch_delete_image.assert_not_called()
 
 def test_get_repo_list():
     """SSM parameter value is parsed as a JSON list of repo names."""
@@ -281,6 +288,13 @@ def test_get_protected_image_refs(task_definitions, expected):
     )
     assert lambda_function.get_protected_image_refs(mock_ecs) == expected
 
+def test_get_protected_image_refs_on_error():
+    """Tags from running task containers are returned as protected refs."""
+    mock_ecs = MagicMock()
+    mock_ecs.get_paginator.side_effect = ClientError({}, 'get_paginator')
+    with pytest.raises(ClientError):
+        lambda_function.get_protected_image_refs(mock_ecs)
+
 @pytest.fixture(autouse=True)
 def mock_boto3_clients():
     """Patches the module-level boto3 clients used by the lambda handler."""
@@ -326,12 +340,13 @@ def _setup_handler_mocks(  # pylint: disable=too-many-arguments,too-many-positio
     mock_ecr.get_paginator.side_effect = ecr_paginator_side_effect
 
 def test_lambda_handler_deletes_old_unprotected_images(mock_boto3_clients):
-    """Happy path: old image outside KEEP_COUNT is deleted; recent images are kept."""
+    """ Old image is deleted; recent images are kept."""
     mock_ssm, mock_ecs, mock_ecr = mock_boto3_clients
-    old_image = _make_image('sha256:old', ['unprotected-tag'], EXPIRED_DATETIME).data
+    old_image = make_image('sha256:old', ['unprotected-tag'], EXPIRED_DATETIME).data
+    new_image = make_image('sha256:old', ['unprotected-tag'], datetime.now(timezone.utc)).data
     _setup_handler_mocks(
         mock_ssm, mock_ecs, mock_ecr,
-        ecr_images=[old_image],
+        ecr_images=[old_image, new_image],
     )
     with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test'}):
         lambda_function.lambda_handler({}, None)
@@ -343,7 +358,7 @@ def test_lambda_handler_deletes_old_unprotected_images(mock_boto3_clients):
 def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
     """Image referenced by a running ECS task is never deleted even if old."""
     mock_ssm, mock_ecs, mock_ecr = mock_boto3_clients
-    old_image = _make_image('sha256:old', ['protected-tag'], EXPIRED_DATETIME).data
+    old_image = make_image('sha256:old', ['protected-tag'], EXPIRED_DATETIME).data
     _setup_handler_mocks(
         mock_ssm, mock_ecs, mock_ecr,
         cluster_arns=[CLUSTER_ARN],
@@ -362,9 +377,9 @@ def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
     ( None, 'invalid', None,),
     ( strategies.PROTECT, strategies.DELETE, strategies.PROTECT,),
 ])
-def test_set_status(existing, new, expected):
+def test_image_set_status(existing, new, expected):
     """ Test iamge status not overwritten or set to invalid value. """
-    image = _make_image(None, None, None)
+    image = make_image(None, None, None)
     if existing:
         image.set_status(existing)
     image.set_status(new)
