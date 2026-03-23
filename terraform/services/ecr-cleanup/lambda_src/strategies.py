@@ -67,17 +67,7 @@ def days_older_than_strategy(images, tag_prefix, days):
         else:
             image.set_status(DELETE)
 
-DPC_STRATEGIES = (
-    (count_image_strategy, 'rls-r', 5,),
-    (days_older_than_strategy, '', 14,),
-    (days_older_than_strategy, None, 14,),
-)
-
-REPO_STRATEGIES = {
-    'dpc-aggregation': DPC_STRATEGIES,
-    'dpc-api': DPC_STRATEGIES,
-    'dpc-attribution': DPC_STRATEGIES,
-    'dpc-web': DPC_STRATEGIES,
-    'dpc-web-admin': DPC_STRATEGIES,
-    'dpc-web-portal': DPC_STRATEGIES,
+STRATEGIES = {
+    'count_image': count_image_strategy,
+    'days_older_than': days_older_than_strategy,
 }
