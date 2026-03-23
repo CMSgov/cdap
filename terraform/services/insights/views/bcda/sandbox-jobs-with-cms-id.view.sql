@@ -10,6 +10,7 @@ SELECT
     jobs.updated_at,
     jobs.job_count,
     jobs.transaction_time,
-    acos.cms_id
+    acos.cms_id,
+    benes_attributed_to_aco
 FROM jobs
 LEFT JOIN acos ON acos.uuid = jobs.aco_id;
