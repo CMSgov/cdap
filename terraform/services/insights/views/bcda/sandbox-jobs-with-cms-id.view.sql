@@ -12,8 +12,13 @@ SELECT
     jobs.transaction_time,
     jobs.benes_attributed_to_aco,
     acos.cms_id,
-    job_keys.BenesWithData,
-    job_keys.BenesRetrievedPercent
+    sq.benes_with_data,
+    sq.benes_retrieved_percent
 FROM jobs
 LEFT JOIN acos ON acos.uuid = jobs.aco_id
-LEFT JOIN job_keys on jobs.id = job_keys.job_id;
+JOIN (
+	SELECT job_id, SUM(benes_with_data) AS benes_with_data, AVG(benes_retrieved_percent) AS benes_retrieved_percent FROM job_keys
+	GROUP BY job_id
+) AS sq
+ON sq.job_id = jobs.id 
+
