@@ -38,3 +38,7 @@ All steps in the workflow following this will have VAR1, ENV_VAR2, and SECRET_X 
     echo "::add-mask::$secret_x"
     echo "SECRET_X=$secret_x" >> "$GITHUB_ENV"
 ```
+
+## Building
+
+
