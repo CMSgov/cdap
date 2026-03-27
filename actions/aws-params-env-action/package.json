@@ -9,7 +9,7 @@
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
     "lint": "eslint src",
-    "package": "esbuild src/main.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --external:@aws-sdk/client-ssm",
+    "package": "esbuild src/main.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --external:@aws-sdk/client-ssm && npx legally --csv > dist/licenses.txt",
     "test": "jest",
     "all": "npm install & npm run format-check && npm run lint && npm test && npm run build && npm run package"
   },
@@ -44,6 +44,7 @@
     "jest": "^29.7.0",
     "jest-util": "^30.3.0",
     "js-yaml": "^4.1.1",
+    "legally": "^3.5.10",
     "prettier": "^3.8.1",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
