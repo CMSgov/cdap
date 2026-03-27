@@ -4,6 +4,7 @@
 # For our project, we generate this file through a build process from other source files.
 # We need to make sure the checked-in `index.js` actually matches what we expect it to be.
 name: Check dist/ for aws-params-env-action
+description: 'Builds the artifact for aws-params-env-action and checks it against what is checked in to source control.' 
 
 on:
   pull_request:
