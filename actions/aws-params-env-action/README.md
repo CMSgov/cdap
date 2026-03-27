@@ -41,5 +41,9 @@ All steps in the workflow following this will have VAR1, ENV_VAR2, and SECRET_X 
 ```
 
 ## Building
-
+When making changes to this action, rebuild with 
+```
+rm -rf dist/ &&
+docker run --rm -v $(pwd):/app -w /app/actions/aws-params-env-action node:20-alpine sh -c "npm ci && npm run build && npm run package"
+```
 
