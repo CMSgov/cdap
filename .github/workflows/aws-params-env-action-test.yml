@@ -13,7 +13,7 @@ defaults:
 
 jobs:
   test-and-check-build:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-cdap-${{ github.ref_name =='main' && 'prod' || 'non-prod' }}-${{github.run_id}}-${{github.run_attempt}}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
