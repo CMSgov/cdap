@@ -57,8 +57,11 @@
     "glob": "^11.0.0"
   }
 }
-/*  These overrides address a vulnerability chain (brace-expansion --> minimatch --> glob) that affects only
-  the development tool chain (ESLint and Jest) and should not influence the dist/index.js bundle.
-  `npm audit fix --force` was not used because it introduces breaking changes to ESLint. The overrides
-  enable a targeted fix to resolve audit findings without disrupting the working dependency tree.
+/*
+  These overrides address a vulnerability chain
+  (brace-expansion --> minimatch --> glob) that affects only the development
+  tool chain (ESLint and Jest) and should not influence the dist/index.js bundle.
+  `npm audit fix --force` was not used because it introduces breaking
+  changes to ESLint. The overrides enable a targeted fix to resolve
+  audit findings without disrupting the working dependency tree.
 */

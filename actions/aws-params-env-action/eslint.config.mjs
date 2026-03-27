@@ -1,4 +1,3 @@
-// eslint.config.mjs
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import typescriptParser from '@typescript-eslint/parser'
 import pluginJest from 'eslint-plugin-jest'
