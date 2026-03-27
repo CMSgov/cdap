@@ -2,11 +2,10 @@ name: aws-params-env-action-test.yml
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - feature/GitHub-Actions-AWS-Params-Node-Upgrade-To-20
+  pull_request:
     paths:
       - 'actions/aws-params-env-action/**'
+      - 'services/github-actions-role/data.tf'
       
 permissions:
   contents: read
