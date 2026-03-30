@@ -21,7 +21,7 @@ on:
 
 jobs:
   analyze:
-    runs-on: codebuild-cdap-${{ github.ref_name =='main' && 'prod' || 'non-prod' }}-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
