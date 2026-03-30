@@ -1,12 +1,17 @@
-data "aws_caller_identity" "current" {}
+# TODO: To Deprecate cdap mgmt remove this for each as we can assume the only environment is CDAP
+data "aws_ssm_parameter" "github_token" {
+  for_each = var.app == "cdap" ? toset([var.env]) : toset([])
+  name     = "/cdap/${var.env}/codebuild-projects/sensitive/github-token"
+}
 
 data "aws_security_group" "security_tools" {
-  vpc_id = module.vpc.id
+  vpc_id = var.app == "bcda" ? module.vpc[0].id : module.standards.cdap_vpc.id
   name   = "cmscloud-security-tools"
 }
 
 data "aws_security_group" "security_validation_egress" {
-  vpc_id = module.vpc.id
+  count  = var.app == "bcda" ? 1 : 0
+  vpc_id = module.vpc[0].id
   name   = "cms-cloud-security-validation-egress"
 }
 
@@ -34,6 +39,7 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 data "aws_iam_policy_document" "codebuild" {
+
   # Logs
   statement {
     actions = [
@@ -42,7 +48,7 @@ data "aws_iam_policy_document" "codebuild" {
       "logs:PutLogEvents",
     ]
 
-    resources = ["arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/codebuild/*"]
+    resources = ["arn:aws:logs:us-east-1:${module.standards.account_id}:log-group:/aws/codebuild/*"]
   }
 
   # S3
@@ -68,7 +74,7 @@ data "aws_iam_policy_document" "codebuild" {
       "codebuild:BatchPutCodeCoverages"
     ]
 
-    resources = ["arn:aws:codebuild:us-east-1:${data.aws_caller_identity.current.account_id}:report-group/*"]
+    resources = ["arn:aws:codebuild:us-east-1:${module.standards.account_id}:report-group/*"]
   }
 
   # EC2
@@ -81,11 +87,12 @@ data "aws_iam_policy_document" "codebuild" {
   statement {
     actions = [
       "ec2:CreateNetworkInterface",
+      "ec2:CreateNetworkInterfacePermission",
+      "ec2:DeleteNetworkInterface",
       "ec2:DescribeDhcpOptions",
       "ec2:DescribeNetworkInterfaces",
-      "ec2:DeleteNetworkInterface",
-      "ec2:DescribeSubnets",
       "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
       "ec2:DescribeVpcs",
     ]
 
@@ -97,13 +104,13 @@ data "aws_iam_policy_document" "codebuild" {
       "ec2:CreateNetworkInterfacePermission",
     ]
 
-    resources = ["arn:aws:ec2:us-east-1:${data.aws_caller_identity.current.account_id}:network-interface/*"]
+    resources = ["arn:aws:ec2:us-east-1:${module.standards.account_id}:network-interface/*"]
 
     condition {
       test     = "StringEquals"
       variable = "ec2:Subnet"
       values = [
-        for subnet in module.subnets.ids : "arn:aws:ec2:us-east-1:${data.aws_caller_identity.current.account_id}:subnet/${subnet}"
+        for subnet in module.subnets.ids : "arn:aws:ec2:us-east-1:${module.standards.account_id}:subnet/${subnet}"
       ]
     }
 

@@ -1,3 +1,4 @@
+/cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:wFLx26HtKKxHK974KB4VBppkg/2zISBFtqkPACSKNDR9Z7lh7QwaBA==,iv:Wtka6L3sszviRYVIxti0sc3dd20iqPsnuZfZM5KoWpg=,tag:GjGGT14FBScFhQsX6+421w==,type:str]
 /cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
 /cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
 /cdap/${env}/common/nonsensitive/security-events/renotify-after-days: 30
@@ -18,4 +19,4 @@ sops:
       aws_profile: ""
   unencrypted_regex: /nonsensitive/
   mac_only_encrypted: true
-  version: 3.11.0
+  version: 3.12.1
