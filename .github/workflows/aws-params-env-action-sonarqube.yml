@@ -56,12 +56,12 @@ jobs:
         with:
           projectBaseDir: actions/aws-params-env-action
           env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_URL: ${{ env.SONAR_HOST_URL }}
+            SONAR_URL: ${{ env.SONARQUBE_URL }}
+            SONAR_TOKEN: ${{ env.SONARQUBE_TOKEN }}
 
       - name: Run Sonarqube gate
         uses: sonarsource/sonarqube-quality-gate@master
         timeout-minutes: 5
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
           SONAR_URL: ${{ env.SONAR_HOST_URL }}
