@@ -12,7 +12,7 @@ import sys
 import boto3
 from botocore.exceptions import ClientError
 
-from strategies import DELETE, PROTECT, REPO_STRATEGIES
+from strategies import DELETE, PROTECT, STRATEGIES
 
 AWS_BATCH_SIZE = 100
 
@@ -84,7 +84,6 @@ def get_images_to_delete_from_repo(client, repo_name, strategies, protected_refs
     strategies     -- sequence of strategies for protecting/deleting images
     protected_refs -- sequence of image references that should not be deleted
     """
-
     images = []
     paginator = client.get_paginator('describe_images')
     for page in paginator.paginate(repositoryName=repo_name):
@@ -99,17 +98,18 @@ def get_images_to_delete_from_repo(client, repo_name, strategies, protected_refs
         if img.digest in protected_refs or \
            img.tags and any(tag in protected_refs for tag in img.tags):
             img.set_status(PROTECT)
+
     if None in protected_refs:
         latest = sorted(images, reverse=True)[0]
         latest.set_status(PROTECT)
 
     # Apply lifecycle strategies
     for strategy, *args in strategies:
-        strategy(images, *args)
+        STRATEGIES[strategy](images, *args)
 
     return [img for img in images if img.status == DELETE]
 
-def get_images_to_delete(repo_strategies) -> dict[str, list[Image]]:
+def get_images_to_delete(repo_config) -> dict[str, list[Image]]:
     """
     Returns images to delete from either a single repository or all repositories
     in strategies.REPO_STRATEGIES.
@@ -127,11 +127,11 @@ def get_images_to_delete(repo_strategies) -> dict[str, list[Image]]:
          'repos': list(protected_refs)})
 
     to_delete = {}
-    for repo_name, strategies in repo_strategies.items():
+    for repo_name, config in repo_config.items():
         try:
             to_delete[repo_name] = get_images_to_delete_from_repo(ecr_client,
                                                                   repo_name,
-                                                                  strategies,
+                                                                  config['strategies'],
                                                                   protected_refs[repo_name])
         except ClientError as e:
             log({'msg': f'Error retrieving images from repo {repo_name}: {e}',
@@ -212,12 +212,13 @@ def lambda_handler(_, __):
     For repos associated with the app but not opted in, logs images that would
     be deleted without taking action.
     """
-    ssm_param = f"/{os.environ['APP']}/{os.environ['ENV']}/ecr-cleanup/repos"
+    env = os.environ['ENV']
+    ssm_param = f"/{os.environ['APP']}/{env}/ecr-cleanup/repos"
 
-    opted_in = set(get_repo_list(ssm_client, ssm_param))
+    repo_config = get_repo_list(ssm_client, ssm_param)[env]
 
-    for repo_name, to_delete in get_images_to_delete(REPO_STRATEGIES).items():
-        if repo_name in opted_in:
+    for repo_name, to_delete in get_images_to_delete(repo_config).items():
+        if repo_config[repo_name]['opt_in']:
             try:
                 delete_images(ecr_client, repo_name, to_delete)
             except ClientError as e:
@@ -229,10 +230,13 @@ def lambda_handler(_, __):
 def run(args):
     """ Prints tags of (or digest of untagged) images that would be deleted. """
     repo = args.repo
+    ssm_param = f"/{args.app}/{args.env}/ecr-cleanup/repos"
+
+    repo_config = get_repo_list(ssm_client, ssm_param)[args.env]
     if repo == 'all':
-        to_delete = get_images_to_delete(REPO_STRATEGIES)
-    elif repo in REPO_STRATEGIES:
-        to_delete = get_images_to_delete({repo: REPO_STRATEGIES[repo]})
+        to_delete = get_images_to_delete(repo_config)
+    elif repo in repo_config:
+        to_delete = get_images_to_delete({repo: repo_config[repo]})
     else:
         print(f'{repo} not configured')
         sys.exit(1)
@@ -244,4 +248,6 @@ def run(args):
 if __name__ == '__main__':
     parser = ArgumentParser(description='Prints tags of images that would be deleted')
     parser.add_argument('repo', help='repository to analyze')
+    parser.add_argument('app', help='application to check')
+    parser.add_argument('env', choices=['test', 'prod',], help='environment to check')
     run(parser.parse_args())

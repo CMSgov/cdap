@@ -22,13 +22,13 @@ EXPIRED_DATETIME = datetime.now(timezone.utc) - timedelta(days=200)
 
 @pytest.mark.parametrize("uri,expected_repo,expected_ref", [
     (
-        f"{ECR_REGISTRY}/dpc-attribution@sha256:87654321",
-        "dpc-attribution",
+        f"{ECR_REGISTRY}/some-repo@sha256:87654321",
+        "some-repo",
         "sha256:87654321",
     ),
     (
-        f"{ECR_REGISTRY}/dpc-attribution:my-tag",
-        "dpc-attribution",
+        f"{ECR_REGISTRY}/some-repo:my-tag",
+        "some-repo",
         "my-tag",
     ),
     (
@@ -85,8 +85,8 @@ def test_get_images_to_delete_from_repo():
     images.append(pb_tag_image)
     images.append(pb_digest_image)
     strategy_list = (
-        (strategies.days_older_than_strategy, 'not_v', 2),
-        (strategies.count_image_strategy, 'v', 2),
+        ('days_older_than', 'not_v', 2),
+        ('count_image', 'v', 2),
     )
 
     result = lambda_function.get_images_to_delete_from_repo(
@@ -106,7 +106,7 @@ def test_get_images_to_delete_from_repo_none_prefix():
     """ Make sure get_images_to_delete_from_repo can handle untagged image. """
     image_digest = 'sha256:image'
     image = make_image(image_digest, None, EXPIRED_DATETIME)
-    strategy = (strategies.days_older_than_strategy, None, 14,)
+    strategy = ('days_older_than', None, 14,)
 
     result = lambda_function.get_images_to_delete_from_repo(
         _make_ecr_client_mock((image,)), 'some-repo', (strategy,), (),
@@ -116,13 +116,13 @@ def test_get_images_to_delete_from_repo_none_prefix():
 
 @pytest.mark.parametrize("strategy_list, expected_count", [
     (
-        ((strategies.count_image_strategy, 'v', 2),
-         (strategies.days_older_than_strategy, 'v', 2),),
+        (('count_image', 'v', 2),
+         ('days_older_than', 'v', 2),),
         0,
     ),
     (
-        ((strategies.days_older_than_strategy, 'v', 2),
-         (strategies.count_image_strategy, 'v', 2),),
+        (('days_older_than', 'v', 2),
+         ('count_image', 'v', 2),),
         1,
     ),
 ])
@@ -144,14 +144,8 @@ def test_get_images_to_delete_protect_untagged_task_definition():
     image_count = 4
     images = [ make_image(f'sha265:{i}', f'v{i}',datetime.now(timezone.utc) - timedelta(days=i))
                            for i in range(image_count) ]
-    def delete_all_strategy(images):
-        for image in images:
-            if image.status:
-                continue
-            image.set_status(strategies.DELETE)
-
     result = lambda_function.get_images_to_delete_from_repo(
-        _make_ecr_client_mock(images), 'some-repo', ((delete_all_strategy,),), (None,),
+        _make_ecr_client_mock(images), 'some-repo', (('count_image', '', -1,),), (None,),
     )
     assert len(result) == image_count - 1
     assert images[0].digest not in [image.digest for image in result]
@@ -159,7 +153,7 @@ def test_get_images_to_delete_protect_untagged_task_definition():
 def test_get_images_to_delete_from_repo_no_images_for_repo():
     """Returns an empty list when the repo has no images."""
     result = lambda_function.get_images_to_delete_from_repo(
-        _make_ecr_client_mock([]), 'dpc-attribution', set(), set()
+        _make_ecr_client_mock([]), 'some-repo', set(), set()
     )
     assert result == []
 
@@ -167,9 +161,16 @@ def test_get_images_to_delete_all():
     """
     Make sure all repos are hit.
     """
+    strategy_config = {
+        'strategies': (
+            ('days_older_than', 'not_v', 2),
+            ('count_image', 'v', 2),
+        )
+    }
+    strategy_dict = {'test-repo-1': strategy_config, 'test-repo-2': strategy_config}
     with patch('lambda_function.get_images_to_delete_from_repo') as mock_from_repo:
-        lambda_function.get_images_to_delete(strategies.REPO_STRATEGIES)
-    assert mock_from_repo.call_count == len(strategies.REPO_STRATEGIES)
+        lambda_function.get_images_to_delete(strategy_dict)
+    assert mock_from_repo.call_count == len(strategy_dict)
 
 def test_get_images_to_delete_single(mock_boto3_clients):
     """
@@ -177,11 +178,11 @@ def test_get_images_to_delete_single(mock_boto3_clients):
     """
     repo_name = 'test-repo'
     strategy_list = (
-        (strategies.days_older_than_strategy, 'not_v', 2),
-        (strategies.count_image_strategy, 'v', 2),
+        ('days_older_than', 'not_v', 2),
+        ('count_image', 'v', 2),
     )
 
-    strategy_dict = {repo_name: strategy_list}
+    strategy_dict = {repo_name: {'strategies': strategy_list}}
     with patch('lambda_function.get_images_to_delete_from_repo') as mock_from_repo:
         lambda_function.get_images_to_delete(strategy_dict)
     assert mock_from_repo.call_count == 1
@@ -197,19 +198,25 @@ def test_get_images_to_delete_on_error():
     Make sure get_images_to_delete_from_repo does not call get_images_to_delete_from_repo
     if error getting protected images.
     """
+    repo_name = 'test-repo'
+    strategy_list = (
+        ('days_older_than', 'not_v', 2),
+        ('count_image', 'v', 2),
+    )
+    strategy_dict = {repo_name: strategy_list}
     with patch('lambda_function.get_images_to_delete_from_repo') as mock_from_repo, \
          patch('lambda_function.get_protected_image_refs',
                side_effect=ClientError({}, 'get_paginator')):
-        lambda_function.get_images_to_delete(strategies.REPO_STRATEGIES)
+        lambda_function.get_images_to_delete(strategy_dict)
     assert mock_from_repo.call_count == 0
 
 def test_delete_images_single_image():
     """A single image is deleted with one batch_delete_image call."""
     mock_ecr = MagicMock()
     one_old_image = [make_image('sha256:abc', [], None)]
-    lambda_function.delete_images(mock_ecr, 'dpc-attribution', one_old_image)
+    lambda_function.delete_images(mock_ecr, 'some-repo', one_old_image)
     mock_ecr.batch_delete_image.assert_called_once_with(
-        repositoryName='dpc-attribution',
+        repositoryName='some-repo',
         imageIds=[{'imageDigest': 'sha256:abc'}],
     )
 
@@ -218,7 +225,7 @@ def test_delete_images_multiple_batches():
     mock_ecr = MagicMock()
     num_ecr_images = lambda_function.AWS_BATCH_SIZE + 1
     old_images = [make_image(f'sha256:{i}', [], None) for i in range(num_ecr_images)]
-    lambda_function.delete_images(mock_ecr, 'dpc-attribution', old_images)
+    lambda_function.delete_images(mock_ecr, 'some-repo', old_images)
     assert mock_ecr.batch_delete_image.call_count == 2
     first_call_ids = mock_ecr.batch_delete_image.call_args_list[0].kwargs['imageIds']
     second_call_ids = mock_ecr.batch_delete_image.call_args_list[1].kwargs['imageIds']
@@ -234,8 +241,8 @@ def test_delete_images_empty_list():
 def test_get_repo_list():
     """SSM parameter value is parsed as a JSON list of repo names."""
     mock_ssm = MagicMock()
-    mock_ssm.get_parameter.return_value = {'Parameter': {'Value': '["dpc-attribution", "dpc-api"]'}}
-    assert lambda_function.get_repo_list(mock_ssm, '/test/param') == ['dpc-attribution', 'dpc-api']
+    mock_ssm.get_parameter.return_value = {'Parameter': {'Value': '["some-repo", "another-repo"]'}}
+    assert lambda_function.get_repo_list(mock_ssm, '/test/param') == ['some-repo', 'another-repo']
     mock_ssm.get_parameter.assert_called_once_with(Name='/test/param', WithDecryption=True)
 
 def test_get_repo_list_parameter_not_found():
@@ -281,7 +288,7 @@ def _make_ecs_mock(cluster_arns, task_arns, task_definitions):
      {'dpc-attribution': {'v1.0'},},),
     ([{'not_containers': 'not_container'},],
      {},),
-])
+     ])
 def test_get_protected_image_refs(task_definitions, expected):
     """Tags from running task containers are returned as protected refs."""
     mock_ecs = _make_ecs_mock(
@@ -307,13 +314,13 @@ def mock_boto3_clients():
         yield mock_ssm, mock_ecs, mock_ecr
 
 def _setup_handler_mocks(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        mock_ssm, mock_ecs, mock_ecr, opted_in_repos=None,
+        mock_ssm, mock_ecs, mock_ecr, repo_configs=None,
         cluster_arns=None, task_arns=None, task_images=None, ecr_images=None):
     """Configures SSM, ECS, and ECR client mocks for lambda_handler integration tests."""
-    if opted_in_repos is None:
-        opted_in_repos = ['dpc-attribution']
+    if repo_configs is None:
+        repo_configs = ['some-repo']
     mock_ssm.get_parameter.return_value = {
-        'Parameter': {'Value': json.dumps(opted_in_repos)}
+        'Parameter': {'Value': json.dumps(repo_configs)}
     }
 
     def ecs_paginator_side_effect(operation):
@@ -330,7 +337,7 @@ def _setup_handler_mocks(  # pylint: disable=too-many-arguments,too-many-positio
             'tasks': [{'containers': [{'image': img}]} for img in task_images]
         }
 
-    repos_page = [{'repositoryName': r} for r in opted_in_repos]
+    repos_page = [{'repositoryName': r} for r in repo_configs]
 
     def ecr_paginator_side_effect(operation):
         pager = MagicMock()
@@ -350,11 +357,13 @@ def test_lambda_handler_deletes_old_unprotected_images(mock_boto3_clients):
     _setup_handler_mocks(
         mock_ssm, mock_ecs, mock_ecr,
         ecr_images=[old_image, new_image],
+        repo_configs={ 'test': {'some-repo': { 'strategies': (('days_older_than', '', 14,),),
+                                               'opt_in': True } } }
     )
     with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test'}):
         lambda_function.lambda_handler({}, None)
     mock_ecr.batch_delete_image.assert_called_once_with(
-        repositoryName='dpc-attribution',
+        repositoryName='some-repo',
         imageIds=[{'imageDigest': 'sha256:old'}]
     )
 
@@ -366,8 +375,10 @@ def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
         mock_ssm, mock_ecs, mock_ecr,
         cluster_arns=[CLUSTER_ARN],
         task_arns=[f'{CLUSTER_ARN}/task1'],
-        task_images=[f'{ECR_REGISTRY}/dpc-attribution:protected-tag'],
+        task_images=[f'{ECR_REGISTRY}/some-repo:protected-tag'],
         ecr_images=[old_image],
+        repo_configs={ 'test': {'some-repo': { 'strategies': (('days_older_than', '', 14,),),
+                                               'opt_in': True } } }
     )
     with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test'}):
         lambda_function.lambda_handler({}, None)
