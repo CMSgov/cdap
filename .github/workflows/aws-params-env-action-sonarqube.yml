@@ -8,6 +8,7 @@ on:
       - '!actions/aws-params-env-action/**.md'
   schedule:
     - cron: '31 7 * * 3'
+  workflow_dispatch:
 
 permissions:
   contents: read
