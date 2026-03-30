@@ -29,7 +29,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
-      - uses: cmsgov/cdap/actions/aws-params-env-action
+      - uses: ./actions/aws-params-env-action
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
