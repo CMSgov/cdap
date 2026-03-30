@@ -277,9 +277,12 @@ data "aws_iam_policy_document" "github_actions_policy" {
     actions = [
       "events:DescribeRule",
       "events:ListTagsForResource",
+      "events:ListTagsForResource",
       "events:ListTargetsByRule",
       "events:PutRule",
-      "events:PutTargets"
+      "events:PutTargets",
+      "events:TagResource",
+      "events:UntagResource"
     ]
     resources = ["*"]
   }
@@ -372,17 +375,18 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # Lambda
   statement {
     actions = [
+      "lambda:AddPermission",
       "lambda:CreateEventSourceMapping",
-      "lambda:UpdateFunctionCode",
+      "lambda:CreateFunction",
+      "lambda:GetFunction",
+      "lambda:GetEventSourceMapping",
       "lambda:GetFunctionCodeSigningConfig",
       "lambda:GetPolicy",
-      "lambda:GetFunction",
       "lambda:ListTags",
       "lambda:ListVersionsByFunction",
-      "lambda:GetEventSourceMapping",
-      "lambda:UpdateFunctionConfiguration",
-      "lambda:CreateFunction",
-      "lambda:AddPermission"
+      "lambda:TagResource",
+      "lambda:UpdateFunctionCode",
+      "lambda:UpdateFunctionConfiguration"
     ]
     resources = ["*"]
   }

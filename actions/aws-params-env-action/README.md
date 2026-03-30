@@ -5,6 +5,7 @@ The `aws-params-env-action` sets workflow environment variables from values in A
 ## Prerequisites
 
 To use this action, you must have AWS credentials and region configured in the action environment. This can be done by using the [configure-aws-credentials](https://github.com/aws-actions/configure-aws-credentials) step, for example, or by running the action on a self-hosted runner in AWS with an instance profile.
+This action requires @aws-sdk/client-ssm to be available in the runner environment. It is pre-installed on the project's CodeBuild runners. If using on standard GitHub-hosted runners, remove the --external flag from the package script to produce a fully self-contained bundle.
 
 ## Usage
 
@@ -38,3 +39,11 @@ All steps in the workflow following this will have VAR1, ENV_VAR2, and SECRET_X 
     echo "::add-mask::$secret_x"
     echo "SECRET_X=$secret_x" >> "$GITHUB_ENV"
 ```
+
+## Building
+When making changes to this action, rebuild with 
+```
+rm -rf dist/ &&
+docker run --rm -v $(pwd):/app -w /app/actions/aws-params-env-action node:20-alpine sh -c "npm ci && npm run build && npm run package"
+```
+
