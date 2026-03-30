@@ -142,6 +142,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "codebuild:DeleteWebhook",
       "codebuild:ListCuratedEnvironmentImages",
       "codebuild:ListProjects",
+      "codebuild:ListSourceCredentials",
       "codebuild:UpdateProject",
       "codebuild:UpdateProjectVisibility",
       "codebuild:UpdateWebhook"
@@ -276,9 +277,12 @@ data "aws_iam_policy_document" "github_actions_policy" {
     actions = [
       "events:DescribeRule",
       "events:ListTagsForResource",
+      "events:ListTagsForResource",
       "events:ListTargetsByRule",
       "events:PutRule",
-      "events:PutTargets"
+      "events:PutTargets",
+      "events:TagResource",
+      "events:UntagResource"
     ]
     resources = ["*"]
   }
@@ -323,7 +327,6 @@ data "aws_iam_policy_document" "github_actions_policy" {
         data.aws_kms_alias.bcda_insights_data_sampler[*].target_key_arn,
       ) : [],
       var.app == "dpc" ? concat(
-        [for key in data.aws_kms_alias.dpc_cloudwatch_keys : key.target_key_arn],
         data.aws_kms_alias.dpc_app_config[*].target_key_arn,
         data.aws_kms_alias.dpc_ecr[*].target_key_arn
       ) : []
@@ -372,17 +375,18 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # Lambda
   statement {
     actions = [
+      "lambda:AddPermission",
       "lambda:CreateEventSourceMapping",
-      "lambda:UpdateFunctionCode",
+      "lambda:CreateFunction",
+      "lambda:GetFunction",
+      "lambda:GetEventSourceMapping",
       "lambda:GetFunctionCodeSigningConfig",
       "lambda:GetPolicy",
-      "lambda:GetFunction",
       "lambda:ListTags",
       "lambda:ListVersionsByFunction",
-      "lambda:GetEventSourceMapping",
-      "lambda:UpdateFunctionConfiguration",
-      "lambda:CreateFunction",
-      "lambda:AddPermission"
+      "lambda:TagResource",
+      "lambda:UpdateFunctionCode",
+      "lambda:UpdateFunctionConfiguration"
     ]
     resources = ["*"]
   }
@@ -460,6 +464,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
+      "s3:PutObjectTagging",
       "s3:ListBucket",
       "s3:GetObject",
       "s3:GetObjectTagging",

@@ -2,9 +2,29 @@ locals {
   full_name = "${var.app}-${var.env}-ecr-cleanup"
 
   repo_list_by_env = {
-    test = ["dpc-web-admin", "dpc-web-portal"]
-    prod = ["dpc-web-portal"]
+    test = ["dpc-web"]
+    prod = ["dpc-web"]
   }
+  repo_config = jsonencode({
+    "test" : {
+      "dpc-web" : {
+        "strategies" : [
+          ["count_image", "rls-r", 5],
+          ["days_older_than", "", 14],
+          ["days_older_than", null, 14]
+        ],
+      "opt_in" : false }
+    },
+    "prod" : {
+      "dpc-web" : {
+        "strategies" : [
+          ["count_image", "rls-r", 5],
+          ["days_older_than", "", 14],
+          ["days_older_than", null, 14]
+        ],
+      "opt_in" : false }
+    }
+  })
 }
 
 data "aws_ecr_repository" "repos" {
@@ -65,7 +85,7 @@ resource "aws_ssm_parameter" "repo_list" {
   name        = "/${var.app}/${var.env}/ecr-cleanup/repos"
   type        = "SecureString"
   description = "Comma-separated list of ECR repository names to clean up"
-  value       = jsonencode(local.repo_list_by_env[var.env])
+  value       = jsonencode(local.repo_config)
 }
 
 data "archive_file" "ecr_cleanup" {
