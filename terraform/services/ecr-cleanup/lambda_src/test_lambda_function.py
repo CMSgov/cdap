@@ -221,6 +221,28 @@ def test_delete_images_multiple_batches():
     assert len(first_call_ids) == lambda_function.AWS_BATCH_SIZE
     assert len(second_call_ids) == 1
 
+def test_delete_images_logs_failure(capfd):
+    """When ECR batch_delete_image returns failures, should be logged."""
+    mock_ecr = MagicMock()
+    old_image = make_image('sha256:old', ['asdf-tag'], EXPIRED_DATETIME)
+    image_delete_failure = {
+        'imageId': {
+            'imageDigest': old_image.digest,
+            'imageTag': old_image.tags[0]
+        },
+        'failureCode': 'ImageReferencedByManifestList',
+        'failureReason': 'Requested image could not be deleted because etc etc'
+    }
+    mock_ecr.batch_delete_image.return_value = {
+        'imageIds': [],
+        'failures': [image_delete_failure]
+    }
+
+    lambda_function.delete_images(mock_ecr, 'some-repo', [old_image])
+    final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
+    assert "failures" in final_log_message
+    assert "error" in final_log_message.get("msg")
+
 def test_delete_images_empty_list():
     """ Makes sure delete_images does not throw error on empty list. """
     mock_ecr = MagicMock()
@@ -342,6 +364,58 @@ def test_lambda_handler_deletes_old_unprotected_images(mock_boto3_clients):
         repositoryName='some-repo',
         imageIds=[{'imageDigest': 'sha256:old'}]
     )
+
+
+def test_lambda_handler_logs_completion_message(mock_boto3_clients, capfd):
+    """
+    Ensures successful execution of lambda_handler() will create log statement
+    indicating completion of ECR-cleanup. This is used for monitoring in Splunk.
+    """
+    mock_ssm, mock_ecs, mock_ecr = mock_boto3_clients
+    old_image = make_image('sha256:old', ['old-tag'], EXPIRED_DATETIME).data
+    _setup_handler_mocks(
+        mock_ssm, mock_ecs, mock_ecr,
+        cluster_arns=[CLUSTER_ARN],
+        task_arns=[f'{CLUSTER_ARN}/task1'],
+        task_images=[f'{ECR_REGISTRY}/some-repo:protected-tag'],
+        ecr_images=[old_image],
+        repo_configs={ 'test': {'some-repo': { 'strategies': (('days_older_than', '', 14,),),
+                                               'opt_in': True } } }
+    )
+    with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test'}):
+        lambda_function.lambda_handler({}, None)
+    final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
+
+    expected_log_message = 'ECR cleanup lambda completed'
+    assert expected_log_message in final_log_message["msg"]
+
+
+def test_get_protected_image_refs_logs_describe_tasks_failures(capfd):
+    """When ECS list_tasks() returns failures, should be logged."""
+    task_failure = {
+        'arn': f'{CLUSTER_ARN}/task1',
+        'reason': 'MISSING'
+    }
+    mock_ecs = _make_ecs_mock(
+        cluster_arns=[CLUSTER_ARN],
+        task_arns=[f'{CLUSTER_ARN}/task1'],
+        container_images=[],
+    )
+    mock_ecs.describe_tasks.return_value = {
+        'tasks': [],
+        'failures': [task_failure]
+    }
+    mock_ecs.describe_tasks.return_value = {
+        'tasks': [],
+        'failures': [task_failure]
+    }
+
+    lambda_function.get_protected_image_refs(mock_ecs)
+    final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
+    assert "failures" in final_log_message
+    assert "error" in final_log_message.get("msg")
+
+
 
 def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
     """Image referenced by a running ECS task is never deleted even if old."""

@@ -163,6 +163,12 @@ def get_protected_image_refs(client):
         for i in range(0, len(task_arns), AWS_BATCH_SIZE):
             batch = task_arns[i:i + AWS_BATCH_SIZE]
             resp = client.describe_tasks(cluster=cluster_arn, tasks=batch)
+
+            if resp.get('failures'):
+                log({'msg': 'describe_tasks error, protected refs may be incomplete',
+                     'cluster': cluster_arn,
+                     'failures': resp['failures']})
+
             for task in resp['tasks']:
                 for container in task.get('containers', []):
                     _, ref = parse_image_ref(container.get('image', ''))
@@ -175,7 +181,12 @@ def delete_images(client, repo_name, images):
     image_ids = [{'imageDigest': img.digest} for img in images]
     for i in range(0, len(image_ids), AWS_BATCH_SIZE):
         batch = image_ids[i:i + AWS_BATCH_SIZE]
-        client.batch_delete_image(repositoryName=repo_name, imageIds=batch)
+        resp = client.batch_delete_image(repositoryName=repo_name, imageIds=batch)
+
+        if resp.get('failures'):
+            log({'msg': 'Batch image deletion error',
+                 'repo': repo_name,
+                 'failures': resp['failures']})
 
 def log_images_for_deletion(repo, images):
     """Logs images that would be deleted if the repo were opted in."""
@@ -206,6 +217,11 @@ def lambda_handler(_, __):
         else:
             log_images_for_deletion(repo_name, to_delete)
         log({'msg': f'Cleanup complete for repo: {repo_name}', 'repo': repo_name})
+    log({
+        'msg': 'ECR cleanup lambda completed',
+        'app': os.environ['APP'],
+        'env': os.environ['ENV'],
+    })
 
 def run(args):
     """ Prints tags of (or digest of untagged) images that would be deleted. """
