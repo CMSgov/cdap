@@ -1,0 +1,66 @@
+name: Sonarqube analysis for aws-params-env-action
+description: Leverages sonarqube to scan for quality issues and then gate the workflow success based on any issues.
+
+on:
+  pull_request:
+    paths:
+      - 'actions/aws-params-env-action/**'
+      - '!actions/aws-params-env-action/**.md'
+  schedule:
+    - cron: '31 7 * * 3'
+
+permissions:
+  contents: read
+  id-token: write
+
+defaults:
+  run:
+    working-directory: actions/aws-params-env-action
+
+jobs:
+  sonarqube:
+    runs-on: codebuild-cdap-${{ github.ref_name =='main' && 'prod' || 'non-prod' }}-${{github.run_id}}-${{github.run_attempt}}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Sonarqube requirement
+
+      - name: Assume role to AWS
+        uses: aws-actions/configure-aws-credentials
+        with:
+          aws-region: $${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-github-actions
+
+      - name: Retrieve Sonarqube credentials
+        uses: ./actions/aws-params-env-action
+        env:
+          AWS_REGION: vars.AWS_REGION
+        with:
+          params: |
+            SONARQUBE_URL=/sonarqube/url
+            SONARQUBE_TOKEN=/sonarqube/token
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Sonarqube
+        uses: sonarsource/sonarqube-action-scan@v5
+        with:
+          projectBaseDir: actions/aws-params-env-action
+          env:
+            SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+            SONAR_URL: ${{ env.SONAR_HOST_URL }}
+
+      - name: Run Sonarqube gate
+        uses: sonarsource/sonarqube-quality-gate@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_URL: ${{ env.SONAR_HOST_URL }}
