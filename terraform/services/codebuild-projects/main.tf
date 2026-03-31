@@ -241,7 +241,7 @@ resource "aws_codebuild_project" "per_repo" {
   }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
+    compute_type                = var.app == "dpc-app" ? "BUILD_GENERAL1_MEDIUM" : "BUILD_GENERAL1_SMALL"
     image                       = local.arm64_image
     type                        = "ARM_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
