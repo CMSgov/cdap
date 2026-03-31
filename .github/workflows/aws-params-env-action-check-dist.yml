@@ -4,6 +4,7 @@
 # For our project, we generate this file through a build process from other source files.
 # We need to make sure the checked-in `index.js` actually matches what we expect it to be.
 name: Check dist/ for aws-params-env-action
+description: 'Builds the artifact for aws-params-env-action and checks it against what is checked in to source control.' 
 
 on:
   pull_request:
@@ -19,15 +20,15 @@ defaults:
 
 jobs:
   check-dist:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-cdap-${{ github.ref_name =='main' && 'prod' || 'non-prod' }}-${{github.run_id}}-${{github.run_attempt}}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set Node.js 16.x
-        uses: actions/setup-node@v3.6.0
+      - name: Set Node.js 20.x
+        uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 20.x
 
       - name: Install dependencies
         run: npm ci
@@ -51,4 +52,5 @@ jobs:
         if: ${{ failure() && steps.diff.conclusion == 'failure' }}
         with:
           name: dist
-          path: dist/
+          path: actions/aws-params-env-action/dist/
+          
