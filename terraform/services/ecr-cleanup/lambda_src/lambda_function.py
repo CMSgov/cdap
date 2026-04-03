@@ -206,7 +206,7 @@ def lambda_handler(_, __):
     env = os.environ['ENV']
     ssm_param = f"/{os.environ['APP']}/{env}/ecr-cleanup/repos"
 
-    repo_config = get_repo_list(ssm_client, ssm_param)[env]
+    repo_config: dict[str, list[str]] = json.loads(get_repo_list(ssm_client, ssm_param))[env]
 
     for repo_name, to_delete in get_images_to_delete(repo_config).items():
         if repo_config[repo_name]['opt_in']:
@@ -228,7 +228,7 @@ def run(args):
     repo = args.repo
     ssm_param = f"/{args.app}/{args.env}/ecr-cleanup/repos"
 
-    repo_config = get_repo_list(ssm_client, ssm_param)[args.env]
+    repo_config: dict[str, list[str]] = json.loads(get_repo_list(ssm_client, ssm_param))[args.env]
     if repo == 'all':
         to_delete = get_images_to_delete(repo_config)
     elif repo in repo_config:
