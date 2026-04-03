@@ -90,8 +90,17 @@ resource "aws_ssm_parameter" "repo_list" {
 
 data "archive_file" "ecr_cleanup" {
   type        = "zip"
-  source_file = "${path.module}/lambda_src/lambda_function.py"
   output_path = "${path.module}/function.zip"
+
+  source {
+    content  = file("${path.module}/lambda_src/lambda_function.py")
+    filename = "lambda_function.py"
+  }
+
+  source {
+    content  = file("${path.module}/lambda_src/strategies.py")
+    filename = "strategies.py"
+  }
 }
 
 module "ecr_cleanup_function" {
