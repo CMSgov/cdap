@@ -5,7 +5,7 @@ locals {
     test = ["dpc-web"]
     prod = ["dpc-web"]
   }
-  repo_config = jsonencode({
+  repo_config = {
     "test" : {
       "dpc-web" : {
         "strategies" : [
@@ -24,7 +24,7 @@ locals {
         ],
       "opt_in" : false }
     }
-  })
+  }
 }
 
 data "aws_ecr_repository" "repos" {
@@ -63,35 +63,26 @@ data "aws_iam_policy_document" "ecs_access_policy" {
   }
 }
 
-data "aws_iam_policy_document" "ssm_access_policy" {
-  statement {
-    sid     = "SSMAccess"
-    actions = ["ssm:GetParameter"]
-    resources = [
-      aws_ssm_parameter.repo_list.arn
-    ]
-  }
-}
-
 data "aws_iam_policy_document" "ecr_cleanup" {
   source_policy_documents = [
     data.aws_iam_policy_document.ecr_access_policy.json,
     data.aws_iam_policy_document.ecs_access_policy.json,
-    data.aws_iam_policy_document.ssm_access_policy.json,
   ]
-}
-
-resource "aws_ssm_parameter" "repo_list" {
-  name        = "/${var.app}/${var.env}/ecr-cleanup/repos"
-  type        = "SecureString"
-  description = "Comma-separated list of ECR repository names to clean up"
-  value       = jsonencode(local.repo_config)
 }
 
 data "archive_file" "ecr_cleanup" {
   type        = "zip"
-  source_file = "${path.module}/lambda_src/lambda_function.py"
   output_path = "${path.module}/function.zip"
+
+  source {
+    content  = file("${path.module}/lambda_src/lambda_function.py")
+    filename = "lambda_function.py"
+  }
+
+  source {
+    content  = file("${path.module}/lambda_src/strategies.py")
+    filename = "strategies.py"
+  }
 }
 
 module "ecr_cleanup_function" {
@@ -113,8 +104,9 @@ module "ecr_cleanup_function" {
   }
 
   environment_variables = {
-    APP = var.app
-    ENV = var.env
+    APP         = var.app
+    ENV         = var.env
+    REPO_CONFIG = jsonencode(local.repo_config[var.env])
   }
 
 }
