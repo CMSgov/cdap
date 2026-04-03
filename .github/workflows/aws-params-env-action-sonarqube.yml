@@ -55,7 +55,7 @@ jobs:
         uses: sonarsource/sonarqube-action-scan@v5
         with:
           projectBaseDir: actions/aws-params-env-action
-          env:
+        env:
             SONAR_URL: ${{ env.SONARQUBE_URL }}
             SONAR_TOKEN: ${{ env.SONARQUBE_TOKEN }}
 
