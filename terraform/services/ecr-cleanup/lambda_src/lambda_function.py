@@ -6,7 +6,6 @@ from argparse import ArgumentParser
 from datetime import datetime, timezone
 import json
 import os
-import sys
 
 import boto3
 from botocore.exceptions import ClientError

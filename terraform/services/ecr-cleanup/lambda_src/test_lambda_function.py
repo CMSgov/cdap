@@ -312,7 +312,7 @@ def _setup_handler_mocks(  # pylint: disable=too-many-arguments,too-many-positio
             'tasks': [{'containers': [{'image': img}]} for img in task_images]
         }
 
-    def ecr_paginator_side_effect(operation):
+    def ecr_paginator_side_effect(_):
         pager = MagicMock()
         pager.paginate.return_value = iter([{'imageDetails': ecr_images or []}])
         return pager
@@ -330,7 +330,8 @@ def test_lambda_handler_deletes_old_unprotected_images(mock_boto3_clients):
         ecr_images=[old_image, new_image],
         repo_configs=repo_configs
     )
-    with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}):
+    environment_mocks = {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}
+    with patch.dict(os.environ, environment_mocks):
         lambda_function.lambda_handler({}, None)
     mock_ecr.batch_delete_image.assert_called_once_with(
         repositoryName='some-repo',
@@ -354,7 +355,8 @@ def test_lambda_handler_logs_completion_message(mock_boto3_clients, capfd):
         ecr_images=[old_image],
         repo_configs=repo_configs,
     )
-    with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}):
+    environment_mocks = {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}
+    with patch.dict(os.environ, environment_mocks):
         lambda_function.lambda_handler({}, None)
     final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
 
@@ -398,7 +400,8 @@ def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
         ecr_images=[old_image],
         repo_configs=repo_configs,
     )
-    with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}):
+    environment_mocks = {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}
+    with patch.dict(os.environ, environment_mocks):
         lambda_function.lambda_handler({}, None)
     mock_ecr.batch_delete_image.assert_not_called()
 
