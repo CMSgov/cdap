@@ -405,10 +405,6 @@ def test_get_protected_image_refs_logs_describe_tasks_failures(capfd):
         'tasks': [],
         'failures': [task_failure]
     }
-    mock_ecs.describe_tasks.return_value = {
-        'tasks': [],
-        'failures': [task_failure]
-    }
 
     lambda_function.get_protected_image_refs(mock_ecs)
     final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
