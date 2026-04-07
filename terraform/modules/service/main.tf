@@ -1,6 +1,15 @@
 locals {
   service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
+
+  # Derive the primary container port from port_mappings for Service Connect fallback
+  primary_container_port = try(
+    [for pm in coalesce(var.port_mappings, []) : pm.containerPort if pm.containerPort != null][0],
+    null
+  )
+
+  # Service Connect port: explicit override → first containerPort in port_mappings → null
+  sc_port = coalesce(var.service_connect_port, local.primary_container_port)
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -89,6 +98,24 @@ resource "aws_ecs_service" "this" {
       target_group_arn = load_balancer.value.target_group_arn
       container_name   = load_balancer.value.container_name
       container_port   = load_balancer.value.container_port
+    }
+  }
+
+  dynamic "service_connect_configuration" {
+    for_each = var.enable_ecs_service_connect ? [1] : []
+    content {
+      enabled   = true
+      namespace = var.service_connect_namespace
+
+      service {
+        # Must match the `name` field on the relevant entry in var.port_mappings
+        port_name = var.service_connect_port_name
+
+        client_alias {
+          port     = local.sc_port
+          dns_name = local.service_name
+        }
+      }
     }
   }
 
