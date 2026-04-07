@@ -3,6 +3,38 @@ variable "cluster_arn" {
   type        = string
 }
 
+# -------------------------------------------------------
+# ECS Service Connect (optional)
+# -------------------------------------------------------
+variable "enable_ecs_service_connect" {
+  description = "Enables ECS Service Connect so other services in the namespace can reach this one."
+  type        = bool
+  default     = false
+}
+
+# TODO: Evaluate whether this should be set at the cluster/stack level and passed down
+variable "service_connect_namespace" {
+  type        = string
+  default     = null
+  description = "AWS Cloud Map namespace ARN for Service Connect. Must be associated with the ECS cluster."
+}
+
+variable "service_connect_port_name" {
+  type        = string
+  default     = null
+  description = "The port name to expose via Service Connect. Must exactly match the `name` field on the corresponding entry in var.port_mappings."
+}
+
+variable "service_connect_port" {
+  type        = number
+  default     = null
+  description = "Defaults to the first containerPort in port_mappings. Override this for port remapping (e.g. expose on :80 while container listens on :8080)."
+}
+
+# -------------------------------------------------------
+# ECS Task (optional)
+# -------------------------------------------------------
+
 variable "container_environment" {
   description = "The environment variables to pass to the container"
   type = list(object({
