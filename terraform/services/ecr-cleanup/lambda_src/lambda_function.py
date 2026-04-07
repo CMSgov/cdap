@@ -2,7 +2,6 @@
 Cleans up old ECR images while protecting images referenced by currently running ECS tasks.
 """
 
-from argparse import ArgumentParser
 from datetime import datetime, timezone
 import json
 import os
@@ -204,33 +203,3 @@ def lambda_handler(_, __):
         'app': os.environ['APP'],
         'env': os.environ['ENV'],
     })
-
-def run(args):
-    """
-    Prints tags of (or digest of untagged) images that would be deleted for a given repo.
-    Assumes dpc conventions for strategies used.
-    Forces opt_in=True so deletion candidates are shown regardless of opt-in state.
-    """
-    fake_repo_config = {
-        args.repo: {
-            "opt_in": True,
-            "strategies": [
-                ["count_image","rls-r",5],
-                ["days_older_than","",14],
-                ["days_older_than",None,14]
-            ]
-        }
-    }
-    for repo_name, deleteable in get_images_to_delete(fake_repo_config).items():
-        print(repo_name)
-        if len(deleteable):
-            for image in deleteable:
-                print(f'  {image.tags or image.digest}')
-        else:
-            print(f'No images eligible for deletion for {repo_name}')
-
-
-if __name__ == '__main__':
-    parser = ArgumentParser(description='Prints tags of images that would be deleted')
-    parser.add_argument('repo', help='repository name to analyze')
-    run(parser.parse_args())

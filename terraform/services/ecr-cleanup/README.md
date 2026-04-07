@@ -28,10 +28,19 @@ Lifecycle functions should mark image `status` with either `PROTECT` or `DELETE`
  - For each lifecycle, add the function (along with additional arguments) to the tuple. These functions will run in order.
 
 ## Dry Run
-Dry runs are available locally via the command line. First, set your AWS credentials for the environment you want to invoke. Then pass in the name of the repository (or 'all'). Output will be all images that will be deleted.
+Dry runs are available locally via the command line. 
+- First, set your AWS credentials for the environment you want to invoke (e.g. `kion stak`). 
+- Then set up a .json file to reflect repositories you want to test (e.g. `terraform/services/ecr-cleanup/lambda_src/dry_run_config.json`)
+- Output will be all images that would be deleted in a deployed environment.
 
+#### Example
 ```bash
-python lambda_function.py dpc-attribution
+cd lambda_src
+python3 -m venv venv && source venv/bin/activate
+# Testing new config file
+python3 dry_run.py --config-path path/to/new_config.json
+# Defaults to existing dry_run_config.json with DPC strategies
+python3 dry_run.py
 ```
 
 ## Opting In
