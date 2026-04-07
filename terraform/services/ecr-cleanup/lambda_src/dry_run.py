@@ -1,5 +1,6 @@
 """
-Script for testing config changes locally and preview images that would be deleted. Not used for production code.
+Not used for production code.
+Script for testing config changes locally and preview images that would be deleted.
 Useful for previewing cleanup behavior before updating repo_config in main.tf
 """
 
