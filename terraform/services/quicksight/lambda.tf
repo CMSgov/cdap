@@ -7,7 +7,7 @@ data "archive_file" "zip-archive-format-dpc-logs" {
 # Lambda Function to process logs from Firehose
 resource "aws_lambda_function" "format_dpc_logs" {
   architectures = [
-    "arm64",
+    "x86_64",
   ]
   description                    = "Extracts and flattens JSON messages from CloudWatch log subscriptions"
   function_name                  = "${local.stack_prefix}-cw-to-flattened-json"
