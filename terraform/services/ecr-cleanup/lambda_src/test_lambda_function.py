@@ -260,25 +260,6 @@ def test_delete_images_empty_list():
     lambda_function.delete_images(mock_ecr, 'some-repo', [])
     mock_ecr.batch_delete_image.assert_not_called()
 
-def test_get_repo_list():
-    """SSM parameter value is parsed as a JSON list of repo names."""
-    mock_ssm = MagicMock()
-    mock_ssm.get_parameter.return_value = {'Parameter': {'Value': '["some-repo", "another-repo"]'}}
-    assert lambda_function.get_repo_list(mock_ssm, '/test/param') == ['some-repo', 'another-repo']
-    mock_ssm.get_parameter.assert_called_once_with(Name='/test/param', WithDecryption=True)
-
-def test_get_repo_list_parameter_not_found():
-    """Returns an empty list when the SSM parameter does not exist."""
-    mock_ssm = MagicMock()
-    failed_to_find_message = {
-        "Error": {
-            "Code": "ParameterNotFound",
-            "Message": "Parameter not found",
-        }
-    }
-    mock_ssm.get_parameter.side_effect = ClientError(failed_to_find_message, "get_parameter")
-    assert lambda_function.get_repo_list(mock_ssm, '/param/not/found') == []
-
 def _make_ecs_mock(cluster_arns, task_arns, task_definitions):
     """Creates a mock ECS client returning the given clusters, tasks, and task definitions."""
     mock_ecs = MagicMock()
@@ -330,20 +311,16 @@ def test_get_protected_image_refs_on_error():
 @pytest.fixture(autouse=True)
 def mock_boto3_clients():
     """Patches the module-level boto3 clients used by the lambda handler."""
-    with patch('lambda_function.ssm_client') as mock_ssm, \
-         patch('lambda_function.ecs_client') as mock_ecs, \
+    with patch('lambda_function.ecs_client') as mock_ecs, \
          patch('lambda_function.ecr_client') as mock_ecr:
-        yield mock_ssm, mock_ecs, mock_ecr
+        yield mock_ecs, mock_ecr
 
 def _setup_handler_mocks(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        mock_ssm, mock_ecs, mock_ecr, repo_configs=None,
+        mock_ecs, mock_ecr, repo_configs=None,
         cluster_arns=None, task_arns=None, task_images=None, ecr_images=None):
-    """Configures SSM, ECS, and ECR client mocks for lambda_handler integration tests."""
+    """Configures ECS and ECR client mocks for lambda_handler integration tests."""
     if repo_configs is None:
-        repo_configs = ['some-repo']
-    mock_ssm.get_parameter.return_value = {
-        'Parameter': {'Value': json.dumps(repo_configs)}
-    }
+        repo_configs = {}
 
     def ecs_paginator_side_effect(operation):
         pager = MagicMock()
@@ -359,30 +336,26 @@ def _setup_handler_mocks(  # pylint: disable=too-many-arguments,too-many-positio
             'tasks': [{'containers': [{'image': img}]} for img in task_images]
         }
 
-    repos_page = [{'repositoryName': r} for r in repo_configs]
-
-    def ecr_paginator_side_effect(operation):
+    def ecr_paginator_side_effect(_):
         pager = MagicMock()
-        if operation == 'describe_repositories':
-            pager.paginate.return_value = iter([{'repositories': repos_page}])
-        else:
-            pager.paginate.return_value = iter([{'imageDetails': ecr_images or []}])
+        pager.paginate.return_value = iter([{'imageDetails': ecr_images or []}])
         return pager
 
     mock_ecr.get_paginator.side_effect = ecr_paginator_side_effect
 
 def test_lambda_handler_deletes_old_unprotected_images(mock_boto3_clients):
     """ Old image is deleted; recent images are kept."""
-    mock_ssm, mock_ecs, mock_ecr = mock_boto3_clients
+    mock_ecs, mock_ecr = mock_boto3_clients
     old_image = make_image('sha256:old', ['unprotected-tag'], EXPIRED_DATETIME).data
     new_image = make_image('sha256:old', ['unprotected-tag'], datetime.now(timezone.utc)).data
+    repo_configs = {'some-repo': {'strategies': (('days_older_than', '', 14,),), 'opt_in': True}}
     _setup_handler_mocks(
-        mock_ssm, mock_ecs, mock_ecr,
+        mock_ecs, mock_ecr,
         ecr_images=[old_image, new_image],
-        repo_configs={ 'test': {'some-repo': { 'strategies': (('days_older_than', '', 14,),),
-                                               'opt_in': True } } }
+        repo_configs=repo_configs
     )
-    with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test'}):
+    environment_mocks = {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}
+    with patch.dict(os.environ, environment_mocks):
         lambda_function.lambda_handler({}, None)
     mock_ecr.batch_delete_image.assert_called_once_with(
         repositoryName='some-repo',
@@ -395,18 +368,19 @@ def test_lambda_handler_logs_completion_message(mock_boto3_clients, capfd):
     Ensures successful execution of lambda_handler() will create log statement
     indicating completion of ECR-cleanup. This is used for monitoring in Splunk.
     """
-    mock_ssm, mock_ecs, mock_ecr = mock_boto3_clients
+    mock_ecs, mock_ecr = mock_boto3_clients
     old_image = make_image('sha256:old', ['old-tag'], EXPIRED_DATETIME).data
+    repo_configs = {'some-repo': {'strategies': (('days_older_than', '', 14,),), 'opt_in': True}}
     _setup_handler_mocks(
-        mock_ssm, mock_ecs, mock_ecr,
+        mock_ecs, mock_ecr,
         cluster_arns=[CLUSTER_ARN],
         task_arns=[f'{CLUSTER_ARN}/task1'],
         task_images=[f'{ECR_REGISTRY}/some-repo:protected-tag'],
         ecr_images=[old_image],
-        repo_configs={ 'test': {'some-repo': { 'strategies': (('days_older_than', '', 14,),),
-                                               'opt_in': True } } }
+        repo_configs=repo_configs,
     )
-    with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test'}):
+    environment_mocks = {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}
+    with patch.dict(os.environ, environment_mocks):
         lambda_function.lambda_handler({}, None)
     final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
 
@@ -429,10 +403,6 @@ def test_get_protected_image_refs_logs_describe_tasks_failures(capfd):
         'tasks': [],
         'failures': [task_failure]
     }
-    mock_ecs.describe_tasks.return_value = {
-        'tasks': [],
-        'failures': [task_failure]
-    }
 
     lambda_function.get_protected_image_refs(mock_ecs)
     final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
@@ -443,18 +413,19 @@ def test_get_protected_image_refs_logs_describe_tasks_failures(capfd):
 
 def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
     """Image referenced by a running ECS task is never deleted even if old."""
-    mock_ssm, mock_ecs, mock_ecr = mock_boto3_clients
+    mock_ecs, mock_ecr = mock_boto3_clients
     old_image = make_image('sha256:old', ['protected-tag'], EXPIRED_DATETIME).data
+    repo_configs = {'some-repo': {'strategies': (('days_older_than', '', 14,),), 'opt_in': True}}
     _setup_handler_mocks(
-        mock_ssm, mock_ecs, mock_ecr,
+        mock_ecs, mock_ecr,
         cluster_arns=[CLUSTER_ARN],
         task_arns=[f'{CLUSTER_ARN}/task1'],
         task_images=[f'{ECR_REGISTRY}/some-repo:protected-tag'],
         ecr_images=[old_image],
-        repo_configs={ 'test': {'some-repo': { 'strategies': (('days_older_than', '', 14,),),
-                                               'opt_in': True } } }
+        repo_configs=repo_configs,
     )
-    with patch.dict(os.environ, {'APP': 'cdap', 'ENV': 'test'}):
+    environment_mocks = {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}
+    with patch.dict(os.environ, environment_mocks):
         lambda_function.lambda_handler({}, None)
     mock_ecr.batch_delete_image.assert_not_called()
 
