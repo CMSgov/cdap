@@ -20,3 +20,4 @@ locals {
   # Resolve the ALB target port by name — caller must provide alb_port_name if using ALB
   alb_container_port = local.enable_alb_integration ? local.port_map[var.alb_port_name] : null
 }
+
