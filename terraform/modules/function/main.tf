@@ -233,6 +233,7 @@ resource "aws_lambda_function" "this" {
   timeout           = var.timeout
   memory_size       = var.memory_size
   layers            = var.layer_arns
+  architectures = ["arm64"] # Graviton support for better price/performance
 
   tracing_config {
     mode = "Active"
