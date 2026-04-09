@@ -19,16 +19,28 @@ variable "service_connect_namespace" {
   description = "AWS Cloud Map namespace ARN for Service Connect. Must be associated with the ECS cluster."
 }
 
-variable "service_connect_port_name" {
-  type        = string
-  default     = null
-  description = "The port name to expose via Service Connect. Must exactly match the `name` field on the corresponding entry in var.port_mappings."
-}
-
 variable "service_connect_port" {
   type        = number
   default     = null
   description = "Defaults to the first containerPort in port_mappings. Override this for port remapping (e.g. expose on :80 while container listens on :8080)."
+}
+
+variable "deployment_circuit_breaker" {
+  type = object({
+    enable   = optional(bool, true)
+    rollback = optional(bool, false)
+  })
+  default     = {}
+  description = "Deployment circuit breaker configuration. Stops a failing deployment. Set rollback = true to automatically revert to the previous task definition on failure."
+}
+
+variable "ignore_desired_count_changes" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    When true, Terraform will not revert desired_count to the configured value on apply.
+    Enable this when using Application Auto Scaling to manage task count at runtime.
+  EOT
 }
 
 # -------------------------------------------------------
@@ -93,14 +105,35 @@ variable "cpu_architecture" {
   default     = "ARM64"
 }
 
-variable "load_balancers" {
-  description = "Load balancer(s) for use by the AWS ECS service."
-  type = list(object({
-    target_group_arn = string
-    container_name   = string
-    container_port   = number
-  }))
-  default = []
+variable "alb_port_name" {
+  type        = string
+  default     = null
+  description = "Name of the port mapping to route ALB traffic to. Must match a name in var.port_mappings. Required when alb_listener_arn is set."
+}
+
+variable "alb_health_check" {
+  description = <<-EOT
+    Health check configuration for the ALB target group.
+
+    path                - HTTP path to probe (default: /health)
+    port                - Port to probe. Use "traffic-port" to match the target group port
+    matcher             - HTTP response codes considered healthy (default: "200-299")
+    interval            - Seconds between health checks (default: 30)
+    timeout             - Seconds before a check times out (default: 5)
+    healthy_threshold   - Consecutive successes to mark healthy (default: 2)
+    unhealthy_threshold - Consecutive failures to mark unhealthy (default: 3)
+  EOT
+  type = object({
+    path                = optional(string, "/health")
+    port                = optional(string, "traffic-port")
+    protocol            = optional(string, "HTTP")
+    matcher             = optional(string, "200-299")
+    interval            = optional(number, 30)
+    timeout             = optional(number, 5)
+    healthy_threshold   = optional(number, 2)
+    unhealthy_threshold = optional(number, 3)
+  })
+  default = {}
 }
 
 # reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
