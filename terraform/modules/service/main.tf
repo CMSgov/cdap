@@ -94,16 +94,25 @@ resource "aws_ecs_service" "this" {
       namespace = var.service_connect_namespace
 
       service {
-        port_name = var.service_connect_port_name
+        discovery_name = local.service_name
+        port_name      = local.sc_port_name
 
         client_alias {
-          port     = local.port_map[var.service_connect_port_name]
-          dns_name = var.service_name
+          port     = local.port_map[local.sc_port_name]
+          dns_name = local.service_name
+        }
+
+        tls {
+          kms_key  = var.platform.kms_alias_primary.target_key_arn
+          role_arn = aws_iam_role.service_connect[0].arn
+
+          issuer_cert_authority {
+            aws_pca_authority_arn = [one(data.aws_ram_resource_share.pace_ca.resource_arns)]
+          }
         }
       }
     }
   }
-
   deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
   deployment_maximum_percent         = var.deployment_maximum_percent
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
@@ -146,6 +155,10 @@ resource "aws_lb_target_group" "this" {
     unhealthy_threshold = var.alb_health_check.unhealthy_threshold
   }
 
+  tags = {
+    Name = "${local.service_name_full}-tg"
+  }
+
   lifecycle {
     precondition {
       condition     = var.alb_port_name != null
@@ -158,6 +171,10 @@ resource "aws_lb_target_group" "this" {
     }
   }
 
+  depends_on = [
+    aws_lb_listener_rule.this,
+    aws_iam_role_policy_attachment.service_connect
+  ]
 }
 
 resource "aws_lb_listener_rule" "this" {
@@ -231,3 +248,142 @@ resource "aws_iam_role_policy" "execution" {
   policy = data.aws_iam_policy_document.execution[0].json
 }
 
+resource "aws_iam_role" "service_connect" {
+  count = var.enable_ecs_service_connect ? 1 : 0
+  name  = "${local.service_name_full}-service-connect"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "ecs-tasks.amazonaws.com" }
+    }]
+  })
+}
+
+data "aws_iam_policy_document" "service_connect" {
+  count = var.enable_ecs_service_connect ? 1 : 0
+
+  statement {
+    actions = [
+      "acm-pca:GetCertificate",
+      "acm-pca:GetCertificateAuthorityCertificate",
+      "acm-pca:DescribeCertificateAuthority",
+      "acm-pca:IssueCertificate"
+    ]
+    resources = [var.platform.private_ca_arn]
+  }
+
+  statement {
+    actions   = ["kms:Decrypt", "kms:GenerateDataKey"]
+    resources = [var.platform.kms_alias_primary.target_key_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "service_connect" {
+  count  = var.enable_ecs_service_connect ? 1 : 0
+  name   = "${local.service_name_full}-service-connect"
+  role   = aws_iam_role.service_connect[0].name
+  policy = data.aws_iam_policy_document.service_connect[0].json
+}
+
+data "aws_ram_resource_share" "pace_ca" {
+  resource_owner = "OTHER-ACCOUNTS"
+  name           = "pace-ca-g1"
+}
+
+data "aws_iam_policy_document" "service_connect_pca" {
+  statement {
+    sid       = "AllowDescribePCA"
+    actions   = ["acm-pca:DescribeCertificateAuthority"]
+    resources = [one(data.aws_ram_resource_share.pace_ca.resource_arns)]
+  }
+
+  statement {
+    sid       = "AllowGetAndIssueCertificate"
+    actions   = ["acm-pca:GetCertificateAuthorityCsr", "acm-pca:GetCertificate", "acm-pca:IssueCertificate"]
+    resources = [one(data.aws_ram_resource_share.pace_ca.resource_arns)]
+  }
+}
+
+resource "aws_iam_policy" "service_connect_pca" {
+  name        = "${random_string.unique_suffix.result}-service-connect-pca-policy"
+  description = "Permissions for the ${var.platform.env}-${local.service_name} Service's Service Connect Role to use the PACE Private CA."
+  policy      = data.aws_iam_policy_document.service_connect_pca.json
+}
+
+data "aws_iam_policy_document" "service_connect_secrets_manager" {
+  statement {
+    actions = [
+      "secretsmanager:CreateSecret",
+      "secretsmanager:TagResource",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:UpdateSecret",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:PutSecretValue",
+      "secretsmanager:DeleteSecret",
+      "secretsmanager:RotateSecret",
+      "secretsmanager:UpdateSecretVersionStage"
+    ]
+    resources = ["arn:aws:secretsmanager:${var.platform.primary_region.name}:${data.aws_caller_identity.current.account_id}:secret:ecs-sc!*"]
+  }
+}
+
+resource "aws_iam_policy" "service_connect_secrets_manager" {
+  name        = "${random_string.unique_suffix.result}-service-connect-secrets-manager-policy"
+  description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use Secrets Manager for Service Connect related Secrets."
+  policy      = data.aws_iam_policy_document.service_connect_secrets_manager.json
+}
+
+data "aws_iam_policy_document" "service_assume_role" {
+  for_each = toset(["ecs-tasks", "ecs", "ECSServiceConnectForTLS"])
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["${each.value}.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "service-connect" {
+  name                  = "${local.service_name_full}-service-connect"
+  assume_role_policy    = data.aws_iam_policy_document.service_assume_role["ECSServiceConnectForTLS"].json
+  force_detach_policies = true
+}
+
+data "aws_iam_policy_document" "kms" {
+  statement {
+    sid = "AllowEnvCMKAccess"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:ReEncrypt",
+      "kms:DescribeKey",
+      "kms:CreateGrant",
+      "kms:ListGrants",
+      "kms:RevokeGrant",
+      "kms:GenerateDataKeyPair",
+      "kms:GenerateDataKeyPairWithoutPlaintext",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "service_connect_kms" {
+  name        = "${random_string.unique_suffix.result}-service-connect-kms-policy"
+  description = "Permissions for the ${var.platform.env} ${local.service_name} Service's Service Connect Role to use the ${var.platform.env} CMK"
+  policy      = data.aws_iam_policy_document.kms.json
+}
+
+resource "aws_iam_role_policy_attachment" "service-connect" {
+  for_each = {
+    kms             = aws_iam_policy.service_connect_kms.arn
+    pca             = aws_iam_policy.service_connect_pca.arn
+    secrets_manager = aws_iam_policy.service_connect_secrets_manager.arn
+  }
+
+  role       = aws_iam_role.service-connect.name
+  policy_arn = each.value
+}
