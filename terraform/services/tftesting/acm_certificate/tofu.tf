@@ -15,6 +15,6 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "tftest_acm_certificate/terraform.tfstate"
+    key = "tftesting/acm_certificate/terraform.tfstate"
   }
 }
