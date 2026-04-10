@@ -18,6 +18,21 @@ output "https_listener_arn" {
   value       = aws_lb_listener.https.arn
 }
 
+output "all_listener_arns" {
+  description = <<-EOT
+    Map of (string) to listener ARNs, including the default 443 listener.
+    Use this in ecs-service module calls:
+      alb_listener_arn = module.my_alb.all_listener_arns["9900"]
+  EOT
+  value = merge(
+    { "443" = aws_lb_listener.https.arn },
+    {
+      for port, listener in aws_lb_listener.extra_https :
+      port => listener.arn
+    }
+  )
+}
+
 output "internal" {
   description = "Whether the ALB is internal (private) or internet-facing."
   value       = var.internal
