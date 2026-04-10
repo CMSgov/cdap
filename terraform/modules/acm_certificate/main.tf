@@ -66,7 +66,6 @@ resource "tls_cert_request" "this" {
 
 # -------------------------------------------------------
 # Store private key in SSM — encrypted with platform KMS key
-# It is read back by this module when importing the signed cert into ACM.
 # -------------------------------------------------------
 
 resource "aws_ssm_parameter" "private_key" {
@@ -81,7 +80,7 @@ resource "aws_ssm_parameter" "private_key" {
 
   lifecycle {
     # Prevent Terraform from overwriting the key if it already exists.
-    # The private key must remain stable — replacing it invalidates signed certs.
+    # The private key must remain stable — replacing it may invalidate signed certs.
     ignore_changes = [value]
   }
 }
