@@ -12,7 +12,7 @@ variable "enable_ecs_service_connect" {
   default     = false
 }
 
-# TODO: Evaluate whether this should be set at the cluster/stack level and passed down
+# Define where this gets set by developers
 variable "service_connect_namespace" {
   type        = string
   default     = null
@@ -83,7 +83,7 @@ variable "desired_count" {
 }
 
 variable "execution_role_arn" {
-  description = "ARN of the role that grants Fargate agents permission to make AWS API calls to pull images for containers, get SSM params in the task definition, etc. Defaults to creation of a new role."
+  description = "Deprecated. Do not set. ARN of the role that grants Fargate agents permission to make AWS API calls to pull images for containers, get SSM params in the task definition, etc. Defaults to creation of a new role."
   type        = string
   default     = null
 }
@@ -208,7 +208,7 @@ variable "subnets" {
 }
 
 variable "task_role_arn" {
-  description = "ARN of the role that allows the application code in tasks to make calls to AWS services."
+  description = "Distinct from execution role. ARN of the role that allows the application code in tasks to make calls to AWS services."
   type        = string
 }
 
