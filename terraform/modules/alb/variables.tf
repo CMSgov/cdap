@@ -58,10 +58,20 @@ variable "ssl_policy" {
 }
 
 # -------------------------------------------------------
-# HTTP Redirect
+# Listeners
 # -------------------------------------------------------
 variable "enable_http_redirect" {
   type        = bool
   default     = true
   description = "When true, adds an HTTP:80 listener that redirects all traffic to HTTPS:443."
+}
+
+variable "extra_listeners" {
+  description = "Additional HTTPS listeners beyond the default 443"
+  type = list(object({
+    port                = number
+    acm_certificate_arn = string
+    ssl_policy          = optional(string)
+  }))
+  default = []
 }

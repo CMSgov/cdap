@@ -62,3 +62,22 @@ resource "aws_lb_listener" "http_redirect" {
     }
   }
 }
+
+resource "aws_lb_listener" "extra_https" {
+  for_each = local.extra_listeners_map
+
+  load_balancer_arn = aws_lb.this.arn
+  port              = each.value.port
+  protocol          = "HTTPS"
+  ssl_policy        = coalesce(each.value.ssl_policy, var.ssl_policy)
+  certificate_arn   = coalesce(each.value.acm_certificate_arn, var.acm_certificate_arn)
+
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Not Found"
+      status_code  = "404"
+    }
+  }
+}
