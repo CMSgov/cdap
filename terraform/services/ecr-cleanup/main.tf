@@ -86,7 +86,7 @@ data "archive_file" "ecr_cleanup" {
 }
 
 module "ecr_cleanup_function" {
-  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=d3b3b7a89cff7027aabd2e193df29e549937ecc3"
+  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=a7850b1f5df3f7cdaf828b4cbb7dc08a7117d182"
 
   app = var.app
   env = var.env
