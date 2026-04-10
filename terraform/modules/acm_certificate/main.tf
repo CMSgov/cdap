@@ -23,7 +23,7 @@ resource "aws_acm_certificate" "private" {
   domain_name               = local.private_primary_domain
   subject_alternative_names = local.private_subject_alternative_names
 
-  tags = { Name = "${local.private_domain_name_prefix}-private-cert" }
+  tags = { Name = "${local.private_primary_domain}-private-cert" }
 
   lifecycle {
     prevent_destroy       = true
@@ -72,7 +72,7 @@ resource "tls_cert_request" "this" {
 resource "aws_ssm_parameter" "private_key" {
   for_each = var.public_domain_name != null ? var.public_certificate_versions : toset([])
 
-  name   = "/${var.platform.app}/${var.platform.env}/${var.service_name}/tls/v${each.key}/private-key"
+  name   = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/tls/v${each.key}/private-key"
   type   = "SecureString"
   value  = tls_private_key.this[each.key].private_key_pem
   key_id = var.platform.kms_alias_primary.target_key_arn
@@ -94,7 +94,7 @@ resource "aws_ssm_parameter" "private_key" {
 resource "aws_ssm_parameter" "csr" {
   for_each = var.public_domain_name != null ? var.public_certificate_versions : toset([])
 
-  name        = "/${var.platform.app}/${var.platform.env}/${var.service_name}/tls/v${each.key}/csr"
+  name        = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/tls/v${each.key}/csr"
   description = "Certificate Signing Request for ${var.public_domain_name}. Submit this to CMS for signing."
   type        = "String"
   value       = tls_cert_request.this[each.key].cert_request_pem
@@ -113,7 +113,7 @@ resource "aws_acm_certificate" "public" {
     var.public_private_key != null
   ) ? 1 : 0
 
-  certificate       = var.public_certificate
+  certificate_body       = var.public_certificate
   private_key       = var.public_private_key
   certificate_chain = var.public_certificate_chain
 
