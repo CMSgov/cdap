@@ -45,13 +45,13 @@ resource "aws_acm_certificate_validation" "private" {
 # -------------------------------------------------------
 
 resource "tls_private_key" "this" {
-  for_each  = var.public_domain_name != null ? var.public_certificate_versions : toset([])
+  for_each  = var.public_domain_name != null ? toset([for v in var.public_certificate_versions : tostring(v)]) : toset([])
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
 resource "tls_cert_request" "this" {
-  for_each        = var.public_domain_name != null ? var.public_certificate_versions : toset([])
+  for_each        = var.public_domain_name != null ? toset([for v in var.public_certificate_versions : tostring(v)]) : toset([])
   private_key_pem = tls_private_key.this[each.key].private_key_pem
 
   subject {
@@ -70,7 +70,7 @@ resource "tls_cert_request" "this" {
 # -------------------------------------------------------
 
 resource "aws_ssm_parameter" "private_key" {
-  for_each = var.public_domain_name != null ? var.public_certificate_versions : toset([])
+  for_each = var.public_domain_name != null ? toset([for v in var.public_certificate_versions : tostring(v)]) : toset([])
 
   name   = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/tls/v${each.key}/private-key"
   type   = "SecureString"
@@ -92,7 +92,7 @@ resource "aws_ssm_parameter" "private_key" {
 # -------------------------------------------------------
 
 resource "aws_ssm_parameter" "csr" {
-  for_each = var.public_domain_name != null ? var.public_certificate_versions : toset([])
+  for_each = var.public_domain_name != null ? toset([for v in var.public_certificate_versions : tostring(v)]) : toset([])
 
   name        = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/tls/v${each.key}/csr"
   description = "Certificate Signing Request for ${var.public_domain_name}. Submit this to CMS for signing."
@@ -113,7 +113,7 @@ resource "aws_acm_certificate" "public" {
     var.public_private_key != null
   ) ? 1 : 0
 
-  certificate_body       = var.public_certificate
+  certificate_body  = var.public_certificate
   private_key       = var.public_private_key
   certificate_chain = var.public_certificate_chain
 

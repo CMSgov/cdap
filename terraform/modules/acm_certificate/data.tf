@@ -1,6 +1,6 @@
 locals {
-  hosted_zone_base_internal = "${var.platform.app}-${var.platform.env}.cmscloud.internal"
-  hosted_zone_base_zscaler  = "${var.platform.app}-${var.platform.env}.cmscloud.local"
+  hosted_zone_base_internal = "${var.platform.env}.${var.platform.app}.cmscloud.internal"
+  hosted_zone_base_zscaler  = "${var.platform.env}.${var.platform.app}.cmscloud.local"
 }
 
 data "aws_ram_resource_share" "pace_ca" {
