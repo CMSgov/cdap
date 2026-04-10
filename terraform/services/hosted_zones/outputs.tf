@@ -56,4 +56,3 @@ output "internal_hosted_zone_name_servers" {
   description = "Name servers assigned to this hosted zone by Route53."
   value       = aws_route53_zone.internal.name_servers
 }
-
