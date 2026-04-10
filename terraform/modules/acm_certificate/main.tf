@@ -31,15 +31,6 @@ resource "aws_acm_certificate" "private" {
   }
 }
 
-resource "aws_acm_certificate_validation" "private" {
-  count           = (var.enable_internal_endpoint || var.enable_zscaler_endpoint) ? 1 : 0
-  certificate_arn = aws_acm_certificate.private[0].arn
-
-  timeouts {
-    create = "5m"
-  }
-}
-
 # -------------------------------------------------------
 # PUBLIC PATH: Import CMS-signed cert (developer note: use SOPS encrypted values)
 # -------------------------------------------------------

@@ -20,7 +20,7 @@ locals {
 
 output "private_certificate_arn" {
   description = "ARN of the PCA-issued certificate covering the internal and/or zscaler domains. Use as the primary cert on the ALB HTTPS listener."
-  value       = (var.enable_internal_endpoint || var.enable_zscaler_endpoint) ? aws_acm_certificate_validation.private[0].certificate_arn : null
+  value       = (var.enable_internal_endpoint || var.enable_zscaler_endpoint) ? aws_acm_certificate.private[0].arn : null
   sensitive   = true
 }
 
