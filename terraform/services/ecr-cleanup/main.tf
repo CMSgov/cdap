@@ -86,10 +86,11 @@ data "archive_file" "ecr_cleanup" {
 }
 
 module "ecr_cleanup_function" {
-  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=a7850b1f5df3f7cdaf828b4cbb7dc08a7117d182"
+  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=<new_hash>"
 
-  app = var.app
-  env = var.env
+  app          = var.app
+  env          = var.env
+  architecture = "arm64"
 
   name        = local.full_name
   description = "Deletes old ECR images while protecting images referenced by active ECS task definitions"
