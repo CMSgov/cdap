@@ -100,7 +100,7 @@ while IFS=$'\t' read -r NAME RETENTION; do
     CMD=(
       aws logs put-retention-policy \
       --log-group-name "$LOWER_NAME" \
-      --retention-in-days "$RETENTION"
+      --retention-in-days "$RETENTION_DAYS"
     )
 
     if [[ "$DRY_RUN" == "true" ]]; then
