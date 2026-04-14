@@ -5,10 +5,10 @@ locals {
 data "aws_caller_identity" "current" {}
 
 module "sns_to_slack_function" {
-  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=<new_hash>"
+  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=2874c72ccd4c4821e5e3f77ccf61cf77ed05169f"
 
-  app = var.app
-  env = var.env
+  app          = var.app
+  env          = var.env
   architecture = var.app == "dpc" ? "arm64" : "x86_64"
 
   name        = local.full_name
