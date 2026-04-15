@@ -9,7 +9,7 @@
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
     "lint": "eslint src",
-    "package": "esbuild src/main.ts --bundle --platform=node --target=node20 --outfile=dist/index.js && npx legally --csv > dist/licenses.txt",
+    "package": "esbuild src/main.ts --bundle --platform=node --target=node24 --outfile=dist/index.js && npx legally --csv > dist/licenses.txt",
     "test": "jest",
     "all": "npm install & npm run format-check && npm run lint && npm test && npm run build && npm run package"
   },
