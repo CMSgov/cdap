@@ -1,0 +1,1 @@
+Update this module with booleans for privilege sets as applications increase their use of datadog via Tofu.
