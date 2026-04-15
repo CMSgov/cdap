@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'terraform/**'
+      - '.github/workflows/tofu-fmt.yml'
 
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

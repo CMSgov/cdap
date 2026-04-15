@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'terraform/services/codebuild-projects/**'
+      - '.github/workflows/tofu-codebuild-projects.yml'
 
 jobs:
   smoke-test:
@@ -23,7 +24,7 @@ jobs:
 
       - name: Basic smoke test
         run: |
-          echo "✅ Workflow triggered on branch: ${{ github.ref_name }}"
-          echo "📦 Repo: ${{ github.repository }}"
-          echo "🔖 Commit: ${{ github.sha }}"
+          echo "Workflow triggered on branch: ${{ github.ref_name }}"
+          echo "Repo: ${{ github.repository }}"
+          echo "Commit: ${{ github.sha }}"
           ls -la

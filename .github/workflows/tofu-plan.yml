@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'terraform/services/**'
+      - '.github/workflows/tofu-fmt.yml'
 
 concurrency:
   group: tofu-plan-or-apply
