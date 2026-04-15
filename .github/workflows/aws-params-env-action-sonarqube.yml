@@ -24,24 +24,24 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
         with:
           fetch-depth: 0 # Sonarqube requirement
 
       - name: Assume role to AWS
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ github.ref_name =='main' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ github.ref_name =='main' && 'prod' || 'test' }}-github-actions
+          role-to-assume: arn:aws:iam::${{ github.ref_name =='main' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ github.ref_name =='main' && 'cdap-prod' || 'cdap-test' }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Retrieve Sonarqube credentials
         uses: ./actions/aws-params-env-action
         env:
-          AWS_REGION: vars.AWS_REGION
+          AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            SONARQUBE_URL=/sonarqube/url
-            SONARQUBE_TOKEN=/sonarqube/token
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
 
       - name: Setup node
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
@@ -52,11 +52,12 @@ jobs:
         run: npm ci
 
       - name: Run Sonarqube
-        uses: sonarsource/sonarqube-scan-action@v5
+        uses: sonarsource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
           projectBaseDir: actions/aws-params-env-action
 
       - name: Quality Gate Check
-        uses: sonarsource/sonarqube-quality-gate-action@cb3ed20f9fec62b4c3b8ad9e77656c6adaade913
+        uses: sonarsource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b #v1.2.0
         timeout-minutes: 5
-
+        with:
+          scanMetadataReportFile: actions/aws-params-env-action/.scannerwork/report-task.txt

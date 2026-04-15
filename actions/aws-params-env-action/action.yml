@@ -6,7 +6,7 @@ inputs:
     required: true
     description: 'Whitespace-separated parameters of the form ENV_VAR=/aws/parameter/name'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
 branding:
   icon: dollar-sign
