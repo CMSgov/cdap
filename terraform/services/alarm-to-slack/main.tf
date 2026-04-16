@@ -9,7 +9,7 @@ module "sns_to_slack_function" {
 
   app          = var.app
   env          = var.env
-  architecture = var.app == "arm64"
+  architecture = "arm64"
 
   name        = local.full_name
   description = "Listens for CloudWatch Alerts and forwards to Slack"
