@@ -31,12 +31,12 @@ module "datadog_dashboard" {
 
   # Opt-out of unused default infrastructure widgets
   enable_default_widgets = {
-    # lambda = false
-    # aurora = false
-    # sns    = false
-    # elb = false
-    # s3  = false
-    # ecs = false
+    lambda = true
+    aurora = true
+    sns    = true
+    elb    = true
+    s3     = true
+    ecs    = true
   }
 
 }
