@@ -68,10 +68,15 @@ resource "datadog_dashboard" "Application_Metrics_Dashboard" {
         layout_type = "ordered"
         widget {
           timeseries_definition {
-            title = "ECS CPU/MEM Utilization by Clustername"
+            title = "CPU Utilization by Clustername"
             request {
               q = "avg:aws.ecs.cpuutilization{application:${var.app}, $env} by {clustername}"
             }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "Memory Utilization by Clustername"
             request {
               q = "avg:aws.ecs.memory_utilization{application:${var.app}, $env} by {clustername}"
             }
