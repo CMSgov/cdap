@@ -24,4 +24,15 @@ module "datadog_dashboard" {
       query = "avg:aws.s3.number_of_objects{application:${var.app}} by {bucketname}"
     }
   ]
+
+  # Opt-out of unused default infrastructure widgets
+  enable_default_widgets = {
+    lambda = false
+    aurora = false
+    # sns    = false
+    # elb = false
+    # s3  = false
+    ecs = false
+  }
+
 }

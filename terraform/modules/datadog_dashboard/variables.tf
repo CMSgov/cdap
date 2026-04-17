@@ -10,5 +10,18 @@ variable "app" {
 variable "custom_widgets" {
   description = "Custom widgets to add to the dashboard. See README for details."
   type        = list(any)
-  default = []
+  default     = []
+}
+
+variable "enable_default_widgets" {
+  description = "Toggle default infrastructure widgets on or off for the dashboard."
+  type = object({
+    ecs    = optional(bool, true)
+    lambda = optional(bool, true)
+    elb    = optional(bool, true)
+    sns    = optional(bool, true)
+    aurora = optional(bool, true)
+    s3     = optional(bool, true)
+  })
+  default = {} # Evaluates to all true based on the optional defaults above
 }
