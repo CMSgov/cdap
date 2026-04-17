@@ -2,9 +2,9 @@ resource "datadog_dashboard" "Application_Metrics_Dashboard" {
   layout_type = "ordered"
   title       = "${var.app} Metrics Dashboard"
   template_variable {
-    name    = "env"
-    prefix  = "environment"
-    default = "*"
+    name     = "env"
+    prefix   = "environment"
+    defaults = ["*"]
   }
 
   # Custom widgets defined by the team in main.tf
@@ -144,7 +144,7 @@ resource "datadog_dashboard" "Application_Metrics_Dashboard" {
                   cross_org_uuids = []
                   data_source     = "metrics"
                   name            = "query1"
-                  query           = "avg:aws.s3.number_of_objects{application:ab2d} by {bucketname}"
+                  query           = "avg:aws.s3.number_of_objects{application:${var.app}, $env} by {bucketname}"
                 }
               }
             }
