@@ -32,6 +32,16 @@ variable "handler" {
   default     = "function_handler"
 }
 
+variable "architecture" {
+  description = ""
+  type        = string
+  default     = "x86_64"
+  validation {
+    condition     = contains(["x86_64", "arm64"], var.architecture)
+    error_message = "Valid value for architecture is x86_64 or arm64"
+  }
+}
+
 variable "runtime" {
   description = "Lambda function runtime"
   type        = string
