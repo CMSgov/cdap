@@ -208,10 +208,10 @@ resource "datadog_dashboard" "Application_Metrics_Dashboard" {
   }
   dynamic "widget" {
     # Renders the block exactly once if true, zero times if false
-    for_each = var.enable_default_widgets.elb ? [1] : []
+    for_each = var.enable_default_widgets.alb ? [1] : []
     content {
       group_definition {
-        title       = "ELB"
+        title       = "ALB"
         layout_type = "ordered"
         widget {
           timeseries_definition {
@@ -263,7 +263,6 @@ resource "datadog_dashboard" "Application_Metrics_Dashboard" {
         }
       }
     }
-
 
   }
 }

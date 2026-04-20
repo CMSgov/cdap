@@ -1,3 +1,11 @@
+## Description
+This module provides teams with a Datadog dashboard that provides metrics and high-level observability for
+common DASG architectures. The dashboard displays metrics for Lambda, Aurora, SNS, S3, ECS, and ALB resources by default.
+Teams can opt-out of widgets that are not relevant to their app.
+
+Child modules can also define custom widgets via a dynamic block. In the future, this module can also be expanded to cover additional default
+widgets to support future architectures. For an example child module implementation, refer to services/tftesting/datadog_dashboard/main.tf
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

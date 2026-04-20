@@ -18,7 +18,7 @@ variable "enable_default_widgets" {
   type = object({
     ecs    = optional(bool, true)
     lambda = optional(bool, true)
-    elb    = optional(bool, true)
+    alb    = optional(bool, true)
     sns    = optional(bool, true)
     aurora = optional(bool, true)
     s3     = optional(bool, true)

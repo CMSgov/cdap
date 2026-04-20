@@ -34,7 +34,7 @@ module "datadog_dashboard" {
     lambda = true
     aurora = true
     sns    = true
-    elb    = true
+    alb    = true
     s3     = true
     ecs    = true
   }
