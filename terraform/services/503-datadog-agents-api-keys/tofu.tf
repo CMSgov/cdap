@@ -11,20 +11,20 @@ terraform {
   }
 
   backend "s3" {
-    key = "503-datadog-agents-api-keys/terraform.tfstate"
+    key = "503-datadog-config/terraform.tfstate"
   }
 }
 
 provider "datadog" {
-  api_key = sensitive(data.aws_ssm_parameter.cdap_datadog_api_key.value)
-  app_key = sensitive(data.aws_ssm_parameter.cdap_datadog_application_key.value)
+  api_key = sensitive(module.platform.ssm.datadog.api_key.value)
+  app_key = sensitive(module.platform.ssm.datadog.application_key.value)
   api_url = "https://api.ddog-gov.com"
 }
 
 provider "aws" {
   region = "us-east-1"
   default_tags {
-    tags = module.standards.default_tags
+    tags = module.platform.default_tags
   }
 }
 
@@ -32,6 +32,6 @@ provider "aws" {
   alias  = "secondary"
   region = "us-west-2"
   default_tags {
-    tags = module.standards.default_tags
+    tags = module.platform.default_tags
   }
 }
