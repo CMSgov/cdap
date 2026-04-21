@@ -1,1 +1,1 @@
-TARGET_ENVS="cdap-test cdap-prod"
+TARGET_ENVS=all
