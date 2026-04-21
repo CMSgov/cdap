@@ -82,6 +82,26 @@ variable "health_check_grace_period_seconds" {
   type        = number
 }
 
+variable "deployment_minimum_healthy_percent" {
+  type        = number
+  default     = 100
+  description = <<-EOT
+    Lower limit (as a percentage of desired_count) of the number of running tasks
+    that must remain healthy during a deployment.
+    Default is 100 — no tasks are taken down before new ones are healthy.
+  EOT
+}
+
+variable "deployment_maximum_percent" {
+  type        = number
+  default     = 200
+  description = <<-EOT
+    Upper limit (as a percentage of desired_count) of the number of running tasks
+    that can exist during a deployment.
+    Default is 200 — allows doubling the task count during a rolling deploy.
+  EOT
+}
+
 variable "desired_count" {
   description = "Number of instances of the task definition to place and keep running."
   type        = number
@@ -109,6 +129,27 @@ variable "cpu_architecture" {
   description = "The cpu architecture needed."
   type        = string
   default     = "ARM64"
+}
+
+variable "load_balancers" {
+  description = "DEPRECATED. Use alb_listener_arn and related variables. container_name is optional — defaults to the module's resolved service name."
+  type = list(object({
+    target_group_arn = string
+    container_name   = optional(string)
+    container_port   = number
+  }))
+  default = null
+}
+
+variable "alb_listener_arn" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    ARN of the ALB HTTPS listener to attach a listener rule to.
+    When set, the module creates an aws_lb_target_group and aws_lb_listener_rule
+    and wires the ECS service to the ALB.
+    When null, no ALB integration is created.
+  EOT
 }
 
 variable "alb_port_name" {
@@ -142,6 +183,24 @@ variable "alb_health_check" {
   default = {}
 }
 
+variable "alb_priority" {
+  type    = number
+  default = null
+
+  validation {
+    condition     = var.alb_priority == null || (var.alb_priority >= 1 && var.alb_priority <= 50000)
+    error_message = "alb_priority must be between 1 and 50000."
+  }
+
+  description = "Listener rule priority (1–50000). Required when alb_listener_arn is set."
+}
+
+variable "alb_path_patterns" {
+  type        = list(string)
+  default     = null
+  description = "Path pattern conditions for the ALB listener rule. Required when alb_listener_arn is set."
+}
+
 # reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
 variable "memory" {
   description = "Amount (in MiB) of memory used by the task."
@@ -167,6 +226,8 @@ variable "platform" {
     primary_region    = object({ name = string })
     private_subnets   = map(object({ id = string }))
     service           = string
+    account_id        = string
+    vpc_id            = string
   })
 }
 
@@ -227,8 +288,9 @@ variable "volumes" {
         access_point_id = optional(string)
         iam             = optional(string)
       }))
-      file_system_id = string
-      root_directory = optional(string)
+      file_system_id     = string
+      root_directory     = optional(string)
+      transit_encryption = optional(string) # deprecated: accepted but ignored, always ENABLED
     }))
     host_path = optional(string)
     name      = string

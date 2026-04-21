@@ -1,3 +1,7 @@
+locals {
+  use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
+}
+
 data "aws_ram_resource_share" "pace_ca" {
   resource_owner = "OTHER-ACCOUNTS"
   name           = "pace-ca-g1"
@@ -87,8 +91,18 @@ resource "aws_ecs_service" "this" {
     for_each = local.enable_alb_integration ? [1] : []
     content {
       target_group_arn = aws_lb_target_group.this[0].arn
-      container_name   = var.service_name
+      container_name   = var.service_name != null ? var.service_name : local.service_name
       container_port   = local.alb_container_port
+    }
+  }
+
+  # Old interface: caller-provided load_balancers (deprecated, maintained for backwards compatibility)
+  dynamic "load_balancer" {
+    for_each = local.use_external_load_balancers ? coalesce(var.load_balancers, []) : []
+    content {
+      target_group_arn = load_balancer.value.target_group_arn
+      container_name   = coalesce(load_balancer.value.container_name, local.service_name) #
+      container_port   = load_balancer.value.container_port
     }
   }
 
@@ -112,7 +126,7 @@ resource "aws_ecs_service" "this" {
           role_arn = aws_iam_role.service_connect[0].arn
 
           issuer_cert_authority {
-            aws_pca_authority_arn = [one(data.aws_ram_resource_share.pace_ca.resource_arns)]
+            aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
           }
         }
       }
@@ -132,7 +146,7 @@ resource "aws_ecs_service" "this" {
   }
 
   lifecycle {
-    ignore_changes = var.ignore_desired_count_changes ? [desired_count] : []
+    ignore_changes = [desired_count]
   }
 }
 
@@ -177,7 +191,6 @@ resource "aws_lb_target_group" "this" {
   }
 
   depends_on = [
-    aws_lb_listener_rule.this,
     aws_iam_role_policy_attachment.service_connect
   ]
 }

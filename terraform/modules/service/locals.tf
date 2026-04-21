@@ -9,9 +9,12 @@ locals {
     if pm.name != null && pm.containerPort != null
   }
 
-  sc_port_name = coalesce(
-    var.service_connect_port_name,
-    try([for pm in coalesce(var.port_mappings, []) : pm.name if pm.name != null][0], null)
+  sc_port_name = try(
+    coalesce(
+      var.service_connect_port_name,
+      try([for pm in coalesce(var.port_mappings, []) : pm.name if pm.name != null][0], null)
+    ),
+    null
   )
 
   # ALB integration is active when a listener ARN is provided
