@@ -44,21 +44,24 @@ data "aws_iam_policy_document" "task" {
       "ssm:GetParametersByPath"
     ]
     resources = [
-      "arn:aws:ssm:${module.platform.primary_region.name}:${module.platform.aws_caller_identity}:/cdap/test/tftesting/*"
+      "arn:aws:ssm:${module.platform.primary_region.name}:${module.platform.aws_caller_identity.account_id}:/cdap/test/tftesting/*"
     ]
   }
 
-  statement {
-    sid = "AllowACMRead"
-    actions = [
-      "acm:ExportCertificate",
-      "acm:DescribeCertificate",
-      "acm:GetCertificate"
-    ]
-    resources = [
-      "arn:aws:acm:${module.platform.primary_region.name}:${module.platform.aws_caller_identity}:certificate/*"
-    ]
-  }
+  # # -------------------------------------------------------
+  # # ACM Certificate test with private cert
+  # # -------------------------------------------------------
+  #   statement {
+  #     sid = "AllowACMRead"
+  #     actions = [
+  #       "acm:ExportCertificate",
+  #       "acm:DescribeCertificate",
+  #       "acm:GetCertificate"
+  #     ]
+  #     resources = [
+  #       module.acm_certificate.private_cert_arn
+  #     ]
+  #   }
 
   statement {
     sid = "AllowECRAuthToken"
@@ -76,8 +79,7 @@ data "aws_iam_policy_document" "task" {
       "logs:PutLogEvents"
     ]
     resources = [
-      "arn:aws:logs:${module.platform.primary_region.name}:${module.platform.aws_caller_identity}:log-group:/aws/ecs/fargate/cdap-test/*"
+      "arn:aws:logs:${module.platform.primary_region.name}:${module.platform.aws_caller_identity.account_id}:log-group:/aws/ecs/fargate/cdap-test/*"
     ]
   }
 }
-
