@@ -9,12 +9,17 @@ module "datadog_api_key" {
 }
 
 # The CDAP api key and application keys manage agent keys
+
+locals {
+    cdap_env = contains(["sandbox", "prod"], var.env) ? "prod" : "test"
+}
+
 data "aws_ssm_parameter" "cdap_datadog_api_key" {
-  name = "/cdap/${var.env}/datadog/cicd/api_key"
+  name = "/cdap/${local.cdap_env}/datadog/cicd/api_key"
 }
 
 data "aws_ssm_parameter" "cdap_datadog_application_key" {
-  name = "/cdap/${var.env}/datadog/cicd/application_key"
+  name = "/cdap/${local.cdap_env}/datadog/cicd/application_key"
 }
 
 module "standards" {
