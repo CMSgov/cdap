@@ -1,6 +1,6 @@
 locals {
-  api_key_manager   = var.api_key_manager ? ["api_keys_read", "api_keys_write"] : []
-  dashboard_manager = var.dashboard_manager ? ["dashboards_read", "dashboards_write"] : []
+  api_key_manager   = var.api_key_manager ? ["api_keys_read", "api_keys_write", "api_keys_delete"] : []
+  dashboard_manager = var.dashboard_manager ? ["dashboards_read", "dashboards_write", "dashboards_delete"] : []
   monitors_manager  = var.monitors_manager ? ["monitors_read", "monitors_write", "monitors_downtime"] : []
   users_manager     = var.users_manager ? ["user_access_manage", "user_access_read", "teams_manage"] : []
 
