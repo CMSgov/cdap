@@ -24,44 +24,40 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
         with:
           fetch-depth: 0 # Sonarqube requirement
 
       - name: Assume role to AWS
-      - uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5.1.0
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ github.ref_name =='main' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ github.ref_name =='main' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ github.ref_name =='main' && 'cdap-prod' || 'cdap-test' }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Retrieve Sonarqube credentials
         uses: ./actions/aws-params-env-action
         env:
-          AWS_REGION: vars.AWS_REGION
+          AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            SONARQUBE_URL=/sonarqube/url
-            SONARQUBE_TOKEN=/sonarqube/token
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
 
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: 20.x
+          node-version: 24.x
 
       - name: Install dependencies
         run: npm ci
 
       - name: Run Sonarqube
-        uses: sonarsource/sonarqube-action-scan@v5
+        uses: sonarsource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
           projectBaseDir: actions/aws-params-env-action
-          env:
-            SONAR_URL: ${{ env.SONARQUBE_URL }}
-            SONAR_TOKEN: ${{ env.SONARQUBE_TOKEN }}
 
-      - name: Run Sonarqube gate
-        uses: sonarsource/sonarqube-quality-gate@master
+      - name: Quality Gate Check
+        uses: sonarsource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b #v1.2.0
         timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
-          SONAR_URL: ${{ env.SONAR_HOST_URL }}
+        with:
+          scanMetadataReportFile: actions/aws-params-env-action/.scannerwork/report-task.txt
