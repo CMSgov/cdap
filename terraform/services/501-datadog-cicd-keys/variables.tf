@@ -17,7 +17,7 @@ variable "app_permissions" {
 }
 
 variable "env" {
-  description = "The application environment (test, prod)"
+  description = "The application environment (dev, test, sandbox, prod)"
   type        = string
   validation {
     condition     = contains(["dev", "sandbox", "test", "prod"], var.env)
