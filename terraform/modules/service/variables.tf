@@ -25,6 +25,12 @@ variable "service_connect_port" {
   description = "Defaults to the first containerPort in port_mappings. Override this for port remapping (e.g. expose on :80 while container listens on :8080)."
 }
 
+variable "service_connect_port_name" {
+  type        = string
+  default     = null
+  description = "Name of the port mapping to use for Service Connect. Defaults to the first named port in port_mappings."
+}
+
 variable "deployment_circuit_breaker" {
   type = object({
     enable   = optional(bool, true)
