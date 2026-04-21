@@ -13,6 +13,12 @@ variable "app" {
   }
 }
 
+variable "default_encryption_key_arn" {
+  default     = null
+  description = "The ARN of the default S3 bucket encryption key"
+  type        = string
+}
+
 variable "env" {
   description = "The application environment (dev, test, sandbox, prod, mgmt)"
   type        = string
