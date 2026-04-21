@@ -59,11 +59,6 @@ data "aws_iam_policy_document" "execution" {
 # Service Connect Role IAM
 #---------------------------
 
-resource "aws_iam_role_policy_attachment" "service-connect" {
-  role       = aws_iam_role.service_connect.name
-  policy_arn = aws_iam_role_policy.service_connect.arn
-}
-
 resource "aws_iam_role" "service_connect" {
   count = var.enable_ecs_service_connect ? 1 : 0
   name  = "${local.service_name_full}-service-connect"
@@ -78,12 +73,17 @@ resource "aws_iam_role" "service_connect" {
   })
 }
 
-# encrypted certificate lifecycle and storage
-resource "aws_iam_role_policy" "service_connect" {
-  count  = var.enable_ecs_service_connect ? 1 : 0
-  name   = "${local.service_name_full}-service-connect"
-  role   = aws_iam_role.service_connect[0].name
-  policy = data.aws_iam_policy_document.service_connect.json
+resource "aws_iam_policy" "service_connect" {
+  count       = var.enable_ecs_service_connect ? 1 : 0
+  name        = "${local.service_name_full}-service-connect"
+  description = "Base permissions for ECS Service Connect TLS lifecycle"
+  policy      = data.aws_iam_policy_document.service_connect.json
+}
+
+resource "aws_iam_role_policy_attachment" "service_connect" {
+  count      = var.enable_ecs_service_connect ? 1 : 0
+  role       = aws_iam_role.service_connect[0].name
+  policy_arn = aws_iam_policy.service_connect[0].arn
 }
 
 data "aws_iam_policy_document" "service_connect" {
@@ -95,7 +95,7 @@ data "aws_iam_policy_document" "service_connect" {
       "acm-pca:DescribeCertificateAuthority",
       "acm-pca:IssueCertificate"
     ]
-    resources = [data.aws_ram_resource_share.pace_ca.resource_arns]
+    resources = data.aws_ram_resource_share.pace_ca.resource_arns
   }
 
   statement {
@@ -106,21 +106,6 @@ data "aws_iam_policy_document" "service_connect" {
       "acm:GetCertificate"
     ]
     resources = ["arn:aws:acm:${var.platform.primary_region.name}:${var.platform.account_id}:certificate/*"]
-  }
-
-  statement {
-    actions = [
-      "secretsmanager:CreateSecret",
-      "secretsmanager:TagResource",
-      "secretsmanager:DescribeSecret",
-      "secretsmanager:UpdateSecret",
-      "secretsmanager:GetSecretValue",
-      "secretsmanager:PutSecretValue",
-      "secretsmanager:DeleteSecret",
-      "secretsmanager:RotateSecret",
-      "secretsmanager:UpdateSecretVersionStage"
-    ]
-    resources = ["arn:aws:secretsmanager:${var.platform.primary_region.name}:${data.aws_caller_identity.current.account_id}:secret:ecs-sc!*"]
   }
 
   statement {
