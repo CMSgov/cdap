@@ -1,7 +1,7 @@
 resource "datadog_team" "this" {
   for_each    = toset(var.app_teams)
   description = "Team that implements and manages ${each.key}"
-  handle      = "${lower(each.key)}-team"
+  handle      = lower(each.key)
   name        = "${upper(each.key)} Team"
 }
 
