@@ -63,3 +63,8 @@ output "cdap_vpc" {
   sensitive   = false
   value       = data.aws_vpc.cdap_vpc
 }
+
+output "ssm" {
+  description = "SSM parameter resources available based on the `var.ssm_root_map` input variable."
+  value       = { for named_root, data in data.aws_ssm_parameters_by_path.ssm : named_root => { for each in [for arn, value in zipmap(data.arns, data.values) : { "value" = value, "arn" = arn }] : reverse(split("/", each.arn))[0] => each } }
+}

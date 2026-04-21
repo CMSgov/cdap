@@ -7,8 +7,8 @@ resource "datadog_monitor_config_policy" "env_tag" {
   }
 }
 
-module "platform" {
-  source    = "../../modules/platform"
+module "standards" {
+  source    = "../../modules/standards"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = "cdap"

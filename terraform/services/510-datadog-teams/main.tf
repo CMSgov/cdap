@@ -5,8 +5,8 @@ resource "datadog_team" "this" {
   name        = "${upper(each.key)} Team"
 }
 
-module "platform" {
-  source    = "../../modules/platform"
+module "standards" {
+  source    = "../../modules/standards"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = "cdap"
