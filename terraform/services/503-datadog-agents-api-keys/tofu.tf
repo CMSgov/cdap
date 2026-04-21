@@ -11,7 +11,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "503-datadog-cicd-keys/terraform.tfstate"
+    key = "503-datadog-agents-api-keys/terraform.tfstate"
   }
 }
 
