@@ -31,6 +31,16 @@ variable "service_connect_port_name" {
   description = "Name of the port mapping to use for Service Connect. Defaults to the first named port in port_mappings."
 }
 
+variable "service_connect_dns_name" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    Fully-qualified DNS name for the Service Connect client alias.
+    Must satisfy the Name Constraints of the Private CA (e.g. "myservice.cmscloud.local").
+    Defaults to the bare service name if not set — only override when using TLS with a constrained PCA.
+  EOT
+}
+
 variable "deployment_circuit_breaker" {
   type = object({
     enable   = optional(bool, true)

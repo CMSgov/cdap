@@ -30,6 +30,7 @@ resource "aws_iam_role_policy" "execution" {
   policy = data.aws_iam_policy_document.execution[0].json
 }
 
+
 data "aws_iam_policy_document" "execution" {
   count = var.execution_role_arn != null ? 0 : 1
   statement {
@@ -53,6 +54,15 @@ data "aws_iam_policy_document" "execution" {
     resources = [var.platform.kms_alias_primary.target_key_arn]
     effect    = "Allow"
   }
+
+  dynamic "statement" {
+    for_each = var.enable_ecs_service_connect ? [1] : []
+    content {
+      sid     = "AllowPassServiceConnectRole"
+      actions = ["iam:PassRole"]
+      resources = [aws_iam_role.service_connect[0].arn]
+    }
+    }
 }
 
 # -------------------------
@@ -65,11 +75,18 @@ resource "aws_iam_role" "service_connect" {
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Action    = "sts:AssumeRole"
-      Effect    = "Allow"
-      Principal = { Service = "ecs-tasks.amazonaws.com" }
-    }]
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = { Service = "ecs.amazonaws.com" }
+      },
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = { Service = "ecs-tasks.amazonaws.com" }
+      }
+    ]
   })
 }
 
@@ -112,7 +129,8 @@ data "aws_iam_policy_document" "service_connect" {
     sid = "AllowKMSDecrypt"
     actions = [
       "kms:Decrypt",
-      "kms:GenerateDataKey"
+      "kms:GenerateDataKey",
+      "kms:GenerateDataKeyPair"
     ]
     resources = [var.platform.kms_alias_primary.target_key_arn]
   }

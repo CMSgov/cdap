@@ -35,35 +35,35 @@ module "platform" {
 #   enable_http_redirect = true
 # }
 #
-# resource "aws_security_group" "alb" {
-#   name        = "cdap-test-tftesting-alb-sg"
-#   description = "Allow HTTPS inbound to ALB"
-#   vpc_id      = module.platform.vpc_id
-#
-#   ingress {
-#     description = "HTTPS from VPC"
-#     from_port   = 443
-#     to_port     = 443
-#     protocol    = "tcp"
-#     cidr_blocks = [module.platform.platform_cidr]
-#   }
-#
-#   ingress {
-#     description = "HTTP from VPC (redirect to HTTPS)"
-#     from_port   = 80
-#     to_port     = 80
-#     protocol    = "tcp"
-#     cidr_blocks = [module.platform.platform_cidr]
-#   }
-#
-#   egress {
-#     description = "Allow all outbound"
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
+resource "aws_security_group" "alb" {
+  name        = "cdap-test-tftesting-alb-sg"
+  description = "Allow HTTPS inbound to ALB"
+  vpc_id      = module.platform.vpc_id
+
+  ingress {
+    description = "HTTPS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [module.platform.platform_cidr]
+  }
+
+  ingress {
+    description = "HTTP from VPC (redirect to HTTPS)"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = [module.platform.platform_cidr]
+  }
+
+  egress {
+    description = "Allow all outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 #
 # resource "aws_security_group_rule" "ecs_from_alb" {
 #   type                     = "ingress"
@@ -232,6 +232,7 @@ module "service" {
 # Old-style target group — created externally by the caller
 # (this is what existing callers like ab2d manage themselves)
 # -------------------------------------------------------
+
 resource "aws_lb_target_group" "legacy_test" {
   name        = "cdap-test-tftesting-legacy-tg"
   port        = 8081
@@ -327,5 +328,28 @@ module "service_legacy" {
   deployment_circuit_breaker = {
     enable   = true
     rollback = true
+  }
+
+depends_on = [
+        aws_lb_listener.legacy_test,
+        ]
+}
+
+resource "aws_lb" "legacy_test" {
+  name               = "cdap-test-tftesting-legacy-alb"
+  internal           = true
+  load_balancer_type = "application"
+  subnets            = [for s in module.platform.private_subnets : s.id]
+  security_groups    = [aws_security_group.alb.id]
+}
+
+resource "aws_lb_listener" "legacy_test" {
+  load_balancer_arn = aws_lb.legacy_test.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.legacy_test.arn
   }
 }
