@@ -167,11 +167,16 @@ def generate_plan(log_groups: list[dict]) -> tuple[dict, list[dict]]:
 
     return results, commands
 
-
 def write_plan_file(commands: list[dict]) -> str:
     """Serialise the command list to a timestamped JSON file. Returns the filename."""
     payload = {
         "generated_at":   DATE_TAG,
         "region":         AWS_REGION,
         "retention_days": RETENTION_DAYS,
-        "target
+        "target_env":     TARGET_ENV,
+        "commands":       commands,
+    }
+    with open(PLAN_FILE, "w") as fh:
+        json.dump(payload, fh, indent=2)
+    print(f"\nPlan written  → {PLAN_FILE}")
+    return PLAN_FILE
