@@ -3,7 +3,7 @@ resource "aws_ecs_cluster" "this" {
 
   setting {
     name  = "containerInsights"
-    value = var.platform.is_ephemeral_env ? "disabled" : "enabled"
+    value = true
   }
 
   configuration {
