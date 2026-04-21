@@ -7,10 +7,13 @@ resource "datadog_monitor_config_policy" "env_tag" {
   }
 }
 
-data "aws_ssm_parameter" "cdap_datadog_api_key" {
-  name = "/cdap/prod/datadog/cicd/api_key"
-}
+module "platform" {
+  source    = "../../modules/platform"
+  providers = { aws = aws, aws.secondary = aws.secondary }
 
-data "aws_ssm_parameter" "cdap_datadog_application_key" {
-  name = "/cdap/prod/datadog/cicd/application_key"
+  app          = "cdap"
+  env          = "prod"
+  root_module  = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
+  service      = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
+  ssm_root_map = { datadog = "/cdap/prod/datadog/cicd/" }
 }
