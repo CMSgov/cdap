@@ -78,7 +78,7 @@ else
 fi
 
 if [ -z "$CHANGED_DIRS" ]; then
-  echo "No lambda_src directories changed. Exiting."
+  echo "No python directories changed. Exiting."
   exit 0
 fi
 
