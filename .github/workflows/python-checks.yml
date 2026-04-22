@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'terraform/services/**/lambda_src/**'
+      - 'terraform/services/**/lambda_src/**/*.py'
+      - 'terraform/services/**/lambda_src/**/requirements.txt'
       - 'scripts/**/*.py'
 
 env:
