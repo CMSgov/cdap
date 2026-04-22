@@ -1,6 +1,6 @@
 /dasgapi/sensitive/datadog/init_api_key: ENC[AES256_GCM,data:M5NFBuIPo2FaB7hssb35UkKQSTpVd0SIYSYkbKqXVA4=,iv:fkrQx/gJYcUHkCByRZV4T1dBkp36Aagso23ayO/C63A=,tag:k5LGV/Y0IhR+mIriqzYfWQ==,type:str]
 /dasgapi/sensitive/datadog/init_application_key: ENC[AES256_GCM,data:ESjlQ9h0lorD6onKsSmVVGUzv+EPPI7qUoVay751LfK5/UOJhJ1TpA==,iv:Uj9VQnhdnqT2SPEjm9lVCB2unhlEINiU500u4keGfIk=,tag:DoKkFKJT/adXDQ2WJqdwqw==,type:str]
-/cdap/${env}/snyk/api_token:
+/cdap/${env}/snyk/api_token: ENC[AES256_GCM,data:NjOThPKiEFGj4YZdJOK1l0zBtjJmUdSHGin0UQv5nQj80UQe,iv:wMT3hQSPBwY+hhNrcppnL8Y6AgptvphDUvm04K8jKo0=,tag:31S/Hr10uZzCh/Py36smpQ==,type:str]
 /cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:wFLx26HtKKxHK974KB4VBppkg/2zISBFtqkPACSKNDR9Z7lh7QwaBA==,iv:Wtka6L3sszviRYVIxti0sc3dd20iqPsnuZfZM5KoWpg=,tag:GjGGT14FBScFhQsX6+421w==,type:str]
 /cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
 /cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
