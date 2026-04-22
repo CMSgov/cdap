@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'terraform/services/**/lambda_src/**'
+      - 'scripts/**/*.py'
 
 env:
   PYTHON_VERSION: '3.12'
