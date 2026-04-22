@@ -7,6 +7,7 @@ on:
       - 'terraform/services/**/lambda_src/**/*.py'
       - 'terraform/services/**/lambda_src/**/requirements.txt'
       - 'scripts/**/*.py'
+      - 'scripts/**/requirements.txt'
 
 env:
   PYTHON_VERSION: '3.12'
@@ -39,7 +40,7 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            SNYK_TOKEN=/cdap/snyk/token
+            SNYK_TOKEN=/cdap/${{ github.ref_name =='main' && 'prod' || 'test' }}/snyk/token
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
 
