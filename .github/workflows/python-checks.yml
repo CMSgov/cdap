@@ -40,7 +40,7 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            SNYK_TOKEN=/cdap/${{ github.ref_name =='main' && 'prod' || 'test' }}/snyk/token
+            SNYK_TOKEN=/cdap/${{ github.ref_name =='main' && 'prod' || 'test' }}/snyk/api_token
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
 
