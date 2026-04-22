@@ -14,20 +14,14 @@ locals {
   cdap_env = contains(["sandbox", "prod"], var.env) ? "prod" : "test"
 }
 
-data "aws_ssm_parameter" "cdap_datadog_api_key" {
-  name = "/cdap/${local.cdap_env}/datadog/cicd/api_key"
-}
-
-data "aws_ssm_parameter" "cdap_datadog_application_key" {
-  name = "/cdap/${local.cdap_env}/datadog/cicd/application_key"
-}
 
 module "standards" {
-  source = "../../modules/standards"
+  source    = "../../modules/standards"
+  providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app         = var.app
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/datadog-agents-api-keys"
-  service     = "datadog"
-  providers   = { aws = aws, aws.secondary = aws.secondary }
+  app          = var.app
+  env          = var.env
+  root_module  = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
+  service      = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
+  ssm_root_map = { datadog = "/cdap/${local.cdap_env}/datadog/cicd/" }
 }
