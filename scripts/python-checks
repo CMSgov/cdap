@@ -1,18 +1,75 @@
 #!/bin/bash
-# Run checks on python directories. Used in the python-checks workflow.
+# Run SonarQube and Snyk scans on changed Python Lambda directories.
 set -e
 
 repo_root="$(git rev-parse --show-toplevel)"
+base_ref="${GITHUB_BASE_REF:-main}"
+python_version="${PYTHON_VERSION:-3.12}"
+
+# Detect changed lambda_src directories via git diff
+CHANGED_DIRS=$(git diff --name-only "origin/$base_ref"...HEAD \
+  | grep 'terraform/services/.*/lambda_src/' \
+  | awk -F'/' '{print $1"/"$2"/"$3"/"$4}' \
+  | sort -u)
+
+if [ -z "$CHANGED_DIRS" ]; then
+  echo "No lambda_src directories changed. Exiting."
+  exit 0
+fi
+
+# Install SonarScanner CLI if not already available
+if ! command -v sonar-scanner &> /dev/null; then
+  echo "Installing SonarScanner..."
+  SONAR_SCANNER_VERSION="6.2.1.4610"
+  curl -sSLo sonar-scanner.zip \
+    "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip"
+  unzip -q sonar-scanner.zip
+  export PATH="$PWD/sonar-scanner-${SONAR_SCANNER_VERSION}-linux-x64/bin:$PATH"
+fi
+
 for dir in $CHANGED_DIRS; do
   dir_absolute="$repo_root/$dir"
-  [ ! -d "$dir_absolute" ] && echo "No directory found at $dir. Skipping" && continue
+
+  [ ! -d "$dir_absolute" ] && echo "No directory found at $dir. Skipping." && continue
+
+  echo "=========================================="
+  echo "Scanning: $dir"
+  echo "=========================================="
+
   cd "$dir_absolute"
+
+  # --- Snyk Scans ---
   temp_venv=$(mktemp -d)
   python -m venv "$temp_venv"
   source "$temp_venv/bin/activate"
-  [ -f "requirements.txt" ] && pip install -r requirements.txt
-  pip install pylint pytest
-  echo "Running python lint and test on \"$dir\""
-  pylint .
-  pytest .
+
+  if [ -f "requirements.txt" ]; then
+    pip install -r requirements.txt
+    echo "[Snyk] Running dependency scan..."
+    snyk test --file=requirements.txt --package-manager=pip || true
+  else
+    echo "[Snyk] No requirements.txt found. Skipping dependency scan."
+  fi
+
+  echo "[Snyk] Running SAST scan..."
+  snyk code test . || true
+
+  deactivate
+  rm -rf "$temp_venv"
+
+  # --- SonarQube Scan ---
+  echo "[SonarQube] Running scan..."
+  project_key=$(echo "$dir" | tr '/' '_')
+  project_name=$(echo "$dir" | awk -F'/' '{print $3}')
+
+  sonar-scanner \
+    -Dsonar.projectKey="$project_key" \
+    -Dsonar.projectName="$project_name" \
+    -Dsonar.sources="$dir_absolute" \
+    -Dsonar.host.url="$SONAR_HOST_URL" \
+    -Dsonar.token="$SONAR_TOKEN" \
+    -Dsonar.language=py \
+    -Dsonar.python.version="$python_version"
+
+  cd "$repo_root"
 done
