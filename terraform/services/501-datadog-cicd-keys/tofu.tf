@@ -16,9 +16,9 @@ terraform {
 }
 
 provider "datadog" {
-  api_key = data.aws_ssm_parameter.datadog_init_api_key.value
-  app_key = data.aws_ssm_parameter.datadog_init_app_key.value
-  api_url = "https://api.ddog-gov.com/"
+  api_key = sensitive(module.standards.ssm.init_datadog.init_api_key.value)
+  app_key = sensitive(module.standards.ssm.init_datadog.init_application_key.value)
+  api_url = "https://api.ddog-gov.com"
 }
 
 provider "aws" {
@@ -35,4 +35,3 @@ provider "aws" {
     tags = module.standards.default_tags
   }
 }
-
