@@ -11,13 +11,13 @@ terraform {
   }
 
   backend "s3" {
-    key = "503-datadog-agents-api-keys/terraform.tfstate"
+    key = "503-datadog-config/terraform.tfstate"
   }
 }
 
 provider "datadog" {
-  api_key = sensitive(data.aws_ssm_parameter.cdap_datadog_api_key.value)
-  app_key = sensitive(data.aws_ssm_parameter.cdap_datadog_application_key.value)
+  api_key = sensitive(module.standards.ssm.datadog.api_key.value)
+  app_key = sensitive(module.standards.ssm.datadog.application_key.value)
   api_url = "https://api.ddog-gov.com"
 }
 
