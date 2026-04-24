@@ -23,7 +23,7 @@ env:
   AWS_REGION:     us-east-1
   RETENTION_DAYS: ${{ github.event.inputs.retention_days || '180' }}
   TARGET_ENV:     ${{ github.event.inputs.target_env || 'prod' }}
-  PYTHON_VERSION: "3.12"
+  PYTHON_VERSION: "3.13.12"
 
 jobs:
 
