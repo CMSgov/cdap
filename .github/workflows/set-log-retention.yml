@@ -106,7 +106,36 @@ jobs:
           echo "**Download the \`retention-plan\` artifact from the bottom of this page before approving.**" >> "$GITHUB_STEP_SUMMARY"
           
 
-  # ── JOB 2: APPROVE (manual gate) ───────────────────────────────────────────
+  # ── JOB 2 & 3: NOTIFY & APPROVE (manual gate) ───────────────────────────────────────────
+  notify:
+    name: "Pending Approval – Review Plan Details Here"
+    needs: plan
+    if: needs.plan.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Post plan summary for reviewer
+        run: |
+          echo "## ⏳ Retention Plan Awaiting Approval"            >> "$GITHUB_STEP_SUMMARY"
+          echo ""                                                   >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Value |"                                   >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | ----- |"                                   >> "$GITHUB_STEP_SUMMARY"
+          echo "| Plan file    | \`${{ needs.plan.outputs.plan_file }}\` |"       >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target env   | \`${{ needs.plan.outputs.target_env }}\` |"      >> "$GITHUB_STEP_SUMMARY"
+          echo "| Generated at | \`${{ needs.plan.outputs.generated_at }}\` |"   >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commands     | **${{ needs.plan.outputs.command_count }}** |"  >> "$GITHUB_STEP_SUMMARY"
+          echo ""                                                   >> "$GITHUB_STEP_SUMMARY"
+          echo "---"                                               >> "$GITHUB_STEP_SUMMARY"
+          echo "**Scroll and download the \`retention-plan\` artifact before approving.**" >> "$GITHUB_STEP_SUMMARY"
+          echo ""                                                   >> "$GITHUB_STEP_SUMMARY"
+          echo " Once reviewed, click **Review deployments** to approve or reject." >> "$GITHUB_STEP_SUMMARY"
+
+          # Also print to console log so it's visible in raw step output
+          echo "Plan file:    ${{ needs.plan.outputs.plan_file }}"
+          echo "Target env:   ${{ needs.plan.outputs.target_env }}"
+          echo "Generated at: ${{ needs.plan.outputs.generated_at }}"
+          echo "Commands:     ${{ needs.plan.outputs.command_count }}"
+
   approve:
     name: "Approve – Review Plan Before Applying"
     needs: plan
@@ -139,6 +168,7 @@ jobs:
           echo "Commands:   ${{ needs.plan.outputs.command_count }}"
           echo "Proceeding to apply retention policy changes."
           
+
 
   # ── JOB 3: APPLY ───────────────────────────────────────────────────────────
   apply:
