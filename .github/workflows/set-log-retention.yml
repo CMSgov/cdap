@@ -20,20 +20,23 @@ permissions:
   id-token: write
 
 env:
-  AWS_REGION:     us-east-1
+  AWS_REGION: us-east-1
   RETENTION_DAYS: ${{ github.event_name == 'schedule' && '180' || github.event.inputs.retention_days || '180' }}
-  TARGET_ENV:     ${{ github.event_name == 'schedule' && 'prod' || github.event.inputs.target_env || 'prod' }}
+  TARGET_ENV: ${{ github.event_name == 'schedule' && 'prod' || github.event.inputs.target_env || 'prod' }}
 
 jobs:
 
-  # ── JOB 1: PLAN ────────────────────────────────────────────────────────────
+  # -- JOB 1: PLAN ------------------------------------------------------------
   plan:
-    name: "Plan – Generate Retention Plan"
+    name: "Plan - Generate Retention Plan"
     runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
 
     outputs:
-      plan_file:   ${{ steps.meta.outputs.plan_file }}
+      plan_file: ${{ steps.meta.outputs.plan_file }}
       has_changes: ${{ steps.meta.outputs.has_changes }}
+      command_count: ${{ steps.meta.outputs.command_count }}
+      target_env: ${{ steps.meta.outputs.target_env }}
+      generated_at: ${{ steps.meta.outputs.generated_at }}
 
     steps:
       - name: Checkout
@@ -58,10 +61,10 @@ jobs:
       - name: Run plan
         working-directory: ${{ github.workspace }}/scripts/set_log_retention
         env:
-          MODE:           plan
-          AWS_REGION:     ${{ vars.AWS_REGION }}
+          MODE: plan
+          AWS_REGION: ${{ vars.AWS_REGION }}
           RETENTION_DAYS: ${{ env.RETENTION_DAYS }}
-          TARGET_ENV:     ${{ env.TARGET_ENV }}
+          TARGET_ENV: ${{ env.TARGET_ENV }}
         run: python3 set_log_retention.py
 
       - name: Collect metadata
@@ -69,27 +72,27 @@ jobs:
         working-directory: ${{ github.workspace }}/scripts/set_log_retention
         run: |
           PLAN_FILE=$(ls retention-plan-*.json 2>/dev/null | head -n 1)
-
+          
           if [ -z "$PLAN_FILE" ]; then
-            echo "Err No retention plan file found in $(pwd)"
+            echo "No retention plan file found in $(pwd)"
             ls -la
             exit 1
           fi
-
+          
           COMMAND_COUNT=$(jq '.commands | length' "$PLAN_FILE")
           GENERATED_AT=$(jq -r '.generated_at' "$PLAN_FILE")
-
+          
           echo "plan_file=${PLAN_FILE}"           >> "$GITHUB_OUTPUT"
           echo "command_count=${COMMAND_COUNT}"   >> "$GITHUB_OUTPUT"
           echo "target_env=${{ env.TARGET_ENV }}" >> "$GITHUB_OUTPUT"
           echo "generated_at=${GENERATED_AT}"     >> "$GITHUB_OUTPUT"
-
+          
           if [ "$COMMAND_COUNT" -gt 0 ]; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           fi
-
+          
           echo "### Retention Plan"                               >> "$GITHUB_STEP_SUMMARY"
           echo "| Key | Value |"                                  >> "$GITHUB_STEP_SUMMARY"
           echo "| --- | ----- |"                                  >> "$GITHUB_STEP_SUMMARY"
@@ -103,12 +106,18 @@ jobs:
           echo "\`\`\`"                                            >> "$GITHUB_STEP_SUMMARY"
           echo ""                                                  >> "$GITHUB_STEP_SUMMARY"
           echo "---"                                               >> "$GITHUB_STEP_SUMMARY"
-          echo "**Download the \`retention-plan\` artifact from the bottom of this page before approving.**" >> "$GITHUB_STEP_SUMMARY"
-          
+          echo "Download the \`retention-plan\` artifact from the bottom of this page before approving." >> "$GITHUB_STEP_SUMMARY"
 
-  # ── JOB 2 & 3: NOTIFY & APPROVE (manual gate) ───────────────────────────────────────────
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: retention-plan
+          path: ${{ github.workspace }}/scripts/set_log_retention/retention-plan-*.json
+          retention-days: 7
+
+  # -- JOB 2: NOTIFY ----------------------------------------------------------
   notify:
-    name: "Pending Approval – Review Plan Details Here"
+    name: "Pending Approval - Review Plan Details Here"
     needs: plan
     if: needs.plan.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
@@ -116,64 +125,40 @@ jobs:
     steps:
       - name: Post plan summary for reviewer
         run: |
-          echo "## ⏳ Retention Plan Awaiting Approval"            >> "$GITHUB_STEP_SUMMARY"
-          echo ""                                                   >> "$GITHUB_STEP_SUMMARY"
-          echo "| Key | Value |"                                   >> "$GITHUB_STEP_SUMMARY"
-          echo "| --- | ----- |"                                   >> "$GITHUB_STEP_SUMMARY"
-          echo "| Plan file    | \`${{ needs.plan.outputs.plan_file }}\` |"       >> "$GITHUB_STEP_SUMMARY"
-          echo "| Target env   | \`${{ needs.plan.outputs.target_env }}\` |"      >> "$GITHUB_STEP_SUMMARY"
-          echo "| Generated at | \`${{ needs.plan.outputs.generated_at }}\` |"   >> "$GITHUB_STEP_SUMMARY"
-          echo "| Commands     | **${{ needs.plan.outputs.command_count }}** |"  >> "$GITHUB_STEP_SUMMARY"
-          echo ""                                                   >> "$GITHUB_STEP_SUMMARY"
-          echo "---"                                               >> "$GITHUB_STEP_SUMMARY"
-          echo "**Scroll and download the \`retention-plan\` artifact before approving.**" >> "$GITHUB_STEP_SUMMARY"
-          echo ""                                                   >> "$GITHUB_STEP_SUMMARY"
-          echo " Once reviewed, click **Review deployments** to approve or reject." >> "$GITHUB_STEP_SUMMARY"
+          echo "## Retention Plan Awaiting Approval"                                       >> "$GITHUB_STEP_SUMMARY"
+          echo ""                                                                           >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Value |"                                                           >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | ----- |"                                                           >> "$GITHUB_STEP_SUMMARY"
+          echo "| Plan file    | \`${{ needs.plan.outputs.plan_file }}\` |"                >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target env   | \`${{ needs.plan.outputs.target_env }}\` |"               >> "$GITHUB_STEP_SUMMARY"
+          echo "| Generated at | \`${{ needs.plan.outputs.generated_at }}\` |"            >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commands     | **${{ needs.plan.outputs.command_count }}** |"           >> "$GITHUB_STEP_SUMMARY"
+          echo ""                                                                           >> "$GITHUB_STEP_SUMMARY"
+          echo "---"                                                                        >> "$GITHUB_STEP_SUMMARY"
+          echo "Scroll down and download the \`retention-plan\` artifact before approving." >> "$GITHUB_STEP_SUMMARY"
+          echo ""                                                                           >> "$GITHUB_STEP_SUMMARY"
+          echo "Once reviewed, click **Review deployments** to approve or reject."         >> "$GITHUB_STEP_SUMMARY"
 
-          # Also print to console log so it's visible in raw step output
-          echo "Plan file:    ${{ needs.plan.outputs.plan_file }}"
-          echo "Target env:   ${{ needs.plan.outputs.target_env }}"
-          echo "Generated at: ${{ needs.plan.outputs.generated_at }}"
-          echo "Commands:     ${{ needs.plan.outputs.command_count }}"
-
+  # -- JOB 3: APPROVE (manual gate) -------------------------------------------
   approve:
-    name: "Approve – Review Plan Before Applying"
-    needs: plan
+    name: "Approve - Review Plan Before Applying"
+    needs: [ plan, notify ]
     if: needs.plan.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     environment: compliance-approval
 
     steps:
-      - name: Display plan summary for review
-        run: |
-          echo "## 📋 Retention Plan Pending Approval"           >> "$GITHUB_STEP_SUMMARY"
-          echo ""                                                  >> "$GITHUB_STEP_SUMMARY"
-          echo "| Key | Value |"                                  >> "$GITHUB_STEP_SUMMARY"
-          echo "| --- | ----- |"                                  >> "$GITHUB_STEP_SUMMARY"
-          echo "| Plan file | \`${{ needs.plan.outputs.plan_file }}\` |"       >> "$GITHUB_STEP_SUMMARY"
-          echo "| Target env | \`${{ needs.plan.outputs.target_env }}\` |"     >> "$GITHUB_STEP_SUMMARY"
-          echo "| Generated at | \`${{ needs.plan.outputs.generated_at }}\` |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Commands to apply | **${{ needs.plan.outputs.command_count }}** |" >> "$GITHUB_STEP_SUMMARY"
-          echo ""                                                  >> "$GITHUB_STEP_SUMMARY"
-          echo "---"                                               >> "$GITHUB_STEP_SUMMARY"
-          echo " **Download the \`retention-plan\` artifact from the bottom of the run page to review the full command list before approving.**" >> "$GITHUB_STEP_SUMMARY"
-          echo ""                                                  >> "$GITHUB_STEP_SUMMARY"
-          echo " [View full plan job summary](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> "$GITHUB_STEP_SUMMARY"
-
       - name: Approval confirmed
         run: |
-          echo "Plan reviewed and approved."
+          echo "Plan approved."
           echo "Plan file:  ${{ needs.plan.outputs.plan_file }}"
           echo "Target env: ${{ needs.plan.outputs.target_env }}"
           echo "Commands:   ${{ needs.plan.outputs.command_count }}"
-          echo "Proceeding to apply retention policy changes."
-          
 
-
-  # ── JOB 3: APPLY ───────────────────────────────────────────────────────────
+  # -- JOB 4: APPLY -----------------------------------------------------------
   apply:
-    name: "Apply – Execute Retention Policy Updates"
-    needs: [plan, approve]
+    name: "Apply - Execute Retention Policy Updates"
+    needs: [ plan, approve ]
     if: needs.plan.outputs.has_changes == 'true'
     runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
 
@@ -207,8 +192,8 @@ jobs:
       - name: Apply retention plan
         working-directory: ${{ github.workspace }}/scripts/set_log_retention
         env:
-          MODE:       apply
-          PLAN_FILE:  ${{ steps.find-plan.outputs.plan_file }}
+          MODE: apply
+          PLAN_FILE: ${{ steps.find-plan.outputs.plan_file }}
           AWS_REGION: ${{ vars.AWS_REGION }}
         run: python3 set_log_retention.py
 
@@ -219,3 +204,4 @@ jobs:
           name: retention-apply-report
           path: ${{ github.workspace }}/scripts/set_log_retention/retention-report-*.csv
           retention-days: 30
+
