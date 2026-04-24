@@ -98,6 +98,10 @@ jobs:
           jq '.commands' "$PLAN_FILE"                             >> "$GITHUB_STEP_SUMMARY"
           echo "\`\`\`"                                            >> "$GITHUB_STEP_SUMMARY"
 
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "---" >> "$GITHUB_STEP_SUMMARY"
+          echo " **Download the \`retention-plan\` artifact from the bottom of this page before approving.**" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload plan artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
