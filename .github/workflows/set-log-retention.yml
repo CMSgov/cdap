@@ -2,6 +2,7 @@ name: CloudWatch Log Retention Manager
 
 on:
   schedule:
+    # Every Monday at 10:00 ET (14:00 UTC)
     - cron: "0 14 * * 1"
   workflow_dispatch:
     inputs:
@@ -28,9 +29,6 @@ jobs:
   plan:
     name: "Plan – Generate Retention Plan"
     runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
-    defaults:
-      run:
-        working-directory: scripts/set_cloudwatch_retention
 
     outputs:
       plan_file:   ${{ steps.meta.outputs.plan_file }}
@@ -41,11 +39,13 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
 
       - name: Check available Python
+        working-directory: ${{ github.workspace }}
         run: |
           python3 --version
           which python3
 
       - name: Install dependencies
+        working-directory: ${{ github.workspace }}/scripts/set_cloudwatch_retention
         run: python3 -m pip install -r requirements.txt
 
       - name: Configure AWS credentials
@@ -55,6 +55,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Run plan
+        working-directory: ${{ github.workspace }}/scripts/set_cloudwatch_retention
         env:
           MODE:           plan
           AWS_REGION:     ${{ vars.AWS_REGION }}
@@ -64,6 +65,7 @@ jobs:
 
       - name: Collect metadata
         id: meta
+        working-directory: ${{ github.workspace }}/scripts/set_cloudwatch_retention
         run: |
           PLAN_FILE=$(ls retention-plan-*.json | head -n 1)
           COMMAND_COUNT=$(jq '.commands | length' "$PLAN_FILE")
@@ -93,10 +95,11 @@ jobs:
         with:
           name: retention-plan
           path: |
-            scripts/set_cloudwatch_retention/retention-plan-*.json
-            scripts/set_cloudwatch_retention/retention-report-*.csv
+            ${{ github.workspace }}/scripts/set_cloudwatch_retention/retention-plan-*.json
+            ${{ github.workspace }}/scripts/set_cloudwatch_retention/retention-report-*.csv
           retention-days: 7
 
+  # ── JOB 2: APPROVE (manual gate) ───────────────────────────────────────────
   approve:
     name: "Approve – Review Plan Before Applying"
     needs: plan
@@ -111,20 +114,19 @@ jobs:
           echo "Plan file: ${{ needs.plan.outputs.plan_file }}"
           echo "Proceeding to apply retention policy changes."
 
+  # ── JOB 3: APPLY ───────────────────────────────────────────────────────────
   apply:
     name: "Apply – Execute Retention Policy Updates"
     needs: [plan, approve]
     if: needs.plan.outputs.has_changes == 'true'
     runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
-    defaults:
-      run:
-        working-directory: scripts/set_cloudwatch_retention
 
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
 
       - name: Install dependencies
+        working-directory: ${{ github.workspace }}/scripts/set_cloudwatch_retention
         run: python3 -m pip install -r requirements.txt
 
       - name: Configure AWS credentials
@@ -137,15 +139,17 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: retention-plan
-          path: scripts/set_cloudwatch_retention
+          path: ${{ github.workspace }}/scripts/set_cloudwatch_retention
 
       - name: Locate plan file
         id: find-plan
+        working-directory: ${{ github.workspace }}/scripts/set_cloudwatch_retention
         run: |
           PLAN_FILE=$(ls retention-plan-*.json | head -n 1)
           echo "plan_file=${PLAN_FILE}" >> "$GITHUB_OUTPUT"
 
       - name: Apply retention plan
+        working-directory: ${{ github.workspace }}/scripts/set_cloudwatch_retention
         env:
           MODE:       apply
           PLAN_FILE:  ${{ steps.find-plan.outputs.plan_file }}
@@ -157,5 +161,5 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: retention-apply-report
-          path: scripts/set_cloudwatch_retention/retention-report-*.csv
+          path: ${{ github.workspace }}/scripts/set_cloudwatch_retention/retention-report-*.csv
           retention-days: 30
