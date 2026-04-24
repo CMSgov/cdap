@@ -23,7 +23,6 @@ env:
   AWS_REGION:     us-east-1
   RETENTION_DAYS: ${{ github.event.inputs.retention_days || '180' }}
   TARGET_ENV:     ${{ github.event.inputs.target_env || 'prod' }}
-  PYTHON_VERSION: "3.13.12"
 
 jobs:
 
@@ -39,10 +38,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5.2.0
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Check available Python
+        run: |
+          python3 --version
+          which python3
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -122,11 +121,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5.2.0
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: pip install -r requirements.txt
