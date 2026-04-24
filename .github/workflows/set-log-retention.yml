@@ -26,6 +26,7 @@ env:
 
 jobs:
 
+  # ── JOB 1: PLAN ────────────────────────────────────────────────────────────
   plan:
     name: "Plan – Generate Retention Plan"
     runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -67,7 +68,14 @@ jobs:
         id: meta
         working-directory: ${{ github.workspace }}/scripts/set_log_retention
         run: |
-          PLAN_FILE=$(ls retention-plan-*.json | head -n 1)
+          PLAN_FILE=$(ls retention-plan-*.json 2>/dev/null | head -n 1)
+
+          if [ -z "$PLAN_FILE" ]; then
+            echo "Err No retention plan file found in $(pwd)"
+            ls -la
+            exit 1
+          fi
+
           COMMAND_COUNT=$(jq '.commands | length' "$PLAN_FILE")
 
           echo "plan_file=${PLAN_FILE}" >> "$GITHUB_OUTPUT"
@@ -96,7 +104,6 @@ jobs:
           name: retention-plan
           path: |
             ${{ github.workspace }}/scripts/set_log_retention/retention-plan-*.json
-            ${{ github.workspace }}/scripts/set_log_retention/retention-report-*.csv
           retention-days: 7
 
   # ── JOB 2: APPROVE (manual gate) ───────────────────────────────────────────
