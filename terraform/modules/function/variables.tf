@@ -26,6 +26,8 @@ variable "description" {
   type        = string
 }
 
+# ── Core Function Config
+
 variable "handler" {
   description = "Lambda function handler"
   type        = string
@@ -33,7 +35,7 @@ variable "handler" {
 }
 
 variable "architecture" {
-  description = ""
+  description = "Lambda function CPU architecture. Use arm64 for Graviton (better price/performance for most workloads)."
   type        = string
   default     = "x86_64"
   validation {
@@ -60,22 +62,46 @@ variable "memory_size" {
   default     = null
 }
 
-variable "function_role_inline_policies" {
-  description = "Inline policies (in JSON) for the function IAM role"
-  type        = map(string)
-  default     = {}
+# ── Source / Deployment ───────────────────────────────────────────────────────
+
+variable "source_dir" {
+  description = "Path to the Lambda source directory to zip and upload. If set, the module manages zipping and deployment. If null, an external process (or dummy zip) is used."
+  type        = string
+  default     = null
 }
+
+variable "source_dir_excludes" {
+  description = "List of glob (**/*) patterns to exclude when zipping the source directory."
+  type        = list(string)
+  default     = []
+}
+
+variable "source_code_version" {
+  description = "Optional S3 object version of function.zip uploaded to module's zip_bucket by external sources."
+  type        = string
+  default     = null
+}
+
+variable "create_function_zip" {
+  description = <<-EOT
+    Upload a dummy zip to initialize the S3 bucket on first apply.
+    Has no effect and should not be set to true when source_dir is provided,
+    as the module will manage the zip and upload automatically.
+  EOT
+  type        = bool
+  default     = false
+  validation {
+    condition     = !(var.create_function_zip && var.source_dir != null)
+    error_message = "create_function_zip must not be true when source_dir is provided. The module manages the zip automatically."
+  }
+}
+
+# ── Runtime Behavior ──────────────────────────────────────────────────────────
 
 variable "environment_variables" {
   description = "Map of environment variables for the function"
   type        = map(string)
   default     = {}
-}
-
-variable "create_function_zip" {
-  description = "Create the function zip file, necessary for initialization (defaults to true)"
-  type        = bool
-  default     = true
 }
 
 variable "schedule_expression" {
@@ -84,20 +110,59 @@ variable "schedule_expression" {
   default     = ""
 }
 
-variable "extra_kms_key_arns" {
+variable "log_retention_days" {
+  description = "Number of days to retain Lambda function logs in CloudWatch. If null, no retention policy is set and retention is managed externally (e.g., via cdap/scripts/set_log_retention/)."
+  type        = number
+  default     = 180
+}
+
+# ── IAM / Permissions ─────────────────────────────────────────────────────────
+
+variable "ssm_parameter_paths" {
+  description = <<-EOT
+    List of SSM parameter ARNs or path patterns this function is permitted to read.
+    Each entry should be a full ARN or ARN pattern. This can be retrieved from platform.module.ssm.ssm_root_name.parameter_name.arn.
+    If empty (default), the function receives no SSM access.
+    Do not use broad wildcards — scope each entry to the specific parameters this function requires.
+  EOT
   type        = list(string)
   default     = []
+  validation {
+    condition = alltrue([
+      for arn in var.ssm_parameter_paths :
+      can(regex("^arn:aws:ssm:", arn))
+    ])
+    error_message = "Each entry in ssm_parameter_paths must be a valid SSM parameter ARN starting with 'arn:aws:ssm:'."
+  }
+}
+
+variable "function_role_inline_policies" {
+  description = "Inline policies (in JSON) for the function IAM role"
+  type        = map(string)
+  default     = {}
+}
+
+# ── Advanced / Migration strategies ─────────────────────────────────────────────────
+
+variable "extra_kms_key_arns" {
   description = "Optional list of additional KMS key ARNs the Lambda can use"
+  type        = list(string)
+  default     = []
 }
 
 variable "layer_arns" {
+  description = "Optional list of layer arns"
   type        = list(string)
   default     = []
-  description = "Optional list of layer arns"
 }
 
-variable "source_code_version" {
-  description = "Optional S3 object version of function.zip uploaded to module's zip_bucket."
-  type        = string
-  default     = null
+variable "github_actions_repos" {
+  description = <<-EOT
+    Used for integration tests and, when source_dir is null,
+    for CI/CD workflows that upload the function zip.
+    Format: "repo:CMSgov/<repo-name>:*" or a more specific ref pattern.
+    Defaults to empty — no GitHub Actions access unless explicitly granted.
+  EOT
+  type        = list(string)
+  default     = []
 }

@@ -1,187 +1,48 @@
 locals {
   provider_domain = "token.actions.githubusercontent.com"
-
-  repos = {
-    bcda = [
-      "repo:CMSgov/bcda-app:*",
-    ]
-    cdap = [
-      "repo:CMSgov/cdap:*",
-    ]
-    dpc = [
-      "repo:CMSgov/dpc-app:*",
-    ]
-  }
 }
 
 data "aws_kms_alias" "kms_key" {
   name = "alias/${var.app}-${var.env}"
 }
 
-data "aws_iam_openid_connect_provider" "github" {
-  url = "https://${local.provider_domain}"
-}
+# Only used when source_dir is provided
+data "archive_file" "function" {
+  count = var.source_dir != null ? 1 : 0
 
-data "aws_iam_role" "admin" {
-  name = "ct-ado-bcda-application-admin"
-}
-
-data "aws_iam_role" "dasg_admin" {
-  name = "ct-ado-dasg-application-admin"
-}
-
-data "aws_iam_policy_document" "function_assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
-    }
-  }
-
-  # Allow access from GitHub-hosted runners via OIDC for integration tests
-  statement {
-    actions = [
-      "sts:AssumeRoleWithWebIdentity",
-      "sts:TagSession",
-    ]
-
-    principals {
-      type        = "Federated"
-      identifiers = [data.aws_iam_openid_connect_provider.github.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "${local.provider_domain}:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "${local.provider_domain}:sub"
-      values   = local.repos[var.app]
-    }
-  }
-
-  # Allow access from admin role for manual checks
-  statement {
-    actions = [
-      "sts:AssumeRole",
-      "sts:TagSession",
-    ]
-
-    principals {
-      type        = "AWS"
-      identifiers = [data.aws_iam_role.admin.arn, data.aws_iam_role.dasg_admin.arn]
-    }
-  }
-}
-
-data "aws_caller_identity" "current" {}
-
-data "aws_iam_policy_document" "default_function" {
-  statement {
-    actions = [
-      "ec2:CreateNetworkInterface",
-      "ec2:DeleteNetworkInterface",
-      "ec2:DescribeAccountAttributes",
-      "ec2:DescribeNetworkInterfaces",
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "sqs:DeleteMessage",
-      "sqs:GetQueueAttributes",
-      "sqs:ReceiveMessage",
-      "ssm:GetParameter",
-      "ssm:GetParameters",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "kms:Encrypt",
-      "kms:Decrypt",
-      "kms:GenerateDataKey"
-    ]
-    resources = concat(
-      [data.aws_kms_alias.kms_key.target_key_arn],
-      var.extra_kms_key_arns
-    )
-  }
-}
-
-resource "aws_iam_role" "function" {
-  name = "${var.name}-function"
-  path = "/delegatedadmin/developer/"
-
-  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
-
-  assume_role_policy = data.aws_iam_policy_document.function_assume_role.json
-}
-
-resource "aws_iam_role_policy" "default_function" {
-  name   = "default-function"
-  role   = aws_iam_role.function.id
-  policy = data.aws_iam_policy_document.default_function.json
-}
-
-resource "aws_iam_role_policy" "extra_policies" {
-  for_each = var.function_role_inline_policies
-
-  name   = each.key
-  role   = aws_iam_role.function.id
-  policy = each.value
-}
-
-data "aws_ssm_parameter" "prod_account_id" {
-  count = var.env == "test" ? 1 : 0
-  name  = "/prod/account-id"
-}
-
-data "aws_iam_policy_document" "bucket_cross_account_read_roles_policy" {
-  count = var.env == "test" ? 1 : 0
-
-  statement {
-    actions = [
-      "s3:GetObject",
-      "s3:GetObjectTagging",
-      "s3:GetObjectVersion",
-      "s3:GetObjectVersionTagging",
-      "s3:ListBucket",
-    ]
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-prod-github-actions",
-        "arn:aws:iam::${data.aws_ssm_parameter.prod_account_id[0].value}:role/delegatedadmin/developer/${var.app}-${var.app == "cdap" ? "mgmt" : "sandbox"}-github-actions",
-      ]
-    }
-
-    resources = [
-      module.zip_bucket.arn,
-      "${module.zip_bucket.arn}/*",
-    ]
-
-    sid = "CrossAccountRead"
-  }
+  type        = "zip"
+  source_dir  = var.source_dir
+  output_path = "${path.module}/.terraform/tmp/${var.name}-function.zip"
+  excludes    = var.source_dir_excludes
 }
 
 module "zip_bucket" {
   source = "../bucket"
 
-  additional_bucket_policies = var.env == "test" ? [data.aws_iam_policy_document.bucket_cross_account_read_roles_policy[0].json] : []
+  additional_bucket_policies = var.source_dir == null ? [data.aws_iam_policy_document.cicd_manage_lambda_objects.json] : []
   app                        = var.app
   env                        = var.env
   name                       = "${var.name}-function"
   ssm_parameter              = "/${var.app}/${var.env}/${var.name}-bucket"
 }
 
+# Managed zip upload — used when source_dir is provided
+resource "aws_s3_object" "function_zip" {
+  count = var.source_dir != null ? 1 : 0
+
+  bucket = module.zip_bucket.id
+  key    = "function.zip"
+  source = data.archive_file.function[0].output_path
+
+  # Use the hash so S3 object (and Lambda) updates when source changes
+  source_hash = data.archive_file.function[0].output_base64sha256
+
+  # KMS encryption
+  kms_key_id = data.aws_kms_alias.kms_key.target_key_arn
+}
+
 resource "aws_s3_object" "empty_function_zip" {
-  count = var.create_function_zip ? 1 : 0
+  count = var.source_dir == null && var.create_function_zip ? 1 : 0
 
   bucket = module.zip_bucket.id
   key    = "function.zip"
@@ -221,11 +82,13 @@ resource "aws_security_group" "function" {
 }
 
 resource "aws_lambda_function" "this" {
-  description       = var.description
-  function_name     = var.name
-  s3_key            = "function.zip"
-  s3_bucket         = module.zip_bucket.id
-  s3_object_version = var.source_code_version
+  description   = var.description
+  function_name = var.name
+  s3_key        = "function.zip"
+  s3_bucket     = module.zip_bucket.id
+  # If source_dir is managed by this module, track the uploaded object version.
+  # Otherwise, fall back to the externally-supplied version (or null).
+  s3_object_version = var.source_dir != null ? aws_s3_object.function_zip[0].version_id : var.source_code_version
   kms_key_arn       = data.aws_kms_alias.kms_key.target_key_arn
   role              = aws_iam_role.function.arn
   handler           = var.handler
@@ -272,4 +135,12 @@ resource "aws_lambda_permission" "cloudwatch_events" {
   function_name = aws_lambda_function.this.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.this[0].arn
+}
+
+# Manage cloudwatch log group to ensure compliant
+resource "aws_cloudwatch_log_group" "function" {
+  name              = "/aws/lambda/${var.name}"
+  kms_key_id        = data.aws_kms_alias.kms_key.target_key_arn
+  skip_destroy      = true # Log group persists after tofu destroy
+  retention_in_days = var.log_retention_days
 }
