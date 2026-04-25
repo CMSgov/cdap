@@ -131,6 +131,7 @@ resource "aws_iam_role_policy" "extra_policies" {
 # Allow CICD management outside of Tofu runs
 data "aws_iam_policy_document" "cicd_manage_lambda_objects" {
   statement {
+    sid = "CICDZipUpload"
     actions = [
       "s3:GetObject",
       "s3:GetObjectTagging",
@@ -138,13 +139,13 @@ data "aws_iam_policy_document" "cicd_manage_lambda_objects" {
       "s3:GetObjectVersionTagging",
       "s3:ListBucket",
       "s3:PutObject",
-      "s3:PutObjectTagging"
+      "s3:PutObjectTagging",
     ]
 
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role"
+        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/${var.app}-${var.env}-github-actions",
       ]
     }
 
@@ -154,4 +155,3 @@ data "aws_iam_policy_document" "cicd_manage_lambda_objects" {
     ]
   }
 }
-
