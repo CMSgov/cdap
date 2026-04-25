@@ -14,21 +14,24 @@ data "aws_ssm_parameters_by_path" "slack_webhook_urls" {
 
 module "sns_to_slack_function" {
   source = "../../modules/function"
-
-  app          = var.app
-  env          = var.env
-  architecture = "arm64"
+  app    = var.app
+  env    = var.env
 
   name        = local.full_name
   description = "Listens for CloudWatch Alerts and forwards to Slack"
+
+  architecture = "arm64"
+  handler      = "lambda_function.lambda_handler"
+  runtime      = "python3.13"
 
   ssm_parameter_paths = flatten([
     for app, data in data.aws_ssm_parameters_by_path.slack_webhook_urls :
     data.arns
   ])
 
-  handler = "lambda_function.lambda_handler"
-  runtime = "python3.13"
+  function_role_inline_policies = {
+    sqs-trigger = data.aws_iam_policy_document.sqs_trigger.json
+  }
 
   # Point to the local source directory — module handles zip + upload
   source_dir = "${path.module}/lambda_src"
@@ -56,33 +59,4 @@ module "sns_to_slack_queue" {
   policy_documents = [
     data.aws_iam_policy_document.sqs_queue_policy.json
   ]
-}
-
-data "aws_iam_policy_document" "sqs_queue_policy" {
-  statement {
-    sid    = "allow_sns_access"
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["sns.amazonaws.com"]
-    }
-
-    actions = [
-      "SQS:SendMessage",
-    ]
-
-    resources = [
-      module.sns_to_slack_queue.arn
-    ]
-
-    condition {
-      test     = "ArnLike"
-      variable = "aws:SourceArn"
-
-      values = [
-        "arn:aws:sns:us-east-1:${module.standards.account_id}:*"
-      ]
-    }
-  }
 }
