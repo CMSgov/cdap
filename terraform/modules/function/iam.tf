@@ -46,7 +46,6 @@ data "aws_iam_policy_document" "function_assume_role" {
   statement {
     actions = [
       "sts:AssumeRole",
-      "sts:TagSession",
     ]
 
     principals {
