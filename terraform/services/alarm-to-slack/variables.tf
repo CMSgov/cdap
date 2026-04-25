@@ -15,3 +15,8 @@ variable "env" {
     error_message = "Valid values for env are test, prod."
   }
 }
+
+variable "apps_served" {
+  type    = list(string)
+  default = ["bcda", "cdap", "dpc"]
+}

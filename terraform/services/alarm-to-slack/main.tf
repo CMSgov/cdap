@@ -2,10 +2,18 @@ locals {
   full_name = "${var.app}-${var.env}-alarm-to-slack"
 }
 
-data "aws_caller_identity" "current" {}
+import {
+  to = module.sns_to_slack_function.aws_cloudwatch_log_group.function
+  id = "/aws/lambda/${local.full_name}"
+}
+
+data "aws_ssm_parameters_by_path" "slack_webhook_urls" {
+  for_each = toset(var.apps_served)
+  path     = "/${each.value}/lambda/slack_webhook_url"
+}
 
 module "sns_to_slack_function" {
-  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=2874c72ccd4c4821e5e3f77ccf61cf77ed05169f"
+  source = "../../modules/function"
 
   app          = var.app
   env          = var.env
@@ -14,10 +22,23 @@ module "sns_to_slack_function" {
   name        = local.full_name
   description = "Listens for CloudWatch Alerts and forwards to Slack"
 
-  # TODO use zip file
+  ssm_parameter_paths = flatten([
+    for app, data in data.aws_ssm_parameters_by_path.slack_webhook_urls :
+    data.arns
+  ])
 
   handler = "lambda_function.lambda_handler"
   runtime = "python3.13"
+
+  # Point to the local source directory — module handles zip + upload
+  source_dir = "${path.module}/lambda_src"
+
+  # Optionally exclude tests and cache
+  source_dir_excludes = [
+    "__pycache__",
+    "test_*.py",
+    "*.pyc",
+  ]
 
   environment_variables = {
     IGNORE_OK = true
@@ -60,7 +81,7 @@ data "aws_iam_policy_document" "sqs_queue_policy" {
       variable = "aws:SourceArn"
 
       values = [
-        "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:*"
+        "arn:aws:sns:us-east-1:${module.standards.account_id}:*"
       ]
     }
   }
