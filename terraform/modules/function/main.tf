@@ -19,7 +19,7 @@ data "archive_file" "function" {
 module "zip_bucket" {
   source = "../bucket"
 
-  additional_bucket_policies = var.source_dir == null ? [data.aws_iam_policy_document.cicd_manage_lambda_objects.json] : []
+  additional_bucket_policies = length(var.github_actions_repos) > 0 ? [data.aws_iam_policy_document.cicd_manage_lambda_objects.json] : []
   app                        = var.app
   env                        = var.env
   name                       = "${var.name}-function"
@@ -42,16 +42,11 @@ resource "aws_s3_object" "function_zip" {
 }
 
 resource "aws_s3_object" "empty_function_zip" {
-  count = var.source_dir == null && var.create_function_zip ? 1 : 0
+  count = var.source_dir == null && length(var.github_actions_repos) == 0 ? 1 : 0
 
   bucket = module.zip_bucket.id
   key    = "function.zip"
   source = "${path.module}/dummy_function.zip"
-
-  # This resource only exists to initialize the function, not manage it
-  lifecycle {
-    ignore_changes = all
-  }
 }
 
 module "vpc" {

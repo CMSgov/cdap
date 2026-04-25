@@ -2,8 +2,9 @@
 
 This is a generic module for creating lambda function resources in CMS Cloud. Use it in terraform services where a lambda function is needed.
 
-Note that a dummy function is included to allow for initialization without defined source code. It is meant to be replaced once the function has been created.
-Function logic can be deployed separately via GitHub actions or can be updated by re-applying Terraform with source_dir set.  
+Note that a dummy function will be made if source_dir with function logic is not yet provided or github_actions_repo is not defined. 
+The dummy function allows for infrastructure scaffolding before source code is written.
+If source code is written and the lifecycle is managed outside of terraform, set github_actions_repo. 
 
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.

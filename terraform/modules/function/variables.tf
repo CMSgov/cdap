@@ -82,20 +82,6 @@ variable "source_code_version" {
   default     = null
 }
 
-variable "create_function_zip" {
-  description = <<-EOT
-    Upload a dummy zip to initialize the S3 bucket on first apply.
-    Has no effect and should not be set to true when source_dir is provided,
-    as the module will manage the zip and upload automatically.
-  EOT
-  type        = bool
-  default     = false
-  validation {
-    condition     = !(var.create_function_zip && var.source_dir != null)
-    error_message = "create_function_zip must not be true when source_dir is provided. The module manages the zip automatically."
-  }
-}
-
 # ── Runtime Behavior ──────────────────────────────────────────────────────────
 
 variable "environment_variables" {
