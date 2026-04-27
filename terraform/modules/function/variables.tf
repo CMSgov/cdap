@@ -152,3 +152,35 @@ variable "github_actions_repos" {
   type        = list(string)
   default     = []
 }
+
+variable "egress_rules" {
+  description = "List of egress rules to apply to the security group"
+  type = list(object({
+    name             = string
+    from_port        = number
+    to_port          = number
+    protocol         = string
+    cidr_ipv4        = optional(string)
+    cidr_ipv6        = optional(string)
+    referenced_sg_id = optional(string)
+    description      = optional(string)
+  }))
+  default = [
+    {
+      name        = "allow-all-ipv4"
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_ipv4   = "0.0.0.0/0"
+      description = "Allow all egress traffic (IPv4) - migration default"
+    },
+    {
+      name        = "allow-all-ipv6"
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_ipv6   = "::/0"
+      description = "Allow all egress traffic (IPv6) - migration default"
+    }
+  ]
+}

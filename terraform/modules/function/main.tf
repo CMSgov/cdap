@@ -68,15 +68,46 @@ resource "aws_security_group" "function" {
   vpc_id      = module.vpc.id
 }
 
-# FixMe Refine egress
-resource "aws_security_group_rule" "egress" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = var.allowed_cidr_blocks ? var.allowed_cidr_blocks : [module.vpc.cidr_block]
-  ipv6_cidr_blocks  = ["::/0"]
+resource "aws_vpc_security_group_egress_rule" "ipv4" {
+  for_each = {
+    for idx, rule in var.egress_rules : tostring(idx) => rule
+    if rule.cidr_ipv4 != null
+  }
+
   security_group_id = aws_security_group.function.id
+  cidr_ipv4         = each.value.cidr_ipv4
+  ip_protocol       = each.value.protocol
+  from_port         = each.value.from_port
+  to_port           = each.value.to_port
+  description       = each.value.description
+}
+
+resource "aws_vpc_security_group_egress_rule" "ipv6" {
+  for_each = {
+    for idx, rule in var.egress_rules : tostring(idx) => rule
+    if rule.cidr_ipv6 != null
+  }
+
+  security_group_id = aws_security_group.function.id
+  cidr_ipv6         = each.value.cidr_ipv6
+  ip_protocol       = each.value.protocol
+  from_port         = each.value.from_port
+  to_port           = each.value.to_port
+  description       = each.value.description
+}
+
+resource "aws_vpc_security_group_egress_rule" "sg_source" {
+  for_each = {
+    for idx, rule in var.egress_rules : tostring(idx) => rule
+    if rule.referenced_sg_id != null
+  }
+
+  security_group_id            = aws_security_group.function.id
+  referenced_security_group_id = each.value.referenced_sg_id
+  ip_protocol                  = each.value.protocol
+  from_port                    = each.value.from_port
+  to_port                      = each.value.to_port
+  description                  = each.value.description
 }
 
 resource "aws_lambda_function" "this" {
