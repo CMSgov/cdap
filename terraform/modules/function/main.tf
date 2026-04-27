@@ -170,6 +170,6 @@ resource "aws_lambda_permission" "cloudwatch_events" {
 resource "aws_cloudwatch_log_group" "function" {
   name              = "/aws/lambda/${var.name}"
   kms_key_id        = data.aws_kms_alias.kms_key.target_key_arn
-  skip_destroy      = true # Log group persists after tofu destroy
+  skip_destroy      = strcontains(var.env, "prod") ? true : false
   retention_in_days = var.log_retention_days
 }
