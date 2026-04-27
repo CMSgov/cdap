@@ -1,6 +1,10 @@
 locals {
-  service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
-  service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
+  use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
+}
+
+data "aws_ram_resource_share" "pace_ca" {
+  resource_owner = "OTHER-ACCOUNTS"
+  name           = "pace-ca-g1"
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -78,69 +82,133 @@ resource "aws_ecs_service" "this" {
   propagate_tags       = "SERVICE"
 
   network_configuration {
-    subnets          = var.subnets == null ? keys(var.platform.private_subnets) : var.subnets
+    subnets          = var.subnets == null ? [for s in var.platform.private_subnets : s.id] : var.subnets
     assign_public_ip = false
     security_groups  = var.security_groups
   }
 
   dynamic "load_balancer" {
-    for_each = var.load_balancers
+    for_each = local.enable_alb_integration ? [1] : []
+    content {
+      target_group_arn = aws_lb_target_group.this[0].arn
+      container_name   = var.service_name != null ? var.service_name : local.service_name
+      container_port   = local.alb_container_port
+    }
+  }
+
+  # Old interface: caller-provided load_balancers (deprecated, maintained for backwards compatibility)
+  dynamic "load_balancer" {
+    for_each = local.use_external_load_balancers ? coalesce(var.load_balancers, []) : []
     content {
       target_group_arn = load_balancer.value.target_group_arn
-      container_name   = load_balancer.value.container_name
+      container_name   = coalesce(load_balancer.value.container_name, local.service_name) #
       container_port   = load_balancer.value.container_port
     }
   }
 
-  deployment_minimum_healthy_percent = 100
-  health_check_grace_period_seconds  = var.health_check_grace_period_seconds
-}
+  dynamic "service_connect_configuration" {
+    for_each = var.enable_ecs_service_connect ? [1] : []
+    content {
+      enabled   = true
+      namespace = var.service_connect_namespace
 
-data "aws_iam_policy_document" "execution" {
-  count = var.execution_role_arn != null ? 0 : 1
-  statement {
-    actions = [
-      "ecr:GetAuthorizationToken",
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:BatchGetImage",
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "ssm:GetParameters"
-    ]
-    resources = ["*"]
-  }
+      service {
+        discovery_name = local.service_name
+        port_name      = local.sc_port_name
 
-  statement {
-    actions = [
-      "kms:Decrypt"
-    ]
-    resources = [var.platform.kms_alias_primary.target_key_arn]
-    effect    = "Allow"
-  }
-}
-
-resource "aws_iam_role" "execution" {
-  count = var.execution_role_arn != null ? 0 : 1
-  name  = "${local.service_name_full}-execution"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
+        client_alias {
+          port     = local.port_map[local.sc_port_name]
+          dns_name = local.service_name
         }
-      },
-    ]
-  })
+
+        tls {
+          kms_key  = var.platform.kms_alias_primary.target_key_arn
+          role_arn = aws_iam_role.service_connect[0].arn
+
+          issuer_cert_authority {
+            aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
+          }
+        }
+      }
+    }
+  }
+  deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
+  deployment_maximum_percent         = var.deployment_maximum_percent
+  health_check_grace_period_seconds  = var.health_check_grace_period_seconds
+
+  depends_on = [
+    aws_lb_listener_rule.this
+  ]
+
+  deployment_circuit_breaker {
+    enable   = var.deployment_circuit_breaker.enable
+    rollback = var.deployment_circuit_breaker.rollback
+  }
+
+  lifecycle {
+    ignore_changes = [desired_count]
+  }
 }
 
-resource "aws_iam_role_policy" "execution" {
-  count  = var.execution_role_arn != null ? 0 : 1
-  name   = "${aws_ecs_task_definition.this.family}-execution"
-  role   = aws_iam_role.execution[0].name
-  policy = data.aws_iam_policy_document.execution[0].json
+# -------------------------------------------------------
+# ALB
+# -------------------------------------------------------
+
+resource "aws_lb_target_group" "this" {
+  count = local.enable_alb_integration ? 1 : 0
+
+  name        = "${local.service_name_full}-tg"
+  port        = local.alb_container_port
+  protocol    = "HTTP"
+  vpc_id      = var.platform.vpc_id
+  target_type = "ip"
+
+  health_check {
+    path                = var.alb_health_check.path
+    port                = var.alb_health_check.port
+    protocol            = var.alb_health_check.protocol
+    matcher             = var.alb_health_check.matcher
+    interval            = var.alb_health_check.interval
+    timeout             = var.alb_health_check.timeout
+    healthy_threshold   = var.alb_health_check.healthy_threshold
+    unhealthy_threshold = var.alb_health_check.unhealthy_threshold
+  }
+
+  tags = {
+    Name = "${local.service_name_full}-tg"
+  }
+
+  lifecycle {
+    precondition {
+      condition     = var.alb_port_name != null
+      error_message = "alb_port_name is required when alb_listener_arn is set. Set it to the name of the port mapping in port_mappings that should receive ALB traffic."
+    }
+
+    precondition {
+      condition     = var.alb_port_name == null || contains(keys(local.port_map), var.alb_port_name)
+      error_message = "alb_port_name '${var.alb_port_name}' does not match any named port in port_mappings."
+    }
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.service_connect
+  ]
+}
+
+resource "aws_lb_listener_rule" "this" {
+  count = local.enable_alb_integration ? 1 : 0
+
+  listener_arn = var.alb_listener_arn
+  priority     = var.alb_priority
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.this[0].arn
+  }
+
+  condition {
+    path_pattern {
+      values = var.alb_path_patterns
+    }
+  }
 }
