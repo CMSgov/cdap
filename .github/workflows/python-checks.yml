@@ -9,8 +9,6 @@ on:
       - 'scripts/**/*.py'
       - 'scripts/**/requirements.txt'
 
-env:
-  PYTHON_VERSION: '3.12'
 
 jobs:
   python-checks:
@@ -19,11 +17,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
         with:
           fetch-depth: 0  # Required for both SonarQube blame data and git diff
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Set up Snyk
         uses: snyk/actions/setup@master
