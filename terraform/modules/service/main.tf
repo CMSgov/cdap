@@ -1,6 +1,40 @@
 locals {
   service_name      = var.service_name_override != null ? var.service_name_override : var.platform.service
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
+
+  app_container = {
+    name                   = local.service_name
+    image                  = var.image
+    readonlyRootFilesystem = true
+    portMappings           = var.port_mappings
+    mountPoints            = var.mount_points
+    secrets                = var.container_secrets
+    environment            = var.container_environment
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+        awslogs-create-group  = "true"
+        awslogs-region        = var.platform.primary_region.name
+        awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
+      }
+    }
+    healthCheck = var.health_check
+  }
+
+  datadog_container = {
+    name      = "datadog-agent"
+    image     = "public.ecr.aws/datadog/agent:latest"
+    essential = false # Do not impact task health if this container fails
+    environment = [
+      { name = "ECS_FARGATE", value = "true" },
+      { name = "DD_SITE", value = "ddog-gov.com" },
+      { name = "DD_APM_ENABLED", value = "true" },
+      { name = "DD_LOGS_ENABLED", value = "false" },  # DD logging is currently not approved
+      { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" }
+    ]
+    secrets = var.container_secrets
+  }
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -11,27 +45,9 @@ resource "aws_ecs_task_definition" "this" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.cpu
   memory                   = var.memory
-  container_definitions = nonsensitive(jsonencode([
-    {
-      name                   = local.service_name
-      image                  = var.image
-      readonlyRootFilesystem = true
-      portMappings           = var.port_mappings
-      mountPoints            = var.mount_points
-      secrets                = var.container_secrets
-      environment            = var.container_environment
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
-          awslogs-create-group  = "true"
-          awslogs-region        = var.platform.primary_region.name
-          awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
-        }
-      }
-      healthCheck = var.health_check
-    }
-  ]))
+
+  # Concat the main container with the datadog container
+  container_definitions = nonsensitive(jsonencode(concat([local.app_container], [local.datadog_container])))
 
   runtime_platform {
     operating_system_family = "LINUX"
