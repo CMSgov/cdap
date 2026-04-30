@@ -21,7 +21,7 @@ resource "aws_s3_bucket_versioning" "this" {
 
 data "aws_kms_alias" "default_encryption_key" {
   count = var.kms_key_arn == null ? 1 : 0
-  name = "alias/${var.app}-${var.env}"
+  name  = "alias/${var.app}-${var.env}"
 }
 
 data "aws_iam_policy_document" "ssl_only" {
