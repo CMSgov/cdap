@@ -20,6 +20,7 @@ resource "aws_s3_bucket_versioning" "this" {
 }
 
 data "aws_kms_alias" "kms_key" {
+  count = var.kms_key_arn == null ? 1 : 0
   name = "alias/${var.app}-${var.env}"
 }
 
@@ -68,11 +69,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
     bucket_key_enabled = true
 
     apply_server_side_encryption_by_default {
-      sse_algorithm = "aws:kms"
+      sse_algorithm     = "aws:kms"
       kms_master_key_id = (
-        var.default_encryption_key_arn == null ?
-        data.aws_kms_alias.kms_key.target_key_arn :
-        var.default_encryption_key_arn
+        var.kms_key_arn == null ?
+        data.aws_kms_alias.kms_key[0].target_key_arn :
+        var.kms_key_arn
       )
     }
   }

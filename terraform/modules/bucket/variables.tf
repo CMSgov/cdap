@@ -13,7 +13,7 @@ variable "app" {
   }
 }
 
-variable "default_encryption_key_arn" {
+variable "kms_key_arn" {
   default     = null
   description = "The ARN of the default S3 bucket encryption key"
   type        = string
