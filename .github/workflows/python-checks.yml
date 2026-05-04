@@ -4,19 +4,44 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'terraform/services/alarm-to-slack/lambda_src/**'
+      - 'terraform/services/**/lambda_src/**/*.py'
+      - 'terraform/services/**/lambda_src/**/requirements.txt'
+      - 'scripts/**/*.py'
+      - 'scripts/**/requirements.txt'
 
 jobs:
   python-checks:
-    runs-on: codebuild-cdap-${{ github.ref_name =='main' && 'prod' || 'non-prod' }}-${{github.run_id}}-${{github.run_attempt}}
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
-      - uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v 47.0.5
-        id: changed-dirs
         with:
-          files: |
-            terraform/services/alarm-to-slack/lambda_src/**
-          dir_names: 'true'
-      - run: scripts/python-checks
+          fetch-depth: 0  # Required for both SonarQube blame data and git diff
+
+      - name: Set up Snyk
+        uses: snyk/actions/setup@master
+
+      - name: Assume role to AWS
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ github.ref_name =='main' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ github.ref_name =='main' && 'cdap-prod' || 'cdap-test' }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Retrieve credentials
+        uses: ./actions/aws-params-env-action
         env:
-          CHANGED_DIRS: ${{ steps.changed-dirs.outputs.all_changed_files }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            SNYK_TOKEN=/cdap/${{ github.ref_name =='main' && 'prod' || 'test' }}/snyk/api_token
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
+
+      - name: Run Python Checks (SonarQube + Snyk)
+        env:
+          SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
+        run: scripts/python-checks

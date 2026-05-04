@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# Used to evaluate encryption.
 import boto3
 
 def list_unencrypted_s3_buckets():

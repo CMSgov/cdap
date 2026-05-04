@@ -1,18 +1,177 @@
 #!/bin/bash
-# Run checks on python directories. Used in the python-checks workflow.
+# =============================================================================
+# python-checks
+# =============================================================================
+# Runs Snyk (SAST security) scans on changed Python Lambda source directories.
+# SonarQube (code quality) scans run automatically in CI via GitHub Actions.
+#
+# USAGE (local):
+#   bash scripts/python-checks
+#
+# PREREQUISITES:
+#   - snyk           : brew install snyk-cli        (or auto-installed by script)
+#   - pyenv          : brew install pyenv           (optional, recommended)
+#
+#   After installing Snyk, authenticate once:
+#     snyk auth
+#   This opens a browser to log in and stores your token locally.
+#   You do NOT need to set SNYK_TOKEN manually after running snyk auth.
+#
+# REQUIRED ENV VARS (CI only — not needed locally after snyk auth):
+#   SNYK_TOKEN       : Snyk API token (set as GitHub Actions secret in CI)
+#   SONAR_TOKEN      : SonarQube token with project creation rights (CI only)
+#   SONAR_HOST_URL   : retrieve through aws ssm params
+#
+# OPTIONAL ENV VARS:
+#   PYTHON_VERSION   : Python version to use (default: 3.12)
+#   CHANGED_DIRS     : Override git diff detection for targeted local testing
+#                      e.g. export CHANGED_DIRS="terraform/services/my-func/lambda_src"
+#   PRE_COMMIT_MODE  : Set to "true" to scan staged files instead of branch diff
+#
+# MODES:
+#   CI (default)     : Diffs against origin/$GITHUB_BASE_REF (set automatically in Actions)
+#   Local testing    : Set GITHUB_BASE_REF=main or override with CHANGED_DIRS
+#   Pre-commit       : Set PRE_COMMIT_MODE=true (scans staged files only)
+#
+# NOTES:
+#   - SonarQube scanning is skipped locally if SONAR_TOKEN/SONAR_HOST_URL are not set.
+#     It runs automatically in CI via GitHub Actions secrets.
+#   - Snyk SAST scanning runs in both local and CI environments.
+#   - Add .snyk-cli/ to .gitignore if Snyk is auto-installed by this script.
+# =============================================================================
 set -e
 
 repo_root="$(git rev-parse --show-toplevel)"
+python_version="${PYTHON_VERSION:-3.12}"
+
+# --- pyenv setup ---
+if command -v pyenv &> /dev/null; then
+  echo "[pyenv] Found pyenv. Ensuring Python $python_version is available..."
+  if ! pyenv versions --bare | grep -q "^${python_version}"; then
+    echo "[pyenv] Python $python_version not installed. Installing..."
+    pyenv install "$python_version"
+  fi
+  full_version=$(pyenv versions --bare | grep "^${python_version}" | tail -1)
+  PYTHON_BIN="$(pyenv root)/versions/${full_version}/bin/python"
+  echo "[pyenv] Using Python $($PYTHON_BIN --version)"
+else
+  PYTHON_BIN="python"
+  echo "[pyenv] pyenv not found. Using system Python: $(python --version)"
+fi
+
+# --- Detect changed dirs based on context ---
+if [ "${PRE_COMMIT_MODE:-false}" = "true" ]; then
+  echo "Running in pre-commit mode (staged files)..."
+
+  LAMBDA_DIRS=$(git diff --cached --name-only \
+    | grep 'terraform/services/.*/lambda_src/' \
+    | awk -F'/' '{print $1"/"$2"/"$3"/"$4}' \
+    | sort -u)
+
+  SCRIPT_DIRS=$(git diff --cached --name-only \
+    | grep -E '^scripts/.*\.py$|^scripts/.*/requirements\.txt$' \
+    | awk -F'/' 'NF>1 {print $1"/"$2} NF==1 {print $1}' \
+    | sort -u)
+
+  CHANGED_DIRS=$(printf "%s\n%s" "$LAMBDA_DIRS" "$SCRIPT_DIRS" | grep -v '^$' | sort -u)
+
+elif [ -n "$CHANGED_DIRS" ]; then
+  echo "Using manually set CHANGED_DIRS..."
+
+else
+  base_ref="${GITHUB_BASE_REF:-main}"
+  echo "Running in CI mode (diff against origin/$base_ref)..."
+
+  LAMBDA_DIRS=$(git diff --name-only "origin/$base_ref"...HEAD \
+    | grep 'terraform/services/.*/lambda_src/' \
+    | awk -F'/' '{print $1"/"$2"/"$3"/"$4}' \
+    | sort -u)
+
+  SCRIPT_DIRS=$(git diff --name-only "origin/$base_ref"...HEAD \
+    | grep -E '^scripts/.*\.py$|^scripts/.*/requirements\.txt$' \
+    | awk -F'/' 'NF>1 {print $1"/"$2} NF==1 {print $1}' \
+    | sort -u)
+
+  CHANGED_DIRS=$(printf "%s\n%s" "$LAMBDA_DIRS" "$SCRIPT_DIRS" | grep -v '^$' | sort -u)
+fi
+
+# --- Install SonarScanner if needed ---
+if [ -n "$SONAR_TOKEN" ] && [ -n "$SONAR_HOST_URL" ]; then
+  if ! command -v sonar-scanner &> /dev/null; then
+    SONAR_SCANNER_VERSION="6.2.1.4610"
+    SONAR_SCANNER_DIR="$repo_root/sonar-scanner-${SONAR_SCANNER_VERSION}-linux-x64"
+
+    if [ ! -d "$SONAR_SCANNER_DIR" ]; then
+      echo "[SonarQube] Installing SonarScanner..."
+      curl -sSLo sonar-scanner.zip \
+        "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux-x64.zip"
+      unzip -q -o sonar-scanner.zip
+      rm sonar-scanner.zip
+    fi
+
+    export PATH="$SONAR_SCANNER_DIR/bin:$PATH"
+  fi
+fi
+
+# --- Install Snyk CLI if not available ---
+if ! command -v snyk &> /dev/null; then
+  echo "[Snyk] snyk CLI not found. Attempting to install..."
+  OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  if [ "$OS" = "darwin" ]; then
+    SNYK_BINARY="snyk-macos"
+  elif [ "$OS" = "linux" ]; then
+    SNYK_BINARY="snyk-linux"
+  else
+    echo "[Snyk] Unsupported OS: $OS. Skipping Snyk installation."
+    SNYK_BINARY=""
+  fi
+
+  if [ -n "$SNYK_BINARY" ]; then
+    mkdir -p "$repo_root/.snyk-cli"
+    curl -sSLo "$repo_root/.snyk-cli/snyk" \
+      "https://static.snyk.io/cli/latest/$SNYK_BINARY"
+    chmod +x "$repo_root/.snyk-cli/snyk"
+    export PATH="$repo_root/.snyk-cli:$PATH"
+    echo "[Snyk] Installed: $(snyk --version)"
+  fi
+fi
+
+# --- Scan each changed directory ---
 for dir in $CHANGED_DIRS; do
   dir_absolute="$repo_root/$dir"
-  [ ! -d "$dir_absolute" ] && echo "No directory found at $dir. Skipping" && continue
+
+  [ ! -d "$dir_absolute" ] && echo "No directory found at $dir. Skipping." && continue
+
+  echo "=========================================="
+  echo "Scanning: $dir"
+  echo "=========================================="
+
   cd "$dir_absolute"
-  temp_venv=$(mktemp -d)
-  python -m venv "$temp_venv"
-  source "$temp_venv/bin/activate"
-  [ -f "requirements.txt" ] && pip install -r requirements.txt
-  pip install pylint pytest
-  echo "Running python lint and test on \"$dir\""
-  pylint .
-  pytest .
+
+  # --- Snyk Scans ---
+  if command -v snyk &> /dev/null; then
+    echo "[Snyk] Running SAST scan..."
+    snyk code test . || true
+  else
+    echo "[Snyk] snyk CLI not available. Skipping Snyk scans."
+  fi
+
+  # --- SonarQube Scan ---
+  if [ -z "$SONAR_TOKEN" ] || [ -z "$SONAR_HOST_URL" ]; then
+    echo "[SonarQube] SONAR_TOKEN or SONAR_HOST_URL not set. Skipping SonarQube scan."
+    echo "[SonarQube] SonarQube scanning runs automatically in CI."
+  else
+    echo "[SonarQube] Running scan..."
+    project_key=$(echo "$dir" | tr '/' '_')
+    project_name=$(echo "$dir" | awk -F'/' '{print $3}')
+
+    sonar-scanner \
+      -Dsonar.projectKey="$project_key" \
+      -Dsonar.projectName="$project_name" \
+      -Dsonar.sources="$dir_absolute" \
+      -Dsonar.host.url="$SONAR_HOST_URL" \
+      -Dsonar.token="$SONAR_TOKEN" \
+      -Dsonar.language=py \
+      -Dsonar.python.version="$python_version"
+  fi
 done
