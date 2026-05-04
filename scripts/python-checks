@@ -62,24 +62,37 @@ fi
 # --- Detect changed dirs based on context ---
 if [ "${PRE_COMMIT_MODE:-false}" = "true" ]; then
   echo "Running in pre-commit mode (staged files)..."
-  CHANGED_DIRS=$(git diff --cached --name-only \
+
+  LAMBDA_DIRS=$(git diff --cached --name-only \
     | grep 'terraform/services/.*/lambda_src/' \
     | awk -F'/' '{print $1"/"$2"/"$3"/"$4}' \
     | sort -u)
+
+  SCRIPT_DIRS=$(git diff --cached --name-only \
+    | grep -E '^scripts/.*\.py$|^scripts/.*/requirements\.txt$' \
+    | awk -F'/' 'NF>1 {print $1"/"$2} NF==1 {print $1}' \
+    | sort -u)
+
+  CHANGED_DIRS=$(printf "%s\n%s" "$LAMBDA_DIRS" "$SCRIPT_DIRS" | grep -v '^$' | sort -u)
+
 elif [ -n "$CHANGED_DIRS" ]; then
   echo "Using manually set CHANGED_DIRS..."
+
 else
   base_ref="${GITHUB_BASE_REF:-main}"
   echo "Running in CI mode (diff against origin/$base_ref)..."
-  CHANGED_DIRS=$(git diff --name-only "origin/$base_ref"...HEAD \
+
+  LAMBDA_DIRS=$(git diff --name-only "origin/$base_ref"...HEAD \
     | grep 'terraform/services/.*/lambda_src/' \
     | awk -F'/' '{print $1"/"$2"/"$3"/"$4}' \
     | sort -u)
-fi
 
-if [ -z "$CHANGED_DIRS" ]; then
-  echo "No python directories changed. Exiting."
-  exit 0
+  SCRIPT_DIRS=$(git diff --name-only "origin/$base_ref"...HEAD \
+    | grep -E '^scripts/.*\.py$|^scripts/.*/requirements\.txt$' \
+    | awk -F'/' 'NF>1 {print $1"/"$2} NF==1 {print $1}' \
+    | sort -u)
+
+  CHANGED_DIRS=$(printf "%s\n%s" "$LAMBDA_DIRS" "$SCRIPT_DIRS" | grep -v '^$' | sort -u)
 fi
 
 # --- Install SonarScanner if needed ---
