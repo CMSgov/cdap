@@ -1,16 +1,13 @@
-locals {
-  cdap_env = contains(["sandbox", "prod"], var.env) ? "prod" : "test"
-}
 
 module "standards" {
   source    = "../../../modules/standards"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app          = var.app
-  env          = var.env
+  app          = "cdap"
+  env          = "test"
   root_module  = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
   service      = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
-  ssm_root_map = { datadog = "/cdap/${local.cdap_env}/datadog/cicd/" }
+  ssm_root_map = { datadog = "/cdap/test/datadog/cicd/" }
 }
 
 module "datadog_dashboard" {
