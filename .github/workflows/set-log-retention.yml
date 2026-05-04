@@ -57,7 +57,7 @@ jobs:
             if echo "$INPUT_ENV" | grep -qiE 'prod|sandbox'; then
               echo "runner_env=prod"     >> "$GITHUB_OUTPUT"
             elif echo "$INPUT_ENV" | grep -qiE 'dev|test'; then
-              echo "runner_env=non_prod" >> "$GITHUB_OUTPUT"
+              echo "runner_env=non-prod" >> "$GITHUB_OUTPUT"
             else
               echo "::error::Environment '${INPUT_ENV}' must contain one of: prod, sandbox, dev, test"
               exit 1
@@ -183,12 +183,7 @@ jobs:
     name: "Apply - Execute Retention Policy Updates"
     needs: [plan, approve]
     if: needs.plan.outputs.has_changes == 'true'
-    runs-on: >-
-      codebuild-cdap-${{
-        needs.plan.outputs.runner_env == 'prod'
-        && 'prod'
-        || 'non-prod'
-      }}-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: codebuild-cdap-${{ needs.plan.outputs.runner_env }}-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - name: Checkout
