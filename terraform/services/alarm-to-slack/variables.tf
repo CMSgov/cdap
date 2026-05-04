@@ -15,3 +15,9 @@ variable "env" {
     error_message = "Valid values for env are test, prod."
   }
 }
+
+variable "apps_served" {
+  description = "List of app names whose Slack webhook URLs this function reads from SSM at runtime."
+  type        = list(string)
+  default     = ["bcda", "cdap", "dpc"]
+}
