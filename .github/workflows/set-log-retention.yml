@@ -102,7 +102,7 @@ jobs:
           PLAN_FILE=$(ls retention-plan-*.json 2>/dev/null | head -n 1)
 
           if [ -z "$PLAN_FILE" ]; then
-            echo "No retention plan file found in $(pwd)"
+            echo "No retention plan file found in $(PWD)"
             ls -la
             exit 1
           fi
