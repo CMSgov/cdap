@@ -12,6 +12,9 @@ on:
 
 jobs:
   python-checks:
+    permissions:
+      contents: read
+      id-token: write
     runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
