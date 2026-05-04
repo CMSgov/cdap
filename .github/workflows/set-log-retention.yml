@@ -67,12 +67,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
 
-      - name: Check available Python
-        working-directory: ${{ github.workspace }}
-        run: |
-          python3 --version
-          which python3
-
       - name: Install dependencies
         working-directory: ${{ github.workspace }}/scripts/set_log_retention
         run: python3 -m pip install -r requirements.txt
