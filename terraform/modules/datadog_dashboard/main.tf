@@ -1,4 +1,4 @@
-resource "datadog_dashboard" "Application_Metrics_Dashboard" {
+resource "datadog_dashboard" "application_metrics_dashboard" {
   layout_type = "ordered"
   title       = "${var.app} Metrics Dashboard"
   template_variable {
