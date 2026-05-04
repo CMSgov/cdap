@@ -35,24 +35,7 @@ PLAN_FILE   = f"retention-plan-{DATE_TAG}.json"
 REPORT_FILE = f"retention-report-{DATE_TAG}.csv"
 
 # Log groups excluded because their retention is managed by Terraform.
-EXCLUSION_LIST = {
-    "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_job_data",
-    "/aws/kinesisfirehose/bfd-insights-bcda-prod-bfd-insights-get_stale_pending_jobs",
-    "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_active_acos",
-    "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_stale_cclf_imports",
-    "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_num_benes_per_aco",
-    "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_suppression_metrics",
-    "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_num_days_to_make_first_request",
-    "/aws/kinesisfirehose/bfd-insights-bcda-prod-get_acos_with_expired_credentials",
-    "aws/kinesisfirehose/bfd-insights-bcda-prod-get_job_data",  # intentional: no leading slash
-    "/aws/lambda/insights_data_sampler_prod",
-    "/aws/lambda/ab2d-prod-audit",
-    "/aws/lambda/ab2d-sandbox-audit",
-    "/aws/lambda/ab2d-test-audit",
-    "/aws/lambda/ab2d-dev-audit",
-    "/aws/events/ecs/dpc-prod-backend",
-    "/aws/events/ecs/dpc-prod-frontend",
-}
+EXCLUSION_LIST = {}
 # ---------------------------------------------------------------------------
 
 # Helpers
