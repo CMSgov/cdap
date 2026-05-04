@@ -2,7 +2,7 @@ name: CloudWatch Log Retention Manager
 
 on:
   schedule:
-    - cron: "0 14 * * 1"
+    - cron: "0 14 * * 1" # Every Monday at 14:00 UTC set to always run on prod
   workflow_dispatch:
     inputs:
       retention_days:
@@ -12,7 +12,6 @@ on:
       target_env:
         description: "Target environment string (e.g. ephemeral-prod, happy-test, nice-sandbox, dev)"
         required: true
-        default: "prod"
 
 permissions:
   contents: write
