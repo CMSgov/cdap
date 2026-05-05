@@ -101,10 +101,6 @@ variable "liveness_check_enabled" {
     surfaces as a function error and causes the Tofu apply to fail, alerting
     the deploying team immediately.
 
-    See the liveness_check_handler_key variable for the expected event shape,
-    and refer to your function's documentation for what the liveness check
-    validates.
-
     Recommended: true in all environments to catch misconfiguration at deploy time.
     EOT
   type        = bool
