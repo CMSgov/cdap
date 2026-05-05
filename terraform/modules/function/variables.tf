@@ -82,6 +82,35 @@ variable "source_code_version" {
   default     = null
 }
 
+variable "liveness_check_enabled" {
+  description = <<-EOT
+    Enables a deploy-time liveness check that invokes the Lambda function
+    immediately after deployment to verify it is healthy and correctly configured.
+
+    When enabled, an aws_lambda_invocation resource is created that sends a
+    { "RequestType": "LivenessCheck" } payload to the Lambda function after
+    each deployment. The invocation is re-triggered whenever the Lambda source
+    code changes (tracked via source_code_hash).
+
+    The Lambda function is responsible for implementing the liveness check logic
+    in its handler. This may include verifying external dependencies, validating
+    configuration, checking connectivity to downstream services, or any other
+    health validation relevant to the function's purpose.
+
+    If the liveness check fails, the Lambda should raise an exception. This
+    surfaces as a function error and causes the Tofu apply to fail, alerting
+    the deploying team immediately.
+
+    See the liveness_check_handler_key variable for the expected event shape,
+    and refer to your function's documentation for what the liveness check
+    validates.
+
+    Recommended: true in all environments to catch misconfiguration at deploy time.
+    EOT
+  type        = bool
+  default     = true
+}
+
 # ── Runtime Behavior ──────────────────────────────────────────────────────────
 
 variable "environment_variables" {

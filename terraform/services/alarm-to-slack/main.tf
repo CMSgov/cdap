@@ -45,6 +45,7 @@ module "sns_to_slack_function" {
 
   environment_variables = {
     IGNORE_OK = true
+    APPS      = "bcda, dpc, ab2d"
   }
 }
 

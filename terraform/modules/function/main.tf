@@ -173,3 +173,17 @@ resource "aws_cloudwatch_log_group" "function" {
   skip_destroy      = strcontains(var.env, "prod") ? true : false
   retention_in_days = var.log_retention_days
 }
+
+resource "aws_lambda_invocation" "liveness_check" {
+  count         = liveness_check_enabled ? 1 : 0
+  function_name = aws_lambda_function.this.function_name
+
+  # Re-runs whenever the Lambda source code changes
+  triggers = {
+    redeployment = aws_lambda_function.this.source_code_hash
+  }
+
+  input = jsonencode({
+    RequestType = "LivenessCheck"
+  })
+}
