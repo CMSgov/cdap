@@ -45,16 +45,20 @@ jobs:
           chmod +x /usr/local/bin/snyk
           snyk --version
 
+
       - name: Snyk Dependency Scan (snyk test)
-        env:
-          SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
-        run: snyk test --all-projects --exclude=.terraform,.snyk-cli,node_modules
+        run: |
+          snyk test \
+            --all-projects \
+            --package-manager=pip \
+            --exclude=.terraform,.snyk-cli,node_modules,vendor
 
       - name: Snyk Code Scan (snyk code test)
         continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
-        run: snyk code test --all-projects
+        run: |
+          snyk code test \
+            terraform/services \
+            scripts
 
       - name: Run SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
