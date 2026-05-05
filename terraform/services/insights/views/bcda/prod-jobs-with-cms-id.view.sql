@@ -9,8 +9,10 @@ SELECT
     jobs.updated_at,
     jobs.job_count,
     jobs.transaction_time,
-    jobs.benes_attributed_to_aco,
     acos.cms_id,
+    jobs.benes_attributed_to_aco,
+    sq.benes_with_data,
+    sq.benes_retrieved_percent,
     CASE
         WHEN acos.cms_id ~ 'D\d{4}' THEN 'ACO REACH'
         WHEN acos.cms_id ~ 'K\d{4}' THEN 'KCC'
@@ -24,9 +26,7 @@ SELECT
         WHEN acos.cms_id ~ 'V\d{3}' THEN 'NGACO'
         WHEN acos.cms_id ~ 'E\d{4}' THEN 'CEC'
         ELSE 'Unknown'
-    END AS model_name,
-    sq.benes_with_data,
-    sq.benes_retrieved_percent
+    END AS model_name
 FROM jobs
 LEFT JOIN acos ON acos.uuid = jobs.aco_id
 JOIN (
