@@ -1,29 +1,35 @@
-name: python-checks (reusable)
+name: code-checks (reusable)
 description: Workflow that can be called to evaluate any script or folder containing python logic.
 
 on:
   workflow_call:
     inputs:
       source_path:
-        description: 'Path to the Python source directory to scan'
+        description: 'Path to Python or JavaScript source directory (optional)'
         required: true
         type: string
-      python_version:
-        description: 'Python version to use'
+      node_version:
+        description: 'Node.js version (if source is JavaScript and requires npm install)'
         required: false
         type: string
-        default: '3.14'
+        default: ''
+      terraform_path:
+        description: 'Path to Terraform directory to scan with snyk iac test (optional)'
+        required: false
+        type: string
+        default: ''
       sonar_project_key:
         description: 'SonarQube project key'
         required: true
         type: string
-      sonar_project_name:
-        description: 'SonarQube project name'
-        required: true
+      sonar_extra_args:
+        description: 'Additional sonar-scanner -D args (optional)'
+        required: false
         type: string
+        default: ''
 
 jobs:
-  python-checks:
+  checks:
     permissions:
       contents: read
       id-token: write
@@ -34,12 +40,6 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
         with:
           fetch-depth: 0
-
-      - name: Set up Python ${{ inputs.python_version }}
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-        with:
-          python-version: ${{ inputs.python_version }}
-          update-environment: true
 
       - name: Assume role to AWS
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v4.1.0
@@ -64,30 +64,49 @@ jobs:
           snyk --version
 
       - name: Snyk Dependency Scan (snyk test)
-        run: |
-          REQ="${{ inputs.source_path }}/requirements.txt"
-          if [ -f "$REQ" ]; then
-            echo "[Snyk] Found requirements.txt — running dependency scan..."
-            snyk test --file="$REQ"
-          else
-            echo "[Snyk] No requirements.txt found at $REQ — skipping dependency scan."
-          fi
+        if: inputs.source_path != ''
+        continue-on-error: true
+        run: snyk test ${{ inputs.source_path }}
 
       - name: Snyk Code Scan (snyk code test)
+        if: inputs.source_path != ''
         continue-on-error: true
-        run: snyk code test ${{ inputs.source_path }} --include="**/*.py"
+        run: snyk code test ${{ inputs.source_path }}
+
+      - name: Setup node for Sonarqube analysis of compiled typescript
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Install Node dependencies
+        if: inputs.node_version != ''
+        working-directory: ${{ inputs.source_path }}
+        run: npm ci
 
       - name: Run SonarQube Scan
+        if: inputs.source_path != '' && inputs.sonar_project_key != ''
         uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
+          projectBaseDir: ${{ inputs.source_path }}
           args: >
             -Dsonar.projectKey=${{ inputs.sonar_project_key }}
-            -Dsonar.projectName=${{ inputs.sonar_project_name }}
-            -Dsonar.sources=${{ inputs.source_path }}
-            -Dsonar.language=py
-            -Dsonar.python.version=${{ inputs.python_version }}
-            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**
+            -Dsonar.projectName=${{ inputs.sonar_project_key }}
+            -Dsonar.sources=.
+            -Dsonar.ci.autoconfig.disabled=true
+            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**,**/node_modules/**,**/dist/**,**/lib/**
 
-      - name: Quality Gate Check
+      - name: SonarQube Quality Gate Check
+        if: inputs.source_path != '' && inputs.sonar_project_key != ''
         uses: sonarsource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
         timeout-minutes: 5
+        with:
+          scanMetadataReportFile: ${{ inputs.source_path }}/.scannerwork/report-task.txt
+
+      # -------------------------------------------------------
+      # TERRAFORM / IaC SCAN
+      # -------------------------------------------------------
+
+      - name: Snyk IaC Scan (Terraform)
+        if: inputs.terraform_path != ''
+        continue-on-error: true
+        run: snyk iac test ${{ inputs.terraform_path }} --report

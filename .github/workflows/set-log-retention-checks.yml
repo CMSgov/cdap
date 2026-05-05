@@ -1,4 +1,4 @@
-name: set-log-retention-checks (cloudwatch log retention)
+name: code-checks (set-log-retention-checks / cloudwatch log retention)
 description: Checks CDAP hosted check-log-retention for python vulnerabilities and code quality.
 
 on:
@@ -8,11 +8,16 @@ on:
       - 'scripts/set_log_retention/*.py'
       - 'scripts/set_log_retention/requirements.txt'
       - 'terraform/modules/function/**'
+      - '.github/workflows/set-log-retention-checks.yml'
+      - '.github/workflows/checks-reusable.yml'
 
 jobs:
-  python-checks:
-    uses: ./.github/workflows/python-checks-reusable.yml
+  checks:
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/checks-reusable.yml
+    secrets: inherit
     with:
       source_path: scripts/set_log_retention
       sonar_project_key: cdap-set-log-retention
-      sonar_project_name: "CDAP Set Log Retention"
