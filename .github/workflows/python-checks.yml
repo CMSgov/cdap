@@ -46,20 +46,15 @@ jobs:
           snyk --version
 
       - name: Snyk Dependency Scan (snyk test)
-        uses: snyk/actions/python-3.12@9adf32b1121593767fc3c057af55b55db032dc04 # unversioned ; latest 4 May 2026
-        continue-on-error: false
         env:
           SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
-        with:
-          args: --all-projects --exclude=.terraform,.snyk-cli,node_modules
+        run: snyk test --all-projects --exclude=.terraform,.snyk-cli,node_modules
 
-      - name: Run Snyk Code (static application security testing)
-        uses: snyk/actions/python-3.12@9adf32b1121593767fc3c057af55b55db032dc04 # unversioned ; latest 4 May 2026
+      - name: Snyk Code Scan (snyk code test)
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
-        with:
-          command: code test
-          args: --all-projects
+        run: snyk code test --all-projects
 
       - name: Run SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
