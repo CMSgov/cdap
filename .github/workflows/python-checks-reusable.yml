@@ -1,0 +1,93 @@
+name: python-checks (reusable)
+description: Workflow that can be called to evaluate any script or folder containing python logic.
+
+on:
+  workflow_call:
+    inputs:
+      source_path:
+        description: 'Path to the Python source directory to scan'
+        required: true
+        type: string
+      python_version:
+        description: 'Python version to use'
+        required: false
+        type: string
+        default: '3.14'
+      sonar_project_key:
+        description: 'SonarQube project key'
+        required: true
+        type: string
+      sonar_project_name:
+        description: 'SonarQube project name'
+        required: true
+        type: string
+
+jobs:
+  python-checks:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ inputs.python_version }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ inputs.python_version }}
+          update-environment: true
+
+      - name: Assume role to AWS
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v4.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ github.ref_name == 'main' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ github.ref_name == 'main' && 'cdap-prod' || 'cdap-test' }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Retrieve credentials
+        uses: ./actions/aws-params-env-action
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            SNYK_TOKEN=/cdap/${{ github.ref_name == 'main' && 'prod' || 'test' }}/snyk/api_token
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
+
+      - name: Install Snyk CLI
+        run: |
+          curl -sSLo /usr/local/bin/snyk https://static.snyk.io/cli/latest/snyk-linux-arm64
+          chmod +x /usr/local/bin/snyk
+          snyk --version
+
+      - name: Snyk Dependency Scan (snyk test)
+        run: |
+          REQ="${{ inputs.source_path }}/requirements.txt"
+          if [ -f "$REQ" ]; then
+            echo "[Snyk] Found requirements.txt — running dependency scan..."
+            snyk test --file="$REQ"
+          else
+            echo "[Snyk] No requirements.txt found at $REQ — skipping dependency scan."
+          fi
+
+      - name: Snyk Code Scan (snyk code test)
+        continue-on-error: true
+        run: snyk code test ${{ inputs.source_path }} --include="**/*.py"
+
+      - name: Run SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
+        with:
+          args: >
+            -Dsonar.projectKey=${{ inputs.sonar_project_key }}
+            -Dsonar.projectName=${{ inputs.sonar_project_name }}
+            -Dsonar.sources=${{ inputs.source_path }}
+            -Dsonar.language=py
+            -Dsonar.python.version=${{ inputs.python_version }}
+            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**
+
+      - name: Quality Gate Check
+        uses: sonarsource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b # v1.2.0
+        timeout-minutes: 5
