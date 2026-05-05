@@ -1,4 +1,5 @@
 name: python-checks
+description: Evaluates all python files using Snyk and Sonarqube.
 
 on:
   workflow_dispatch:
@@ -6,6 +7,8 @@ on:
     paths:
       - 'terraform/services/**/lambda_src/**/*.py'
       - 'terraform/services/**/lambda_src/**/requirements.txt'
+      - 'terraform/modules/**/lambda_src/**/*.py'
+      - 'terraform/modules/**/lambda_src/**/requirements.txt'
       - 'scripts/**/*.py'
       - 'scripts/**/requirements.txt'
 
@@ -18,10 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
         with:
-          fetch-depth: 0  # Required for both SonarQube blame data and git diff
-
-      - name: Set up Snyk
-        uses: snyk/actions/setup@master
+          fetch-depth: 0
 
       - name: Assume role to AWS
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
@@ -39,9 +39,31 @@ jobs:
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
 
-      - name: Run Python Checks (SonarQube + Snyk)
+      - name: Install Snyk CLI while binary defaults to x86 and runners use arm64
+        run: |
+          curl -sSLo /usr/local/bin/snyk https://static.snyk.io/cli/latest/snyk-linux-arm64
+          chmod +x /usr/local/bin/snyk
+          snyk --version
+
+      - name: Snyk Dependency Scan (snyk test)
+        uses: snyk/actions/python-3.12@9adf32b1121593767fc3c057af55b55db032dc04 # unversioned ; latest 4 May 2026
+        continue-on-error: false
         env:
           SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
-        run: scripts/python-checks
+        with:
+          args: --all-projects --exclude=.terraform,.snyk-cli,node_modules
+
+      - name: Run Snyk Code (static application security testing)
+        uses: snyk/actions/python-3.12@9adf32b1121593767fc3c057af55b55db032dc04 # unversioned ; latest 4 May 2026
+        env:
+          SNYK_TOKEN: ${{ env.SNYK_TOKEN }}
+        with:
+          command: code test
+          args: --all-projects
+
+      - name: Run SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
+
+      - name: Quality Gate Check
+        uses: sonarsource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b #v1.2.0
+        timeout-minutes: 5
