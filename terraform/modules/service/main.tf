@@ -24,7 +24,7 @@ locals {
 
   datadog_container = {
     name      = "datadog-agent"
-    image     = var.datadog_image
+    image     = "public.ecr.aws/datadog/agent:7.50.0"
     essential = false # Do not impact task health if this container fails
     environment = [
       { name = "ECS_FARGATE", value = "true" },
