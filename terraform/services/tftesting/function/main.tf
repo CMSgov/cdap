@@ -21,7 +21,7 @@ module "tftesting_function" {
 
   app         = "cdap"
   env         = "test"
-  name        = "tftesting-function"
+  name        = "tftesting"
   description = "Ephemeral Lambda for CI/CD integration testing — exercises module features"
 
   source_dir          = "${path.module}/lambda_src"
