@@ -105,14 +105,14 @@ data "aws_iam_policy_document" "default_function" {
 }
 
 resource "aws_iam_role" "function" {
-  name = "${var.name}-function"
+  name = "${local.full_name_string}-function"
   path = "/delegatedadmin/developer/"
 
   assume_role_policy = data.aws_iam_policy_document.function_assume_role.json
 }
 
 resource "aws_iam_role_policy" "default_function" {
-  name   = "default-function"
+  name   = "${local.full_name_string}-default"
   role   = aws_iam_role.function.id
   policy = data.aws_iam_policy_document.default_function.json
 }

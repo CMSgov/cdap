@@ -1,5 +1,6 @@
 locals {
-  provider_domain = "token.actions.githubusercontent.com"
+  provider_domain  = "token.actions.githubusercontent.com"
+  full_name_string = "${var.app}-${var.env}-${var.name}"
 }
 
 data "aws_kms_alias" "kms_key" {
@@ -22,7 +23,7 @@ module "zip_bucket" {
   additional_bucket_policies = length(var.github_actions_repos) > 0 ? [data.aws_iam_policy_document.cicd_manage_lambda_objects.json] : []
   app                        = var.app
   env                        = var.env
-  name                       = "${var.name}-function"
+  name                       = "${var.app}-${var.env}-${var.name}-function"
   ssm_parameter              = "/${var.app}/${var.env}/${var.name}-bucket"
 }
 
@@ -63,8 +64,8 @@ module "subnets" {
 }
 
 resource "aws_security_group" "function" {
-  name        = "${var.name}-function"
-  description = "For the ${var.name} function"
+  name        = "${local.full_name_string}-function"
+  description = "For the ${local.full_name_string} function"
   vpc_id      = module.vpc.id
 }
 
@@ -112,7 +113,7 @@ resource "aws_vpc_security_group_egress_rule" "sg_source" {
 
 resource "aws_lambda_function" "this" {
   description   = var.description
-  function_name = var.name
+  function_name = local.full_name_string
   s3_key        = "function.zip"
   s3_bucket     = module.zip_bucket.id
   # If source_dir is managed by this module, track the uploaded object version.
@@ -144,7 +145,7 @@ resource "aws_lambda_function" "this" {
 resource "aws_cloudwatch_event_rule" "this" {
   count = var.schedule_expression != "" ? 1 : 0
 
-  name                = "${var.name}-function"
+  name                = "${local.full_name_string}-function"
   description         = "Trigger ${var.name} function"
   schedule_expression = var.schedule_expression
 }
