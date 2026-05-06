@@ -21,4 +21,3 @@ jobs:
     with:
       source_path: terraform/services/alarm-to-slack/lambda_src
       sonar_project_key: cdap-alarm-to-slack
-      terraform_path: terraform/services/alarm-to-slack

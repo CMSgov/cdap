@@ -1,5 +1,5 @@
 name: code-checks (reusable)
-description: Workflow that can be called to evaluate any script or folder containing python logic.
+description: Workflow that can be called to evaluate any script or folder containing python logic. Used in tandem with built-in Snyk integration.
 
 on:
   workflow_call:
@@ -10,11 +10,6 @@ on:
         type: string
       node_version:
         description: 'Node.js version (if source is JavaScript and requires npm install)'
-        required: false
-        type: string
-        default: ''
-      terraform_path:
-        description: 'Path to Terraform directory to scan with snyk iac test (optional)'
         required: false
         type: string
         default: ''
@@ -53,25 +48,8 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            SNYK_TOKEN=/cdap/${{ github.ref_name == 'main' && 'prod' || 'test' }}/snyk/api_token
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
-
-      - name: Install Snyk CLI
-        run: |
-          curl -sSLo /usr/local/bin/snyk https://static.snyk.io/cli/latest/snyk-linux-arm64
-          chmod +x /usr/local/bin/snyk
-          snyk --version
-
-      - name: Snyk Dependency Scan (snyk test)
-        if: inputs.source_path != ''
-        continue-on-error: true
-        run: snyk test ${{ inputs.source_path }}
-
-      - name: Snyk Code Scan (snyk code test)
-        if: inputs.source_path != ''
-        continue-on-error: true
-        run: snyk code test ${{ inputs.source_path }}
 
       - name: Setup node for Sonarqube analysis of compiled typescript
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
@@ -101,12 +79,3 @@ jobs:
         timeout-minutes: 5
         with:
           scanMetadataReportFile: ${{ inputs.source_path }}/.scannerwork/report-task.txt
-
-      # -------------------------------------------------------
-      # TERRAFORM / IaC SCAN
-      # -------------------------------------------------------
-
-      - name: Snyk IaC Scan (Terraform)
-        if: inputs.terraform_path != ''
-        continue-on-error: true
-        run: snyk iac test ${{ inputs.terraform_path }} --report
