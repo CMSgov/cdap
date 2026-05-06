@@ -66,7 +66,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
       - name: Tofu Init
         working-directory: ${{ env.TF_DIR }}
-        run: tofu init -reconfigure -backend-config="../../backends/${{ env.APP }}-${{ env.ENV }}.s3.tfbackend"
+        run: tofu init -reconfigure -backend-config="../../../backends/${{ env.APP }}-${{ env.ENV }}.s3.tfbackend"
       - name: Tofu Destroy
         working-directory: ${{ env.TF_DIR }}
         run: tofu destroy -auto-approve
