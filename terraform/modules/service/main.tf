@@ -24,16 +24,16 @@ locals {
 
   datadog_container = {
     name      = "datadog-agent"
-    image     = "public.ecr.aws/datadog/agent:latest"
+    image     = var.datadog_image
     essential = false # Do not impact task health if this container fails
     environment = [
       { name = "ECS_FARGATE", value = "true" },
       { name = "DD_SITE", value = "ddog-gov.com" },
       { name = "DD_APM_ENABLED", value = "true" },
-      { name = "DD_LOGS_ENABLED", value = "false" },  # DD logging is currently not approved
+      { name = "DD_LOGS_ENABLED", value = "false" }, # DD logging is currently not approved
       { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" }
     ]
-    secrets = var.container_secrets
+    secrets = [{ name = "DD_API_KEY", valueFrom = "/${var.platform.app}/${var.platform.env}/datadog/agents/api_key" }]
   }
 }
 

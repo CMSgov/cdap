@@ -55,6 +55,11 @@ variable "image" {
   type        = string
 }
 
+variable "datadog_image" {
+  description = "The image used for the Datadog agent container."
+  type        = string
+}
+
 variable "cpu_architecture" {
   description = "The cpu architecture needed."
   type        = string
