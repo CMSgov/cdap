@@ -7,7 +7,6 @@ on:
     paths:
       - 'scripts/set_log_retention/*.py'
       - 'scripts/set_log_retention/requirements.txt'
-      - 'terraform/modules/function/**'
 
 jobs:
   python-checks:

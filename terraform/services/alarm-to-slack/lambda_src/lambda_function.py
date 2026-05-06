@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import json
 import os
 from urllib import request
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 import boto3
 from botocore.exceptions import ClientError
 
@@ -44,37 +44,40 @@ def is_ignore_ok():
     """
     return os.environ.get('IGNORE_OK', 'false').lower() == 'true'
 
+
 def ping_slack_webhook(webhook, app, message_id=None):
     """
-    Sends a liveness ping to a Slack webhook using Slack's no-op endpoint pattern.
-    Uses an empty payload to trigger a validation response from Slack without
-    posting a visible message. Returns True if Slack responds with 200, False otherwise.
-
-    Note: Slack returns 400 for empty/invalid payloads, but a 400 still confirms
-    the webhook URL is reachable and valid. A URLError or non-reachable host
-    indicates a broken webhook.
+    Sends a liveness ping to a Slack webhook using an empty payload.
+    Slack returns 400 for empty payloads, but a 400 still confirms the
+    webhook URL is reachable. A URLError or non-reachable host indicates
+    a broken webhook.
     """
     try:
-        # Send minimal JSON — Slack will return 400 "no_text" but the URL is reachable
         jsondata = json.dumps({}).encode('utf-8')
         req = request.Request(webhook)
         req.add_header('Content-Type', 'application/json; charset=utf-8')
         req.add_header('Content-Length', str(len(jsondata)))
         with request.urlopen(req, jsondata) as resp:
-            log({'msg': f'Liveness ping succeeded for app: {app}', 'status': resp.status,
-                 'messageId': message_id})
+            log({'msg': f'Liveness ping succeeded for app: {app}',
+                 'status': resp.status, 'messageId': message_id})
             return True
-    except URLError as e:
-        # Slack returns HTTP 400 for empty payloads, which raises URLError in urllib.
-        # A 400 still means the webhook URL is reachable — treat it as alive.
-        reason = str(e.reason)
-        if hasattr(e, 'code') and e.code == 400:
+    except HTTPError as e:
+        # Slack returns 400 for empty payloads — still means the URL is reachable
+        if e.code == 400:
             log({'msg': f'Liveness ping reachable (400 expected) for app: {app}',
                  'messageId': message_id})
             return True
-        log({'msg': f'Liveness ping FAILED for app: {app}, reason: {reason}',
+        log({'msg': f'Liveness ping FAILED (HTTP {e.code}) for app: {app}',
              'messageId': message_id})
         return False
+    except URLError as e:
+        log({'msg': f'Liveness ping FAILED for app: {app}, reason: {e.reason}',
+             'messageId': message_id})
+        return False
+
+def get_app_list():
+    apps_env = os.environ.get('APPS', '')
+    return [app.strip() for app in apps_env.split(',') if app.strip()]
 
 def liveness_check():
     """
