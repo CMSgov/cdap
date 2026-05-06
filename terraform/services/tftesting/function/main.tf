@@ -5,7 +5,7 @@ resource "aws_ssm_parameter" "test_config" {
   # not an actually secure string
   value = "tftesting"
 
-  key_id = module.platform.kms_alias_primary
+  key_id = module.platform.kms_alias_primary.id
 }
 
 # This parameter is NOT in ssm_parameter_paths — only accessible via inline policy
@@ -13,7 +13,7 @@ resource "aws_ssm_parameter" "inline_policy_test" {
   name   = "/cdap/test/tftesting/function/inline-policy-test"
   type   = "SecureString"
   value  = "inline-policy-access-confirmed"
-  key_id = module.platform.kms_alias_primary
+  key_id = module.platform.kms_alias_primary.id
 }
 
 module "tftesting_function" {
