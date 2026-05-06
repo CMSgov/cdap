@@ -1,0 +1,73 @@
+name: tftesting-lambda
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'terraform/services/tftesting/function/**'
+      - 'terraform/modules/function/**'
+      - '.github/workflows/tftesting-function.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/services/tftesting/function/**'
+      - 'terraform/modules/function/**'
+      - '.github/workflows/tftesting-function.yml'
+
+concurrency:
+  group: tftesting-function
+  cancel-in-progress: true
+
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  APP: cdap
+  ENV: test
+  TF_DIR: terraform/services/tftesting/function
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  apply:
+    name: Tofu Apply
+    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+      - uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
+      - uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+      - uses: cmsgov/cdap/actions/setup-sops@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+      - uses: cmsgov/cdap/actions/setup-yq@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ env.APP }}-${{ env.ENV }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Tofu Init
+        working-directory: ${{ env.TF_DIR }}
+        run: tofu init
+      - name: Tofu Apply
+        working-directory: ${{ env.TF_DIR }}
+        run: tofu apply -auto-approve
+
+  destroy:
+    name: Tofu Destroy
+    if: success()
+    needs: apply
+    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+      - uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
+      - uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+      - uses: cmsgov/cdap/actions/setup-sops@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+      - uses: cmsgov/cdap/actions/setup-yq@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ env.APP }}-${{ env.ENV }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Tofu Init
+        working-directory: ${{ env.TF_DIR }}
+        run: tofu init
+      - name: Tofu Destroy
+        working-directory: ${{ env.TF_DIR }}
+        run: tofu destroy -auto-approve
