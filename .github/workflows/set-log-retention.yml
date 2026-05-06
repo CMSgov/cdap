@@ -2,8 +2,7 @@ name: CloudWatch Log Retention Manager
 
 on:
   schedule:
-    # Every Monday at 10:00 ET (14:00 UTC)
-    - cron: "0 14 * * 1"
+    - cron: "0 14 * * 1" # Every Monday at 14:00 UTC set to always run on prod
   workflow_dispatch:
     inputs:
       retention_days:
@@ -11,9 +10,8 @@ on:
         required: false
         default: "180"
       target_env:
-        description: "Target environment string (e.g. prod, test, dev, sandbox)"
+        description: "Target environment string (e.g. ephemeral-prod, happy-test, nice-sandbox, dev)"
         required: true
-        default: "prod"
 
 permissions:
   contents: write
@@ -21,56 +19,103 @@ permissions:
 
 env:
   AWS_REGION:     us-east-1
-  RETENTION_DAYS: ${{ github.event.inputs.retention_days || '180' }}
-  TARGET_ENV:     ${{ github.event.inputs.target_env || 'prod' }}
-  PYTHON_VERSION: "3.12"
+  RETENTION_DAYS: ${{ github.event_name == 'schedule' && '180' || github.event.inputs.retention_days || '180' }}
+  TARGET_ENV:     ${{ github.event_name == 'schedule' && 'prod' || github.event.inputs.target_env || 'prod' }}
 
 jobs:
 
+  # -- JOB 1: PLAN ------------------------------------------------------------
   plan:
-    name: "Plan – Generate Retention Plan"
-    runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
+    name: "Plan - Generate Retention Plan"
+    runs-on: >-
+      codebuild-cdap-${{
+        (github.event_name == 'schedule'
+          || contains(github.event.inputs.target_env, 'prod')
+          || contains(github.event.inputs.target_env, 'sandbox'))
+        && 'prod'
+        || 'non-prod'
+      }}-${{ github.run_id }}-${{ github.run_attempt }}
 
     outputs:
-      plan_file:   ${{ steps.meta.outputs.plan_file }}
-      has_changes: ${{ steps.meta.outputs.has_changes }}
+      plan_file:     ${{ steps.meta.outputs.plan_file }}
+      has_changes:   ${{ steps.meta.outputs.has_changes }}
+      command_count: ${{ steps.meta.outputs.command_count }}
+      target_env:    ${{ steps.meta.outputs.target_env }}
+      generated_at:  ${{ steps.meta.outputs.generated_at }}
+      runner_env:    ${{ steps.resolve.outputs.runner_env }}
 
     steps:
+      - name: Resolve environment tier
+        id: resolve
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "runner_env=prod" >> "$GITHUB_OUTPUT"
+          else
+            INPUT_ENV="${{ github.event.inputs.target_env }}"
+            if echo "$INPUT_ENV" | grep -qiE 'prod|sandbox'; then
+              echo "runner_env=prod"     >> "$GITHUB_OUTPUT"
+            elif echo "$INPUT_ENV" | grep -qiE 'dev|test'; then
+              echo "runner_env=non-prod" >> "$GITHUB_OUTPUT"
+            else
+              echo "::error::Environment '${INPUT_ENV}' must contain one of: prod, sandbox, dev, test"
+              exit 1
+            fi
+          fi
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5.2.0
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        working-directory: ${{ github.workspace }}/scripts/set_log_retention
+        run: python3 -m pip install -r requirements.txt
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v4.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ github.ref_name == 'main' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ github.ref_name == 'main' && 'cdap-prod' || 'cdap-test' }}-github-actions
+          role-to-assume: >-
+            arn:aws:iam::${{
+              steps.resolve.outputs.runner_env == 'prod'
+              && secrets.PROD_ACCOUNT
+              || secrets.NON_PROD_ACCOUNT
+            }}:role/delegatedadmin/developer/${{
+              steps.resolve.outputs.runner_env == 'prod'
+              && 'cdap-prod'
+              || 'cdap-test'
+            }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Run plan
+        working-directory: ${{ github.workspace }}/scripts/set_log_retention
         env:
           MODE:           plan
           AWS_REGION:     ${{ vars.AWS_REGION }}
           RETENTION_DAYS: ${{ env.RETENTION_DAYS }}
           TARGET_ENV:     ${{ env.TARGET_ENV }}
-        run: python set_log_retention.py
+        run: python3 set_log_retention.py
 
       - name: Collect metadata
         id: meta
+        working-directory: ${{ github.workspace }}/scripts/set_log_retention
         run: |
-          PLAN_FILE=$(ls retention-plan-*.json | head -n 1)
-          COMMAND_COUNT=$(jq '.commands | length' "$PLAN_FILE")
+          PLAN_FILE=$(ls retention-plan-*.json 2>/dev/null | head -n 1)
 
-          echo "plan_file=${PLAN_FILE}" >> "$GITHUB_OUTPUT"
+          if [ -z "$PLAN_FILE" ]; then
+            echo "No retention plan file found in $(PWD)"
+            ls -la
+            exit 1
+          fi
+
+          COMMAND_COUNT=$(jq '.commands | length' "$PLAN_FILE")
+          GENERATED_AT=$(jq -r '.generated_at' "$PLAN_FILE")
+
+          echo "plan_file=${PLAN_FILE}"           >> "$GITHUB_OUTPUT"
+          echo "command_count=${COMMAND_COUNT}"   >> "$GITHUB_OUTPUT"
+          echo "target_env=${{ env.TARGET_ENV }}" >> "$GITHUB_OUTPUT"
+          echo "generated_at=${GENERATED_AT}"     >> "$GITHUB_OUTPUT"
 
           if [ "$COMMAND_COUNT" -gt 0 ]; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "has_changes=true"  >> "$GITHUB_OUTPUT"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           fi
@@ -85,82 +130,108 @@ jobs:
           echo "#### Commands"                                     >> "$GITHUB_STEP_SUMMARY"
           echo "\`\`\`json"                                        >> "$GITHUB_STEP_SUMMARY"
           jq '.commands' "$PLAN_FILE"                             >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`"                                            >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`"                                           >> "$GITHUB_STEP_SUMMARY"
+          echo ""                                                  >> "$GITHUB_STEP_SUMMARY"
+          echo "---"                                              >> "$GITHUB_STEP_SUMMARY"
+          echo "Download the \`retention-plan\` artifact from the bottom of this page before approving." >> "$GITHUB_STEP_SUMMARY"
 
-      # Reviewers can download this directly from the Actions UI before approving
       - name: Upload plan artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: retention-plan
-          path: |
-            retention-plan-*.json
-            retention-report-*.csv
+          path: ${{ github.workspace }}/scripts/set_log_retention/retention-plan-*.json
           retention-days: 7
 
-  # ── JOB 2: APPROVE (manual gate) ───────────────────────────────────────────
-  approve:
-    name: "Approve – Review Plan Before Applying"
+  # -- JOB 2: NOTIFY ----------------------------------------------------------
+  notify:
+    name: "Pending Approval - Review Plan Details Here"
     needs: plan
     if: needs.plan.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
-    environment: compliance-approval
+    steps:
+      - name: Post plan summary for reviewer
+        run: |
+          echo "## Retention Plan Awaiting Approval"                                        >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Value |"                                                            >> "$GITHUB_STEP_SUMMARY"
+          echo "| --- | ----- |"                                                            >> "$GITHUB_STEP_SUMMARY"
+          echo "| Plan file    | \`${{ needs.plan.outputs.plan_file }}\` |"                 >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target env   | \`${{ needs.plan.outputs.target_env }}\` |"                >> "$GITHUB_STEP_SUMMARY"
+          echo "| Generated at | \`${{ needs.plan.outputs.generated_at }}\` |"             >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commands     | **${{ needs.plan.outputs.command_count }}** |"            >> "$GITHUB_STEP_SUMMARY"
+          echo "---"                                                                         >> "$GITHUB_STEP_SUMMARY"
+          echo "Scroll down and download the \`retention-plan\` artifact before approving." >> "$GITHUB_STEP_SUMMARY"
+          echo "Once reviewed, click **Review deployments** to approve or reject."          >> "$GITHUB_STEP_SUMMARY"
 
+  # -- JOB 3: APPROVE ---------------------------------------------------------
+  approve:
+    name: "Approve - Review Plan Before Applying"
+    needs: [plan, notify]
+    if: needs.plan.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    environment: compliance-approval
     steps:
       - name: Approval confirmed
         run: |
-          echo "Plan reviewed and approved."
-          echo "Plan file: ${{ needs.plan.outputs.plan_file }}"
-          echo "Proceeding to apply retention policy changes."
+          echo "Plan approved."
+          echo "Plan file:  ${{ needs.plan.outputs.plan_file }}"
+          echo "Target env: ${{ needs.plan.outputs.target_env }}"
+          echo "Commands:   ${{ needs.plan.outputs.command_count }}"
 
-  # ── JOB 3: APPLY ───────────────────────────────────────────────────────────
+  # -- JOB 4: APPLY -----------------------------------------------------------
   apply:
-    name: "Apply – Execute Retention Policy Updates"
+    name: "Apply - Execute Retention Policy Updates"
     needs: [plan, approve]
     if: needs.plan.outputs.has_changes == 'true'
-    runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: codebuild-cdap-${{ needs.plan.outputs.runner_env }}-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v5.2.0
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        working-directory: ${{ github.workspace }}/scripts/set_log_retention
+        run: python3 -m pip install -r requirements.txt
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v4.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ github.ref_name == 'main' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ github.ref_name == 'main' && 'cdap-prod' || 'cdap-test' }}-github-actions
+          role-to-assume: >-
+            arn:aws:iam::${{
+              needs.plan.outputs.runner_env == 'prod'
+              && secrets.PROD_ACCOUNT
+              || secrets.NON_PROD_ACCOUNT
+            }}:role/delegatedadmin/developer/${{
+              needs.plan.outputs.runner_env == 'prod'
+              && 'cdap-prod'
+              || 'cdap-test'
+            }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
-      # Download the exact artifact that was reviewed and approved
       - name: Download plan artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: retention-plan
+          path: ${{ github.workspace }}/scripts/set_log_retention
 
       - name: Locate plan file
         id: find-plan
+        working-directory: ${{ github.workspace }}/scripts/set_log_retention
         run: |
           PLAN_FILE=$(ls retention-plan-*.json | head -n 1)
           echo "plan_file=${PLAN_FILE}" >> "$GITHUB_OUTPUT"
 
       - name: Apply retention plan
+        working-directory: ${{ github.workspace }}/scripts/set_log_retention
         env:
           MODE:       apply
           PLAN_FILE:  ${{ steps.find-plan.outputs.plan_file }}
           AWS_REGION: ${{ vars.AWS_REGION }}
-        run: python set_log_retention.py
+        run: python3 set_log_retention.py
 
-      # Upload the report as a separate artifact for auditing
       - name: Upload apply report artifact
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: retention-apply-report
-          path: retention-report-*.csv
+          path: ${{ github.workspace }}/scripts/set_log_retention/retention-report-*.csv
           retention-days: 30
