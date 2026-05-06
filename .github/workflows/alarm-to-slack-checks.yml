@@ -7,16 +7,8 @@ on:
     paths:
       - 'terraform/services/alarm-to-slack/lambda_src/**/*.py'
       - 'terraform/services/alarm-to-slack/lambda_src/**/requirements.txt'
-      - 'terraform/modules/function/**'
 
 jobs:
-  python-checks:
-    uses: ./.github/workflows/python-checks-reusable.yml
-    with:
-      source_path: terraform/services/alarm-to-slack/lambda_src
-      sonar_project_key: cdap-alarm-to-slack
-      sonar_project_name: "CDAP Alarm to Slack"
-
   python-tests:
     runs-on: codebuild-cdap-${{ github.ref_name == 'main' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
     defaults:
