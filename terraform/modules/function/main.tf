@@ -175,8 +175,9 @@ resource "aws_cloudwatch_log_group" "function" {
 }
 
 resource "aws_lambda_invocation" "liveness_check" {
-  count         = liveness_check_enabled ? 1 : 0
+  count         = var.liveness_check_enabled ? 1 : 0
   function_name = aws_lambda_function.this.function_name
+  qualifier     = aws_lambda_alias.live.name
 
   # Re-runs whenever the Lambda source code changes
   triggers = {
@@ -186,4 +187,10 @@ resource "aws_lambda_invocation" "liveness_check" {
   input = jsonencode({
     RequestType = "LivenessCheck"
   })
+}
+
+resource "aws_lambda_alias" "live" {
+  name             = "live"
+  function_name    = aws_lambda_function.this.function_name
+  function_version = var.rollback_version != null ? var.rollback_version : aws_lambda_function.this.version
 }

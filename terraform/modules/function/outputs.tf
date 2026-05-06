@@ -3,6 +3,16 @@ output "name" {
   value       = aws_lambda_function.this.function_name
 }
 
+output "alias_arn" {
+  description = "ARN of the live alias"
+  value       = aws_lambda_alias.live.arn
+}
+
+output "function_version" {
+  description = "Published version number of the Lambda function"
+  value       = aws_lambda_function.this.version
+}
+
 output "role_arn" {
   description = "ARN of the IAM role for the function"
   value       = aws_iam_role.function.arn

@@ -42,15 +42,17 @@ No requirements.
 | <a name="input_env"></a> [env](#input\_env) | The application environment (dev, test, sandbox, prod) | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Name of the lambda function | `string` | n/a | yes |
 | <a name="input_architecture"></a> [architecture](#input\_architecture) | Lambda function CPU architecture. Use arm64 for Graviton (better price/performance for most workloads). | `string` | `"x86_64"` | no |
-| <a name="input_create_function_zip"></a> [create\_function\_zip](#input\_create\_function\_zip) | Upload a dummy zip to initialize the S3 bucket on first apply.<br/>Has no effect and should not be set to true when source\_dir is provided,<br/>as the module will manage the zip and upload automatically. | `bool` | `false` | no |
+| <a name="input_egress_rules"></a> [egress\_rules](#input\_egress\_rules) | List of egress rules to apply to the security group | <pre>list(object({<br/>    name             = string<br/>    from_port        = number<br/>    to_port          = number<br/>    protocol         = string<br/>    cidr_ipv4        = optional(string)<br/>    cidr_ipv6        = optional(string)<br/>    referenced_sg_id = optional(string)<br/>    description      = optional(string)<br/>  }))</pre> | <pre>[<br/>  {<br/>    "cidr_ipv4": "0.0.0.0/0",<br/>    "description": "Allow all egress traffic (IPv4) - migration default",<br/>    "from_port": 0,<br/>    "name": "allow-all-ipv4",<br/>    "protocol": "-1",<br/>    "to_port": 0<br/>  },<br/>  {<br/>    "cidr_ipv6": "::/0",<br/>    "description": "Allow all egress traffic (IPv6) - migration default",<br/>    "from_port": 0,<br/>    "name": "allow-all-ipv6",<br/>    "protocol": "-1",<br/>    "to_port": 0<br/>  }<br/>]</pre> | no |
 | <a name="input_environment_variables"></a> [environment\_variables](#input\_environment\_variables) | Map of environment variables for the function | `map(string)` | `{}` | no |
 | <a name="input_extra_kms_key_arns"></a> [extra\_kms\_key\_arns](#input\_extra\_kms\_key\_arns) | Optional list of additional KMS key ARNs the Lambda can use | `list(string)` | `[]` | no |
 | <a name="input_function_role_inline_policies"></a> [function\_role\_inline\_policies](#input\_function\_role\_inline\_policies) | Inline policies (in JSON) for the function IAM role | `map(string)` | `{}` | no |
 | <a name="input_github_actions_repos"></a> [github\_actions\_repos](#input\_github\_actions\_repos) | Used for integration tests and, when source\_dir is null,<br/>for CI/CD workflows that upload the function zip.<br/>Format: "repo:CMSgov/<repo-name>:*" or a more specific ref pattern.<br/>Defaults to empty — no GitHub Actions access unless explicitly granted. | `list(string)` | `[]` | no |
 | <a name="input_handler"></a> [handler](#input\_handler) | Lambda function handler | `string` | `"function_handler"` | no |
 | <a name="input_layer_arns"></a> [layer\_arns](#input\_layer\_arns) | Optional list of layer arns | `list(string)` | `[]` | no |
+| <a name="input_liveness_check_enabled"></a> [liveness\_check\_enabled](#input\_liveness\_check\_enabled) | Enables a deploy-time liveness check that invokes the Lambda function<br/>immediately after deployment to verify it is healthy and correctly configured.<br/><br/>When enabled, an aws\_lambda\_invocation resource is created that sends a<br/>{ "RequestType": "LivenessCheck" } payload to the Lambda function after<br/>each deployment. The invocation is re-triggered whenever the Lambda source<br/>code changes (tracked via source\_code\_hash).<br/><br/>The Lambda function is responsible for implementing the liveness check logic<br/>in its handler. This may include verifying external dependencies, validating<br/>configuration, checking connectivity to downstream services, or any other<br/>health validation relevant to the function's purpose.<br/><br/>If the liveness check fails, the Lambda should raise an exception. This<br/>surfaces as a function error and causes the Tofu apply to fail, alerting<br/>the deploying team immediately.<br/><br/>Recommended: true in all environments to catch misconfiguration at deploy time. | `bool` | `true` | no |
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | Number of days to retain Lambda function logs in CloudWatch. If null, no retention policy is set and retention is managed externally (e.g., via cdap/scripts/set\_log\_retention/). | `number` | `180` | no |
 | <a name="input_memory_size"></a> [memory\_size](#input\_memory\_size) | Lambda function memory size | `number` | `null` | no |
+| <a name="input_rollback_version"></a> [rollback\_version](#input\_rollback\_version) | Pin the live alias to a specific version for rollback. Set to null for normal deploys (alias tracks latest published version). | `string` | `null` | no |
 | <a name="input_runtime"></a> [runtime](#input\_runtime) | Lambda function runtime | `string` | `"python3.11"` | no |
 | <a name="input_schedule_expression"></a> [schedule\_expression](#input\_schedule\_expression) | Cron or rate expression for a scheduled function | `string` | `""` | no |
 | <a name="input_source_code_version"></a> [source\_code\_version](#input\_source\_code\_version) | Optional S3 object version of function.zip uploaded to module's zip\_bucket by external sources. | `string` | `null` | no |
@@ -87,11 +89,16 @@ No requirements.
 | [aws_iam_role.function](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy.default_function](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
 | [aws_iam_role_policy.extra_policies](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
+| [aws_lambda_alias.live](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_alias) | resource |
 | [aws_lambda_function.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_function) | resource |
+| [aws_lambda_invocation.liveness_check](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_invocation) | resource |
 | [aws_lambda_permission.cloudwatch_events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lambda_permission) | resource |
 | [aws_s3_object.empty_function_zip](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_s3_object.function_zip](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_security_group.function](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_vpc_security_group_egress_rule.ipv4](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.ipv6](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.sg_source](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [archive_file.function](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_openid_connect_provider.github](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_openid_connect_provider) | data source |
@@ -111,6 +118,8 @@ No requirements.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_alias_arn"></a> [alias\_arn](#output\_alias\_arn) | ARN of the live alias |
+| <a name="output_function_version"></a> [function\_version](#output\_function\_version) | Published version number of the Lambda function |
 | <a name="output_name"></a> [name](#output\_name) | Name for the lambda function |
 | <a name="output_role_arn"></a> [role\_arn](#output\_role\_arn) | ARN of the IAM role for the function |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | ID for the security group for the function |

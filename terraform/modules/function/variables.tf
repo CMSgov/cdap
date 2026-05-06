@@ -107,6 +107,12 @@ variable "liveness_check_enabled" {
   default     = true
 }
 
+variable "rollback_version" {
+  description = "Pin the live alias to a specific version for rollback. Set to null for normal deploys (alias tracks latest published version)."
+  type        = string
+  default     = null
+}
+
 # ── Runtime Behavior ──────────────────────────────────────────────────────────
 
 variable "environment_variables" {
