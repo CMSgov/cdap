@@ -108,8 +108,6 @@ resource "aws_iam_role" "function" {
   name = "${var.name}-function"
   path = "/delegatedadmin/developer/"
 
-  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
-
   assume_role_policy = data.aws_iam_policy_document.function_assume_role.json
 }
 
