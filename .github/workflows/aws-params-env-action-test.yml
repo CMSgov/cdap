@@ -1,12 +1,7 @@
 name: aws-params-env-action-test.yml
-description: 'Tests that github actions roles can pull SSM parameters using the aws-params-env-action.'
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'actions/aws-params-env-action/**'
-      - 'services/github-actions-role/data.tf'
 
 permissions:
   contents: read
