@@ -1,0 +1,28 @@
+name: code-checks (aws-params-env-action)
+description: Leverages sonarqube to scan for quality issues and then gate the workflow success based on any issues.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'actions/aws-params-env-action/**'
+      - '!actions/aws-params-env-action/**.md'
+      - '.github/workflows/aws-params-env-action-checks.yml'
+      - '.github/workflows/checks-reusable.yml'
+
+jobs:
+  checks:
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/checks-reusable.yml
+    secrets: inherit
+    with:
+      source_path: actions/aws-params-env-action
+      node_version: '24'
+      sonar_project_key: cdap-aws-params-env-action
+      sonar_extra_args: >
+        -Dsonar.language=ts
+        -Dsonar.typescript.tsconfigPath=tsconfig.json
+        -Dsonar.tests=__tests__
+        -Dsonar.test.inclusions=**/*.test.ts

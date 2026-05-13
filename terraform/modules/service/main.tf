@@ -15,27 +15,9 @@ resource "aws_ecs_task_definition" "this" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.cpu
   memory                   = var.memory
-  container_definitions = nonsensitive(jsonencode([
-    {
-      name                   = local.service_name
-      image                  = var.image
-      readonlyRootFilesystem = true
-      portMappings           = var.port_mappings
-      mountPoints            = var.mount_points
-      secrets                = var.container_secrets
-      environment            = var.container_environment
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
-          awslogs-create-group  = "true"
-          awslogs-region        = var.platform.primary_region.name
-          awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
-        }
-      }
-      healthCheck = var.health_check
-    }
-  ]))
+
+  # Concat the main container with the datadog container
+  container_definitions = nonsensitive(jsonencode(concat([local.app_container], [local.datadog_container])))
 
   runtime_platform {
     operating_system_family = "LINUX"

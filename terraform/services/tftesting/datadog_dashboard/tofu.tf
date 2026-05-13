@@ -4,14 +4,10 @@ terraform {
       source  = "DataDog/datadog"
       version = "~>4.4"
     }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~>6.0"
-    }
   }
 
   backend "s3" {
-    key = "503-datadog-config/terraform.tfstate"
+    key = "datadog_dashboard/terraform.tfstate"
   }
 }
 
