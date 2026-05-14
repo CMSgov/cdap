@@ -188,7 +188,7 @@ resource "aws_ecs_service" "this" {
         port_name      = local.sc_port_name
 
         client_alias {
-          port     = local.port_map[local.sc_port_name]
+          port     = coalesce(var.service_connect_client_port, local.port_map[local.sc_port_name])
           dns_name = local.service_name
         }
 

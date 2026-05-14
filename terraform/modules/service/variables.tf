@@ -66,13 +66,13 @@ variable "service_connect_port_name" {
   description = "Optional. Defaults to the first named port in port_mappings. Name of the port mapping to use for Service Connect."
 }
 
-variable "service_connect_dns_name" {
-  type        = string
+variable "service_connect_client_port" {
+  type        = number
   default     = null
   description = <<-EOT
-    Fully-qualified DNS name for the Service Connect client alias.
-    Must satisfy the Name Constraints of the Private CA (e.g. "myservice.cmscloud.local").
-    Defaults to the bare service name if not set — only override when using TLS with a constrained PCA.
+    Override the port clients use to call this service via Service Connect.
+    Defaults to the containerPort of the named port mapping.
+    Use this for port remapping (e.g. container listens on 8080, clients call on 80 for easy calls by name without port).
   EOT
 }
 
