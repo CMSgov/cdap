@@ -37,49 +37,24 @@ data "aws_iam_policy_document" "task" {
   }
 
   statement {
-    sid = "AllowSSMRead"
+    sid = "AllowECSExec"
     actions = [
-      "ssm:GetParameter",
-      "ssm:GetParameters",
-      "ssm:GetParametersByPath"
-    ]
-    resources = [
-      "arn:aws:ssm:${module.platform.primary_region.name}:${module.platform.aws_caller_identity.account_id}:/cdap/test/tftesting/*"
-    ]
-  }
-
-  # # -------------------------------------------------------
-  # # ACM Certificate test with private cert
-  # # -------------------------------------------------------
-  #   statement {
-  #     sid = "AllowACMRead"
-  #     actions = [
-  #       "acm:ExportCertificate",
-  #       "acm:DescribeCertificate",
-  #       "acm:GetCertificate"
-  #     ]
-  #     resources = [
-  #       module.acm_certificate.private_cert_arn
-  #     ]
-  #   }
-
-  statement {
-    sid = "AllowECRAuthToken"
-    actions = [
-      "ecr:GetAuthorizationToken"
+      "ssmmessages:CreateControlChannel",
+      "ssmmessages:CreateDataChannel",
+      "ssmmessages:OpenControlChannel",
+      "ssmmessages:OpenDataChannel"
     ]
     resources = ["*"]
   }
-
-  statement {
-    sid = "AllowCloudWatchLogs"
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents"
-    ]
-    resources = [
-      "arn:aws:logs:${module.platform.primary_region.name}:${module.platform.aws_caller_identity.account_id}:log-group:/aws/ecs/fargate/cdap-test/*"
-    ]
-  }
+  # -------------------------------------------------------
+  # Future: RDS IAM Authentication
+  # Uncomment and fill in db-cluster-resource-id when ready
+  # -------------------------------------------------------
+  # statement {
+  #   sid     = "AllowRDSIAMAuth"
+  #   actions = ["rds-db:connect"]
+  #   resources = [
+  #     "arn:aws:rds-db:${var.region}:${var.account_id}:dbuser:${var.db_resource_id}/${var.db_user}"
+  #   ]
+  # }
 }
