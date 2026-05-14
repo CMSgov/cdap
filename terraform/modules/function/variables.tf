@@ -175,10 +175,16 @@ variable "layer_arns" {
 
 variable "github_actions_repos" {
   description = <<-EOT
-    Used for integration tests and, when source_dir is null,
-    for CI/CD workflows that upload the function zip.
-    Format: "repo:CMSgov/<repo-name>:*" or a more specific ref pattern.
-    Defaults to empty — no GitHub Actions access unless explicitly granted.
+    List of GitHub repository paths (e.g. "org/repo") that are permitted to
+    deploy Lambda function zips to this module's S3 bucket via GitHub Actions
+    OIDC. When non-empty, an S3 bucket policy is added that allows the
+    corresponding GitHub Actions IAM role to put/get objects under the
+    function zip key.
+
+    Example:
+      github_actions_repos = ["CMSgov/bcda-app", "CMSgov/dpc-app"]
+
+    Leave empty ([]) to disable CI/CD write access to the bucket entirely.
   EOT
   type        = list(string)
   default     = []

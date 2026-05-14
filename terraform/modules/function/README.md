@@ -2,6 +2,63 @@
 
 This is a generic module for creating lambda function resources in CMS Cloud. Use it in terraform services where a lambda function is needed.
 
+## CI/CD Enablement via GitHub Actions
+
+This module supports GitHub Actions OIDC-based deployments. When
+`github_actions_repos` is set, the Lambda zip bucket policy is extended
+to allow the specified repositories to upload new function zips directly
+from a GitHub Actions workflow.
+
+### How to use
+
+1. Pass the repo(s) that should have deploy access:
+
+```hcl
+module "alarm_to_slack" {
+  source = "../modules/function"
+
+  # ... other vars ...
+
+  github_actions_repos = ["CMSgov/bcda-app"]
+}
+```
+
+2. In your GitHub Actions workflow, authenticate using OIDC:
+
+```yaml
+- name: Configure AWS credentials
+  uses: aws-actions/configure-aws-credentials@v4
+  with:
+    role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+    aws-region: us-east-1
+```
+
+3. Upload the zip to the bucket:
+
+```yaml
+- name: Upload Lambda zip
+  run: |
+    aws s3 cp function.zip s3:///function.zip
+```
+
+4. Update the Lambda to use the new zip version:
+
+```yaml
+- name: Update Lambda function code
+  run: |
+    aws lambda update-function-code \
+      --function-name  \
+      --s3-bucket  \
+      --s3-key function.zip
+```
+
+### What it does under the hood
+
+When `github_actions_repos` is non-empty, the module attaches an additional
+S3 bucket policy (`cicd_manage_lambda_objects`) that grants the GitHub Actions
+OIDC role permission to manage objects in the zip bucket. No access is granted
+when the list is empty.
+
 Note that a dummy function will be made if source_dir with function logic is not yet provided or github_actions_repo is not defined. 
 The dummy function allows for infrastructure scaffolding before source code is written.
 If source code is written and the lifecycle is managed outside of terraform, set github_actions_repo. 

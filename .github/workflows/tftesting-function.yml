@@ -2,18 +2,16 @@ name: tftesting-lambda
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'terraform/services/tftesting/function/**'
-      - 'terraform/modules/function/**'
-      - '.github/workflows/tftesting-function.yml'
-  push:
-    branches:
-      - main
-    paths:
-      - 'terraform/services/tftesting/function/**'
-      - 'terraform/modules/function/**'
-      - '.github/workflows/tftesting-function.yml'
+  inputs:
+    action:
+      description: 'Action to perform'
+      required: true
+      default: 'plan'
+      type: choice
+      options:
+        - plan
+        - apply
+        - destroy
 
 concurrency:
   group: tftesting-function
@@ -30,8 +28,9 @@ permissions:
   id-token: write
 
 jobs:
-  apply:
-    name: Tofu Apply
+  plan-or-apply:
+    name: Tofu Plan/Apply
+    if: github.event.inputs.action == 'apply'
     runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
@@ -43,14 +42,16 @@ jobs:
       - name: Tofu Init
         working-directory: ${{ env.TF_DIR }}
         run: tofu init -reconfigure -backend-config="../../../backends/${{ env.APP }}-${{ env.ENV }}.s3.tfbackend"
+      - name: Tofu Plan
+        run: tofu apply tfplan
       - name: Tofu Apply
+        if: github.event.inputs.action == 'apply'
         working-directory: ${{ env.TF_DIR }}
-        run: tofu apply
+        run: tofu apply -auto-approve
 
   destroy:
     name: Tofu Destroy
-    if: success()
-    needs: apply
+    if: github.event.inputs.action == 'destroy'
     runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
