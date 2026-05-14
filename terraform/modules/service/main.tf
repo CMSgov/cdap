@@ -1,10 +1,74 @@
 locals {
+  service_name      = coalesce(var.service_name_override, var.platform.service)
+  service_name_full = "${var.platform.app}-${var.platform.env}-${var.platform.service}"
+
+  # Build a name → containerPort lookup from port_mappings
+  port_map = {
+    for pm in coalesce(var.port_mappings, []) :
+    pm.name => pm.containerPort
+    if pm.name != null && pm.containerPort != null
+  }
+
+  sc_port_name = try(
+    coalesce(
+      var.service_connect_port_name,
+      try([for pm in coalesce(var.port_mappings, []) : pm.name if pm.name != null][0], null)
+    ),
+    null
+  )
+
+  # ALB integration is active when a listener ARN is provided
+  enable_alb_integration = var.alb_listener_arn != null
+
+  # Resolve the ALB target port by name — caller must provide alb_port_name if using ALB
+  alb_container_port = local.enable_alb_integration ? local.port_map[var.alb_port_name] : null
+
   use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
+  app_container = {
+    name                   = local.service_name
+    image                  = var.image
+    readonlyRootFilesystem = true
+    portMappings           = var.port_mappings
+    mountPoints            = var.mount_points
+    secrets                = var.container_secrets
+    environment            = var.container_environment
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+        awslogs-region        = var.platform.primary_region.name
+        awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
+      }
+    }
+    healthCheck = var.health_check
+  }
+
+  datadog_container = {
+    name      = "datadog-agent"
+    image     = "public.ecr.aws/datadog/agent:7.50.0"
+    essential = false # Do not impact task health if this container fails
+    environment = [
+      { name = "ECS_FARGATE", value = "true" },
+      { name = "DD_SITE", value = "ddog-gov.com" },
+      { name = "DD_APM_ENABLED", value = "true" },
+      { name = "DD_LOGS_ENABLED", value = "false" }, # DD logging is currently not approved
+      { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" }
+    ]
+    secrets = [{ name = "DD_API_KEY", valueFrom = data.aws_ssm_parameter.datadog_api_key.name }]
+  }
 }
 
-data "aws_ram_resource_share" "pace_ca" {
-  resource_owner = "OTHER-ACCOUNTS"
-  name           = "pace-ca-g1"
+resource "aws_cloudwatch_log_group" "app" {
+  name              = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+  retention_in_days = var.log_retention_days
+  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
+
+  tags = {
+    Name        = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+    Application = var.platform.app
+    Environment = var.platform.env
+    Service     = local.service_name
+  }
 }
 
 resource "aws_ecs_task_definition" "this" {
@@ -53,20 +117,45 @@ resource "aws_ecs_task_definition" "this" {
   }
 }
 
+resource "aws_security_group" "task" {
+  count       = (length(var.security_groups) == 0) ? 1 : 0
+  name        = "${local.service_name_full}-task-sg"
+  description = "ECS task security group for ${local.service_name_full}"
+  vpc_id      = var.platform.vpc_id
+
+  # No inline ingress or egress rules — all dependent rules managed externally
+  # via aws_security_group_rule in the caller to avoid conflicts.
+
+  tags = {
+    Name = "${local.service_name_full}-task-sg"
+  }
+}
+
+resource "aws_vpc_security_group_egress_rule" "https" {
+  count             = (length(var.security_groups) == 0) ? 1 : 0
+  security_group_id = aws_security_group.task[0].id
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
+  description       = "Allow HTTPS outbound (ECR, CloudWatch, SSM)"
+}
+
 resource "aws_ecs_service" "this" {
-  name                 = local.service_name_full
-  cluster              = var.cluster_arn
-  task_definition      = aws_ecs_task_definition.this.arn
-  desired_count        = var.desired_count
-  launch_type          = "FARGATE"
-  platform_version     = "1.4.0"
-  force_new_deployment = var.force_new_deployment
-  propagate_tags       = "SERVICE"
+  name                   = local.service_name_full
+  cluster                = var.cluster_arn
+  task_definition        = aws_ecs_task_definition.this.arn
+  desired_count          = var.desired_count
+  launch_type            = "FARGATE"
+  platform_version       = "1.4.0"
+  force_new_deployment   = var.force_new_deployment
+  propagate_tags         = "SERVICE"
+  enable_execute_command = var.enable_execute_command
 
   network_configuration {
     subnets          = var.subnets == null ? [for s in var.platform.private_subnets : s.id] : var.subnets
     assign_public_ip = false
-    security_groups  = var.security_groups
+    security_groups  = (length(var.security_groups) == 0) ? [aws_security_group.task[0].id] : var.security_groups
   }
 
   dynamic "load_balancer" {
@@ -92,7 +181,7 @@ resource "aws_ecs_service" "this" {
     for_each = var.enable_ecs_service_connect ? [1] : []
     content {
       enabled   = true
-      namespace = var.service_connect_namespace
+      namespace = var.service_connect_namespace.arn
 
       service {
         discovery_name = local.service_name
@@ -119,7 +208,9 @@ resource "aws_ecs_service" "this" {
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 
   depends_on = [
-    aws_lb_listener_rule.this
+    aws_lb_listener_rule.this,
+    aws_iam_role_policy_attachment.service_connect,
+    aws_iam_role.service_connect
   ]
 
   deployment_circuit_breaker {

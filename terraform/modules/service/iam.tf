@@ -41,10 +41,32 @@ data "aws_iam_policy_document" "execution" {
       "ecr:BatchGetImage",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "ssm:GetParameters"
+      "logs:PutLogEvents"
     ]
     resources = ["*"]
+  }
+
+  dynamic "statement" {
+    for_each = length(data.aws_ssm_parameter.secrets) > 0 ? [1] : []
+    content {
+      sid    = "AllowSSMParameterAccess"
+      effect = "Allow"
+      actions = [
+        "ssm:GetParameters",
+        "ssm:GetParameter"
+      ]
+      resources = [for secret in data.aws_ssm_parameter.secrets : secret.arn]
+    }
+  }
+
+  statement {
+    sid    = "AllowDatadogSSMAccess"
+    effect = "Allow"
+    actions = [
+      "ssm:GetParameters",
+      "ssm:GetParameter"
+    ]
+    resources = [data.aws_ssm_parameter.datadog_api_key.arn]
   }
 
   statement {
@@ -58,11 +80,11 @@ data "aws_iam_policy_document" "execution" {
   dynamic "statement" {
     for_each = var.enable_ecs_service_connect ? [1] : []
     content {
-      sid     = "AllowPassServiceConnectRole"
-      actions = ["iam:PassRole"]
+      sid       = "AllowPassServiceConnectRole"
+      actions   = ["iam:PassRole"]
       resources = [aws_iam_role.service_connect[0].arn]
     }
-    }
+  }
 }
 
 # -------------------------
@@ -115,14 +137,41 @@ data "aws_iam_policy_document" "service_connect" {
     resources = data.aws_ram_resource_share.pace_ca.resource_arns
   }
 
+  dynamic "statement" {
+    for_each = var.enable_ecs_service_connect && var.service_connect_namespace != null ? [1] : []
+    content {
+      sid = "AllowCertManagement"
+      actions = [
+        "acm:ExportCertificate",
+        "acm:DescribeCertificate",
+        "acm:GetCertificate"
+      ]
+      resources = ["arn:aws:acm:${var.platform.primary_region.name}:${var.platform.account_id}:certificate/*"]
+
+      condition {
+        test     = "StringLike"
+        variable = "acm:DomainName"
+        values   = ["*.${var.service_connect_namespace.name}"]
+      }
+    }
+  }
+
+  # Scoped to ECS Service Connect-managed secrets only (ecs-sc! prefix)
   statement {
-    sid = "AllowCertManagement"
+    sid = "AllowSecretsManagerForTLS"
     actions = [
-      "acm:ExportCertificate",
-      "acm:DescribeCertificate",
-      "acm:GetCertificate"
+      "secretsmanager:CreateSecret",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:UpdateSecret",
+      "secretsmanager:DeleteSecret",
+      "secretsmanager:PutSecretValue",
+      "secretsmanager:TagResource",
+      "secretsmanager:RotateSecret"
     ]
-    resources = ["arn:aws:acm:${var.platform.primary_region.name}:${var.platform.account_id}:certificate/*"]
+    resources = [
+      "arn:aws:secretsmanager:${var.platform.primary_region.name}:${var.platform.account_id}:secret:ecs-sc!*"
+    ]
   }
 
   statement {

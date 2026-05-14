@@ -12,12 +12,48 @@ variable "enable_ecs_service_connect" {
   default     = false
 }
 
-# Define where this gets set by developers
 variable "service_connect_namespace" {
-  type        = string
+  type = object({
+    arn  = string
+    name = string
+  })
   default     = null
-  description = "AWS Cloud Map namespace ARN for Service Connect. Must be associated with the ECS cluster."
+  description = <<-EOT
+    Cloud Map HTTP namespace for ECS Service Connect.
+    Pass the aws_service_discovery_http_namespace resource directly:
+      service_connect_namespace = aws_service_discovery_http_namespace.this
+    The module uses .arn for the ECS service and .name for IAM condition scoping.
+  EOT
+
+  validation {
+    condition = var.service_connect_namespace == null || anytrue([
+      for domain in [
+        ".cmscloud.local",
+        ".cms.local",
+        ".hcgov.local",
+        ".marketplace.local",
+        ".internal.cms.gov",
+        ".internal.healthcare.gov",
+        ".internal.cuidadodesalud.gov",
+        ".internal.hhs.gov"
+      ] : endswith(var.service_connect_namespace.name, domain)
+    ])
+    error_message = <<-EOT
+      service_connect_namespace.name must end with a domain permitted by the pace-ca-g1 Private CA.
+      Permitted suffixes:
+        - .cmscloud.local
+        - .cms.local
+        - .hcgov.local
+        - .marketplace.local
+        - .internal.cms.gov
+        - .internal.healthcare.gov
+        - .internal.cuidadodesalud.gov
+        - .internal.hhs.gov
+      Example: "cdap-test.cmscloud.local"
+    EOT
+  }
 }
+
 
 variable "service_connect_port" {
   type        = number
@@ -57,6 +93,12 @@ variable "ignore_desired_count_changes" {
     When true, Terraform will not revert desired_count to the configured value on apply.
     Enable this when using Application Auto Scaling to manage task count at runtime.
   EOT
+}
+
+variable "enable_execute_command" {
+  type        = bool
+  default     = false
+  description = "Used only for testing. Requires task role to have ssm Permissions for ECS Exec."
 }
 
 # -------------------------------------------------------
@@ -306,4 +348,19 @@ variable "volumes" {
     name      = string
   }))
   default = null
+}
+
+variable "log_retention_days" {
+  type        = number
+  default     = 180
+  description = "Number of days to retain ECS task logs in CloudWatch. Required for production is minimum 180."
+
+  validation {
+    condition = contains(
+      [0, 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731,
+      1096, 1827, 2192, 2557, 2922, 3288, 3653],
+      var.log_retention_days
+    )
+    error_message = "log_retention_days must be a value supported by CloudWatch Logs (e.g. 30, 90, 180, 365, 731). See: https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutRetentionPolicy.html"
+  }
 }
