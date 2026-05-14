@@ -2,16 +2,16 @@ name: tftesting-lambda
 
 on:
   workflow_dispatch:
-  inputs:
-    action:
-      description: 'Action to perform'
-      required: true
-      default: 'plan'
-      type: choice
-      options:
-        - plan
-        - apply
-        - destroy
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
 
 concurrency:
   group: tftesting-function
