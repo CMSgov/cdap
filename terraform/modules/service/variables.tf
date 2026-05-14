@@ -54,17 +54,16 @@ variable "service_connect_namespace" {
   }
 }
 
-
 variable "service_connect_port" {
   type        = number
   default     = null
-  description = "Defaults to the first containerPort in port_mappings. Override this for port remapping (e.g. expose on :80 while container listens on :8080)."
+  description = "Optional. Defaults to the first containerPort in port_mappings. Override this for port remapping (e.g. expose on :80 while container listens on :8080)."
 }
 
 variable "service_connect_port_name" {
   type        = string
   default     = null
-  description = "Name of the port mapping to use for Service Connect. Defaults to the first named port in port_mappings."
+  description = "Optional. Defaults to the first named port in port_mappings. Name of the port mapping to use for Service Connect."
 }
 
 variable "service_connect_dns_name" {
@@ -284,7 +283,7 @@ variable "platform" {
 }
 
 variable "port_mappings" {
-  description = "The list of port mappings for the container. Port mappings allow containers to access ports on the host container instance to send or receive traffic. For task definitions that use the awsvpc network mode, only specify the containerPort. The hostPort can be left blank or it must be the same value as the containerPort"
+  description = "The list of port mappings for the container. Port mappings allow containers to access ports on the host container instance to send or receive traffic. For task definitions that use the awsvpc network mode, only specify the containerPort."
   type = list(object({
     appProtocol        = optional(string)
     containerPort      = optional(number)

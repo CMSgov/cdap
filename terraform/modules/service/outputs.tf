@@ -54,3 +54,13 @@ output "task_role_arn" {
   description = "ARN of the ECS task role (module-managed or externally provided)."
   value       = aws_iam_role.task.arn
 }
+
+output "service_connect_port" {
+  description = "The container port exposed via Service Connect. Use this as the port in security group rules for service-to-service traffic."
+  value       = var.enable_ecs_service_connect ? local.port_map[local.sc_port_name] : null
+}
+
+output "service_connect_name" {
+  description = "The Service Connect DNS name for this service. Other services in the same namespace call this service at http://<service_connect_name>:<service_connect_port>/."
+  value       = var.enable_ecs_service_connect ? local.service_name : null
+}

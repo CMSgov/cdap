@@ -2,8 +2,8 @@
 
 resource "aws_vpc_security_group_egress_rule" "service_a_to_service_b" {
   security_group_id            = module.service_a.task_security_group_id
-  from_port                    = 80
-  to_port                      = 80
+  from_port                    = module.service_b.service_connect_port
+  to_port                      = module.service_b.service_connect_port
   ip_protocol                  = "tcp"
   referenced_security_group_id = module.service_b.task_security_group_id
   description                  = "Allow outbound HTTP to service-b (through Service Connect)"
@@ -11,8 +11,8 @@ resource "aws_vpc_security_group_egress_rule" "service_a_to_service_b" {
 
 resource "aws_vpc_security_group_ingress_rule" "service_b_from_service_a" {
   security_group_id            = module.service_b.task_security_group_id
-  from_port                    = 80
-  to_port                      = 80
+  from_port                    = module.service_b.service_connect_port
+  to_port                      = module.service_b.service_connect_port
   ip_protocol                  = "tcp"
   referenced_security_group_id = module.service_a.task_security_group_id
   description                  = "Allow inbound HTTP from service-a (Service Connect)"
