@@ -52,5 +52,5 @@ output "task_security_group_id" {
 
 output "task_role_arn" {
   description = "ARN of the ECS task role (module-managed or externally provided)."
-  value       = var.task_role_arn != null ? var.task_role_arn : aws_iam_role.task[0].arn
+  value       = aws_iam_role.task.arn
 }

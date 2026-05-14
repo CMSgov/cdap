@@ -98,9 +98,9 @@ module "service_a" {
   source             = "../../../modules/service/"
   # Use this service to test connections to service-b through service connect
   enable_execute_command = true
-  additional_task_role_policies = [
-    aws_iam_policy.ecs_exec.arn
-  ]
+  additional_task_role_policies = {
+    ecs_exec = aws_iam_policy.ecs_exec.arn
+  }
   mount_points = [
     { containerPath = "/var/cache/nginx", sourceVolume = "nginx_cache", readOnly = false },
     { containerPath = "/var/run", sourceVolume = "nginx_run", readOnly = false },
@@ -338,8 +338,7 @@ module "service_legacy" {
     account_id      = module.platform.aws_caller_identity.account_id
   }
 
-  task_role_arn = aws_iam_role.legacy_task.arn
-  cluster_arn   = aws_ecs_cluster.test.arn
+  cluster_arn = aws_ecs_cluster.test.arn
 
   image  = "public.ecr.aws/nginx/nginx:latest"
   cpu    = 256

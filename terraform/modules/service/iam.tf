@@ -185,8 +185,6 @@ data "aws_iam_policy_document" "service_connect" {
 # Task Role — assumed by the running container
 # -------------------------------------------------------
 resource "aws_iam_role" "task" {
-  count = var.task_role_arn == null ? 1 : 0
-
   name = "${local.service_name_full}-task-role"
 
   assume_role_policy = jsonencode({
@@ -206,15 +204,15 @@ resource "aws_iam_role" "task" {
 }
 
 resource "aws_iam_role_policy_attachment" "task_additional" {
-  for_each = var.task_role_arn == null ? toset(var.additional_task_role_policies) : toset([])
+  for_each = var.additional_task_role_policies
 
-  role       = aws_iam_role.task[0].name
+  role       = aws_iam_role.task.name
   policy_arn = each.value
 }
 
 resource "aws_iam_role_policy" "task" {
   name   = "${local.service_name_full}-task-policy"
-  role   = aws_iam_role.task[0].name
+  role   = aws_iam_role.task.name
   policy = data.aws_iam_policy_document.task.json
 }
 
