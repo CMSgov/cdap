@@ -1,7 +1,3 @@
-# --------------------------------
-# Task Role IAM handled externally
-#---------------------------------
-
 # --------------------
 # Execution Role IAM
 #----------------------
@@ -183,4 +179,63 @@ data "aws_iam_policy_document" "service_connect" {
     ]
     resources = [var.platform.kms_alias_primary.target_key_arn]
   }
+}
+
+# -------------------------------------------------------
+# Task Role — assumed by the running container
+# -------------------------------------------------------
+resource "aws_iam_role" "task" {
+  count = var.task_role_arn == null ? 1 : 0
+
+  name = "${local.service_name_full}-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Action    = "sts:AssumeRole"
+        Principal = { Service = "ecs-tasks.amazonaws.com" }
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.service_name_full}-task-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "task_additional" {
+  for_each = var.task_role_arn == null ? toset(var.additional_task_role_policies) : toset([])
+
+  role       = aws_iam_role.task[0].name
+  policy_arn = each.value
+}
+
+resource "aws_iam_role_policy" "task" {
+  name   = "${local.service_name_full}-task-policy"
+  role   = aws_iam_role.task[0].name
+  policy = data.aws_iam_policy_document.task.json
+}
+
+data "aws_iam_policy_document" "task" {
+  statement {
+    sid = "AllowKMSDecrypt"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
+    ]
+    resources = [var.platform.kms_alias_primary.target_key_arn]
+  }
+  # -------------------------------------------------------
+  # Future: RDS IAM Authentication
+  # Uncomment and fill in db-cluster-resource-id when ready
+  # -------------------------------------------------------
+  # statement {
+  #   sid     = "AllowRDSIAMAuth"
+  #   actions = ["rds-db:connect"]
+  #   resources = [
+  #     var.database_arn
+  #   ]
+  # }
 }

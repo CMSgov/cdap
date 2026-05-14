@@ -309,7 +309,16 @@ variable "health_check" {
 }
 
 variable "security_groups" {
-  description = "List of security groups to associate with the service."
+  description = <<-EOT
+    For most use cases, leave this empty. List of additional security group IDs to attach to the ECS task alongside the
+    module-managed task security group.
+
+    By default, the module creates and manages its own security group for the ECS task,
+    with a scoped HTTPS egress rule. Ingress rules and any additional egress rules
+    (e.g., service-to-service via Service Connect) should be managed in the caller
+    using aws_vpc_security_group_ingress_rule / aws_vpc_security_group_egress_rule
+    referencing module.service.task_security_group_id.
+  EOT
   type        = list(string)
   default     = []
 }
@@ -324,11 +333,6 @@ variable "subnets" {
   description = "Optional list of subnets associated with the service. Defaults to private subnets as specified by the platform module."
   type        = list(string)
   default     = null
-}
-
-variable "task_role_arn" {
-  description = "Distinct from execution role. ARN of the role that allows the application code in tasks to make calls to AWS services."
-  type        = string
 }
 
 variable "volumes" {
@@ -363,4 +367,26 @@ variable "log_retention_days" {
     )
     error_message = "log_retention_days must be a value supported by CloudWatch Logs (e.g. 30, 90, 180, 365, 731). See: https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutRetentionPolicy.html"
   }
+}
+
+## IAM
+variable "additional_task_role_policies" {
+  type        = list(string)
+  default     = []
+  description = <<-EOT
+    List of IAM managed policy ARNs to attach to the module-managed task role.
+    Use this to grant the running container access to AWS resources
+    (e.g., S3 buckets, DynamoDB tables, SQS queues) without modifying the module.
+    Has no effect when task_role_arn is set (external role).
+  EOT
+}
+
+variable "task_role_arn" {
+  description = <<-EOT
+    ARN of an externally-managed IAM task role. If null (default), the module creates
+    and manages the task role automatically. Only set this if you need to share a task
+    role across multiple services or have external role management requirements.
+  EOT
+  type        = string
+  default     = null
 }

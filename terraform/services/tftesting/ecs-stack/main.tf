@@ -98,6 +98,9 @@ module "service_a" {
   source             = "../../../modules/service/"
   # Use this service to test connections to service-b through service connect
   enable_execute_command = true
+  additional_task_role_policies = [
+    aws_iam_policy.ecs_exec.arn
+  ]
   mount_points = [
     { containerPath = "/var/cache/nginx", sourceVolume = "nginx_cache", readOnly = false },
     { containerPath = "/var/run", sourceVolume = "nginx_run", readOnly = false },
@@ -112,32 +115,10 @@ module "service_a" {
     { name = "ssm_agent", configure_at_launch = false }
   ]
 
-  # -------------------------------------------------------
-  # Platform — passed through from your platform module
-  # -------------------------------------------------------
-  platform = {
-    app     = module.platform.app
-    env     = module.platform.env
-    service = "tftesting-a"
-
-    kms_alias_primary = {
-      target_key_arn = module.platform.kms_alias_primary.target_key_arn
-    }
-
-    primary_region = {
-      name = module.platform.primary_region.name
-    }
-
-    private_subnets = module.platform.private_subnets
-    vpc_id          = module.platform.vpc_id
-    account_id      = module.platform.aws_caller_identity.account_id
-  }
-
   cluster_arn = aws_ecs_cluster.test.arn
-
-  image  = "public.ecr.aws/nginx/nginx:latest"
-  cpu    = 256
-  memory = 512
+  image       = "public.ecr.aws/nginx/nginx:latest"
+  cpu         = 256
+  memory      = 512
 
   port_mappings = [
     {
@@ -156,7 +137,6 @@ module "service_a" {
     timeout     = 5
   }
 
-  task_role_arn         = aws_iam_role.task.arn
   desired_count         = 1
   force_new_deployment  = false
   container_environment = []
@@ -178,6 +158,27 @@ module "service_a" {
   deployment_circuit_breaker = {
     enable   = true
     rollback = true
+  }
+
+  # -------------------------------------------------------
+  # Platform — passed through from your platform module
+  # -------------------------------------------------------
+  platform = {
+    app     = module.platform.app
+    env     = module.platform.env
+    service = "tftesting-a"
+
+    kms_alias_primary = {
+      target_key_arn = module.platform.kms_alias_primary.target_key_arn
+    }
+
+    primary_region = {
+      name = module.platform.primary_region.name
+    }
+
+    private_subnets = module.platform.private_subnets
+    vpc_id          = module.platform.vpc_id
+    account_id      = module.platform.aws_caller_identity.account_id
   }
 }
 
@@ -241,7 +242,6 @@ module "service_b" {
     timeout     = 5
   }
 
-  task_role_arn         = aws_iam_role.task.arn
   desired_count         = 1
   force_new_deployment  = false
   container_environment = []
@@ -338,7 +338,8 @@ module "service_legacy" {
     account_id      = module.platform.aws_caller_identity.account_id
   }
 
-  cluster_arn = aws_ecs_cluster.test.arn
+  task_role_arn = aws_iam_role.legacy_task.arn
+  cluster_arn   = aws_ecs_cluster.test.arn
 
   image  = "public.ecr.aws/nginx/nginx:latest"
   cpu    = 256
@@ -372,7 +373,6 @@ module "service_legacy" {
     timeout     = 5
   }
 
-  task_role_arn   = aws_iam_role.task.arn
   security_groups = [aws_security_group.ecs_task.id]
 
   desired_count        = 1

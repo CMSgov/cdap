@@ -49,3 +49,8 @@ output "task_security_group_id" {
   description = "ID of the ECS task security group (module-managed or first caller-provided)."
   value       = (length(var.security_groups) == 0) ? aws_security_group.task[0].id : one(var.security_groups)
 }
+
+output "task_role_arn" {
+  description = "ARN of the ECS task role (module-managed or externally provided)."
+  value       = var.task_role_arn != null ? var.task_role_arn : aws_iam_role.task[0].arn
+}
