@@ -1,0 +1,135 @@
+name: tftesting-ecs-service
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: tftesting-ecs-service
+  cancel-in-progress: true
+
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  APP: cdap
+  ENV: test
+  TF_DIR: terraform/services/tftesting/ecs-stack
+  CLUSTER: cdap-test-tftesting-cluster
+  SERVICE_A: cdap-test-tftesting-a
+  SERVICE_B: cdap-test-tftesting-b
+  CONTAINER_A: tftesting-a
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  apply:
+    name: Tofu Apply
+    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+      - uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ env.APP }}-${{ env.ENV }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Tofu Init
+        working-directory: ${{ env.TF_DIR }}
+        run: tofu init -reconfigure -backend-config="../../../backends/${{ env.APP }}-${{ env.ENV }}.s3.tfbackend"
+      - name: Tofu Apply
+        working-directory: ${{ env.TF_DIR }}
+        run: tofu apply -auto-approve
+
+  test:
+    name: Connectivity Test
+    needs: apply
+    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ env.APP }}-${{ env.ENV }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Wait for services to reach steady state
+        run: |
+          echo "Waiting for service-a to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.CLUSTER }} \
+            --services ${{ env.SERVICE_A }}
+
+          echo "Waiting for service-b to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.CLUSTER }} \
+            --services ${{ env.SERVICE_B }}
+
+      - name: Get service-a task ARN
+        id: get-task
+        run: |
+          TASK_ARN=$(aws ecs list-tasks \
+            --cluster ${{ env.CLUSTER }} \
+            --service-name ${{ env.SERVICE_A }} \
+            --desired-status RUNNING \
+            --query "taskArns[0]" \
+            --output text)
+
+          if [[ -z "$TASK_ARN" || "$TASK_ARN" == "None" ]]; then
+            echo "ERROR: No running tasks found for ${{ env.SERVICE_A }}"
+            exit 1
+          fi
+
+          echo "task_arn=$TASK_ARN" >> $GITHUB_OUTPUT
+          echo "Found task: $TASK_ARN"
+
+      - name: Verify ECS Exec agent is running
+        run: |
+          STATUS=$(aws ecs describe-tasks \
+            --cluster ${{ env.CLUSTER }} \
+            --tasks ${{ steps.get-task.outputs.task_arn }} \
+            --query "tasks[0].containers[?name=='${{ env.CONTAINER_A }}'].managedAgents[?name=='ExecuteCommandAgent'].lastStatus" \
+            --output text)
+
+          echo "ExecuteCommandAgent status: $STATUS"
+
+          if [[ "$STATUS" != "RUNNING" ]]; then
+            echo "ERROR: ExecuteCommandAgent is not running (status: $STATUS)"
+            exit 1
+          fi
+
+      - name: Test service-a → service-b connectivity via Service Connect
+        run: |
+          echo "Testing HTTP connectivity from service-a to service-b..."
+
+          RESULT=$(aws ecs execute-command \
+            --cluster ${{ env.CLUSTER }} \
+            --task ${{ steps.get-task.outputs.task_arn }} \
+            --container ${{ env.CONTAINER_A }} \
+            --interactive \
+            --command "curl -s -o /dev/null -w '%{http_code}' http://tftesting-b:80/" \
+            2>&1)
+
+          echo "Result: $RESULT"
+
+          if echo "$RESULT" | grep -q "200"; then
+            echo "✅ Connectivity test passed — service-a successfully reached service-b via Service Connect"
+          else
+            echo "❌ Connectivity test failed — expected HTTP 200, got: $RESULT"
+            exit 1
+          fi
+
+  destroy:
+    name: Tofu Destroy
+    if: always()
+    needs: [apply, test]
+    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+      - uses: cmsgov/cdap/actions/setup-tenv@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ env.APP }}-${{ env.ENV }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Tofu Init
+        working-directory: ${{ env.TF_DIR }}
+        run: tofu init -reconfigure -backend-config="../../../backends/${{ env.APP }}-${{ env.ENV }}.s3.tfbackend"
+      - name: Tofu Destroy
+        working-directory: ${{ env.TF_DIR }}
+        run: tofu destroy -auto-approve
