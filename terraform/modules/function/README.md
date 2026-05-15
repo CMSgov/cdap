@@ -2,24 +2,54 @@
 
 This is a generic module for creating lambda function resources in CMS Cloud. Use it in terraform services where a lambda function is needed.
 
+This module provisions:
+
+    An AWS Lambda function deployed from S3 (managed or externally supplied zip)
+    A dedicated S3 bucket for the function zip artifact
+    VPC placement using shared VPC and subnet modules
+    A security group (rules managed externally by the caller)
+    A CloudWatch Log Group with KMS encryption and configurable retention
+    An IAM role with least-privilege defaults (VPC ENI, CloudWatch Logs, KMS, optional SSM)
+    An optional CloudWatch Events schedule trigger
+    An optional deploy-time liveness check
+    A live alias for stable invocation ARNs and rollback support
+
+### Cloudwatch Events 
+    Pass a schedule_expression to enable a CloudWatch Events rule that invokes the function on a schedule. 
+    The module creates the rule, target, and Lambda permission automatically.
+    
+## Security groups 
+    This module creates a security group for the Lambda function and outputs its ID. 
+    All ingress rules are managed by the caller, to avoid circular dependencies when the SG is referenced alongside other resources.
+    Required egress rules should also be managed by the caller, as the existing broad egress rule will be removed in 
+    favor of VPC endpoints.
+
+### SQS
+    No ingress security group rules are needed for SQS. 
+    Lambda polls SQS outbound — SQS does not make inbound network connections to your function.
+
 ## CI/CD Enablement via GitHub Actions
 
-This module supports GitHub Actions OIDC-based deployments. When
-`github_actions_repos` is set, the Lambda zip bucket policy is extended
-to allow the specified repositories to upload new function zips directly
-from a GitHub Actions workflow.
+    This module supports GitHub Actions OIDC-based deployments. When
+    `github_actions_repos` is set, the Lambda zip bucket policy is extended
+    to allow the specified repositories to upload new function zips directly
+    from a GitHub Actions workflow.
 
 ### How to use
 
 1. Pass the repo(s) that should have deploy access:
 
 ```hcl
-module "alarm_to_slack" {
-  source = "../modules/function"
+module "my_lambda" {
+  source = "../lambda"
 
-  # ... other vars ...
-
-  github_actions_repos = ["CMSgov/bcda-app"]
+  app         = "bcda"
+  env         = "dev"
+  name        = "my-function"
+  description = "Some descriptive message"
+  handler     = "handler.main"
+  runtime     = "python3.11"
+  source_dir  = "${path.module}/lambda_src"
 }
 ```
 
