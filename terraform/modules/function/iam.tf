@@ -120,7 +120,7 @@ resource "aws_iam_role_policy" "default_function" {
 resource "aws_iam_role_policy" "extra_policies" {
   for_each = var.function_role_inline_policies
 
-  name   = each.key
+  name   = "${var.app}-${var.env}-${each.key}"
   role   = aws_iam_role.function.id
   policy = each.value
 }
