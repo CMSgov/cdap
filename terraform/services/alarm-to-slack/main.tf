@@ -4,7 +4,7 @@ locals {
 
 import {
   to = module.sns_to_slack_function.aws_cloudwatch_log_group.function
-  id = "/aws/lambda/${var.app}-${var.env}-${local.full_name}"
+  id = "/aws/lambda/${local.full_name}"
 }
 
 data "aws_ssm_parameters_by_path" "slack_webhook_urls" {
