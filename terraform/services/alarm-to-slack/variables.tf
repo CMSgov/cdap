@@ -19,5 +19,5 @@ variable "env" {
 variable "apps_served" {
   description = "List of app names whose Slack webhook URLs this function reads from SSM at runtime."
   type        = list(string)
-  default     = ["bcda", "cdap", "dpc"]
+  default     = ["bcda", "dpc", "cdap"]
 }
