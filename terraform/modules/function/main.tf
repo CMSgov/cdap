@@ -13,7 +13,7 @@ data "archive_file" "function" {
 
   type        = "zip"
   source_dir  = var.source_dir
-  output_path = "${path.module}/.terraform/tmp/${var.name}-function.zip"
+  output_path = "${path.module}/.terraform/tmp/${local.full_name_string}-function.zip"
   excludes    = var.source_dir_excludes
 }
 
@@ -23,7 +23,7 @@ module "zip_bucket" {
   additional_bucket_policies = length(var.github_actions_repos) > 0 ? [data.aws_iam_policy_document.cicd_manage_lambda_objects.json] : []
   app                        = var.app
   env                        = var.env
-  name                       = "${var.app}-${var.env}-${var.name}-function"
+  name                       = "${local.full_name_string}-function"
   ssm_parameter              = "/${var.app}/${var.env}/${var.name}-bucket"
 }
 
@@ -146,7 +146,7 @@ resource "aws_cloudwatch_event_rule" "this" {
   count = var.schedule_expression != "" ? 1 : 0
 
   name                = "${local.full_name_string}-function"
-  description         = "Trigger ${var.name} function"
+  description         = "Trigger ${local.full_name_string} function"
   schedule_expression = var.schedule_expression
 }
 
@@ -169,7 +169,7 @@ resource "aws_lambda_permission" "cloudwatch_events" {
 
 # Manage cloudwatch log group to ensure compliant
 resource "aws_cloudwatch_log_group" "function" {
-  name              = "/aws/lambda/${var.name}"
+  name              = "/aws/lambda/${local.full_name_string}"
   kms_key_id        = data.aws_kms_alias.kms_key.target_key_arn
   skip_destroy      = strcontains(var.env, "prod") ? true : false
   retention_in_days = var.log_retention_days
