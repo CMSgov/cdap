@@ -2,6 +2,18 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://${local.provider_domain}"
 }
 
+data "aws_ssm_parameter" "this" {
+  for_each = toset(var.ssm_parameter_paths)
+  name     = each.value
+}
+
+locals {
+  ssm_parameter_arns = [
+    for path, param in data.aws_ssm_parameter.this :
+    param.arn
+  ]
+}
+
 data "aws_iam_role" "admin" {
   name = "ct-ado-bcda-application-admin"
 }
@@ -59,14 +71,14 @@ data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "default_function" {
   dynamic "statement" {
-    for_each = length(var.ssm_parameter_paths) > 0 ? [1] : []
+    for_each = length(local.ssm_parameter_arns) > 0 ? [1] : []
     content {
       sid = "SSMParameterRead"
       actions = [
         "ssm:GetParameter",
         "ssm:GetParameters",
       ]
-      resources = var.ssm_parameter_paths
+      resources = local.ssm_parameter_arns
     }
   }
 

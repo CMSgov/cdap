@@ -134,23 +134,17 @@ variable "log_retention_days" {
 }
 
 # ── IAM / Permissions ─────────────────────────────────────────────────────────
-
 variable "ssm_parameter_paths" {
   description = <<-EOT
-    List of SSM parameter ARNs or path patterns this function is permitted to read.
-    Each entry should be a full ARN or ARN pattern. This can be retrieved from platform.module.ssm.ssm_root_name.parameter_name.arn.
+    List of SSM parameter paths this function is permitted to read.
+    Each entry must be a path starting with '/' (e.g., /cdap/test/lambda/secret).
+    The module will validate that each parameter exists and construct the ARN automatically.
     If empty (default), the function receives no SSM access.
-    Do not use broad wildcards — scope each entry to the specific parameters this function requires.
+    Scope each entry to the specific parameters this function requires.
   EOT
   type        = list(string)
   default     = []
-  validation {
-    condition = alltrue([
-      for arn in var.ssm_parameter_paths :
-      can(regex("^arn:aws:ssm:", arn))
-    ])
-    error_message = "Each entry in ssm_parameter_paths must be a valid SSM parameter ARN starting with 'arn:aws:ssm:'."
-  }
+
 }
 
 variable "function_role_inline_policies" {
