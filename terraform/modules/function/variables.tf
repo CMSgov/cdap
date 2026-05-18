@@ -155,6 +155,12 @@ variable "function_role_inline_policies" {
 
 # ── Advanced / Migration strategies ─────────────────────────────────────────────────
 
+variable "additional_admin_roles" {
+  description = "List of additional IAM role names to allow assume role"
+  type        = list(string)
+  default     = ["ct-ado-dasg-application-admin", "ct-ado-bcda-application-admin"]
+}
+
 variable "extra_kms_key_arns" {
   description = "Optional list of additional KMS key ARNs the Lambda can use"
   type        = list(string)

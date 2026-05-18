@@ -22,6 +22,12 @@ data "aws_iam_role" "dasg_admin" {
   name = "ct-ado-dasg-application-admin"
 }
 
+
+data "aws_iam_role" "additional_assume_roles" {
+  for_each = toset(var.additional_admin_roles)
+  name     = each.value
+}
+
 data "aws_iam_policy_document" "function_assume_role" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -54,15 +60,19 @@ data "aws_iam_policy_document" "function_assume_role" {
     }
   }
 
-  # Allow access from admin role for manual checks
+  # Allow access from admin role for manual checks, additional assume roles for config extension
   statement {
-    actions = [
-      "sts:AssumeRole",
-    ]
+    actions = ["sts:AssumeRole"]
 
     principals {
-      type        = "AWS"
-      identifiers = [data.aws_iam_role.admin.arn, data.aws_iam_role.dasg_admin.arn]
+      type = "AWS"
+      identifiers = concat(
+        [
+          data.aws_iam_role.admin.arn,
+          data.aws_iam_role.dasg_admin.arn,
+        ],
+        [for role in data.aws_iam_role.additional_assume_roles : role.arn]
+      )
     }
   }
 }
