@@ -9,12 +9,7 @@ import {
 
 data "aws_ssm_parameters_by_path" "slack_webhook_urls" {
   for_each = toset(var.apps_served)
-  path     = "/${each.value}/lambda/slack_webhook_url"
-}
-
-data "aws_kms_key" "per_app" {
-  for_each = toset(var.apps_served)
-  key_id   = "alias/${each.value}-${var.env}"
+  path     = "/${each.value}/${var.env}/lambda/slack_webhook_url"
 }
 
 module "sns_to_slack_function" {
@@ -28,8 +23,6 @@ module "sns_to_slack_function" {
   architecture = "arm64"
   handler      = "lambda_function.lambda_handler"
   runtime      = "python3.13"
-
-  extra_kms_key_arns = values(data.aws_kms_key.per_app)[*].arn
 
   ssm_parameter_paths = flatten([
     for app, data in data.aws_ssm_parameters_by_path.slack_webhook_urls :
