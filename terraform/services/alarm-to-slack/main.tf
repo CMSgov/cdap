@@ -13,8 +13,8 @@ data "aws_ssm_parameters_by_path" "slack_webhook_urls" {
 }
 
 data "aws_kms_key" "per_app" {
-    for_each = toset(var.apps_served)
-    key_id = "alias/${each.value}-${var.env}"
+  for_each = toset(var.apps_served)
+  key_id   = "alias/${each.value}-${var.env}"
 }
 
 module "sns_to_slack_function" {
