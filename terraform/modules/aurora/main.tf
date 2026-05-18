@@ -65,10 +65,17 @@ resource "aws_db_parameter_group" "this" {
   }
 }
 
+data "aws_rds_engine_version" "this" {
+  engine       = "aurora-postgresql"
+  version      = var.engine_version
+  default_only = true
+  latest       = true
+}
+
 resource "aws_rds_cluster" "this" {
   cluster_identifier                  = coalesce(var.cluster_identifier, local.service_prefix)
   engine                              = local.aurora_engine
-  engine_version                      = var.engine_version
+  engine_version                      = data.aws_rds_engine_version.this.version
   master_username                     = var.username
   master_password                     = var.password
   snapshot_identifier                 = var.snapshot_identifier
