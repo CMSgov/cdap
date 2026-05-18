@@ -2,15 +2,10 @@ data "aws_iam_openid_connect_provider" "github" {
   url = "https://${local.provider_domain}"
 }
 
-data "aws_ssm_parameter" "this" {
-  for_each = toset(var.ssm_parameter_paths)
-  name     = each.value
-}
-
 locals {
   ssm_parameter_arns = [
-    for path, param in data.aws_ssm_parameter.this :
-    param.arn
+    for path in var.ssm_parameter_paths :
+    "arn:aws:ssm:${var.platform.primary_region.name}:${var.platform.account_id}:parameter${path}"
   ]
 }
 
@@ -20,12 +15,6 @@ data "aws_iam_role" "admin" {
 
 data "aws_iam_role" "dasg_admin" {
   name = "ct-ado-dasg-application-admin"
-}
-
-
-data "aws_iam_role" "additional_assume_roles" {
-  for_each = toset(var.additional_admin_roles)
-  name     = each.value
 }
 
 data "aws_iam_policy_document" "function_assume_role" {
@@ -71,7 +60,7 @@ data "aws_iam_policy_document" "function_assume_role" {
           data.aws_iam_role.admin.arn,
           data.aws_iam_role.dasg_admin.arn,
         ],
-        [for role in data.aws_iam_role.additional_assume_roles : role.arn]
+        var.additional_admin_role_arns
       )
     }
   }
@@ -120,7 +109,7 @@ data "aws_iam_policy_document" "default_function" {
       "kms:GenerateDataKey",
     ]
     resources = concat(
-      [data.aws_kms_alias.kms_key.target_key_arn],
+      [var.platform.kms_alias_primary.target_key_arn],
       var.extra_kms_key_arns
     )
   }
@@ -142,7 +131,7 @@ resource "aws_iam_role_policy" "default_function" {
 resource "aws_iam_role_policy" "extra_policies" {
   for_each = var.function_role_inline_policies
 
-  name   = "${var.app}-${var.env}-${each.key}"
+  name   = "${local.app}-${local.env}-${each.key}"
   role   = aws_iam_role.function.id
   policy = each.value
 }
@@ -164,7 +153,7 @@ data "aws_iam_policy_document" "cicd_manage_lambda_objects" {
     principals {
       type = "AWS"
       identifiers = [
-        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/delegatedadmin/developer/${var.app}-${var.env}-github-actions",
+        "arn:aws:iam::${var.platform.account_id}:role/delegatedadmin/developer/${local.app}-${local.env}-github-actions",
       ]
     }
 

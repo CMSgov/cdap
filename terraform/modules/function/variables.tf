@@ -1,21 +1,3 @@
-variable "app" {
-  description = "The application name (ab2d, bcda, cdap dpc)"
-  type        = string
-  validation {
-    condition     = contains(["ab2d", "bcda", "cdap", "dpc"], var.app)
-    error_message = "Valid value for app is ab2d, bcda, cdap or dpc."
-  }
-}
-
-variable "env" {
-  description = "The application environment (dev, test, sandbox, prod)"
-  type        = string
-  validation {
-    condition     = contains(["dev", "test", "sandbox", "prod"], var.env)
-    error_message = "Valid value for env is dev, test, sandbox, or prod."
-  }
-}
-
 variable "name" {
   description = "Name of the lambda function"
   type        = string
@@ -24,6 +6,17 @@ variable "name" {
 variable "description" {
   description = "Description of the lambda function"
   type        = string
+}
+
+variable "platform" {
+  description = "Object representing the CDAP plaform module."
+  type = object({
+    app               = string
+    env               = string
+    kms_alias_primary = object({ target_key_arn = string })
+    primary_region    = object({ name = string })
+    account_id        = string
+  })
 }
 
 # ── Core Function Config
@@ -155,10 +148,10 @@ variable "function_role_inline_policies" {
 
 # ── Advanced / Migration strategies ─────────────────────────────────────────────────
 
-variable "additional_admin_roles" {
-  description = "List of additional IAM role names to allow assume role"
+variable "additional_admin_role_arns" {
+  description = "List of additional IAM role arns to allow assume role"
   type        = list(string)
-  default     = ["ct-ado-dasg-application-admin", "ct-ado-bcda-application-admin"]
+  default     = []
 }
 
 variable "extra_kms_key_arns" {

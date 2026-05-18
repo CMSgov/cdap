@@ -1,10 +1,9 @@
 locals {
-  provider_domain  = "token.actions.githubusercontent.com"
-  full_name_string = "${var.app}-${var.env}-${var.name}"
-}
+  provider_domain = "token.actions.githubusercontent.com"
+  app             = var.platform.app
+  env             = var.platform.env
 
-data "aws_kms_alias" "kms_key" {
-  name = "alias/${var.app}-${var.env}"
+  full_name_string = "${local.app}-${local.env}-${var.name}"
 }
 
 # Only used when source_dir is provided
@@ -21,10 +20,10 @@ module "zip_bucket" {
   source = "../bucket"
 
   additional_bucket_policies = length(var.github_actions_repos) > 0 ? [data.aws_iam_policy_document.cicd_manage_lambda_objects.json] : []
-  app                        = var.app
-  env                        = var.env
+  app                        = local.app
+  env                        = local.env
   name                       = "${local.full_name_string}-function"
-  ssm_parameter              = "/${var.app}/${var.env}/${var.name}-bucket"
+  ssm_parameter              = "/${local.app}/${local.env}/${var.name}-bucket"
 }
 
 # Managed zip upload — used when source_dir is provided
@@ -39,7 +38,7 @@ resource "aws_s3_object" "function_zip" {
   source_hash = data.archive_file.function[0].output_base64sha256
 
   # KMS encryption
-  kms_key_id = data.aws_kms_alias.kms_key.target_key_arn
+  kms_key_id = var.platform.kms_alias_primary.target_key_arn
 }
 
 resource "aws_s3_object" "empty_function_zip" {
@@ -53,8 +52,8 @@ resource "aws_s3_object" "empty_function_zip" {
 module "vpc" {
   source = "../vpc"
 
-  app = var.app
-  env = var.env
+  app = local.app
+  env = local.env
 }
 
 module "subnets" {
@@ -71,7 +70,7 @@ resource "aws_lambda_function" "this" {
   # If source_dir is managed by this module, track the uploaded object version.
   # Otherwise, fall back to the externally-supplied version (or null).
   s3_object_version = var.source_dir != null ? aws_s3_object.function_zip[0].version_id : var.source_code_version
-  kms_key_arn       = data.aws_kms_alias.kms_key.target_key_arn
+  kms_key_arn       = var.platform.kms_alias_primary.target_key_arn
   role              = aws_iam_role.function.arn
   handler           = var.handler
   runtime           = var.runtime
@@ -122,8 +121,8 @@ resource "aws_lambda_permission" "cloudwatch_events" {
 # Manage cloudwatch log group to ensure compliant
 resource "aws_cloudwatch_log_group" "function" {
   name              = "/aws/lambda/${local.full_name_string}"
-  kms_key_id        = data.aws_kms_alias.kms_key.target_key_arn
-  skip_destroy      = strcontains(var.env, "prod") ? true : false
+  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
+  skip_destroy      = strcontains(local.env, "prod") ? true : false
   retention_in_days = var.log_retention_days
 }
 
