@@ -1,7 +1,7 @@
 /dasgapi/sensitive/datadog/init_api_key: ENC[AES256_GCM,data:lrsX4aFEBNeJIWvSH6v/YOenRAKsg8xK498t+294cFE=,iv:OK+3pksyNBX4ZKIqP1iHiSa9F16tDRxwesrbGKr3MmI=,tag:1S0u/0t009+il1BOKeRSig==,type:str]
 /dasgapi/sensitive/datadog/init_application_key: ENC[AES256_GCM,data:zhTGraEUCn8/e4Bv3VrvZxJWokjct1AM0xEtZB+TMnlw5tGB0aF5Dw==,iv:9ni/W8QkrBgQg1b+aOSFR5LI5iqGdsYAMJ6Qz2QNEzw=,tag:1kfE4ir9PIY4DPoQ6xibJg==,type:str]
 /cdap/${env}/snyk/api_token: ENC[AES256_GCM,data:77PUOXcaJH/gTQBEDA5wHUSNXAOgseQUGLAezXYtQ4w6Tu+p,iv:GT95QoEquPKQaE1cLoKXP8v6JgzX/WCeAzWiwPNm5Qc=,tag:CI5RIZ9ASUnAe0eaFZFlfg==,type:str]
-/cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:IEwGK+dEw3mm2FTRTRLNhjLY19vXsr4j4oqUu1uaAeyZ8Kp+Z/Bf/g==,iv:e5RTewVswAsrEMuAPIRGSlhoe7VRrzbb4eRirBwjRJo=,tag:Z9ZpqIyHoNZqGRBcqIaRIQ==,type:str]
+/cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:8I9OcIGsIWVJmNXWR6sjoEujOn9ZaIIuJOJn5LXxiW7dEPly4JdY/A==,iv:iSZKJig6jl9qkX4Y9/i8szn0LkDNT/BaDiNHUnRfK84=,tag:RssiJy+deSRw0yPBLMYWOQ==,type:str]
 /cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
 /cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
 /cdap/${env}/common/nonsensitive/security-events/renotify-after-days: 30
