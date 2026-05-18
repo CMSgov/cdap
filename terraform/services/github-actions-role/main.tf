@@ -378,7 +378,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "lambda:AddPermission",
       "lambda:CreateEventSourceMapping",
       "lambda:CreateFunction",
-      "lambda:GetFunction",
+      "lambda:GetAlias",
       "lambda:GetEventSourceMapping",
       "lambda:GetFunctionCodeSigningConfig",
       "lambda:GetPolicy",
