@@ -19,8 +19,7 @@ resource "aws_ssm_parameter" "inline_policy_test" {
 module "tftesting_function" {
   source = "../../../modules/function"
 
-  app         = "cdap"
-  env         = "test"
+  platform    = module.platform
   name        = "tftesting"
   description = "Ephemeral Lambda for CI/CD integration testing — exercises module features"
 
@@ -57,18 +56,6 @@ module "tftesting_function" {
 
   # Placeholder if evaluating github_actions_repos for deploys outside of Tofu
   github_actions_repos = []
-
-  # Scoped egress — HTTPS only to allow testing of SSM parameter retrieval ; remove when VPC endpoint is introduced
-  egress_rules = [
-    {
-      name        = "allow-https-ipv4"
-      from_port   = 443
-      to_port     = 443
-      protocol    = "tcp"
-      cidr_ipv4   = "0.0.0.0/0"
-      description = "Allow HTTPS egress for AWS API calls"
-    }
-  ]
 
   # Rollback support
   rollback_version = null # null = track latest published version
