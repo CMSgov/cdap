@@ -13,9 +13,8 @@ data "aws_ssm_parameters_by_path" "slack_webhook_urls" {
 }
 
 module "sns_to_slack_function" {
-  source = "../../modules/function"
-  app    = var.app
-  env    = var.env
+  source   = "../../modules/function"
+  platform = module.platform
 
   name        = "alarm-to-slack"
   description = "Listens for CloudWatch Alerts and forwards to Slack"
@@ -52,12 +51,22 @@ module "sns_to_slack_function" {
 module "sns_to_slack_queue" {
   source = "github.com/CMSgov/cdap/terraform/modules/queue?ref=b177921621c97d02dc4a21f830e4532147aa0749"
 
-  app           = var.app
-  env           = var.env
   name          = local.full_name
   function_name = module.sns_to_slack_function.name
+  app           = var.app
+  env           = var.env
 
   policy_documents = [
     data.aws_iam_policy_document.sqs_queue_policy.json
   ]
+}
+
+module "platform" {
+  providers = { aws = aws, aws.secondary = aws.secondary }
+
+  source      = "../../modules/platform"
+  app         = var.app
+  env         = var.env
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
+  service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
 }
