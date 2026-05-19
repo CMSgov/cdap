@@ -1,4 +1,4 @@
-name: Trigger Test CloudWatch Alarm
+name: alarm-to-slack test trigger cloudwatch alarm
 
 on:
   workflow_dispatch:
