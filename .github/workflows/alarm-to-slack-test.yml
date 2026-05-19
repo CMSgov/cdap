@@ -16,7 +16,7 @@ on:
         options:
           - test
           - prod
-        default: test
+        default: 'test'
       state:
         description: 'Alarm state to set'
         required: true
@@ -25,7 +25,7 @@ on:
           - ALARM
           - OK
           - INSUFFICIENT_DATA
-        default: ALARM
+        default: 'ALARM'
       reason:
         description: 'Reason for state change (optional)'
         required: false
@@ -42,7 +42,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ inputs.env == 'test' && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-${{ inputs.env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ inputs.env == 'test' && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-${{ inputs.env == 'test' && 'non-prod' || 'prod' }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
 
