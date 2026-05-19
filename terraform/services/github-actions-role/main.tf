@@ -328,6 +328,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
         data.aws_kms_alias.bcda_app_config[*].target_key_arn,
         data.aws_kms_alias.bcda_insights_data_sampler[*].target_key_arn,
       ) : [],
+      var.app == "cdap" ? values(data.aws_kms_alias.all_managed_account_envs)[*].target_key_arn : [],
       var.app == "dpc" ? concat(
         data.aws_kms_alias.dpc_app_config[*].target_key_arn,
         data.aws_kms_alias.dpc_ecr[*].target_key_arn

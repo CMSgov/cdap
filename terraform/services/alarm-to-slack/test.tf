@@ -1,18 +1,12 @@
 ## Use DPC platform module to use cross-team KMS keys
-module "dpc_platform" {
-  providers = { aws = aws, aws.secondary = aws.secondary }
-
-  source      = "../../modules/platform"
-  app         = "dpc"
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
-  service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
+data "aws_kms_alias" "dpc" {
+  name = "alias/dpc-${var.env}"
 }
 
 ## DPC Test cloudwatch metric alarm
 resource "aws_sns_topic" "cloudwatch_alarms" {
   name              = "${module.platform.app}-${module.platform.env}-cloudwatch-alarms"
-  kms_master_key_id = module.dpc_platform.kms_alias_primary.target_key_arn
+  kms_master_key_id = data.aws_kms_alias.dpc.target_key_arn
 }
 
 resource "aws_sns_topic_subscription" "alarms_sqs" {
