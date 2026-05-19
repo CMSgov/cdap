@@ -1,0 +1,57 @@
+name: Trigger Test CloudWatch Alarm
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Environment (test, prod)'
+        required: true
+        type: choice
+        options:
+          - test
+          - prod
+      state:
+        description: 'Alarm state to set'
+        required: true
+        type: choice
+        options:
+          - ALARM
+          - OK
+          - INSUFFICIENT_DATA
+        default: ALARM
+      reason:
+        description: 'Reason for state change (optional)'
+        required: false
+        default: 'Manual test trigger via GitHub Actions'
+
+jobs:
+  trigger-alarm:
+    runs-on: codebuild-cdap-${{ inputs.env =='test' && 'non-prod' || 'prod' }}-${{github.run_id}}-${{github.run_attempt}}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ inputs.env == 'test' && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-${{ inputs.env }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+
+      - name: Set CloudWatch Alarm State
+        run: |
+          ALARM_NAME="cdap-${{ inputs.env }}-test-alarm"
+          echo "Setting '${ALARM_NAME}' to '${{ inputs.state }}'..."
+
+          aws cloudwatch set-alarm-state \
+            --alarm-name "${ALARM_NAME}" \
+            --state-value "${{ inputs.state }}" \
+            --state-reason "${{ inputs.reason }} at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Verify Alarm State
+        run: |
+          ALARM_NAME="cdap-${{ inputs.env }}-test-alarm"
+          sleep 5
+
+          STATE
