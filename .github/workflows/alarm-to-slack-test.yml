@@ -1,6 +1,12 @@
 name: alarm-to-slack test trigger cloudwatch alarm
 
 on:
+  pull_request:
+    paths:
+      - 'terraform/services/alarm-to-slack/lambda_src/*.py'
+      - 'terraform/services/alarm-to-slack/lambda_src/requirements.txt'
+      - '.github/workflows/alarm-to-slack-checks.yml'
+      - '.github/workflows/checks-reusable.yml'
   workflow_dispatch:
     inputs:
       env:
@@ -10,6 +16,7 @@ on:
         options:
           - test
           - prod
+        default: test
       state:
         description: 'Alarm state to set'
         required: true
