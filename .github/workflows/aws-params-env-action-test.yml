@@ -2,6 +2,10 @@ name: aws-params-env-action-test.yml
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'actions/aws-params-env-action/**'
+      - 'services/github-actions-role/data.tf'
 
 permissions:
   contents: read

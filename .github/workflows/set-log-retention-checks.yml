@@ -9,6 +9,7 @@ on:
       - 'terraform/modules/function/**'
       - '.github/workflows/set-log-retention-checks.yml'
       - '.github/workflows/checks-reusable.yml'
+
 jobs:
   checks:
     permissions:
