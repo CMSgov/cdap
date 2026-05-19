@@ -1,5 +1,4 @@
 name: code-checks (aws-params-env-action)
-description: Leverages sonarqube to scan for quality issues and then gate the workflow success based on any issues.
 
 on:
   workflow_dispatch:

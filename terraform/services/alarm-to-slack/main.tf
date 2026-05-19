@@ -2,66 +2,71 @@ locals {
   full_name = "${var.app}-${var.env}-alarm-to-slack"
 }
 
-data "aws_caller_identity" "current" {}
+import {
+  to = module.sns_to_slack_function.aws_cloudwatch_log_group.function
+  id = "/aws/lambda/${local.full_name}"
+}
+
+data "aws_ssm_parameters_by_path" "slack_webhook_urls" {
+  for_each = toset(var.apps_served)
+  path     = "/${each.value}/${var.env}/lambda/slack_webhook_url"
+}
 
 module "sns_to_slack_function" {
-  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=2874c72ccd4c4821e5e3f77ccf61cf77ed05169f"
+  source   = "../../modules/function"
+  platform = module.platform
 
-  app          = var.app
-  env          = var.env
-  architecture = "arm64"
-
-  name        = local.full_name
+  name        = "alarm-to-slack"
   description = "Listens for CloudWatch Alerts and forwards to Slack"
 
-  # TODO use zip file
+  architecture = "arm64"
+  handler      = "lambda_function.lambda_handler"
+  runtime      = "python3.13"
 
-  handler = "lambda_function.lambda_handler"
-  runtime = "python3.13"
+  ssm_parameter_paths = flatten([
+    for app, data in data.aws_ssm_parameters_by_path.slack_webhook_urls :
+    data.path
+  ])
+
+  function_role_inline_policies = {
+    sqs-trigger = data.aws_iam_policy_document.sqs_trigger.json
+  }
+
+  # Point to the local source directory — module handles zip + upload
+  source_dir = "${path.module}/lambda_src"
+
+  # Optionally exclude tests and cache
+  source_dir_excludes = [
+    "__pycache__",
+    "test_*.py",
+    "*.pyc",
+  ]
 
   environment_variables = {
     IGNORE_OK = true
+    APPS      = join(",", var.apps_served)
   }
 }
 
 module "sns_to_slack_queue" {
   source = "github.com/CMSgov/cdap/terraform/modules/queue?ref=b177921621c97d02dc4a21f830e4532147aa0749"
 
-  app           = var.app
-  env           = var.env
   name          = local.full_name
   function_name = module.sns_to_slack_function.name
+  app           = var.app
+  env           = var.env
 
   policy_documents = [
     data.aws_iam_policy_document.sqs_queue_policy.json
   ]
 }
 
-data "aws_iam_policy_document" "sqs_queue_policy" {
-  statement {
-    sid    = "allow_sns_access"
-    effect = "Allow"
+module "platform" {
+  providers = { aws = aws, aws.secondary = aws.secondary }
 
-    principals {
-      type        = "Service"
-      identifiers = ["sns.amazonaws.com"]
-    }
-
-    actions = [
-      "SQS:SendMessage",
-    ]
-
-    resources = [
-      module.sns_to_slack_queue.arn
-    ]
-
-    condition {
-      test     = "ArnLike"
-      variable = "aws:SourceArn"
-
-      values = [
-        "arn:aws:sns:us-east-1:${data.aws_caller_identity.current.account_id}:*"
-      ]
-    }
-  }
+  source      = "../../modules/platform"
+  app         = var.app
+  env         = var.env
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
+  service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
 }

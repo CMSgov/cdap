@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import json
 import os
 from urllib import request
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 import boto3
 from botocore.exceptions import ClientError
 
@@ -44,12 +44,129 @@ def is_ignore_ok():
     """
     return os.environ.get('IGNORE_OK', 'false').lower() == 'true'
 
+
+def ping_slack_webhook(webhook, app, message_id=None):
+    """
+    Sends a liveness ping to a Slack webhook using an empty payload.
+    Slack returns 400 for empty payloads, but a 400 still confirms the
+    webhook URL is reachable. A URLError or non-reachable host indicates
+    a broken webhook.
+    """
+    try:
+        jsondata = json.dumps({}).encode('utf-8')
+        req = request.Request(webhook)
+        req.add_header('Content-Type', 'application/json; charset=utf-8')
+        req.add_header('Content-Length', str(len(jsondata)))
+        with request.urlopen(req, jsondata) as resp:
+            log({'msg': f'Liveness ping succeeded for app: {app}',
+                 'status': resp.status, 'messageId': message_id})
+            return True
+    except HTTPError as e:
+        # Slack returns 400 for empty payloads — still means the URL is reachable
+        if e.code == 400:
+            log({'msg': f'Liveness ping reachable (400 expected) for app: {app}',
+                 'messageId': message_id})
+            return True
+        log({'msg': f'Liveness ping FAILED (HTTP {e.code}) for app: {app}',
+             'messageId': message_id})
+        return False
+    except URLError as e:
+        log({'msg': f'Liveness ping FAILED for app: {app}, reason: {e.reason}',
+             'messageId': message_id})
+        return False
+
+def get_app_list():
+    apps_env = os.environ.get('APPS', '')
+    return [app.strip() for app in apps_env.split(',') if app.strip()]
+
+def liveness_check():
+    """
+    Iterates over all configured apps (from the APPS env var), retrieves each
+    app's Slack webhook SSM parameter, and performs a connectivity ping.
+
+    Returns a dict with:
+      - 'results': per-app status (ssm_ok, webhook_reachable)
+      - 'all_ok': True only if every app passed both checks
+    """
+    apps = get_app_list()
+    if not apps:
+        log({'msg': 'Liveness check: No apps configured in APPS environment variable'})
+        return {'results': {}, 'all_ok': True}
+
+    results = {}
+    all_ok = True
+
+    for app in apps:
+        param_name = f'/{app}/lambda/slack_webhook_url'
+        webhook = get_ssm_parameter(param_name)
+
+        ssm_ok = webhook is not None
+        webhook_reachable = False
+
+        if ssm_ok:
+            webhook_reachable = ping_slack_webhook(webhook, app)
+        else:
+            log({'msg': f'Liveness check FAILED: SSM parameter missing or broken for app: {app}',
+                 'param': param_name})
+
+        app_ok = ssm_ok and webhook_reachable
+        all_ok = all_ok and app_ok
+
+        results[app] = {
+            'ssm_ok': ssm_ok,
+            'webhook_reachable': webhook_reachable,
+            'ok': app_ok,
+        }
+
+        log({
+            'msg': 'Liveness check result',
+            'app': app,
+            'ssm_ok': ssm_ok,
+            'webhook_reachable': webhook_reachable,
+            'ok': app_ok,
+        })
+
+    return {'results': results, 'all_ok': all_ok}
+
+def handle_liveness_event(event):
+    """
+    Handles a deploy-time liveness check invocation from Tofu's aws_lambda_invocation.
+    Raises RuntimeError if any app's SSM parameter or Slack webhook is unreachable,
+    which surfaces as a function error and fails the Tofu apply.
+    """
+    check = liveness_check()
+
+    log({
+        'msg': 'Liveness check complete',
+        'all_ok': check['all_ok'],
+        'results': check['results'],
+    })
+
+    if not check['all_ok']:
+        failed = [app for app, r in check['results'].items() if not r['ok']]
+        raise RuntimeError(
+            f"Liveness check failed for app(s): {', '.join(failed)}. "
+            "Check CloudWatch logs for details."
+        )
+
+    return {
+        'statusCode': 200,
+        'body': 'Liveness check passed',
+        'results': check['results'],
+    }
+
 def lambda_handler(event, _):
     """
     Main entry point for the Lambda function.
-    It iterates through the SQS records, processes each CloudWatch alarm,
+    Handles two event types:
+    1) A liveness check that can be invoked via Tofu changes
+    2) Primary function: Iteration through the SQS records, processes each CloudWatch alarm,
     and forwards it to the appropriate Slack channel.
     """
+
+    if event.get('RequestType') == 'LivenessCheck':
+        return handle_liveness_event(event)
+
     processed_count = 0
     for record in event['Records']:
         message = enriched_cloudwatch_message(record)
