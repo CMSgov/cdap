@@ -1,5 +1,5 @@
 locals {
-  arm64_image               = "aws/codebuild/amazonlinux2-aarch64-standard:3.0"
+  arm64_image = "aws/codebuild/amazonlinux2-aarch64-standard:3.0"
 
   repos = [
     "ab2d",

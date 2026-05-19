@@ -1,5 +1,5 @@
 data "aws_ssm_parameter" "github_token" {
-  name     = "/cdap/${var.env}/codebuild-projects/sensitive/github-token"
+  name = "/cdap/${var.env}/codebuild-projects/sensitive/github-token"
 }
 
 data "aws_security_group" "security_tools" {
