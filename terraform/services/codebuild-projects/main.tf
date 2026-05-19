@@ -71,10 +71,9 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
 }
 
 resource "aws_codebuild_source_credential" "github" {
-  for_each    = toset([var.env])
   auth_type   = "PERSONAL_ACCESS_TOKEN"
   server_type = "GITHUB"
-  token       = sensitive(data.aws_ssm_parameter.github_token[var.env].value)
+  token       = sensitive(data.aws_ssm_parameter.github_token.value)
 }
 
 module "subnets" {
