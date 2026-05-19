@@ -44,7 +44,7 @@ module "tftesting_function" {
   }
 
   # Exercises ssm_parameter_paths
-  ssm_parameter_paths = [aws_ssm_parameter.test_config.arn]
+  ssm_parameter_paths = [aws_ssm_parameter.test_config.name]
 
   # Exercises schedule_expression — can be set for scheduler testing
   schedule_expression = ""
