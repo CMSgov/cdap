@@ -126,24 +126,13 @@ resource "aws_cloudwatch_log_group" "function" {
 resource "aws_lambda_invocation" "liveness_check" {
   count         = var.liveness_check_enabled ? 1 : 0
   function_name = aws_lambda_function.this.function_name
-  qualifier     = aws_lambda_alias.live.name
 
   triggers = {
-    redeployment  = aws_lambda_function.this.source_code_hash
-    alias_version = aws_lambda_alias.live.function_version
+    redeployment = aws_lambda_function.this.source_code_hash
+    s3_version   = aws_lambda_function.this.s3_object_version
   }
 
   input = jsonencode({
     RequestType = "LivenessCheck"
   })
-
-  depends_on = [aws_lambda_alias.live]
-}
-
-resource "aws_lambda_alias" "live" {
-  name             = "live"
-  function_name    = aws_lambda_function.this.function_name
-  function_version = "$LATEST"
-
-  depends_on = [aws_lambda_function.this]
 }
