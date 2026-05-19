@@ -11,7 +11,7 @@ on:
     inputs:
       env:
         description: 'Environment (test, prod)'
-        required: true
+        required: false
         type: choice
         options:
           - test
@@ -19,7 +19,7 @@ on:
         default: 'test'
       state:
         description: 'Alarm state to set'
-        required: true
+        required: false
         type: choice
         options:
           - ALARM
@@ -33,7 +33,7 @@ on:
 
 jobs:
   trigger-alarm:
-    runs-on: codebuild-cdap-${{ inputs.env =='test' && 'non-prod' || 'prod' }}-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-cdap-${{ (inputs.env || (github.ref_name == 'main' && 'prod' || 'test')) == 'test' && 'non-prod' || 'prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
     permissions:
       id-token: write
       contents: read
@@ -42,23 +42,41 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ inputs.env == 'test' && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-${{ inputs.env == 'test' && 'non-prod' || 'prod' }}-github-actions
+          role-to-assume: arn:aws:iam::${{ (inputs.env || (github.ref_name == 'main' && 'prod' || 'test')) == 'test' && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-${{ (inputs.env || (github.ref_name == 'main' && 'prod' || 'test')) == 'test' && 'non-prod' || 'prod' }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
-
       - name: Set CloudWatch Alarm State
+        env:
+          ENV: ${{ inputs.env || (github.ref_name == 'main' && 'prod' || 'test') }}
+          STATE: ${{ inputs.state || 'ALARM' }}
+          REASON: ${{ inputs.reason || 'Automated test trigger via PR' }}
         run: |
-          ALARM_NAME="cdap-${{ inputs.env }}-test-alarm"
-          echo "Setting '${ALARM_NAME}' to '${{ inputs.state }}'..."
+          ALARM_NAME="cdap-${ENV}-test-alarm"
+          echo "Setting '${ALARM_NAME}' to '${STATE}'..."
 
           aws cloudwatch set-alarm-state \
             --alarm-name "${ALARM_NAME}" \
-            --state-value "${{ inputs.state }}" \
-            --state-reason "${{ inputs.reason }} at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            --state-value "${STATE}" \
+            --state-reason "${REASON} at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
       - name: Verify Alarm State
+        env:
+          ENV: ${{ inputs.env || 'test' }}
+          STATE: ${{ inputs.state || 'ALARM' }}
         run: |
-          ALARM_NAME="cdap-${{ inputs.env }}-test-alarm"
+          ALARM_NAME="cdap-${ENV}-test-alarm"
           sleep 5
 
-          STATE
+          CURRENT_STATE=$(aws cloudwatch describe-alarms \
+            --alarm-names "${ALARM_NAME}" \
+            --query 'MetricAlarms[0].StateValue' \
+            --output text)
+
+          echo "Current alarm state: ${CURRENT_STATE}"
+
+          if [ "${CURRENT_STATE}" != "${STATE}" ]; then
+            echo "ERROR: Expected '${STATE}' but got '${CURRENT_STATE}'"
+            exit 1
+          fi
+
+          echo "Alarm state confirmed: ${CURRENT_STATE}. Check Slack for the notification."
