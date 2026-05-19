@@ -97,7 +97,7 @@ def liveness_check():
     all_ok = True
 
     for app in apps:
-        param_name = f'/{app}/lambda/slack_webhook_url'
+        param_name = f'/{app}/{env}/lambda/slack_webhook_url'
         webhook = get_ssm_parameter(param_name)
 
         ssm_ok = webhook is not None
