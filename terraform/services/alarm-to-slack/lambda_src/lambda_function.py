@@ -53,7 +53,16 @@ def ping_slack_webhook(webhook, app, message_id=None):
     a broken webhook.
     """
     try:
-        jsondata = json.dumps({}).encode('utf-8')
+        payload = {
+            "AlarmDescription": "Liveness check — automated connectivity test",
+            "NewStateReason": "This is a deploy-time ping, not a real alarm state change",
+            "AlarmName": f"{app} — Liveness Check Ping",
+            "StateChangeTime": datetime.now().astimezone(tz=timezone.utc).isoformat(),
+            "NewStateValue": "LIVENESS_CHECK",
+            "Region": os.environ.get("AWS_REGION", "us-east-1"),
+            "OldStateValue": "LIVENESS_CHECK",
+        }
+        jsondata = json.dumps(payload).encode('utf-8')
         req = request.Request(webhook)
         req.add_header('Content-Type', 'application/json; charset=utf-8')
         req.add_header('Content-Length', str(len(jsondata)))
@@ -86,7 +95,7 @@ def liveness_check():
 
     Returns a dict with:
       - 'results': per-app status (ssm_ok, webhook_reachable)
-      - 'all_ok': True only if every app passed both checks
+      - 'all_ok': True if every app passed both checks
     """
     apps = get_app_list()
     if not apps:

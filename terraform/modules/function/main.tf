@@ -128,8 +128,7 @@ resource "aws_lambda_invocation" "liveness_check" {
   function_name = aws_lambda_function.this.function_name
 
   triggers = {
-    redeployment = aws_lambda_function.this.source_code_hash
-    s3_version   = aws_lambda_function.this.s3_object_version
+    s3_version = aws_lambda_function.this.s3_object_version
   }
 
   input = jsonencode({
