@@ -45,6 +45,7 @@ module "sns_to_slack_function" {
   environment_variables = {
     IGNORE_OK = true
     APPS      = join(",", var.apps_served)
+    SSM_ENV   = var.env
   }
 }
 

@@ -95,9 +95,9 @@ def liveness_check():
 
     results = {}
     all_ok = True
-
+    ssm_env = os.environ.get('SSM_ENV', '').lower()
     for app in apps:
-        param_name = f'/{app}/{env}/lambda/slack_webhook_url'
+        param_name = f'/{app}/{ssm_env}/lambda/slack_webhook_url'
         webhook = get_ssm_parameter(param_name)
 
         ssm_ok = webhook is not None
@@ -168,12 +168,14 @@ def lambda_handler(event, _):
         return handle_liveness_event(event)
 
     processed_count = 0
+    ssm_env = os.environ.get('SSM_ENV', '').lower()
+
     for record in event['Records']:
         message = enriched_cloudwatch_message(record)
         if message:
             app = message.get('App')
             if app:
-                webhook = get_ssm_parameter(f'/{app}/lambda/slack_webhook_url')
+                webhook = get_ssm_parameter(f'/{app}/{ssm_env}/lambda/slack_webhook_url')
                 if webhook:
                     send_message_to_slack(webhook, message, record.get('messageId'))
                     processed_count += 1
