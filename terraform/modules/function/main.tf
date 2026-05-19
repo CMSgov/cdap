@@ -30,15 +30,11 @@ module "zip_bucket" {
 resource "aws_s3_object" "function_zip" {
   count = var.source_dir != null ? 1 : 0
 
-  bucket = module.zip_bucket.id
-  key    = "function.zip"
-  source = data.archive_file.function[0].output_path
-
-  # Use the hash so S3 object (and Lambda) updates when source changes
+  bucket      = module.zip_bucket.id
+  key         = "function.zip"
+  source      = data.archive_file.function[0].output_path
   source_hash = data.archive_file.function[0].output_base64sha256
-
-  # KMS encryption
-  kms_key_id = var.platform.kms_alias_primary.target_key_arn
+  kms_key_id  = var.platform.kms_alias_primary.target_key_arn
 }
 
 resource "aws_s3_object" "empty_function_zip" {
@@ -67,17 +63,18 @@ resource "aws_lambda_function" "this" {
   function_name = local.full_name_string
   s3_key        = "function.zip"
   s3_bucket     = module.zip_bucket.id
-  # If source_dir is managed by this module, track the uploaded object version.
-  # Otherwise, fall back to the externally-supplied version (or null).
-  s3_object_version = var.source_dir != null ? aws_s3_object.function_zip[0].version_id : var.source_code_version
-  kms_key_arn       = var.platform.kms_alias_primary.target_key_arn
-  role              = aws_iam_role.function.arn
-  handler           = var.handler
-  runtime           = var.runtime
-  timeout           = var.timeout
-  memory_size       = var.memory_size
-  layers            = var.layer_arns
-  architectures     = [var.architecture]
+  # null = use latest S3 version; set = pin to a specific prior version
+  s3_object_version = var.rollback_version != null ? var.rollback_version : (var.source_dir != null ?
+  aws_s3_object.function_zip[0].version_id : var.source_code_version)
+
+  kms_key_arn   = var.platform.kms_alias_primary.target_key_arn
+  role          = aws_iam_role.function.arn
+  handler       = var.handler
+  runtime       = var.runtime
+  timeout       = var.timeout
+  memory_size   = var.memory_size
+  layers        = var.layer_arns
+  architectures = [var.architecture]
 
   tracing_config {
     mode = "Active"
@@ -131,18 +128,22 @@ resource "aws_lambda_invocation" "liveness_check" {
   function_name = aws_lambda_function.this.function_name
   qualifier     = aws_lambda_alias.live.name
 
-  # Re-runs whenever the Lambda source code changes
   triggers = {
-    redeployment = aws_lambda_function.this.source_code_hash
+    redeployment  = aws_lambda_function.this.source_code_hash
+    alias_version = aws_lambda_alias.live.function_version
   }
 
   input = jsonencode({
     RequestType = "LivenessCheck"
   })
+
+  depends_on = [aws_lambda_alias.live]
 }
 
 resource "aws_lambda_alias" "live" {
   name             = "live"
   function_name    = aws_lambda_function.this.function_name
-  function_version = var.rollback_version != null ? var.rollback_version : aws_lambda_function.this.version
+  function_version = "$LATEST"
+
+  depends_on = [aws_lambda_function.this]
 }

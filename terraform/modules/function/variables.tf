@@ -101,7 +101,17 @@ variable "liveness_check_enabled" {
 }
 
 variable "rollback_version" {
-  description = "Pin the live alias to a specific version for rollback. Set to null for normal deploys (alias tracks latest published version)."
+  description = <<-EOT
+    S3 object version ID of a previous "function.zip" to roll back to.
+    When null (default), Lambda uses the latest version of function.zip.
+    When set, Lambda is pinned to that specific S3 object version.
+
+    To list available version IDs:
+      aws s3api list-object-versions \
+        --bucket <zip_bucket_name> \
+        --prefix function.zip \
+        --query 'Versions[*].{VersionId:VersionId, LastModified:LastModified}'
+  EOT
   type        = string
   default     = null
 }

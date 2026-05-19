@@ -9,8 +9,14 @@ output "alias_arn" {
 }
 
 output "function_version" {
-  description = "Published version number of the Lambda function"
-  value       = aws_lambda_function.this.version
+  description = "Active S3 object version ID used for the Lambda deployment package"
+  value = var.rollback_version != null ? var.rollback_version : (var.source_dir != null ?
+  aws_s3_object.function_zip[0].version_id : var.source_code_version)
+}
+
+output "source_code_hash" {
+  description = "Base64-encoded SHA256 hash of the Lambda deployment package"
+  value       = aws_lambda_function.this.source_code_hash
 }
 
 output "role_arn" {

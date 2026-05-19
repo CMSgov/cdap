@@ -3,6 +3,7 @@ import logging
 import os
 
 import boto3
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -27,19 +28,41 @@ def _liveness_check():
     Validates that the function can reach dependencies.
     Raises on failure so tofu apply fails.
     """
+    # --- Validate SSM parameter is retrievable based on ssm_parameter_paths
     param_name = os.environ["SSM_PARAM_PATH"]
+    _assert_ssm_readable(param_name, label="ssm_parameter_paths grant")
 
-    # Validates: egress rules, IAM SSM permissions, KMS decrypt permission
-    response = ssm.get_parameter(Name=param_name, WithDecryption=True)
-    value = response["Parameter"]["Value"]
+    # --- Validate SSM parameter is retrievable based on inline policy grant
+    inline_param_name = os.environ["INLINE_POLICY_PARAM_PATH"]
+    _assert_ssm_readable(inline_param_name, label="inline policy grant")
+
+    logger.info("Liveness check passed. All SSM parameters retrieved successfully.")
+    return {"status": "ok", "message": "Lambda is healthy"}
+
+
+def _assert_ssm_readable(param_name: str, label: str) -> str:
+    """
+    Attempts to read an SSM SecureString parameter.
+    Raises on failure with a descriptive message.
+    Returns the parameter value on success.
+    """
+    try:
+        response = ssm.get_parameter(Name=param_name, WithDecryption=True)
+        value = response["Parameter"]["Value"]
+    except ClientError as e:
+        raise RuntimeError(
+            f"Liveness check FAILED [{label}]: Could not read that SSM parameter "
+            f"'{param_name}': {e}"
+        ) from e
 
     if not value:
-        raise ValueError("SSM parameter was empty")
-
-    if os.environ.get("ENVIRONMENT") != "tftesting":
         raise ValueError(
-            f"ENVIRONMENT env var not set correctly: {os.environ.get('ENVIRONMENT')!r}"
+            f"Liveness check FAILED [{label}]: SSM parameter '{param_name}' was empty"
         )
 
-    logger.info("Liveness check passed. SSM value retrieved successfully.")
-    return {"status": "ok", "message": "Lambda is healthy"}
+    logger.info(
+        "SSM parameter readable [%s]: %s",
+        label,
+        param_name,
+    )
+    return value

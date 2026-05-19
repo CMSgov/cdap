@@ -58,7 +58,7 @@ module "tftesting_function" {
   github_actions_repos = []
 
   # Rollback support
-  rollback_version = null # null = track latest published version
+  rollback_version = "DDw7QokwqGuO4.kTDELfc_xWYg7B_73L" # null = track latest published version
 }
 
 
