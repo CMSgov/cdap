@@ -350,6 +350,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "iam:CreateRole",
       "iam:DeletePolicy",
       "iam:DeleteRole",
+      "iam:DeleteRolePolicy",
       "iam:DetachRolePolicy",
       "iam:GetInstanceProfile",
       "iam:GetOpenIDConnectProvider",
@@ -460,6 +461,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:GetEncryptionConfiguration",
       "s3:GetLifecycleConfiguration",
       "s3:GetReplicationConfiguration",
+      "s3:ListBucket",
       "s3:PutBucketLogging",
       "s3:PutBucketNotification",
       "s3:PutBucketOwnershipControls",
@@ -468,8 +470,14 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
+    ]
+    resources = ["*"]
+  }
+  # S3Objects
+  statement {
+    actions = [
+      "s3:ListObjectVersions",
       "s3:PutObjectTagging",
-      "s3:ListBucket",
       "s3:GetObject",
       "s3:GetObjectTagging",
       "s3:GetObjectVersion",
