@@ -1,5 +1,4 @@
 name: code-checks (set-log-retention-checks / cloudwatch log retention)
-description: Checks CDAP hosted check-log-retention for python vulnerabilities and code quality.
 
 on:
   workflow_dispatch:
