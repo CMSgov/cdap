@@ -162,7 +162,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # CloudWatch
   statement {
     actions = [
-      "cloudwatch:DescribeAlarms"
+      "cloudwatch:DescribeAlarms",
+      "cloudwatch:SetAlarmState"
     ]
     resources = ["*"]
   }
