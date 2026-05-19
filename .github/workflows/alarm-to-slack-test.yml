@@ -42,7 +42,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ (inputs.env || (github.ref_name == 'main' && 'prod' || 'test')) == 'test' && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-${{ (inputs.env || (github.ref_name == 'main' && 'prod' || 'test')) == 'test' && 'non-prod' || 'prod' }}-github-actions
+          role-to-assume: arn:aws:iam::${{ (inputs.env || (github.ref_name == 'main' && 'prod' || 'test')) == 'test' && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-${{ (inputs.env || (github.ref_name == 'main' && 'prod' || 'test')) == 'test' && 'test' || 'prod' }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Set CloudWatch Alarm State
