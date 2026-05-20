@@ -31,7 +31,15 @@ locals {
     portMappings           = var.port_mappings
     mountPoints            = var.mount_points
     secrets                = var.container_secrets
-    environment            = var.container_environment
+    environment = concat(
+      var.container_environment,
+      [
+        { name = "DD_ENV", value = var.platform.env },
+        { name = "DD_SERVICE", value = var.platform.app },
+        { name = "DD_AGENT_HOST", value = "localhost" },
+        { name = "DD_TRACE_AGENT_PORT", value = "8126" } # default datadog
+      ]
+    )
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -49,8 +57,11 @@ locals {
     essential = false # Do not impact task health if this container fails
     environment = [
       { name = "ECS_FARGATE", value = "true" },
+      { name = "DD_ENV", value = var.platform.env },
+      { name = "DD_TAGS", value = "environment:${var.platform.env},application:${var.platform.app}" },
       { name = "DD_SITE", value = "ddog-gov.com" },
       { name = "DD_APM_ENABLED", value = "true" },
+      { name = "DD_APM_NON_LOCAL_TRAFFIC", value = "true" },
       { name = "DD_LOGS_ENABLED", value = "false" }, # DD logging is currently not approved
       { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" }
     ]

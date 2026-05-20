@@ -144,6 +144,69 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
       }
     }
   }
+  dynamic "widget" {
+    for_each = var.enable_default_widgets.apm ? [1] : []
+    content {
+      group_definition {
+        title       = "APM / Traces"
+        layout_type = "ordered"
+
+        widget {
+          timeseries_definition {
+            title     = "Request Rate"
+            live_span = var.widget_live_spans.apm
+            request {
+              q            = "sum:trace.http.request.hits{service:${var.app}, env:${var.env}}.as_rate()"
+              display_type = "line"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "p50 / p95 / p99 Latency"
+            live_span = var.widget_live_spans.apm
+            request {
+              q            = "p50:trace.http.request{service:${var.app}, env:${var.env}}"
+              display_type = "line"
+            }
+            request {
+              q            = "p95:trace.http.request{service:${var.app}, env:${var.env}}"
+              display_type = "line"
+            }
+            request {
+              q            = "p99:trace.http.request{service:${var.app}, env:${var.env}}"
+              display_type = "line"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Error Rate"
+            live_span = var.widget_live_spans.apm
+            request {
+              q            = "sum:trace.http.request.errors{service:${var.app}, env:${var.env}}.as_rate()"
+              display_type = "bars"
+            }
+          }
+        }
+
+        widget {
+          query_value_definition {
+            title     = "Apdex Score"
+            live_span = var.widget_live_spans.apm
+            autoscale = true
+            precision = 2
+            request {
+              q = "avg:trace.http.request.apdex{service:${var.app}, env:${var.env}}"
+            }
+          }
+        }
+
+      }
+    }
+  }
 
   dynamic "widget" {
     for_each = var.enable_default_widgets.s3 ? [1] : []
