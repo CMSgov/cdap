@@ -58,7 +58,27 @@ module "subnets" {
   vpc_id = module.vpc.id
 }
 
-resource "aws_lambda_function" "this" {
+module "lambda-datadog" {
+  source  = "DataDog/lambda-datadog/aws"
+  version = "4.7.0"
+
+  environment_variables = merge(var.environment_variables, {
+    "DD_API_KEY_SSM_ARN"          : data.aws_ssm_parameter.dd_api_key.arn
+    "DD_ENV"                      : local.env
+    "DD_SERVICE"                  : local.app
+    "DD_SITE"                     : "ddog-gov.com"
+    "DD_VERSION"                  : var.source_code_version
+    "DD_SERVERLESS_LOGS_ENABLED"  : false
+    "DD_LAMBDA_HANDLER"           : var.handler
+  })
+
+  datadog_extension_layer_version = 96
+  datadog_python_layer_version = startswith(var.runtime, "python") ? var.dd_python_layer_version : null
+  datadog_node_layer_version   = startswith(var.runtime, "nodejs") ? var.dd_node_layer_version : null
+  datadog_java_layer_version   = startswith(var.runtime, "java") ? var.dd_java_layer_version : null
+  datadog_ruby_layer_version   = startswith(var.runtime, "ruby") ? var.dd_ruby_layer_version : null
+  datadog_dotnet_layer_version = startswith(var.runtime, "dotnet") ? var.dd_dotnet_layer_version : null
+
   description   = var.description
   function_name = local.full_name_string
   s3_key        = "function.zip"
@@ -76,18 +96,9 @@ resource "aws_lambda_function" "this" {
   layers        = var.layer_arns
   architectures = [var.architecture]
 
-  tracing_config {
-    mode = "Active"
-  }
-
-  vpc_config {
-    subnet_ids         = module.subnets.ids
-    security_group_ids = [aws_security_group.function.id]
-  }
-
-  environment {
-    variables = var.environment_variables
-  }
+  tracing_config_mode = "Active"
+  vpc_config_subnet_ids         = module.subnets.ids
+  vpc_config_security_group_ids = [aws_security_group.function.id]
 }
 
 resource "aws_cloudwatch_event_rule" "this" {
@@ -101,7 +112,7 @@ resource "aws_cloudwatch_event_rule" "this" {
 resource "aws_cloudwatch_event_target" "this" {
   count = var.schedule_expression != "" ? 1 : 0
 
-  arn  = aws_lambda_function.this.arn
+  arn  = module.lambda-datadog.arn
   rule = aws_cloudwatch_event_rule.this[0].name
 }
 
@@ -110,7 +121,7 @@ resource "aws_lambda_permission" "cloudwatch_events" {
 
   statement_id  = "AllowExecutionFromCloudWatchEvents"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.this.function_name
+  function_name = module.lambda-datadog.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.this[0].arn
 }
@@ -125,10 +136,10 @@ resource "aws_cloudwatch_log_group" "function" {
 
 resource "aws_lambda_invocation" "liveness_check" {
   count         = var.liveness_check_enabled ? 1 : 0
-  function_name = aws_lambda_function.this.function_name
+  function_name = module.lambda-datadog.function_name
 
   triggers = {
-    s3_version = aws_lambda_function.this.s3_object_version
+    s3_version = module.lambda-datadog.s3_object_version
   }
 
   input = jsonencode({

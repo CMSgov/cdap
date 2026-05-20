@@ -1,6 +1,6 @@
 output "name" {
   description = "Name for the lambda function"
-  value       = aws_lambda_function.this.function_name
+  value       = module.lambda-datadog.function_name
 }
 
 output "function_version" {
@@ -11,7 +11,7 @@ output "function_version" {
 
 output "source_code_hash" {
   description = "Base64-encoded SHA256 hash of the Lambda deployment package"
-  value       = aws_lambda_function.this.source_code_hash
+  value       = module.lambda-datadog.source_code_hash
 }
 
 output "role_arn" {
