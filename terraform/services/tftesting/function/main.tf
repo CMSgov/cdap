@@ -19,6 +19,8 @@ resource "aws_ssm_parameter" "inline_policy_test" {
 module "tftesting_function" {
   source = "../../../modules/function"
 
+  dd_enabled = true # Set to true to test Datadog Lambda module integration
+
   platform    = module.platform
   name        = "tftesting"
   description = "Ephemeral Lambda for CI/CD integration testing — exercises module features"
@@ -58,7 +60,8 @@ module "tftesting_function" {
   github_actions_repos = []
 
   # Rollback support
-  rollback_version = "DDw7QokwqGuO4.kTDELfc_xWYg7B_73L" # null = track latest published version
+  #   rollback_version = "DDw7QokwqGuO4.kTDELfc_xWYg7B_73L" # null = track latest published version
+  rollback_version = null
 }
 
 

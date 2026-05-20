@@ -13,6 +13,8 @@ This module provisions:
     An optional CloudWatch Events schedule trigger
     An optional deploy-time liveness check
     A live alias for stable invocation ARNs and rollback support
+    If var.dd_enabled = true, enables Datadog instrumentation for enhanced metrics and APM reporting via Datadog lambda layers. If false, uses the standard Lambda resource
+
 
 ### Cloudwatch Events 
     Pass a schedule_expression to enable a CloudWatch Events rule that invokes the function on a schedule. 

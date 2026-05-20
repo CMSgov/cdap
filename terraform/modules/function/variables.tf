@@ -192,3 +192,45 @@ variable "github_actions_repos" {
   type        = list(string)
   default     = []
 }
+
+variable "dd_enabled" {
+  description = "If true, enables Datadog instrumentation for enhanced metrics and APM reporting via Datadog lambda layers. If false, use the standard Lambda resource."
+  type        = bool
+  default     = false
+}
+
+variable "dd_extension_layer_version" {
+  description = "Version number for Datadog's Lambda extension layer. Required if dd_enabled is true."
+  type        = number
+  default     = 96
+}
+
+variable "dd_python_layer_version" {
+  description = "Version number for Datadog's Python Lambda layer. Required if using a python runtime."
+  type        = number
+  default     = 125
+}
+
+variable "dd_node_layer_version" {
+  description = "Version number for Datadog's Node.js Lambda layer. Required if using a Node.js runtime."
+  type        = number
+  default     = 137
+}
+
+variable "dd_java_layer_version" {
+  description = "Version number for Datadog's Java Lambda layer. Required if using a Java runtime."
+  type        = number
+  default     = 26
+}
+
+variable "dd_ruby_layer_version" {
+  description = "Version number for Datadog's Ruby Lambda layer. Required if using a Ruby runtime."
+  type        = number
+  default     = 28
+}
+
+variable "dd_dotnet_layer_version" {
+  description = "Version number for Datadog's .NET Lambda layer. Required if using a .NET runtime."
+  type        = number
+  default     = 24
+}

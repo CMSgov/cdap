@@ -1,6 +1,6 @@
 output "name" {
   description = "Name for the lambda function"
-  value       = aws_lambda_function.this.function_name
+  value       = local.lambda_function_name
 }
 
 output "function_version" {
@@ -9,9 +9,14 @@ output "function_version" {
   aws_s3_object.function_zip[0].version_id : var.source_code_version)
 }
 
+output "arn" {
+  description = "ARN of the Lambda function alias (stable identifier for the active version)"
+  value       = local.lambda_function_arn
+}
+
 output "source_code_hash" {
   description = "Base64-encoded SHA256 hash of the Lambda deployment package"
-  value       = aws_lambda_function.this.source_code_hash
+  value       = local.lambda_function_source_code_hash
 }
 
 output "role_arn" {
