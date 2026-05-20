@@ -26,6 +26,7 @@ module "datadog_dashboard" {
   }
 
   custom_widgets = []
+  runbook_url    = "https://definerunbook.cdap.internal.cms.gov" #FIXME to provide an actual runbook
 }
 
 module "standards" {

@@ -38,6 +38,7 @@ variable "enable_default_widgets" {
     sqs    = optional(bool, true)
     aurora = optional(bool, true)
     s3     = optional(bool, true)
+    apm    = optional(bool, true)
   })
   default = {} # Evaluates to all true based on the optional defaults above
 }
@@ -51,5 +52,4 @@ variable "name_rewrite" {
 variable "runbook_url" {
   description = "URL where on-call engineers can find actions to remediate issues, including escalation."
   type        = string
-  default     = "please provide a runbook url via cdap/services/520-datadog-dashboards/config/<app>.yml"
 }
