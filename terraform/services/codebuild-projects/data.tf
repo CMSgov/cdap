@@ -1,18 +1,10 @@
-# TODO: To Deprecate cdap mgmt remove this for each as we can assume the only environment is CDAP
 data "aws_ssm_parameter" "github_token" {
-  for_each = var.app == "cdap" ? toset([var.env]) : toset([])
-  name     = "/cdap/${var.env}/codebuild-projects/sensitive/github-token"
+  name = "/cdap/${var.env}/codebuild-projects/sensitive/github-token"
 }
 
 data "aws_security_group" "security_tools" {
-  vpc_id = var.app == "bcda" ? module.vpc[0].id : module.standards.cdap_vpc.id
+  vpc_id = module.standards.cdap_vpc.id
   name   = "cmscloud-security-tools"
-}
-
-data "aws_security_group" "security_validation_egress" {
-  count  = var.app == "bcda" ? 1 : 0
-  vpc_id = module.vpc[0].id
-  name   = "cms-cloud-security-validation-egress"
 }
 
 data "aws_iam_policy" "developer_boundary_policy" {
