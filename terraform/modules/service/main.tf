@@ -36,9 +36,11 @@ locals {
       [
         { name = "DD_ENV", value = var.platform.env },
         { name = "DD_SERVICE", value = var.platform.app },
+      ],
+      var.enable_datadog_agent ? [
         { name = "DD_AGENT_HOST", value = "localhost" },
-        { name = "DD_TRACE_AGENT_PORT", value = "8126" } # default datadog
-      ]
+        { name = "DD_TRACE_AGENT_PORT", value = "8126" },
+      ] : []
     )
     logConfiguration = {
       logDriver = "awslogs"
@@ -92,7 +94,11 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
 
   # Concat the main container with the datadog container
-  container_definitions = nonsensitive(jsonencode(concat([local.app_container], [local.datadog_container])))
+  container_definitions = nonsensitive(jsonencode(
+    var.enable_datadog_agent
+    ? concat([local.app_container], [local.datadog_container])
+    : [local.app_container]
+  ))
 
   runtime_platform {
     operating_system_family = "LINUX"
