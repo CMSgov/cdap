@@ -53,7 +53,16 @@ def ping_slack_webhook(webhook, app, message_id=None):
     a broken webhook.
     """
     try:
-        jsondata = json.dumps({}).encode('utf-8')
+        payload = {
+            "AlarmDescription": "Liveness check — automated connectivity test",
+            "NewStateReason": "This is a deploy-time ping, not a real alarm state change",
+            "AlarmName": f"{app} — Liveness Check Ping",
+            "StateChangeTime": datetime.now().astimezone(tz=timezone.utc).isoformat(),
+            "NewStateValue": "LIVENESS_CHECK",
+            "Region": os.environ.get("AWS_REGION", "us-east-1"),
+            "OldStateValue": "LIVENESS_CHECK",
+        }
+        jsondata = json.dumps(payload).encode('utf-8')
         req = request.Request(webhook)
         req.add_header('Content-Type', 'application/json; charset=utf-8')
         req.add_header('Content-Length', str(len(jsondata)))
@@ -86,7 +95,7 @@ def liveness_check():
 
     Returns a dict with:
       - 'results': per-app status (ssm_ok, webhook_reachable)
-      - 'all_ok': True only if every app passed both checks
+      - 'all_ok': True if every app passed both checks
     """
     apps = get_app_list()
     if not apps:
@@ -95,9 +104,9 @@ def liveness_check():
 
     results = {}
     all_ok = True
-
+    ssm_env = os.environ.get('SSM_ENV', '').lower()
     for app in apps:
-        param_name = f'/{app}/lambda/slack_webhook_url'
+        param_name = f'/{app}/{ssm_env}/lambda/slack_webhook_url'
         webhook = get_ssm_parameter(param_name)
 
         ssm_ok = webhook is not None
@@ -168,12 +177,14 @@ def lambda_handler(event, _):
         return handle_liveness_event(event)
 
     processed_count = 0
+    ssm_env = os.environ.get('SSM_ENV', '').lower()
+
     for record in event['Records']:
         message = enriched_cloudwatch_message(record)
         if message:
             app = message.get('App')
             if app:
-                webhook = get_ssm_parameter(f'/{app}/lambda/slack_webhook_url')
+                webhook = get_ssm_parameter(f'/{app}/{ssm_env}/lambda/slack_webhook_url')
                 if webhook:
                     send_message_to_slack(webhook, message, record.get('messageId'))
                     processed_count += 1

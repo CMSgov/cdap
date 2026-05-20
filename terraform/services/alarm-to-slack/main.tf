@@ -45,6 +45,7 @@ module "sns_to_slack_function" {
   environment_variables = {
     IGNORE_OK = true
     APPS      = join(",", var.apps_served)
+    SSM_ENV   = var.env
   }
 }
 
@@ -70,3 +71,4 @@ module "platform" {
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
   service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
 }
+
