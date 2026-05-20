@@ -4,7 +4,7 @@ resource "datadog_monitor" "lambda_error_rate" {
   type    = "metric alert"
   message = "Lambda function {{functionname.name}} has a high error rate. ${var.notify}"
 
-  query = "sum(last_5m):(sum:aws.lambda.errors{app:${var.app},environment:${var.env}} by {functionname} / sum:aws.lambda.invocations{app:${var.app},environment:${var.env}} by {functionname}) * 100 > ${var.monitor_config.lambda.error_rate_threshold}"
+  query = "sum(last_5m):(sum:aws.lambda.errors{application:${var.app},environment:${var.env}} by {functionname} / sum:aws.lambda.invocations{application:${var.app},environment:${var.env}} by {functionname}) * 100 > ${var.monitor_config.lambda.error_rate_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.lambda.error_rate_threshold
@@ -20,7 +20,7 @@ resource "datadog_monitor" "lambda_throttles" {
   type    = "metric alert"
   message = "Lambda function {{functionname.name}} is being throttled. ${var.notify}"
 
-  query = "sum(last_5m):sum:aws.lambda.throttles{app:${var.app},environment:${var.env}} by {functionname} > ${var.monitor_config.lambda.throttle_threshold}"
+  query = "sum(last_5m):sum:aws.lambda.throttles{application:${var.app},environment:${var.env}} by {functionname} > ${var.monitor_config.lambda.throttle_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.lambda.throttle_threshold
@@ -38,7 +38,7 @@ resource "datadog_monitor" "lambda_duration" {
   type    = "metric alert"
   message = "Lambda function {{functionname.name}} p99 duration is approaching its timeout threshold. ${var.notify}"
 
-  query = "avg(last_10m):avg:aws.lambda.duration.p99{app:${var.app},environment:${var.env}} by {functionname} > ${var.monitor_config.lambda.duration_p99_threshold_ms}"
+  query = "avg(last_10m):avg:aws.lambda.duration.p99{application:${var.app},environment:${var.env}} by {functionname} > ${var.monitor_config.lambda.duration_p99_threshold_ms}"
 
   monitor_thresholds {
     critical = var.monitor_config.lambda.duration_p99_threshold_ms
