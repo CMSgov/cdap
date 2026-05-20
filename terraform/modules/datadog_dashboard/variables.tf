@@ -20,6 +20,7 @@ variable "enable_default_widgets" {
     lambda = optional(bool, true)
     alb    = optional(bool, true)
     sns    = optional(bool, true)
+    sqs    = optional(bool, true)
     aurora = optional(bool, true)
     s3     = optional(bool, true)
   })

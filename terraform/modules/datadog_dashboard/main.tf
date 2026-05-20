@@ -315,6 +315,54 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
   }
 
   dynamic "widget" {
+    for_each = var.enable_default_widgets.sqs ? [1] : []
+    content {
+      group_definition {
+        title       = "SQS"
+        layout_type = "ordered"
+
+        widget {
+          timeseries_definition {
+            title = "Messages Visible by Queue"
+            request {
+              q = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $env} by {queuename}"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "🚨 DLQ Messages Visible"
+            request {
+              q = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $env, queuename:*dlq*} by {queuename}"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "Oldest Message Age (seconds)"
+            request {
+              q = "max:aws.sqs.approximate_age_of_oldest_message{application:${var.app}, $env} by {queuename}"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "Messages Sent / Deleted"
+            request {
+              q            = "sum:aws.sqs.number_of_messages_sent{application:${var.app}, $env} by {queuename}.as_count()"
+              display_type = "bars"
+            }
+            request {
+              q            = "sum:aws.sqs.number_of_messages_deleted{application:${var.app}, $env} by {queuename}.as_count()"
+              display_type = "line"
+            }
+          }
+        }
+      }
+    }
+  }
+
+  dynamic "widget" {
     # Renders the block exactly once if true, zero times if false
     for_each = var.enable_default_widgets.sns ? [1] : []
     content {
