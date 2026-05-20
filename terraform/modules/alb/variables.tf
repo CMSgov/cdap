@@ -16,7 +16,7 @@ variable "platform" {
 variable "name_override" {
   type        = string
   default     = null
-  description = "Override for the ALB name. Defaults to '${var.platform.app}-${var.platform.env}-${var.platform.service}-alb'."
+  description = "Override for the ALB name. Defaults to '<var.platform.app>-<var.platform.env>-<var.platform.service>-alb'."
 }
 
 # -------------------------------------------------------

@@ -15,10 +15,7 @@ resource "aws_lb" "this" {
   subnets            = local.subnet_ids
   security_groups    = var.security_group_ids
 
-  tags = merge(
-    { Name = local.alb_name },
-    var.platform.tags
-  )
+  tags = { Name = local.alb_name }
 }
 
 # -------------------------------------------------------
@@ -64,7 +61,7 @@ resource "aws_lb_listener" "http_redirect" {
 }
 
 resource "aws_lb_listener" "extra_https" {
-  for_each = local.extra_listeners_map
+  for_each = tomap(var.extra_listeners)
 
   load_balancer_arn = aws_lb.this.arn
   port              = each.value.port
