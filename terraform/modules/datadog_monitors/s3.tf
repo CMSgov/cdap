@@ -23,7 +23,7 @@ resource "datadog_monitor" "s3_http_response_5xx" {
   type    = "metric alert"
   message = "S3 bucket {{bucketname.name}} is returning 5xx errors — possible AWS-side issue. ${var.notify}"
 
-  query = "sum(${var.monitor_config.s3.timeframe}):sum:aws.s3.5xx_errors{application:${var.app},environment:${var.env}} by {bucketname} > ${var.monitor_config.s3.error_threshold_5xx}"
+  query = "sum(${var.monitor_config.s3.timeframe}):sum:aws.s3.5xx_errors{application:${var.app},environment:${var.env}} by {bucketname} > ${var.monitor_config.s3.http_response_5xx_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.s3.http_response_5xx_threshold
