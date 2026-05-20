@@ -4,7 +4,7 @@ resource "datadog_monitor" "sns_failed_notifications" {
   type    = "metric alert"
   message = "SNS topic {{topicname.name}} is experiencing failed notification deliveries. ${var.notify}"
 
-  query = "sum(last_5m):sum:aws.sns.number_of_notifications_failed{application:${var.app},environment:${var.env}} by {topicname} > ${var.monitor_config.sns.failed_notification_threshold}"
+  query = "sum(${var.monitor_config.sns.timeframe}):sum:aws.sns.number_of_notifications_failed{application:${var.app},environment:${var.env}} by {topicname} > ${var.monitor_config.sns.failed_notification_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.sns.failed_notification_threshold

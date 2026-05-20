@@ -18,8 +18,8 @@ output "monitor_ids" {
       duration   = length(datadog_monitor.lambda_duration) > 0 ? datadog_monitor.lambda_duration[0].id : null
     }
     s3 = {
-      errors_4xx = length(datadog_monitor.s3_4xx_errors) > 0 ? datadog_monitor.s3_4xx_errors[0].id : null
-      errors_5xx = length(datadog_monitor.s3_5xx_errors) > 0 ? datadog_monitor.s3_5xx_errors[0].id : null
+      http_response_4xx = length(datadog_monitor.s3_http_response_4xx) > 0 ? datadog_monitor.s3_http_response_4xx[0].id : null
+      http_response_5xx = length(datadog_monitor.s3_http_response_5xx) > 0 ? datadog_monitor.s3_http_response_5xx[0].id : null
     }
     rds = {
       cpu_high            = length(datadog_monitor.rds_cpu_high) > 0 ? datadog_monitor.rds_cpu_high[0].id : null

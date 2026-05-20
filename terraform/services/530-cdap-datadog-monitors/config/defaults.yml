@@ -41,7 +41,7 @@ shadow_mode: true
 # -----------------------------------------------------------------------------
 notifications:
   channels:
-    - "@cdap-users"  # global — always notified, do not remove
+    - "@cdap-users"  # global — always notified
 
 # -----------------------------------------------------------------------------
 # Enabled Flags
@@ -76,6 +76,7 @@ ecs:
   memory_threshold: 85
   notify_no_data: false
   no_data_timeframe_minutes: 10
+  timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
 # SQS Monitors
@@ -95,6 +96,7 @@ sqs:
   max_message_age_seconds: 300   # 5 minutes — lower for real-time consumers
   notify_no_data: false
   no_data_timeframe_minutes: 10
+  timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
 # SNS Monitors
@@ -108,6 +110,7 @@ sns:
   failed_notification_threshold: 5
   notify_no_data: false
   no_data_timeframe_minutes: 10
+  timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
 # Lambda Monitors
@@ -136,6 +139,7 @@ lambda:
   duration_p99_threshold_ms: 8000
   notify_no_data: false
   no_data_timeframe_minutes: 10
+  timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
 # S3 Monitors
@@ -156,6 +160,7 @@ s3:
   error_threshold_5xx: 10
   notify_no_data: false
   no_data_timeframe_minutes: 10
+  timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
 # RDS / Aurora Monitors
@@ -189,3 +194,4 @@ rds:
   deadlocks_enabled: true             # set false without Enhanced Monitoring / Performance Insights
   notify_no_data: false
   no_data_timeframe_minutes: 10
+  timeframe: "last_10m"

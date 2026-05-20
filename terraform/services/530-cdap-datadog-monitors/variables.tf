@@ -1,9 +1,3 @@
-variable "app" {
-  description = "The application name (bcda, cdap)"
-  type        = string
-  default     = "cdap"
-}
-
 variable "env" {
   description = "The application environment (test, prod)"
   type        = string

@@ -11,6 +11,7 @@ terraform {
   }
 }
 
+# Leverage per app- API and application keys that are managed by CDAP in services/datadog-cicd-keys
 provider "datadog" {
   api_key = sensitive(module.platform.ssm.datadog.api_key.value)
   app_key = sensitive(module.platform.ssm.datadog.application_key.value)

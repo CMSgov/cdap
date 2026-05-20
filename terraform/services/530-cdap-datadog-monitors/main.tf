@@ -1,11 +1,15 @@
 locals {
+
+  ## Evaluates config/defaults.yml and overwrites values with those from config/${var.env}.yml for each
+  ## variable/key type. Creates a hierarchy of defaults, so the modules/datadog_monitors defaults are
+  ## the least prioritized, followed by config/defaults.yml, followed by the environment specific settings.
+
   defaults   = yamldecode(file("config/defaults.yml"))
   env_config = yamldecode(file("config/${var.env}.yml"))
 
-  # handle scalars directly with env overwriting default
   shadow_mode = lookup(local.env_config, "shadow_mode", local.defaults.shadow_mode)
 
-  # merge map-typed keys
+  # map-typed keys
   monitor_config = merge(
     { for key in keys(local.defaults) : key => merge(
       lookup(local.defaults, key, {}),
@@ -15,22 +19,28 @@ locals {
     { shadow_mode = local.shadow_mode }
   )
 
+  # always use the notification channels set up in the defaults, and adds those from the environment
   notify = join(" ", concat(
     local.defaults.notifications.channels,
     try(local.env_config.notifications.channels, [])
   ))
 }
 
-# Default monitors
+###################
+# Common Monitors #
+###################
+
 module "common_datadog_monitors" {
   source = "../../modules/datadog_monitors"
 
-  app            = var.app
+  app            = "cdap"
   env            = var.env
   monitor_config = local.monitor_config
   notify         = local.notify
 }
 
+# Use platform module to derive datadog keys via ssm_root_map
+# Can be replaced with direct data lookups 
 module "platform" {
   source    = "../../modules/platform"
   providers = { aws = aws, aws.secondary = aws.secondary }
@@ -42,10 +52,14 @@ module "platform" {
   ssm_root_map = { datadog = "/cdap/${var.env}/datadog/cicd/" }
 }
 
-# Codebuild-projects specific monitors:
+
+##########################
+# CDAP Specific Monitors #
+##########################
 
 locals {
-  codebuild_repos = ["ab2d",
+  codebuild_repos = [
+    "ab2d",
     "ab2d-website",
     "bcda-app",
     "bcda-ssas-app",
@@ -71,7 +85,7 @@ resource "datadog_monitor" "codebuild_failed_builds" {
   }
 
   tags = [
-    "app:${each.key}",
+    "application:${each.key}",
     "environment:${var.env}",
     "managed-by:tofu",
   ]
@@ -92,7 +106,7 @@ resource "datadog_monitor" "codebuild_queue_backup" {
   }
 
   tags = [
-    "app:${each.key}",
+    "application:${each.key}",
     "environment:${var.env}",
     "managed-by:tofu",
   ]

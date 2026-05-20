@@ -4,7 +4,7 @@ resource "datadog_monitor" "ecs_cpu_high" {
   type    = "metric alert"
   message = "ECS service {{servicename.name}} CPU utilization is critically high. ${var.notify}"
 
-  query = "avg(last_10m):avg:aws.ecs.service.cpuutilization{application:${var.app},environment:${var.env}} by {servicename} > ${var.monitor_config.ecs.cpu_threshold}"
+  query = "avg(${var.monitor_config.ecs.timeframe}):avg:aws.ecs.service.cpuutilization{application:${var.app},environment:${var.env}} by {servicename} > ${var.monitor_config.ecs.cpu_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.ecs.cpu_threshold
@@ -23,7 +23,7 @@ resource "datadog_monitor" "ecs_memory_high" {
   type    = "metric alert"
   message = "ECS service {{servicename.name}} memory utilization is critically high. ${var.notify}"
 
-  query = "avg(last_10m):avg:aws.ecs.service.memory_utilization{application:${var.app},environment:${var.env}} by {servicename} > ${var.monitor_config.ecs.memory_threshold}"
+  query = "avg(${var.monitor_config.ecs.timeframe}):avg:aws.ecs.service.memory_utilization{application:${var.app},environment:${var.env}} by {servicename} > ${var.monitor_config.ecs.memory_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.ecs.memory_threshold

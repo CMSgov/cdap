@@ -17,7 +17,8 @@ monitor resource evaluates independently per resource, even though we set up jus
 
 This module is config-driven. The consuming service merges a `defaults.yml` baseline with
 per-environment overrides in `<env>.yml`. Only specify values you want to change, everything else falls
-through from the defaults. Even if an AWS service's monitors are not enabled, the default values are set.
+through from the defaults. An example of all the settings you can change is in [Link Text](cdap/terraform/services/530-cdap-datadog-monitors/default.yml).
+Even if an AWS service's monitors are not enabled or a default.yml is not used, the default values are set.
 
 ### Enabling and Disabling Service Monitors
 
@@ -53,16 +54,16 @@ The deadlock monitor requires Enhanced Monitoring or Performance Insights to be 
 If neither is enabled, set rds.deadlocks_enabled: false to suppress the monitor.
 
 ## S3 Request Metrics
-S3 request metrics (4xx_errors, 5xx_errors) must be enabled per bucket. 
+S3 request metrics (s3_http_response_4xx, s3_http_response_5xx) must be enabled per bucket. 
 Monitors for buckets without request metrics enabled will remain in a no-data state.
 
 
 # Example Implementations 
 
 ## Thorough example 
-Provided in cdap/terraform/services/530-cdap-datadog-monitors, this will inherit from yaml files.
+Provided in [Link Text](cdap/terraform/services/530-cdap-datadog-monitors/main.tf), this will inherit from yaml files.
 
-## Super simple 
+## Super simple example
 Inherits all defaults. 
 
 ```

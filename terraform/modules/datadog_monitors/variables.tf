@@ -28,17 +28,21 @@ variable "monitor_config" {
       memory_threshold          = optional(number, 85)
       notify_no_data            = optional(bool, false)
       no_data_timeframe_minutes = optional(number, 10)
+      timeframe                 = optional(string, "last_10m")
     }), {})
     sqs = optional(object({
       dlq_message_threshold     = optional(number, 1)
       max_message_age_seconds   = optional(number, 300)
       notify_no_data            = optional(bool, false)
       no_data_timeframe_minutes = optional(number, 10)
+      timeframe                 = optional(string, "last_5m")
     }), {})
     sns = optional(object({
       failed_notification_threshold = optional(number, 5)
       notify_no_data                = optional(bool, false)
       no_data_timeframe_minutes     = optional(number, 10)
+      timeframe                     = optional(string, "last_5m")
+
     }), {})
     lambda = optional(object({
       error_rate_threshold      = optional(number, 5)
@@ -46,12 +50,16 @@ variable "monitor_config" {
       duration_p99_threshold_ms = optional(number, 8000)
       notify_no_data            = optional(bool, false)
       no_data_timeframe_minutes = optional(number, 10)
+      timeframe                 = optional(string, "last_5m")
+
     }), {})
     s3 = optional(object({
-      error_threshold_4xx       = optional(number, 50)
-      error_threshold_5xx       = optional(number, 10)
-      notify_no_data            = optional(bool, false)
-      no_data_timeframe_minutes = optional(number, 10)
+      http_response_4xx_threshold = optional(number, 50)
+      http_response_5xx_threshold = optional(number, 10)
+      notify_no_data              = optional(bool, false)
+      no_data_timeframe_minutes   = optional(number, 10)
+      timeframe                   = optional(string, "last_5m")
+
     }), {})
     rds = optional(object({
       cpu_threshold                = optional(number, 85)
@@ -62,6 +70,8 @@ variable "monitor_config" {
       deadlocks_enabled            = optional(bool, true)
       notify_no_data               = optional(bool, false)
       no_data_timeframe_minutes    = optional(number, 10)
+      timeframe                    = optional(string, "last_10m")
+
     }), {})
   })
   default = {}
