@@ -13,10 +13,17 @@ locals {
     ecs    = true
   }
 
-  default_custom_widgets = [{}]
   app_configs = {
     for app in local.apps_served :
     app => try(yamldecode(file("./config/${app}.yml")), {})
+  }
+  app_env_overrides = {
+    for app in local.apps_served :
+    app => lookup(
+      lookup(local.app_configs[app], "env_overrides", {}),
+      var.env,
+      {}
+    )
   }
 }
 
@@ -24,13 +31,24 @@ module "datadog_dashboard" {
   source   = "../../modules/datadog_dashboard"
   for_each = local.apps_served
   app      = each.key
+  name_rewrite = lookup(
+    local.app_env_overrides[each.key],
+    "name_rewrite",
+    lookup(local.app_configs[each.key], "name_rewrite", null)
+  )
 
-  custom_widgets = lookup(local.app_configs[each.key], "custom_widgets", [])
+  custom_widgets = lookup(
+    local.app_env_overrides[each.key],
+    "custom_widgets",
+    lookup(local.app_configs[each.key], "custom_widgets", [])
+  )
 
   enable_default_widgets = merge(
     local.default_enable_widgets,
-    lookup(local.app_configs[each.key], "enable_default_widgets", {})
+    lookup(local.app_configs[each.key], "enable_default_widgets", {}),
+    lookup(local.app_env_overrides[each.key], "enable_default_widgets", {})
   )
+
 }
 
 module "standards" {

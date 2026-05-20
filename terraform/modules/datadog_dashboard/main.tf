@@ -1,6 +1,6 @@
 resource "datadog_dashboard" "application_metrics_dashboard" {
   layout_type = "ordered"
-  title       = "${var.app} Metrics Dashboard"
+  title       = "${var.name_rewrite != null ? var.name_rewrite : var.app} Metrics Dashboard"
   template_variable {
     name     = "env"
     prefix   = "environment"

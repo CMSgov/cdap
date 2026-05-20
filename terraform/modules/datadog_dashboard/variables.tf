@@ -25,3 +25,9 @@ variable "enable_default_widgets" {
   })
   default = {} # Evaluates to all true based on the optional defaults above
 }
+
+variable "name_rewrite" {
+  description = "Allows for the creation of unique dashboards per application. Currently used only for development."
+  type        = string
+  default     = null
+}

@@ -1,7 +1,8 @@
 enable_default_widgets:
-  lambda: true
-  aurora: true
-  sns:    true
-  alb:    true
-  s3:     true
   ecs:    false  # Assume CDAP doesn't use ECS
+
+env_overrides:
+  test:
+    name_rewrite: "CDAP Dev Testing"
+  prod:
+    name_rewrite: null
