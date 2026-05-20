@@ -1,0 +1,30 @@
+enabled:
+  ecs: true
+  sqs: true
+  sns: true
+  lambda: true
+  s3: true
+
+notifications:
+  channels:
+    - "@slack-cdap-users" #default as a catchall FIXME with common shared channel
+
+ecs:
+  cpu_threshold: 85
+  memory_threshold: 85
+
+sqs:
+  dlq_message_threshold: 1
+  max_message_age_seconds: 300
+
+sns:
+  failed_notification_threshold: 5
+
+lambda:
+  error_rate_threshold: 5
+  throttle_threshold: 10
+  duration_p99_threshold_ms: 8000
+
+s3:
+  error_threshold_4xx: 50
+  error_threshold_5xx: 10
