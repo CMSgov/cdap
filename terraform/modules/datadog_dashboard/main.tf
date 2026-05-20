@@ -7,7 +7,16 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
     defaults = ["*"]
   }
 
-  # Custom widgets defined by the team in main.tf
+  widget {
+    note_definition {
+      content          = "## ${upper(var.app)}\nMonitoring dashboard. Filters apply via the **env** template variable above.\n\n [Runbook](${var.runbook_url}) | Alerts managed via Tofu monitors module"
+      background_color = "blue"
+      font_size        = "14"
+      text_align       = "left"
+      show_tick        = false
+    }
+  }
+
   widget {
     group_definition {
       layout_type = "ordered"
@@ -60,71 +69,38 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
   }
 
   dynamic "widget" {
-    # Renders the block exactly once if true, zero times if false
     for_each = var.enable_default_widgets.ecs ? [1] : []
     content {
       group_definition {
         title       = "ECS"
         layout_type = "ordered"
+
         widget {
           timeseries_definition {
-            title = "CPU Utilization by Clustername"
+            title     = "CPU Utilization by Service"
+            live_span = var.widget_live_spans.ecs
             request {
-              q = "avg:aws.ecs.cpuutilization{application:${var.app}, $env} by {clustername}"
-            }
-          }
-        }
-        widget {
-          timeseries_definition {
-            title = "Memory Utilization by Clustername"
-            request {
-              q = "avg:aws.ecs.memory_utilization{application:${var.app}, $env} by {clustername}"
-            }
-          }
-        }
-        widget {
-          query_value_definition {
-            title = "Running Tasks"
-            request {
-              q = "avg:aws.ecs.service.running{application:${var.app}, $env}"
-            }
-            timeseries_background {
-              type = "area"
-            }
-          }
-        }
-        widget {
-          query_value_definition {
-            title = "Desired Tasks"
-            request {
-              q = "avg:aws.ecs.service.desired{application:${var.app}, $env}"
-            }
-          }
-        }
-        widget {
-          query_value_definition {
-            title = "Pending Tasks"
-            request {
-              q = "avg:aws.ecs.service.pending{application:${var.app}, $env}"
-            }
-          }
-        }
-        widget {
-          timeseries_definition {
-            title = "Network I/O (Bytes In/Out)"
-            request {
-              q            = "avg:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {containername}.as_rate()"
-              display_type = "line"
-            }
-            request {
-              q            = "avg:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {containername}.as_rate()"
+              q            = "avg:aws.ecs.cpuutilization{application:${var.app}, $env} by {servicename}"
               display_type = "line"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "Task Count: Running vs Desired vs Pending"
+            title     = "Memory Utilization by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "avg:aws.ecs.memory_utilization{application:${var.app}, $env} by {servicename}"
+              display_type = "line"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Running vs Desired vs Pending by Service"
+            live_span = var.widget_live_spans.ecs
             request {
               q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
               display_type = "line"
@@ -139,21 +115,47 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
+
+        widget {
+          toplist_definition {
+            title     = "Desired Task Count by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Network I/O (Bytes In/Out) by Container"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "avg:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {containername}.as_rate()"
+              display_type = "line"
+            }
+            request {
+              q            = "avg:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {containername}.as_rate()"
+              display_type = "line"
+            }
+          }
+        }
+
       }
     }
   }
 
   dynamic "widget" {
-    # Renders the block exactly once if true, zero times if false
     for_each = var.enable_default_widgets.s3 ? [1] : []
     content {
       group_definition {
-        layout_type = "ordered"
         title       = "S3"
+        layout_type = "ordered"
+
         widget {
           toplist_definition {
-            live_span = "4h"
-            title     = "Bucket Size (Bytes)"
+            title     = "Bucket Size (Bytes) by Bucket"
+            live_span = var.widget_live_spans.s3
             request {
               q = "avg:aws.s3.bucket_size_bytes{application:${var.app}, $env} by {bucketname}"
             }
@@ -164,155 +166,193 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
+
         widget {
           toplist_definition {
-            live_span = "4h"
-            title     = "# Objects"
-
+            title     = "Object Count by Bucket"
+            live_span = var.widget_live_spans.s3
             request {
               formula {
                 formula_expression = "query1"
               }
               query {
                 metric_query {
-                  aggregator      = "avg"
-                  cross_org_uuids = []
-                  data_source     = "metrics"
-                  name            = "query1"
-                  query           = "avg:aws.s3.number_of_objects{application:${var.app}, $env} by {bucketname}"
+                  aggregator  = "avg"
+                  data_source = "metrics"
+                  name        = "query1"
+                  query       = "avg:aws.s3.number_of_objects{application:${var.app}, $env} by {bucketname}"
                 }
               }
             }
-
             style {
               display {
                 type = "stacked"
               }
             }
           }
-
         }
       }
     }
   }
+
   dynamic "widget" {
     for_each = var.enable_default_widgets.lambda ? [1] : []
     content {
       group_definition {
         title       = "Lambda"
         layout_type = "ordered"
+
         widget {
           timeseries_definition {
-            title = "Invocations"
+            title     = "Invocations by Function"
+            live_span = var.widget_live_spans.lambda
             request {
-              q = "sum:aws.lambda.invocations{application:${var.app}, $env} by {functionname}.as_count()"
+              q            = "sum:aws.lambda.invocations{application:${var.app}, $env} by {functionname}.as_count()"
+              display_type = "bars"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "Errors"
+            title     = "Errors by Function"
+            live_span = var.widget_live_spans.lambda
             request {
-              q = "sum:aws.lambda.errors{application:${var.app}, $env}.as_count()"
+              q            = "sum:aws.lambda.errors{application:${var.app}, $env} by {functionname}.as_count()"
+              display_type = "bars"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "Duration"
+            title     = "Error Rate by Function (%)"
+            live_span = var.widget_live_spans.lambda
             request {
-              q = "avg:aws.lambda.duration{application:${var.app}, $env} by {functionname}"
+              q            = "sum:aws.lambda.errors{application:${var.app}, $env} by {functionname}.as_count() / sum:aws.lambda.invocations{application:${var.app}, $env} by {functionname}.as_count() * 100"
+              display_type = "line"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "Throttles"
+            title     = "Duration (avg) by Function"
+            live_span = var.widget_live_spans.lambda
             request {
-              q = "sum:aws.lambda.throttles{application:${var.app}, $env}.as_count()"
+              q            = "avg:aws.lambda.duration{application:${var.app}, $env} by {functionname}"
+              display_type = "line"
             }
           }
         }
+
+        widget {
+          timeseries_definition {
+            title     = "Throttles by Function"
+            live_span = var.widget_live_spans.lambda
+            request {
+              q            = "sum:aws.lambda.throttles{application:${var.app}, $env} by {functionname}.as_count()"
+              display_type = "bars"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Concurrent Executions by Function"
+            live_span = var.widget_live_spans.lambda
+            request {
+              q            = "avg:aws.lambda.concurrent_executions{application:${var.app}, $env} by {functionname}"
+              display_type = "line"
+            }
+          }
+        }
+
       }
     }
   }
+
   dynamic "widget" {
-    # Renders the block exactly once if true, zero times if false
     for_each = var.enable_default_widgets.alb ? [1] : []
     content {
       group_definition {
         title       = "ALB"
         layout_type = "ordered"
+
         widget {
           timeseries_definition {
-            title = "Active Connection Count"
-            request {
-              q = "sum:aws.applicationelb.active_connection_count{application:${var.app}, $env} by {environment}.as_count()"
-            }
-          }
-        }
-        widget {
-          timeseries_definition {
-            title = "HTTP 5XX Count"
-            request {
-              q = "sum:aws.applicationelb.httpcode_elb_5xx{application:${var.app}, $env} by {environment}.as_count()"
-            }
-          }
-        }
-        widget {
-          timeseries_definition {
-            title = "Request Count by Target Group"
+            title     = "Request Count by Target Group"
+            live_span = var.widget_live_spans.alb
             request {
               q            = "sum:aws.applicationelb.request_count{application:${var.app}, $env} by {targetgroup}.as_count()"
               display_type = "bars"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "Target Response Time (p95)"
+            title     = "Target Response Time p95 by Target Group"
+            live_span = var.widget_live_spans.alb
             request {
-              q = "p95:aws.applicationelb.target_response_time{application:${var.app}, $env} by {targetgroup}"
+              q            = "p95:aws.applicationelb.target_response_time{application:${var.app}, $env} by {targetgroup}"
+              display_type = "line"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "HTTP 4XX Count"
+            title     = "HTTP 5XX by Target Group"
+            live_span = var.widget_live_spans.alb
             request {
-              q = "sum:aws.applicationelb.httpcode_target_4xx{application:${var.app}, $env} by {targetgroup}.as_count()"
+              q            = "sum:aws.applicationelb.httpcode_target_5xx{application:${var.app}, $env} by {targetgroup}.as_count()"
+              display_type = "bars"
             }
           }
         }
+
         widget {
-          query_value_definition {
-            title     = "Healthy Host Count"
-            autoscale = true
-            precision = 0
+          timeseries_definition {
+            title     = "HTTP 4XX by Target Group"
+            live_span = var.widget_live_spans.alb
             request {
-              q = "avg:aws.applicationelb.healthy_host_count{application:${var.app}, $env}"
-            }
-            timeseries_background {
-              type = "area"
+              q            = "sum:aws.applicationelb.httpcode_target_4xx{application:${var.app}, $env} by {targetgroup}.as_count()"
+              display_type = "bars"
             }
           }
         }
+
         widget {
-          query_value_definition {
-            title     = "Unhealthy Host Count"
-            autoscale = true
-            precision = 0
+          timeseries_definition {
+            title     = "Active Connection Count by Target Group"
+            live_span = var.widget_live_spans.alb
             request {
-              q = "avg:aws.applicationelb.un_healthy_host_count{application:${var.app}, $env}"
-            }
-            timeseries_background {
-              type = "area"
+              q            = "sum:aws.applicationelb.active_connection_count{application:${var.app}, $env} by {targetgroup}.as_count()"
+              display_type = "line"
             }
           }
         }
+
+        widget {
+          timeseries_definition {
+            title     = "Healthy vs Unhealthy Host Count by Target Group"
+            live_span = var.widget_live_spans.alb
+            request {
+              q            = "avg:aws.applicationelb.healthy_host_count{application:${var.app}, $env} by {targetgroup}"
+              display_type = "line"
+            }
+            request {
+              q            = "avg:aws.applicationelb.un_healthy_host_count{application:${var.app}, $env} by {targetgroup}"
+              display_type = "line"
+            }
+          }
+        }
+
       }
     }
   }
+
 
   dynamic "widget" {
     for_each = var.enable_default_widgets.sqs ? [1] : []
@@ -323,31 +363,41 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title = "Messages Visible by Queue"
+            title     = "Messages Visible by Queue"
+            live_span = var.widget_live_spans.sqs
             request {
-              q = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $env} by {queuename}"
+              q            = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $env} by {queuename}"
+              display_type = "line"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "🚨 DLQ Messages Visible"
+            title     = "Dead Letter Queue Messages Visible"
+            live_span = var.widget_live_spans.sqs
             request {
-              q = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $env, queuename:*dlq*} by {queuename}"
+              q            = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $env, queuename:*dlq*} by {queuename}"
+              display_type = "bars"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "Oldest Message Age (seconds)"
+            title     = "Oldest Message Age (seconds) by Queue"
+            live_span = var.widget_live_spans.sqs
             request {
-              q = "max:aws.sqs.approximate_age_of_oldest_message{application:${var.app}, $env} by {queuename}"
+              q            = "max:aws.sqs.approximate_age_of_oldest_message{application:${var.app}, $env} by {queuename}"
+              display_type = "line"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "Messages Sent / Deleted"
+            title     = "Messages Sent / Deleted by Queue"
+            live_span = var.widget_live_spans.sqs
             request {
               q            = "sum:aws.sqs.number_of_messages_sent{application:${var.app}, $env} by {queuename}.as_count()"
               display_type = "bars"
@@ -358,25 +408,48 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
+
       }
     }
   }
 
   dynamic "widget" {
-    # Renders the block exactly once if true, zero times if false
     for_each = var.enable_default_widgets.sns ? [1] : []
     content {
-      timeseries_definition {
-        title = "SNS # Messages Published, Notifications Delivered/Failed"
-        request {
-          q = "sum:aws.sns.number_of_messages_published{application:${var.app}, $env} by {environment}.as_count()"
+      group_definition {
+        title       = "SNS"
+        layout_type = "ordered"
+
+        widget {
+          timeseries_definition {
+            title     = "Messages Published / Delivered / Failed by Topic"
+            live_span = var.widget_live_spans.sns
+            request {
+              q            = "sum:aws.sns.number_of_messages_published{application:${var.app}, $env} by {topicname}.as_count()"
+              display_type = "bars"
+            }
+            request {
+              q            = "sum:aws.sns.number_of_notifications_delivered{application:${var.app}, $env} by {topicname}.as_count()"
+              display_type = "line"
+            }
+            request {
+              q            = "sum:aws.sns.number_of_notifications_failed{application:${var.app}, $env} by {topicname}.as_count()"
+              display_type = "bars"
+            }
+          }
         }
-        request {
-          q = "sum:aws.sns.number_of_notifications_delivered{application:${var.app}, $env} by {environment}.as_count()"
+
+        widget {
+          timeseries_definition {
+            title     = "Notification Failure Rate by Topic (%)"
+            live_span = var.widget_live_spans.sns
+            request {
+              q            = "sum:aws.sns.number_of_notifications_failed{application:${var.app}, $env} by {topicname}.as_count() / sum:aws.sns.number_of_messages_published{application:${var.app}, $env} by {topicname}.as_count() * 100"
+              display_type = "line"
+            }
+          }
         }
-        request {
-          q = "sum:aws.sns.number_of_notifications_failed{application:${var.app}, $env} by {environment}.as_count()"
-        }
+
       }
     }
   }
@@ -388,36 +461,32 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         title       = "Aurora"
         layout_type = "ordered"
 
-        # Keep what you have
         widget {
           timeseries_definition {
-            title = "Estimated Shared Memory (Bytes)"
+            title     = "DB Connections by Instance"
+            live_span = var.widget_live_spans.aurora
             request {
-              q = "avg:aws.rds.aurora_estimated_shared_memory_bytes{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.database_connections{application:${var.app}, $env} by {dbinstanceidentifier}"
+              display_type = "line"
             }
           }
         }
 
-        # Add these — all valid Aurora metrics
         widget {
           timeseries_definition {
-            title = "DB Connections"
+            title     = "CPU Utilization by Instance"
+            live_span = var.widget_live_spans.aurora
             request {
-              q = "avg:aws.rds.database_connections{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.cpuutilization{application:${var.app}, $env} by {dbinstanceidentifier}"
+              display_type = "line"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "CPU Utilization"
-            request {
-              q = "avg:aws.rds.cpuutilization{application:${var.app}, $env} by {dbinstanceidentifier}"
-            }
-          }
-        }
-        widget {
-          timeseries_definition {
-            title = "Read / Write Latency"
+            title     = "Read / Write Latency by Instance"
+            live_span = var.widget_live_spans.aurora
             request {
               q            = "avg:aws.rds.read_latency{application:${var.app}, $env} by {dbinstanceidentifier}"
               display_type = "line"
@@ -428,19 +497,51 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "Freeable Memory"
+            title     = "Read / Write IOPS by Instance"
+            live_span = var.widget_live_spans.aurora
             request {
-              q = "avg:aws.rds.freeable_memory{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.read_iops{application:${var.app}, $env} by {dbinstanceidentifier}"
+              display_type = "line"
+            }
+            request {
+              q            = "avg:aws.rds.write_iops{application:${var.app}, $env} by {dbinstanceidentifier}"
+              display_type = "line"
             }
           }
         }
+
         widget {
           timeseries_definition {
-            title = "Aurora Replica Lag"
+            title     = "Freeable Memory by Instance"
+            live_span = var.widget_live_spans.aurora
             request {
-              q = "avg:aws.rds.aurora_replica_lag{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.freeable_memory{application:${var.app}, $env} by {dbinstanceidentifier}"
+              display_type = "line"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Aurora Replica Lag by Instance"
+            live_span = var.widget_live_spans.aurora
+            request {
+              q            = "avg:aws.rds.aurora_replica_lag{application:${var.app}, $env} by {dbinstanceidentifier}"
+              display_type = "line"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Estimated Shared Memory (Bytes) by Instance"
+            live_span = var.widget_live_spans.aurora
+            request {
+              q            = "avg:aws.rds.aurora_estimated_shared_memory_bytes{application:${var.app}, $env} by {dbinstanceidentifier}"
+              display_type = "line"
             }
           }
         }
