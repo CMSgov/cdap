@@ -19,10 +19,13 @@ locals {
     { shadow_mode = local.shadow_mode }
   )
 
+  # handles a case where the notifications are null
+  _env_channels = try(local.env_config.notifications.channels, null)
+
   # always use the notification channels set up in the defaults, and adds those from the environment
   notify = join(" ", concat(
     local.defaults.notifications.channels,
-    try(tolist(local.env_config.notifications.channels), [])
+    local._env_channels != null ? local._env_channels : []
   ))
 }
 
