@@ -4,7 +4,7 @@ resource "datadog_monitor" "s3_4xx_errors" {
   type    = "metric alert"
   message = "S3 bucket {{bucketname.name}} is returning a high rate of 4xx errors. ${var.notify}"
 
-  query = "sum(last_5m):sum:aws.s3.4xx_errors{app:${var.app},env:${var.env}} by {bucketname} > ${var.monitor_config.s3.error_threshold_4xx}"
+  query = "sum(last_5m):sum:aws.s3.4xx_errors{app:${var.app},environment:${var.env}} by {bucketname} > ${var.monitor_config.s3.error_threshold_4xx}"
 
   monitor_thresholds {
     critical = var.monitor_config.s3.error_threshold_4xx
@@ -23,7 +23,7 @@ resource "datadog_monitor" "s3_5xx_errors" {
   type    = "metric alert"
   message = "S3 bucket {{bucketname.name}} is returning 5xx errors — possible AWS-side issue. ${var.notify}"
 
-  query = "sum(last_5m):sum:aws.s3.5xx_errors{app:${var.app},env:${var.env}} by {bucketname} > ${var.monitor_config.s3.error_threshold_5xx}"
+  query = "sum(last_5m):sum:aws.s3.5xx_errors{app:${var.app},environment:${var.env}} by {bucketname} > ${var.monitor_config.s3.error_threshold_5xx}"
 
   monitor_thresholds {
     critical = var.monitor_config.s3.error_threshold_5xx

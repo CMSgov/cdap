@@ -4,7 +4,7 @@ resource "datadog_monitor" "rds_cpu_high" {
   type    = "metric alert"
   message = "Aurora cluster {{dbclusteridentifier.name}} CPU utilization is critically high. ${var.notify}"
 
-  query = "avg(last_10m):avg:aws.rds.cpuutilization{app:${var.app},env:${var.env}} by {dbclusteridentifier} > ${var.monitor_config.rds.cpu_threshold}"
+  query = "avg(last_10m):avg:aws.rds.cpuutilization{app:${var.app},environment:${var.env}} by {dbclusteridentifier} > ${var.monitor_config.rds.cpu_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.rds.cpu_threshold
@@ -23,7 +23,7 @@ resource "datadog_monitor" "rds_freeable_memory_low" {
   type    = "metric alert"
   message = "Aurora cluster {{dbclusteridentifier.name}} is running low on freeable memory. ${var.notify}"
 
-  query = "avg(last_10m):avg:aws.rds.freeable_memory{app:${var.app},env:${var.env}} by {dbclusteridentifier} < ${var.monitor_config.rds.freeable_memory_threshold_mb * 1000000}"
+  query = "avg(last_10m):avg:aws.rds.freeable_memory{app:${var.app},environment:${var.env}} by {dbclusteridentifier} < ${var.monitor_config.rds.freeable_memory_threshold_mb * 1000000}"
 
   monitor_thresholds {
     critical = var.monitor_config.rds.freeable_memory_threshold_mb * 1000000 # Reported in bytes
@@ -42,7 +42,7 @@ resource "datadog_monitor" "rds_db_connections_high" {
   type    = "metric alert"
   message = "Aurora instance {{dbinstanceidentifier.name}} is approaching its max connection limit. ${var.notify}"
 
-  query = "avg(last_10m):avg:aws.rds.database_connections{app:${var.app},env:${var.env}} by {dbinstanceidentifier} > ${var.monitor_config.rds.db_connections_threshold}"
+  query = "avg(last_10m):avg:aws.rds.database_connections{app:${var.app},environment:${var.env}} by {dbinstanceidentifier} > ${var.monitor_config.rds.db_connections_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.rds.db_connections_threshold
@@ -61,7 +61,7 @@ resource "datadog_monitor" "rds_replica_lag_high" {
   type    = "metric alert"
   message = "Aurora replica {{dbinstanceidentifier.name}} lag is too high — read queries may return stale data. ${var.notify}"
 
-  query = "avg(last_5m):avg:aws.rds.aurora_replica_lag{app:${var.app},env:${var.env}} by {dbinstanceidentifier} > ${var.monitor_config.rds.replica_lag_seconds * 1000}"
+  query = "avg(last_5m):avg:aws.rds.aurora_replica_lag{app:${var.app},environment:${var.env}} by {dbinstanceidentifier} > ${var.monitor_config.rds.replica_lag_seconds * 1000}"
 
   monitor_thresholds {
     critical = var.monitor_config.rds.replica_lag_seconds * 1000 # Becomes milliseconds
@@ -77,7 +77,7 @@ resource "datadog_monitor" "rds_deadlocks" {
   type    = "metric alert"
   message = "Aurora instance {{dbinstanceidentifier.name}} is experiencing deadlocks. ${var.notify}"
 
-  query = "sum(last_5m):sum:aws.rds.deadlocks{app:${var.app},env:${var.env}} by {dbinstanceidentifier} > ${var.monitor_config.rds.deadlock_threshold}"
+  query = "sum(last_5m):sum:aws.rds.deadlocks{app:${var.app},environment:${var.env}} by {dbinstanceidentifier} > ${var.monitor_config.rds.deadlock_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.rds.deadlock_threshold

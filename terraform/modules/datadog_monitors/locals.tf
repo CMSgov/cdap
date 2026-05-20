@@ -3,8 +3,7 @@ locals {
 
   base_tags = [
     "app:${var.app}",
-    "env:${var.env}",
-    "environment:${var.env}", # ← required by Datadog org tag policy
+    "environment:${var.env}",
     "managed-by:tofu",
     var.monitor_config.shadow_mode ? "shadow-mode:true" : "shadow-mode:false",
   ]
