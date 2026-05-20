@@ -229,6 +229,57 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
+        widget {
+          timeseries_definition {
+            title = "Request Count by Target Group"
+            request {
+              q            = "sum:aws.applicationelb.request_count{application:${var.app}, $env} by {targetgroup}.as_count()"
+              display_type = "bars"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "Target Response Time (p95)"
+            request {
+              q = "p95:aws.applicationelb.target_response_time{application:${var.app}, $env} by {targetgroup}"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "HTTP 4XX Count"
+            request {
+              q = "sum:aws.applicationelb.httpcode_target_4xx{application:${var.app}, $env} by {targetgroup}.as_count()"
+            }
+          }
+        }
+        widget {
+          query_value_definition {
+            title     = "Healthy Host Count"
+            autoscale = true
+            precision = 0
+            request {
+              q = "avg:aws.applicationelb.healthy_host_count{application:${var.app}, $env}"
+            }
+            timeseries_background {
+              type = "area"
+            }
+          }
+        }
+        widget {
+          query_value_definition {
+            title     = "Unhealthy Host Count"
+            autoscale = true
+            precision = 0
+            request {
+              q = "avg:aws.applicationelb.un_healthy_host_count{application:${var.app}, $env}"
+            }
+            timeseries_background {
+              type = "area"
+            }
+          }
+        }
       }
     }
   }
