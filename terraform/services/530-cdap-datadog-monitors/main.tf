@@ -22,7 +22,7 @@ locals {
   # always use the notification channels set up in the defaults, and adds those from the environment
   notify = join(" ", concat(
     local.defaults.notifications.channels,
-    try(local.env_config.notifications.channels, [])
+    try(tolist(local.env_config.notifications.channels), [])
   ))
 }
 
