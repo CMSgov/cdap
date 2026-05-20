@@ -11,6 +11,9 @@ resource "datadog_monitor" "ecs_cpu_high" {
     warning  = floor(var.monitor_config.ecs.cpu_threshold * 0.85)
   }
 
+  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.ecs.notify_no_data
+  no_data_timeframe = var.monitor_config.ecs.no_data_timeframe_minutes
+
   tags = local.base_tags
 }
 
@@ -26,6 +29,9 @@ resource "datadog_monitor" "ecs_memory_high" {
     critical = var.monitor_config.ecs.memory_threshold
     warning  = floor(var.monitor_config.ecs.memory_threshold * 0.85)
   }
+
+  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.ecs.notify_no_data
+  no_data_timeframe = var.monitor_config.ecs.no_data_timeframe_minutes
 
   tags = local.base_tags
 }

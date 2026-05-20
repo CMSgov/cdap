@@ -1,4 +1,0 @@
-notifications:
-  channels:
-    # - "@victorops-dpc-integration-info"
-    - "@slack-dpc-alerts"

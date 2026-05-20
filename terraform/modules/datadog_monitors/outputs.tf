@@ -21,5 +21,12 @@ output "monitor_ids" {
       errors_4xx = length(datadog_monitor.s3_4xx_errors) > 0 ? datadog_monitor.s3_4xx_errors[0].id : null
       errors_5xx = length(datadog_monitor.s3_5xx_errors) > 0 ? datadog_monitor.s3_5xx_errors[0].id : null
     }
+    rds = {
+      cpu_high            = length(datadog_monitor.rds_cpu_high) > 0 ? datadog_monitor.rds_cpu_high[0].id : null
+      freeable_memory_low = length(datadog_monitor.rds_freeable_memory_low) > 0 ? datadog_monitor.rds_freeable_memory_low[0].id : null
+      db_connections_high = length(datadog_monitor.rds_db_connections_high) > 0 ? datadog_monitor.rds_db_connections_high[0].id : null
+      replica_lag_high    = length(datadog_monitor.rds_replica_lag_high) > 0 ? datadog_monitor.rds_replica_lag_high[0].id : null
+      deadlocks           = length(datadog_monitor.rds_deadlocks) > 0 ? datadog_monitor.rds_deadlocks[0].id : null
+    }
   }
 }

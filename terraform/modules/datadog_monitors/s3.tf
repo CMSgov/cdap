@@ -11,6 +11,9 @@ resource "datadog_monitor" "s3_4xx_errors" {
     warning  = floor(var.monitor_config.s3.error_threshold_4xx * 0.75)
   }
 
+  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.s3.notify_no_data
+  no_data_timeframe = var.monitor_config.s3.no_data_timeframe_minutes
+
   tags = local.base_tags
 }
 
@@ -26,6 +29,9 @@ resource "datadog_monitor" "s3_5xx_errors" {
     critical = var.monitor_config.s3.error_threshold_5xx
     warning  = floor(var.monitor_config.s3.error_threshold_5xx * 0.5)
   }
+
+  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.s3.notify_no_data
+  no_data_timeframe = var.monitor_config.s3.no_data_timeframe_minutes
 
   tags = local.base_tags
 }

@@ -13,36 +13,58 @@ variable "env" {
 }
 
 variable "monitor_config" {
-  description = "Fully merged monitor configuration. All values required; use defaults.yml as the baseline."
   type = object({
-    enabled = object({
-      ecs    = bool
-      sqs    = bool
-      sns    = bool
-      lambda = bool
-      s3     = bool
-    })
-    ecs = object({
-      cpu_threshold    = number
-      memory_threshold = number
-    })
-    sqs = object({
-      dlq_message_threshold   = number
-      max_message_age_seconds = number
-    })
-    sns = object({
-      failed_notification_threshold = number
-    })
-    lambda = object({
-      error_rate_threshold      = number
-      throttle_threshold        = number
-      duration_p99_threshold_ms = number
-    })
-    s3 = object({
-      error_threshold_4xx = number
-      error_threshold_5xx = number
-    })
+    shadow_mode = optional(bool, true)
+    enabled = optional(object({
+      ecs    = optional(bool, true)
+      sqs    = optional(bool, true)
+      sns    = optional(bool, true)
+      lambda = optional(bool, true)
+      s3     = optional(bool, true)
+      rds    = optional(bool, true)
+    }), {})
+    ecs = optional(object({
+      cpu_threshold             = optional(number, 85)
+      memory_threshold          = optional(number, 85)
+      notify_no_data            = optional(bool, false)
+      no_data_timeframe_minutes = optional(number, 10)
+    }), {})
+    sqs = optional(object({
+      dlq_message_threshold     = optional(number, 1)
+      max_message_age_seconds   = optional(number, 300)
+      notify_no_data            = optional(bool, false)
+      no_data_timeframe_minutes = optional(number, 10)
+    }), {})
+    sns = optional(object({
+      failed_notification_threshold = optional(number, 5)
+      notify_no_data                = optional(bool, false)
+      no_data_timeframe_minutes     = optional(number, 10)
+    }), {})
+    lambda = optional(object({
+      error_rate_threshold      = optional(number, 5)
+      throttle_threshold        = optional(number, 10)
+      duration_p99_threshold_ms = optional(number, 8000)
+      notify_no_data            = optional(bool, false)
+      no_data_timeframe_minutes = optional(number, 10)
+    }), {})
+    s3 = optional(object({
+      error_threshold_4xx       = optional(number, 50)
+      error_threshold_5xx       = optional(number, 10)
+      notify_no_data            = optional(bool, false)
+      no_data_timeframe_minutes = optional(number, 10)
+    }), {})
+    rds = optional(object({
+      cpu_threshold                = optional(number, 85)
+      freeable_memory_threshold_mb = optional(number, 256)
+      db_connections_threshold     = optional(number, 200)
+      replica_lag_seconds          = optional(number, 30)
+      deadlock_threshold           = optional(number, 1)
+      deadlocks_enabled            = optional(bool, true)
+      notify_no_data               = optional(bool, false)
+      no_data_timeframe_minutes    = optional(number, 10)
+    }), {})
   })
+  default = {}
 }
 
 variable "notify" {
