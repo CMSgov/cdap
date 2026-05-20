@@ -253,16 +253,69 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
   }
 
   dynamic "widget" {
-    # Renders the block exactly once if true, zero times if false
     for_each = var.enable_default_widgets.aurora ? [1] : []
     content {
-      timeseries_definition {
-        title = "Aurora Estimated Shared Memory (Bytes)"
-        request {
-          q = "avg:aws.rds.aurora_estimated_shared_memory_bytes{application:${var.app}, $env} by {environment}"
+      group_definition {
+        title       = "Aurora"
+        layout_type = "ordered"
+
+        # Keep what you have
+        widget {
+          timeseries_definition {
+            title = "Estimated Shared Memory (Bytes)"
+            request {
+              q = "avg:aws.rds.aurora_estimated_shared_memory_bytes{application:${var.app}, $env} by {dbinstanceidentifier}"
+            }
+          }
+        }
+
+        # Add these — all valid Aurora metrics
+        widget {
+          timeseries_definition {
+            title = "DB Connections"
+            request {
+              q = "avg:aws.rds.database_connections{application:${var.app}, $env} by {dbinstanceidentifier}"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "CPU Utilization"
+            request {
+              q = "avg:aws.rds.cpuutilization{application:${var.app}, $env} by {dbinstanceidentifier}"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "Read / Write Latency"
+            request {
+              q            = "avg:aws.rds.read_latency{application:${var.app}, $env} by {dbinstanceidentifier}"
+              display_type = "line"
+            }
+            request {
+              q            = "avg:aws.rds.write_latency{application:${var.app}, $env} by {dbinstanceidentifier}"
+              display_type = "line"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "Freeable Memory"
+            request {
+              q = "avg:aws.rds.freeable_memory{application:${var.app}, $env} by {dbinstanceidentifier}"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "Aurora Replica Lag"
+            request {
+              q = "avg:aws.rds.aurora_replica_lag{application:${var.app}, $env} by {dbinstanceidentifier}"
+            }
+          }
         }
       }
     }
-
   }
 }
