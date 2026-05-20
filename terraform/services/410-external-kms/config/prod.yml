@@ -1,0 +1,4 @@
+shares:
+  bluebutton:
+    envs: ["test", "dev"]
+    principal_ssm_key: "bluebutton_aws_account_id"

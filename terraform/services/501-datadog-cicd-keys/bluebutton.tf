@@ -6,6 +6,8 @@ locals {
   ) : toset([])
 }
 
+# NOTICE: This requires the pre-creation of a KMS keys and permissions for cross-account use
+# bluebutton will also have to create a ram share acceptance in their AWS account per resource made
 #----------------------
 ### Application KEY ###
 #----------------------
@@ -53,7 +55,7 @@ module "datadog_bluebutton_api_key" {
 
 resource "aws_ram_resource_share" "datadog_bluebutton_api_key" {
   for_each                  = local.bluebutton_env_labels
-  name                      = "${var.app}-bluebutton-datadog-api-key-${each.key}"
+  name                      = "${var.app}-bluebutton-${each.key}-datadog-cicd-api-key"
   allow_external_principals = true
 }
 
