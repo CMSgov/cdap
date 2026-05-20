@@ -97,8 +97,8 @@ variable "cluster_instance_parameters" {
 }
 
 variable "engine_version" {
-  default     = "16.8"
-  description = "Selected engine version for either RDS DB Instance or RDS Aurora DB Cluster."
+  default     = "16"
+  description = "Selected major engine version for either RDS DB Instance or RDS Aurora DB Cluster."
   type        = string
 }
 

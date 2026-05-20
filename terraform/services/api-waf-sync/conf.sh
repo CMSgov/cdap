@@ -1,1 +1,1 @@
-TARGET_ENVS="bcda-dev bcda-test bcda-prod dpc-dev dpc-test"
+TARGET_ENVS="dpc-dev dpc-test"

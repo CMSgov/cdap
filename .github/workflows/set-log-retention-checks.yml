@@ -1,0 +1,22 @@
+name: code-checks (set-log-retention-checks / cloudwatch log retention)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/set_log_retention/*.py'
+      - 'scripts/set_log_retention/requirements.txt'
+      - 'terraform/modules/function/**'
+      - '.github/workflows/set-log-retention-checks.yml'
+      - '.github/workflows/checks-reusable.yml'
+
+jobs:
+  checks:
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/checks-reusable.yml
+    secrets: inherit
+    with:
+      source_path: scripts/set_log_retention
+      sonar_project_key: cdap-set-log-retention

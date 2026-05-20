@@ -35,3 +35,11 @@ data "aws_vpc" "cdap_vpc" {
     values = [local.cdap_vpc_name]
   }
 }
+
+data "aws_ssm_parameters_by_path" "ssm" {
+  for_each = var.ssm_root_map
+
+  recursive       = true
+  path            = each.value
+  with_decryption = true
+}
