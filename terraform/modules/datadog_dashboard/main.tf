@@ -109,6 +109,36 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
+        widget {
+          timeseries_definition {
+            title = "Network I/O (Bytes In/Out)"
+            request {
+              q            = "avg:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {containername}.as_rate()"
+              display_type = "line"
+            }
+            request {
+              q            = "avg:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {containername}.as_rate()"
+              display_type = "line"
+            }
+          }
+        }
+        widget {
+          timeseries_definition {
+            title = "Task Count: Running vs Desired vs Pending"
+            request {
+              q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              display_type = "line"
+            }
+            request {
+              q            = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
+              display_type = "line"
+            }
+            request {
+              q            = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
+              display_type = "line"
+            }
+          }
+        }
       }
     }
   }
