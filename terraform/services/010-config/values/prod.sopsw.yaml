@@ -4,7 +4,7 @@
 /bcda/${env}/lambda/slack_webhook_url: ENC[AES256_GCM,data:SYnDcedvRmPwUtGNl2Pal/s46hvSt4S66RBZN8CW9oGYSRE6/tzpgtpiNsr++TTtR/ydTJIOXuZBbUCpsiKvTQgxvjpT8nBT3uLvKSiTzK4b3fZ/xsq10qIWzkc=,iv:XDMW3/fpNiL6OEC+KyZuwi9S4PZq3hLsmsTzbWrXhsA=,tag:ZU8SKk2fIb4fDOoEa5hRvg==,type:str]
 /ab2d/${env}/lambda/slack_webhook_url: ENC[AES256_GCM,data:iupnTZ8yRKmDMUVnhN7TlkQKd28LWFm/s2pXqra+VmhgPluYIAmbz2Jn0l9XxqHnRK5cD7Pm1dzVRev7a+Adu+2tlSwVBgsqm7WYMjaJMEffDm/Hh5lUfhEG9wk=,iv:qH/sfI4o1hOJnqG0Cd+LJDfsoJphf5MPA8PFime3Ovk=,tag:ux8fpjwATYW/zVM0XxFViQ==,type:str]
 /cdap/${env}/lambda/slack_webhook_url: ENC[AES256_GCM,data:r9gX7raSftl1W4yUvp/iJvqq9Red7FRt4QAEQw5QpNWgCSeLI0aykRPkDZrI8ur3470pWgkRZFVzqw8ote+I5C7dZtHU1pjXwxVERsuztODqWny9iFUl/qu+xSE=,iv:DagE26hqdFOX1YgVlTexM2Rcwj65xJ2dceTWPgL3O6c=,tag:njti0IKMGjuyL4vkD4oTzw==,type:str]
-/cdap/${env}/sensitive/external/bluebutton_aws_account_id:
+/cdap/${env}/sensitive/external/bbapi_aws_account_id:
 /cdap/${env}/snyk/api_token: ENC[AES256_GCM,data:NjOThPKiEFGj4YZdJOK1l0zBtjJmUdSHGin0UQv5nQj80UQe,iv:wMT3hQSPBwY+hhNrcppnL8Y6AgptvphDUvm04K8jKo0=,tag:31S/Hr10uZzCh/Py36smpQ==,type:str]
 /cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:OyXVBYpKSPGVFqgDZv7juKkWHTznfSJjlwFAqijkXFLSSoFl3GzSXg==,iv:rYavZmFM3yQSR63wzgK2puWSF3Ie8IYw4Ak6kk4umHo=,tag:4WXw/40dOSinprmh9SF8tA==,type:str]
 /cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory

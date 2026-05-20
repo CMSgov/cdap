@@ -1,4 +1,4 @@
 shares:
-  bluebutton:
+  bbapi:
     envs: ["test", "dev"]
-    principal_ssm_key: "bluebutton_aws_account_id"
+    principal_ssm_key: "bbapi_aws_account_id"

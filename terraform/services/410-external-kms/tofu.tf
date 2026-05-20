@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    key = "bluebutton-kms/terraform.tfstate"
+    key = "bbapi-kms/terraform.tfstate"
   }
 }
 
