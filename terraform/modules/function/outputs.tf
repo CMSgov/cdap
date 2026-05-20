@@ -9,6 +9,11 @@ output "function_version" {
   aws_s3_object.function_zip[0].version_id : var.source_code_version)
 }
 
+output "arn" {
+  description = "ARN of the Lambda function"
+  value       = module.lambda-datadog.arn
+}
+
 output "source_code_hash" {
   description = "Base64-encoded SHA256 hash of the Lambda deployment package"
   value       = module.lambda-datadog.source_code_hash
