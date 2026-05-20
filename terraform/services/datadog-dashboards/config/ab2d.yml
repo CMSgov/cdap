@@ -1,5 +1,0 @@
-custom_widgets:
-  - type: "query_value"
-    title: "Total Running Services"
-    query: "avg:aws.ecs.service.running{application:cdap, $env}"
-    precision: 0
