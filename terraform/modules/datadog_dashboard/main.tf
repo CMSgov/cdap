@@ -156,7 +156,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Request Rate"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.http.request.hits{service:${var.app}, env:${var.env}}.as_rate()"
+              q            = "sum:trace.http.request.hits{service:${var.app}, $env}.as_rate()"
               display_type = "line"
             }
           }
@@ -167,15 +167,15 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "p50 / p95 / p99 Latency"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "p50:trace.http.request{service:${var.app}, env:${var.env}}"
+              q            = "p50:trace.http.request{service:${var.app}, $env}"
               display_type = "line"
             }
             request {
-              q            = "p95:trace.http.request{service:${var.app}, env:${var.env}}"
+              q            = "p95:trace.http.request{service:${var.app}, $env}"
               display_type = "line"
             }
             request {
-              q            = "p99:trace.http.request{service:${var.app}, env:${var.env}}"
+              q            = "p99:trace.http.request{service:${var.app}, $env}"
               display_type = "line"
             }
           }
@@ -186,7 +186,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Error Rate"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.http.request.errors{service:${var.app}, env:${var.env}}.as_rate()"
+              q            = "sum:trace.http.request.errors{service:${var.app}, $env}.as_rate()"
               display_type = "bars"
             }
           }
@@ -199,7 +199,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             autoscale = true
             precision = 2
             request {
-              q = "avg:trace.http.request.apdex{service:${var.app}, env:${var.env}}"
+              q = "avg:trace.http.request.apdex{service:${var.app}, $env}"
             }
           }
         }
