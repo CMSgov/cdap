@@ -28,7 +28,7 @@ Disable a service if your application does not use it:
 enabled:
   lambda: false     # disable if your app does not run lambdas
   rds: false     # disable if not hosting RDS
-  ```
+```
 
 ## Notification Channels 
 Add your team's notification targets under notifications.channels in your default or environment config. 
@@ -59,8 +59,11 @@ Monitors for buckets without request metrics enabled will remain in a no-data st
 
 # Example Implementations 
 
+## Thorough example 
+Provided in cdap/terraform/services/530-cdap-datadog-monitors, this will inherit from yaml files.
+
 ## Super simple 
-Inherits all defaults
+Inherits all defaults. 
 
 ```
 module "datadog_monitors" {
