@@ -3,11 +3,6 @@ output "name" {
   value       = aws_lambda_function.this.function_name
 }
 
-output "alias_arn" {
-  description = "ARN of the live alias"
-  value       = aws_lambda_alias.live.arn
-}
-
 output "function_version" {
   description = "Active S3 object version ID used for the Lambda deployment package"
   value = var.rollback_version != null ? var.rollback_version : (var.source_dir != null ?
