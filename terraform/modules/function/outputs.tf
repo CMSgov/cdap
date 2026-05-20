@@ -1,6 +1,6 @@
 output "name" {
   description = "Name for the lambda function"
-  value       = module.lambda-datadog.function_name
+  value       = local.lambda_function_name
 }
 
 output "function_version" {
@@ -10,13 +10,13 @@ output "function_version" {
 }
 
 output "arn" {
-  description = "ARN of the Lambda function"
-  value       = module.lambda-datadog.arn
+  description = "ARN of the Lambda function alias (stable identifier for the active version)"
+  value       = local.lambda_function_arn
 }
 
 output "source_code_hash" {
   description = "Base64-encoded SHA256 hash of the Lambda deployment package"
-  value       = module.lambda-datadog.source_code_hash
+  value       = local.lambda_function_source_code_hash
 }
 
 output "role_arn" {

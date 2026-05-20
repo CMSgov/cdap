@@ -193,6 +193,18 @@ variable "github_actions_repos" {
   default     = []
 }
 
+variable "dd_enabled" {
+  description = "If true, enables Datadog instrumentation for enhanced metrics and APM reporting via Datadog lambda layers. If false, use the standard Lambda resource."
+  type        = bool
+  default     = false
+}
+
+variable "dd_extension_layer_version" {
+  description = "Version number for Datadog's Lambda extension layer. Required if dd_enabled is true."
+  type        = number
+  default     = 96
+}
+
 variable "dd_python_layer_version" {
   description = "Version number for Datadog's Python Lambda layer. Required if using a python runtime."
   type        = number
