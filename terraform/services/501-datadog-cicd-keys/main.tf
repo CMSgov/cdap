@@ -52,7 +52,7 @@ module "standards" {
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
   service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
   ssm_root_map = {
-    init_datadog              = "/dasgapi/sensitive/datadog/",
+    init_datadog         = "/dasgapi/sensitive/datadog/",
     bbapi_aws_account_id = "/cdap/${var.env}/sensitive/bbapi_aws_account_id"
   }
 }
