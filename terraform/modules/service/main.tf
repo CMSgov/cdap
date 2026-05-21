@@ -95,9 +95,10 @@ resource "aws_ecs_task_definition" "this" {
 
   # Concat the main container with the datadog container
   container_definitions = nonsensitive(jsonencode(
-    var.enable_datadog_agent
-    ? concat([local.app_container], [local.datadog_container])
-    : [local.app_container]
+    concat(
+      [local.app_container],
+      var.enable_datadog_agent ? [local.datadog_container] : []
+    )
   ))
 
   runtime_platform {
