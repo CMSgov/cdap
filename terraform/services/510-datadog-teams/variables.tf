@@ -3,7 +3,7 @@ variable "app_teams" {
   type        = list(string)
   default = [
     "ab2d",
-    "bbapi",
+    "bb",
     "bcda",
     "cdap",
     "dpc"

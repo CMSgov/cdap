@@ -1,10 +1,10 @@
-# bbapi KMS
+# bb KMS
 
-Sets up a KMS key with alias per ["dev", "test", "sandbox", "prod"] associated with "bbapi". 
-Makes this KMS key usable with the relevant bbapi AWS account, based on a SOPs stored parameter with Account ID. 
+Sets up a KMS key with alias per ["dev", "test", "sandbox", "prod"] associated with "bb". 
+Makes this KMS key usable with the relevant bb AWS account, based on a SOPs stored parameter with Account ID. 
 
 ## Permissions 
-bbapi AWS accounts will need IAM permissions to access and use this KMS key. 
+bb AWS accounts will need IAM permissions to access and use this KMS key. 
 
 ### RAM Share
 These keys can be used to share resources through SSM or other encrypted exchange, using AWS RAM share.
@@ -59,8 +59,8 @@ No inputs.
 
 | Name | Type |
 |------|------|
-| [aws_kms_alias.bbapi](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
-| [aws_kms_key.bbapi](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
+| [aws_kms_alias.bb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
+| [aws_kms_key.bb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

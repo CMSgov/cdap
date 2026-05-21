@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    key = "bbapi-kms/terraform.tfstate"
+    key = "bb-kms/terraform.tfstate"
   }
 }
 

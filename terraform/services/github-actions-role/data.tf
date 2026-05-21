@@ -44,7 +44,7 @@ data "aws_kms_alias" "account_env_old_secondary" {
 }
 
 data "aws_kms_alias" "all_managed_account_envs" {
-  for_each = toset(["ab2d", "dpc", "bcda", "bbapi"])
+  for_each = toset(["ab2d", "dpc", "bcda", "bb"])
   name     = "alias/${each.key}-${var.env}"
 }
 

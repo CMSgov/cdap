@@ -2,7 +2,7 @@ variable "app" {
   description = "[\"ab2d\", \"bcda\", \"dpc\", \"cdap\"] The application name."
   type        = string
   validation {
-    condition     = contains(["ab2d", "bcda", "dpc", "cdap", "bbapi"], var.app)
+    condition     = contains(["ab2d", "bcda", "dpc", "cdap", "bb"], var.app)
     error_message = "Valid value for app is ab2d, bcda, dpc, or cdap."
   }
 }

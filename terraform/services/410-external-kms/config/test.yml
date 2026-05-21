@@ -1,4 +1,4 @@
 shares:
-  bbapi:
+  bb:
     envs: ["test", "dev"]
-    principal_ssm_key: "bbapi_aws_account_id"
+    principal_ssm_key: "bb_aws_account_id"
