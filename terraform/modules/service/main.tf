@@ -142,7 +142,7 @@ resource "aws_vpc_security_group_egress_rule" "https" {
 }
 
 resource "aws_ecs_service" "this" {
-  name                   = local.service_name_full
+  name                   = var.service_name_override != null ? var.service_name_override : local.service_name_full
   cluster                = var.cluster_arn
   task_definition        = aws_ecs_task_definition.this.arn
   desired_count          = var.desired_count

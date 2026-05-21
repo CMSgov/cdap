@@ -370,10 +370,10 @@ variable "log_retention_days" {
 
 ## IAM
 variable "additional_task_role_policies" {
-  type        = map(string)
-  default     = {}
+  type        = set(string)
+  default     = []
   description = <<-EOT
-    List of IAM managed policy ARNs to attach to the module-managed task role.
+    Set of IAM managed policy ARNs to attach to the module-managed task role.
     Use this to grant the running container access to AWS resources
     (e.g., S3 buckets, DynamoDB tables, SQS queues) without modifying the module.
     Has no effect when task_role_arn is set (external role).

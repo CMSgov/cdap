@@ -47,7 +47,7 @@ output "debug_sc_namespace" {
 
 output "task_security_group_id" {
   description = "ID of the ECS task security group (module-managed or first caller-provided)."
-  value       = (length(var.security_groups) == 0) ? aws_security_group.task[0].id : one(var.security_groups)
+  value       = (length(var.security_groups) == 0) ? aws_security_group.task[0].id : var.security_groups[0]
 }
 
 output "task_role_arn" {
