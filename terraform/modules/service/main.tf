@@ -31,7 +31,17 @@ locals {
     portMappings           = var.port_mappings
     mountPoints            = var.mount_points
     secrets                = var.container_secrets
-    environment            = var.container_environment
+    environment = concat(
+      var.container_environment,
+      [
+        { name = "DD_ENV", value = var.platform.env },
+        { name = "DD_SERVICE", value = var.platform.app },
+      ],
+      var.enable_datadog_agent ? [
+        { name = "DD_AGENT_HOST", value = "localhost" },
+        { name = "DD_TRACE_AGENT_PORT", value = "8126" },
+      ] : []
+    )
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -49,8 +59,11 @@ locals {
     essential = false # Do not impact task health if this container fails
     environment = [
       { name = "ECS_FARGATE", value = "true" },
+      { name = "DD_ENV", value = var.platform.env },
+      { name = "DD_TAGS", value = "environment:${var.platform.env},application:${var.platform.app}" },
       { name = "DD_SITE", value = "ddog-gov.com" },
       { name = "DD_APM_ENABLED", value = "true" },
+      { name = "DD_APM_NON_LOCAL_TRAFFIC", value = "true" },
       { name = "DD_LOGS_ENABLED", value = "false" }, # DD logging is currently not approved
       { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" }
     ]
@@ -81,7 +94,12 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
 
   # Concat the main container with the datadog container
-  container_definitions = nonsensitive(jsonencode(concat([local.app_container], [local.datadog_container])))
+  container_definitions = nonsensitive(jsonencode(
+    concat(
+      [local.app_container],
+      var.enable_datadog_agent ? [local.datadog_container] : []
+    )
+  ))
 
   runtime_platform {
     operating_system_family = "LINUX"
