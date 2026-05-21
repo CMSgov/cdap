@@ -6,7 +6,6 @@ on:
     paths:
       - 'scripts/set_log_retention/*.py'
       - 'scripts/set_log_retention/requirements.txt'
-      - 'terraform/modules/function/**'
       - '.github/workflows/set-log-retention-checks.yml'
       - '.github/workflows/checks-reusable.yml'
 
