@@ -28,7 +28,7 @@ resource "aws_ram_resource_share" "datadog_bbapi_api_key" {
 
 resource "aws_ram_resource_association" "datadog_bbapi_api_key" {
   for_each           = local.bbapi_env_labels
-  resource_arn       = module.datadog_bbapi_api_key[each.key].datadog_api_key.arn
+  resource_arn       = module.datadog_bbapi_api_key[each.key].ssm_parameter.arn
   resource_share_arn = aws_ram_resource_share.datadog_bbapi_api_key[each.key].arn
 }
 
