@@ -34,6 +34,6 @@ resource "aws_ram_resource_association" "datadog_bbapi_api_key" {
 
 resource "aws_ram_principal_association" "principal_share_api_key" {
   for_each           = local.bbapi_env_labels
-  principal          = module.standards.ssm.bbapi_private.value
+  principal          = module.standards.ssm.bbapi_aws_account_id.value
   resource_share_arn = aws_ram_resource_share.datadog_bbapi_api_key[each.key].arn
 }
