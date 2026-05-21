@@ -379,3 +379,10 @@ variable "additional_task_role_policies" {
     Has no effect when task_role_arn is set (external role).
   EOT
 }
+
+## Monitoring
+variable "enable_datadog_agent" {
+  description = "Whether to include the Datadog agent sidecar container. Disable for batch/job tasks, tasks with tight resource limits, or tasks without Datadog network access."
+  type        = bool
+  default     = true
+}
