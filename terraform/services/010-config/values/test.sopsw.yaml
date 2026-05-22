@@ -14,7 +14,7 @@
 /cdap/${env}/common/sensitive/artifactory/password: ENC[AES256_GCM,data:nscDKdf+wuKMJ+gFpUIDb0zZbdBvsk3qYFey0/wbMw345ARL3u8vq2/YqUTnWAm1fYqieKOzq/yJYvM43CIZCg==,iv:XgWvwq94ShSpJwU659XXX/6bLv77oCECiza9FDJau+o=,tag:2afCpXFqv905cIQ0sRQIFg==,type:str]
 /cdap/${env}/common/sensitive/github/service-account-token: ENC[AES256_GCM,data:NfW3owoSTgve3Ys1vHBJMCMVxHOkMsNMzHceLGo0kyR7w+ujhdbPyQ==,iv:Nnjs5Ie7oV2I9NPPEAi1qlnasXDmGsUTss//cFnm7tc=,tag:rxiw8Hxt/mhuA0iUZogGkA==,type:str]
 /cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:Vgp2HifAdY+8wNPltsPt9wZkVDd/YOvGLvzA5wU3Bn4XbEUwTDzJavSLNbTEZwYzGol6tryZBgk8hhP+HxyHNbB0xmJdo783ZZlou9rOQA==,iv:sMxWjUaXd4jfsE6U+cj9ft+8g7sBwVLI9g+1TiwS1eA=,tag:H6YaBowY//nIeppO7pTOQw==,type:str]
-/cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:YBillFWDRXEQqW3dTofMyf55zA6Xy3nJFhGF0L9al19GhdsS9xto8Qzq5Yg=,iv:XNUY9Q5PBFxnNYF/nOlMkeBvSHUcTbDNA1dD5xilgXg=,tag:+mR1nXu5rfqKK5/Y5bhLhA==,type:str]
+/cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:6dO32ao/RR34JvdDkc++kRptAcOSnF/n8t+X4NvxEKj4ndUMkSmbfQ3q6JY=,iv:ZS12ecpKoOxsB2A9Xv9RwUJXwg0urkdPDvBRuqEGaxM=,tag:cO+JFAIVk9dQdHzR5AxFmA==,type:str]
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-test
