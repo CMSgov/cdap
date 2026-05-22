@@ -1,4 +1,4 @@
 shares:
   bb:
-    envs: ["test", "dev"]
+    envs: ["prod", "sandbox"]
     principal_ssm_key: "bb_aws_account_id"

@@ -1,4 +1,9 @@
 locals {
+  config_file_path = "${path.module}/config/${var.env}/${var.app}.yml"
+  config_data      = fileexists(local.config_file_path) ? yamldecode(file(local.config_file_path)) : null
+
+  key_permissions = try(local.config_data["key_permissions"], {})
+
   default_permissions = {
     api_key_manager    = false
     dashboard_manager  = true
@@ -9,11 +14,7 @@ locals {
 
   resolved_permissions = {
     for k, v in local.default_permissions :
-    k => (
-      lookup(var.app_permissions, "${var.app}-${var.env}", null) != null
-      ? coalesce(lookup(var.app_permissions["${var.app}-${var.env}"], k, null), v)
-      : v
-    )
+    k => coalesce(lookup(local.key_permissions, k, null), v)
   }
 }
 
@@ -41,18 +42,4 @@ module "datadog_api_key" {
   app      = var.app
   env      = var.env
   used_for = "cicd"
-}
-
-module "standards" {
-  source    = "../../modules/standards"
-  providers = { aws = aws, aws.secondary = aws.secondary }
-
-  app         = var.app
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
-  service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
-  ssm_root_map = {
-    init_datadog         = "/dasgapi/sensitive/datadog/",
-    bb_aws_account_id = "/cdap/${var.env}/sensitive/bb_aws_account_id"
-  }
 }
