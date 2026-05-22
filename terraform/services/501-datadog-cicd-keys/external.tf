@@ -98,17 +98,9 @@ module "additional_datadog_api_key" {
   used_for = "cicd"
 }
 
-data "aws_ssm_parameter" "datadog_api_key" {
-  for_each        = local.cross_account_shares
-  name            = module.additional_datadog_api_key[each.key].ssm_parameter.name
-  with_decryption = true
-
-  depends_on = [module.additional_datadog_api_key]
-}
-
 resource "aws_secretsmanager_secret" "datadog_api_key" {
   for_each    = local.cross_account_shares
-  name        = "${var.app}/${each.value.service}/${each.value.env}/datadog/cicd-api-key"
+  name        = "${var.app}/${each.value.service}/${each.value.env}/datadog/api-key-cicd"
   description = "Datadog CICD API key for ${each.value.service} ${each.value.env} — shared cross-account"
   kms_key_id  = data.aws_kms_alias.shares[each.key].target_key_arn
 
