@@ -1,0 +1,7 @@
+cross_account_shares:
+  bb:
+    env_labels:
+      - test
+#  bfd:
+#    env_labels: ["test"]
+
