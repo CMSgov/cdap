@@ -13,6 +13,7 @@ variable "platform" {
   type = object({
     app               = string
     env               = string
+    service           = string
     kms_alias_primary = object({ target_key_arn = string })
     primary_region    = object({ name = string })
     account_id        = string
@@ -191,4 +192,34 @@ variable "github_actions_repos" {
   EOT
   type        = list(string)
   default     = []
+}
+
+variable "dd_enabled" {
+  description = "If true, enables Datadog instrumentation for enhanced metrics and APM reporting via Datadog lambda layers. If false, use the standard Lambda resource."
+  type        = bool
+  default     = false
+}
+
+variable "dd_extension_layer_version" {
+  description = "Version number for Datadog's Lambda extension layer. Required if dd_enabled is true."
+  type        = number
+  default     = 97
+}
+
+variable "dd_python_layer_version" {
+  description = "Version number for Datadog's Python Lambda layer. Required if using a python runtime."
+  type        = number
+  default     = 125
+}
+
+variable "dd_node_layer_version" {
+  description = "Version number for Datadog's Node.js Lambda layer. Required if using a Node.js runtime."
+  type        = number
+  default     = 137
+}
+
+variable "dd_java_layer_version" {
+  description = "Version number for Datadog's Java Lambda layer. Required if using a Java runtime."
+  type        = number
+  default     = 26
 }

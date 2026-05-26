@@ -19,6 +19,9 @@ resource "aws_ssm_parameter" "inline_policy_test" {
 module "tftesting_function" {
   source = "../../../modules/function"
 
+  # Exercises Datadog integration — evaluates use of dd_enabled and related variables to configure the Lambda extension and layers
+  dd_enabled = true
+
   platform    = module.platform
   name        = "tftesting"
   description = "Ephemeral Lambda for CI/CD integration testing — exercises module features"
@@ -27,7 +30,7 @@ module "tftesting_function" {
   source_dir_excludes = ["**/__pycache__/**", "**/*.pyc", "**/tests/**"]
 
   handler      = "lambda_function.function_handler"
-  runtime      = "python3.11"
+  runtime      = "python3.14"
   architecture = "arm64"
   timeout      = 30
   memory_size  = 256 # Evaluates non-default memory
@@ -58,7 +61,7 @@ module "tftesting_function" {
   github_actions_repos = []
 
   # Rollback support
-  rollback_version = "DDw7QokwqGuO4.kTDELfc_xWYg7B_73L" # null = track latest published version
+  rollback_version = null # null = track latest published version
 }
 
 

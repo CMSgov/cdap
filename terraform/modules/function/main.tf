@@ -4,6 +4,55 @@ locals {
   env             = var.platform.env
 
   full_name_string = "${local.app}-${local.env}-${var.name}"
+  
+  # Datadog layer configuration if dd_enabled = true
+  runtime_base = regex("[a-z]+", var.runtime)
+  runtime_base_handler_map = {
+    java   = var.handler
+    nodejs = "/opt/nodejs/node_modules/datadog-lambda-js/handler.handler"
+    python = "datadog_lambda.handler.handler"
+  }
+  runtime_layer_map = {
+    "java8.al2"  = "dd-trace-java"
+    "java11"     = "dd-trace-java"
+    "java17"     = "dd-trace-java"
+    "java21"     = "dd-trace-java"
+    "java25"     = "dd-trace-java"
+    "nodejs18.x" = "Datadog-Node18-x"
+    "nodejs20.x" = "Datadog-Node20-x"
+    "nodejs22.x" = "Datadog-Node22-x"
+    "nodejs24.x" = "Datadog-Node24-x"
+    "python3.8"  = "Datadog-Python38-ARM"
+    "python3.9"  = "Datadog-Python39-ARM"
+    "python3.10" = "Datadog-Python310-ARM"
+    "python3.11" = "Datadog-Python311-ARM"
+    "python3.12" = "Datadog-Python312-ARM"
+    "python3.13" = "Datadog-Python313-ARM"
+    "python3.14" = "Datadog-Python314-ARM"
+  }
+  runtime_layer_version_map = {
+    java   = var.dd_java_layer_version
+    nodejs = var.dd_node_layer_version
+    python = var.dd_python_layer_version
+  }
+  datadog_lambda_layer_runtime = lookup(local.runtime_layer_map, var.runtime, null)
+  datadog_runtime_layer_version = lookup(local.runtime_layer_version_map, local.runtime_base, null)
+  dd_extension_layer_arn = "arn:aws:lambda:${var.platform.primary_region.name}:464622532012:layer:Datadog-Extension-ARM:${var.dd_extension_layer_version}"
+  dd_runtime_layer_arn = local.datadog_lambda_layer_runtime != null ? "arn:aws:lambda:${var.platform.primary_region.name}:464622532012:layer:${local.datadog_lambda_layer_runtime}:${local.datadog_runtime_layer_version}" : null
+  # Use compact to remove nulls if dd_runtime_layer_arn is not set
+  dd_layer_arns    = compact([
+    local.dd_extension_layer_arn,
+    local.dd_runtime_layer_arn
+  ])
+  dd_env_vars        = {
+    DD_API_KEY_SSM_ARN          : data.aws_ssm_parameter.dd_api_key.arn
+    DD_ENV                      : local.env
+    DD_SERVICE                  : var.platform.service
+    DD_SITE                     : "ddog-gov.com"
+    DD_VERSION                  : var.source_code_version
+    DD_SERVERLESS_LOGS_ENABLED  : false
+    DD_LAMBDA_HANDLER           : var.handler
+  }
 }
 
 # Only used when source_dir is provided
@@ -69,11 +118,11 @@ resource "aws_lambda_function" "this" {
 
   kms_key_arn   = var.platform.kms_alias_primary.target_key_arn
   role          = aws_iam_role.function.arn
-  handler       = var.handler
+  handler       = var.dd_enabled ? lookup(local.runtime_base_handler_map, local.runtime_base) : var.handler
   runtime       = var.runtime
   timeout       = var.timeout
   memory_size   = var.memory_size
-  layers        = var.layer_arns
+  layers        = var.dd_enabled ? concat(var.layer_arns, local.dd_layer_arns) : var.layer_arns
   architectures = [var.architecture]
 
   tracing_config {
@@ -86,7 +135,7 @@ resource "aws_lambda_function" "this" {
   }
 
   environment {
-    variables = var.environment_variables
+    variables = var.dd_enabled ? merge(var.environment_variables, local.dd_env_vars) : var.environment_variables
   }
 }
 
