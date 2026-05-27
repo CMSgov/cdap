@@ -1,4 +1,4 @@
-shadow_mode: false
+shadow_mode: true
 
 enabled:
   ecs: false
