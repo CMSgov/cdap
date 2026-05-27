@@ -12,7 +12,7 @@ data "datadog_permissions" "all" {}
 # Read-only access + ability to mute monitors during incidents
 # Built on the "standard" base permission
 resource "datadog_role" "engineer" {
-  name = "Engineering - Incident Responder"
+  name = "Incident Response"
 
   # Base "Standard" access — grants general read across the platform
   permission {
@@ -54,3 +54,13 @@ resource "datadog_role" "program_manager" {
   }
 }
 
+resource "datadog_role" "user_admin" {
+  name = "User Admin"
+
+  permission {
+    id = data.datadog_permissions.all.permissions["user_access_invite"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["user_access_manage"]
+  }
+}
