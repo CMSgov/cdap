@@ -201,25 +201,25 @@ variable "dd_enabled" {
 }
 
 variable "dd_extension_layer_version" {
-  description = "Version number for Datadog's Lambda extension layer. Required if dd_enabled is true."
+  description = "Version number for Datadog's Lambda extension layer. Required if dd_enabled is true. For latest versions, see https://github.com/DataDog/datadog-lambda-extension/releases."
   type        = number
   default     = 97
 }
 
 variable "dd_python_layer_version" {
-  description = "Version number for Datadog's Python Lambda layer. Required if using a python runtime."
+  description = "Version number for Datadog's Python Lambda layer. Required if using a python runtime. For latest versions, see https://github.com/DataDog/datadog-lambda-python/releases."
   type        = number
   default     = 125
 }
 
 variable "dd_node_layer_version" {
-  description = "Version number for Datadog's Node.js Lambda layer. Required if using a Node.js runtime."
+  description = "Version number for Datadog's Node.js Lambda layer. Required if using a Node.js runtime. For latest versions, see https://github.com/DataDog/datadog-lambda-js/releases."
   type        = number
   default     = 137
 }
 
 variable "dd_java_layer_version" {
-  description = "Version number for Datadog's Java Lambda layer. Required if using a Java runtime."
+  description = "Version number for Datadog's Java Lambda layer. Required if using a Java runtime. For latest versions, see https://github.com/DataDog/datadog-lambda-java/releases."
   type        = number
   default     = 26
 }

@@ -5,7 +5,7 @@ locals {
 
   full_name_string = "${local.app}-${local.env}-${var.name}"
   
-  # Datadog layer configuration if dd_enabled = true
+  # Datadog layer configuration adapted from https://github.com/DataDog/terraform-aws-lambda-datadog/blob/1b28d51a1a5323b37611908cbd1a9de70adace2e/main.tf#L95
   runtime_base = regex("[a-z]+", var.runtime)
   runtime_base_handler_map = {
     java   = var.handler
@@ -13,19 +13,10 @@ locals {
     python = "datadog_lambda.handler.handler"
   }
   runtime_layer_map = {
-    "java8.al2"  = "dd-trace-java"
-    "java11"     = "dd-trace-java"
-    "java17"     = "dd-trace-java"
     "java21"     = "dd-trace-java"
     "java25"     = "dd-trace-java"
-    "nodejs18.x" = "Datadog-Node18-x"
-    "nodejs20.x" = "Datadog-Node20-x"
     "nodejs22.x" = "Datadog-Node22-x"
     "nodejs24.x" = "Datadog-Node24-x"
-    "python3.8"  = "Datadog-Python38-ARM"
-    "python3.9"  = "Datadog-Python39-ARM"
-    "python3.10" = "Datadog-Python310-ARM"
-    "python3.11" = "Datadog-Python311-ARM"
     "python3.12" = "Datadog-Python312-ARM"
     "python3.13" = "Datadog-Python313-ARM"
     "python3.14" = "Datadog-Python314-ARM"
