@@ -6,59 +6,51 @@ resource "datadog_team" "this" {
 }
 
 
-data "datadog_permissions" "dd_perms" {}
+data "datadog_permissions" "all" {}
 
-# Create an role that can silence incidents
-resource "datadog_role" "incident_responder" {
-  name = "Observer"
-
-  # Standard read permissions
-  permission {
-    id = data.datadog_permissions.all.permissions["monitors_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["dashboards_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["metrics_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["apm_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["infrastructure_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["synthetics_read"]
-  }
-}
-
-# Create an role that can silence incidents
-resource "datadog_role" "incident_responder" {
+# Engineering Incident Response (standard)
+# Read-only access + ability to mute monitors during incidents
+# Built on the "standard" base permission
+resource "datadog_role" "engineer" {
   name = "Engineering - Incident Responder"
 
-  # Standard read permissions
+  # Base "Standard" access — grants general read across the platform
   permission {
-    id = data.datadog_permissions.all.permissions["monitors_read"]
+    id = data.datadog_permissions.all.permissions["standard"]
   }
-  permission {
-    id = data.datadog_permissions.all.permissions["dashboards_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["metrics_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["apm_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["infrastructure_read"]
-  }
+
+  # Explicit read permissions
   permission {
     id = data.datadog_permissions.all.permissions["synthetics_read"]
   }
+  permission {
+    id = data.datadog_permissions.all.permissions["apm_service_catalog_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["integrations_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["watchdog_insights_read"]
+  }
 
-  # Incident response additions
+  # Incident response: mute/downtime monitors
   permission {
     id = data.datadog_permissions.all.permissions["monitors_downtime"]
   }
 }
+
+# Can manage API and Application keys without risking monitor modifications
+resource "datadog_role" "program_manager" {
+  name = "Program Management"
+  # API key management
+  permission {
+    id = data.datadog_permissions.all.permissions["api_keys_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["api_keys_write"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["user_app_keys"]
+  }
+}
+
