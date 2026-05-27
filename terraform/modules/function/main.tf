@@ -38,7 +38,7 @@ locals {
   dd_env_vars        = {
     DD_API_KEY_SSM_ARN          : data.aws_ssm_parameter.dd_api_key.arn
     DD_ENV                      : local.env
-    DD_SERVICE                  : var.platform.service
+    DD_SERVICE                  : local.full_name_string
     DD_SITE                     : "ddog-gov.com"
     DD_VERSION                  : var.source_code_version
     DD_SERVERLESS_LOGS_ENABLED  : false
