@@ -1,4 +1,4 @@
-0resource "aws_kms_key" "this" {
+resource "aws_kms_key" "this" {
   description         = var.description
   enable_key_rotation = true
 }
