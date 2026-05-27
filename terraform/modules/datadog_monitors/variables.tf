@@ -18,7 +18,7 @@ variable "monitor_config" {
 
     notifications = optional(object({
       victorops           = optional(bool, false)
-      slack               = optional(list(string), [])
+      slack               = optional(bool, false)
       emails              = optional(list(string), [])
       additional_webhooks = optional(list(string), [])
     }), {})
