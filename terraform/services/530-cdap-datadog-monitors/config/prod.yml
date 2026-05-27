@@ -1,9 +1,7 @@
-shadow_mode: true
+shadow_mode: false
 
 notifications:
-  channels:
-#    - "@victorops-cdap-team"
-# FixMe Update with integrations provided
+  victorops: true
 
 lambda:
   error_rate_threshold: 1

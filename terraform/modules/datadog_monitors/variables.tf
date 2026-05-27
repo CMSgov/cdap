@@ -15,6 +15,14 @@ variable "env" {
 variable "monitor_config" {
   type = object({
     shadow_mode = optional(bool, true)
+
+    notifications = optional(object({
+      victorops           = optional(bool, false)
+      slack               = optional(list(string), [])
+      emails              = optional(list(string), [])
+      additional_webhooks = optional(list(string), [])
+    }), {})
+
     enabled = optional(object({
       ecs    = optional(bool, true)
       sqs    = optional(bool, true)
@@ -23,6 +31,7 @@ variable "monitor_config" {
       s3     = optional(bool, true)
       rds    = optional(bool, true)
     }), {})
+
     ecs = optional(object({
       cpu_threshold             = optional(number, 85)
       memory_threshold          = optional(number, 85)
@@ -30,6 +39,7 @@ variable "monitor_config" {
       no_data_timeframe_minutes = optional(number, 10)
       timeframe                 = optional(string, "last_10m")
     }), {})
+
     sqs = optional(object({
       dlq_message_threshold     = optional(number, 1)
       max_message_age_seconds   = optional(number, 300)
@@ -37,13 +47,14 @@ variable "monitor_config" {
       no_data_timeframe_minutes = optional(number, 10)
       timeframe                 = optional(string, "last_5m")
     }), {})
+
     sns = optional(object({
       failed_notification_threshold = optional(number, 5)
       notify_no_data                = optional(bool, false)
       no_data_timeframe_minutes     = optional(number, 10)
       timeframe                     = optional(string, "last_5m")
-
     }), {})
+
     lambda = optional(object({
       error_rate_threshold      = optional(number, 5)
       throttle_threshold        = optional(number, 10)
@@ -51,16 +62,16 @@ variable "monitor_config" {
       notify_no_data            = optional(bool, false)
       no_data_timeframe_minutes = optional(number, 10)
       timeframe                 = optional(string, "last_5m")
-
     }), {})
+
     s3 = optional(object({
       http_response_4xx_threshold = optional(number, 50)
       http_response_5xx_threshold = optional(number, 10)
       notify_no_data              = optional(bool, false)
       no_data_timeframe_minutes   = optional(number, 10)
       timeframe                   = optional(string, "last_5m")
-
     }), {})
+
     rds = optional(object({
       cpu_threshold                = optional(number, 85)
       freeable_memory_threshold_mb = optional(number, 256)
@@ -71,13 +82,27 @@ variable "monitor_config" {
       notify_no_data               = optional(bool, false)
       no_data_timeframe_minutes    = optional(number, 10)
       timeframe                    = optional(string, "last_10m")
-
     }), {})
   })
   default = {}
 }
 
-variable "notify" {
-  description = "Composed notification string — all @mention handles joined with spaces"
-  type        = string
+variable "custom_monitors" {
+  description = "Custom monitors to create. Module handles notify, shadow_mode, and base_tags automatically."
+  type = list(object({
+    name    = string
+    type    = optional(string, "metric alert")
+    message = string
+    query   = string
+    thresholds = object({
+      critical          = number
+      warning           = optional(number)
+      critical_recovery = optional(number)
+      warning_recovery  = optional(number)
+    })
+    notify_no_data            = optional(bool, false)
+    no_data_timeframe_minutes = optional(number, 60)
+    tags                      = optional(list(string), [])
+  }))
+  default = []
 }
