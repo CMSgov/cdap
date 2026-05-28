@@ -77,11 +77,6 @@ data "aws_kms_alias" "bcda_aco_creds" {
   name  = "alias/bcda-aco-creds-kms"
 }
 
-data "aws_kms_alias" "bcda_insights_data_sampler" {
-  count = var.app == "bcda" ? var.env == "dev" ? 1 : 0 : 0
-  name  = "alias/bcda-insights-data-sampler-${var.env}-key"
-}
-
 data "aws_kms_alias" "dpc_app_config" {
   count = var.app == "dpc" ? 1 : 0
   name  = "alias/dpc-${var.env}-master-key"
