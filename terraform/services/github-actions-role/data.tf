@@ -43,9 +43,9 @@ data "aws_kms_alias" "account_env_old_secondary" {
   name     = "alias/${local.account_env_old}"
 }
 
-data "aws_kms_alias" "all_managed_account_envs" {
-  for_each = toset(["ab2d", "dpc", "bcda", "bb"])
-  name     = "alias/${each.key}-${var.env}"
+data "aws_kms_alias" "bb" {
+  count = var.app == "cdap" ? 1 : 0
+  name  = "alias/bb-${var.env}"
 }
 
 data "aws_kms_alias" "account_env" {
