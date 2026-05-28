@@ -1,11 +1,3 @@
-module "standards" {
-  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=0bd3eeae6b03cc8883b7dbdee5f04deb33468260"
-  app         = var.app
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/github-actions-role"
-  service     = "github-actions-role"
-}
-
 locals {
   provider_domain = "token.actions.githubusercontent.com"
   repos = {
@@ -328,7 +320,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
         data.aws_kms_alias.bcda_aco_creds[*].target_key_arn,
         data.aws_kms_alias.bcda_app_config[*].target_key_arn
       ) : [],
-      var.app == "cdap" ? values(data.aws_kms_alias.bb)[*].target_key_arn : [],
+      var.app == "cdap" ? data.aws_kms_alias.bb[*].target_key_arn : [],
       var.app == "dpc" ? concat(
         data.aws_kms_alias.dpc_app_config[*].target_key_arn,
         data.aws_kms_alias.dpc_ecr[*].target_key_arn
