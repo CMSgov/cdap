@@ -1,7 +1,6 @@
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import typescriptParser from '@typescript-eslint/parser'
 import pluginJest from 'eslint-plugin-jest'
-import pluginGithub from 'eslint-plugin-github'
 import js from '@eslint/js'
 
 export default [
@@ -12,7 +11,7 @@ export default [
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
-        ecmaVersion: 9,
+        ecmaVersion: 'latest',
         sourceType: 'module',
         project: './tsconfig.json'
       },
@@ -27,31 +26,21 @@ export default [
     },
     plugins: {
       '@typescript-eslint': typescriptEslint,
-      jest: pluginJest,
-      github: pluginGithub
+      jest: pluginJest
     },
     rules: {
-      'i18n-text/no-en': 'off',
-      'eslint-comments/no-use': 'off',
-      'import/no-namespace': 'off',
       'no-unused-vars': 'off',
       camelcase: 'off',
       semi: 'off',
 
       '@typescript-eslint/no-unused-vars': 'error',
-      '@typescript-eslint/explicit-member-accessibility': [
-        'error',
-        {accessibility: 'no-public'}
-      ],
+      '@typescript-eslint/explicit-member-accessibility': ['error', { accessibility: 'no-public' }],
       '@typescript-eslint/no-require-imports': 'error',
       '@typescript-eslint/array-type': 'error',
       '@typescript-eslint/await-thenable': 'error',
       '@typescript-eslint/ban-ts-comment': 'error',
       '@typescript-eslint/consistent-type-assertions': 'error',
-      '@typescript-eslint/explicit-function-return-type': [
-        'error',
-        {allowExpressions: true}
-      ],
+      '@typescript-eslint/explicit-function-return-type': ['error', { allowExpressions: true }],
       '@typescript-eslint/no-array-constructor': 'error',
       '@typescript-eslint/no-empty-object-type': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
@@ -77,7 +66,7 @@ export default [
 
   {
     files: ['**/__tests__/**/*.ts', '**/*.test.ts'],
-    plugins: {jest: pluginJest},
+    plugins: { jest: pluginJest },
     languageOptions: {
       globals: pluginJest.environments.globals.globals
     },
