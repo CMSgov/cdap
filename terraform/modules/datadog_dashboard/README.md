@@ -4,36 +4,70 @@ This module provides teams with a Datadog dashboard that provides metrics and hi
 Child modules can also define custom widgets via a dynamic block. In the future, this module can also be expanded to cover additional default widgets to support future architectures. For an example child module implementation, refer to services/tftesting/datadog_dashboard/main.tf
 
 <!-- BEGIN_TF_DOCS -->
-## Requirements
-
-| Name | Version |
-| ---- | ------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.6.0 |
-| <a name="requirement_datadog"></a> [datadog](#requirement\_datadog) | ~> 3.0 |
-
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Providers
 
 | Name | Version |
-| ---- | ------- |
-| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | 3.91.0 |
+|------|---------|
+| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | ~>4.4 |
 
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Requirements
+
+| Name | Version |
+|------|---------|
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~>6.0 |
+| <a name="requirement_datadog"></a> [datadog](#requirement\_datadog) | ~>4.4 |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_app"></a> [app](#input\_app) | The application name (ab2d, bbapi, bcda, cdap dpc) | `string` | n/a | yes |
+| <a name="input_runbook_url"></a> [runbook\_url](#input\_runbook\_url) | URL where on-call engineers can find actions to remediate issues, including escalation. | `string` | n/a | yes |
+| <a name="input_custom_widgets"></a> [custom\_widgets](#input\_custom\_widgets) | Custom widgets to add to the dashboard. See README for details. | `list(any)` | `[]` | no |
+| <a name="input_enable_default_widgets"></a> [enable\_default\_widgets](#input\_enable\_default\_widgets) | Toggle default infrastructure widgets on or off for the dashboard. | <pre>object({<br/>    ecs    = optional(bool, true)<br/>    lambda = optional(bool, true)<br/>    alb    = optional(bool, true)<br/>    sns    = optional(bool, true)<br/>    sqs    = optional(bool, true)<br/>    aurora = optional(bool, true)<br/>    s3     = optional(bool, true)<br/>    apm    = optional(bool, true)<br/>  })</pre> | `{}` | no |
+| <a name="input_name_rewrite"></a> [name\_rewrite](#input\_name\_rewrite) | Allows for the creation of unique dashboards per application. Currently used only for development. | `string` | `null` | no |
+| <a name="input_widget_live_spans"></a> [widget\_live\_spans](#input\_widget\_live\_spans) | Live span overrides for specific dashboard sections. Valid values: 5m, 10m, 15m, 30m, 1h, 4h, 1d, 2d, 1w, 1mo | <pre>object({<br/>    lambda = optional(string, "2d")<br/>    s3     = optional(string, "1w")<br/>    sqs    = optional(string, "4h")<br/>    sns    = optional(string, "4h")<br/>    ecs    = optional(string, "1d")<br/>    alb    = optional(string, "1d")<br/>    aurora = optional(string, "4h")<br/>    apm    = optional(string, "1h")<br/>  })</pre> | `{}` | no |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Modules
 
 No modules.
 
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Resources
 
 | Name | Type |
-| ---- | ---- |
-| [datadog_dashboard.Application_Metrics_Dashboard](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/dashboard) | resource |
+|------|------|
+| [datadog_dashboard.application_metrics_dashboard](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/dashboard) | resource |
 
-## Inputs
-
-| Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_app"></a> [app](#input\_app) | The application name (ab2d, bcda, cdap dpc) | `string` | n/a | yes |
-| <a name="input_custom_widgets"></a> [custom\_widgets](#input\_custom\_widgets) | Custom widgets to add to the dashboard. See README for details. | `list(any)` | `[]` | no |
-
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Outputs
 
 No outputs.

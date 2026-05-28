@@ -1,4 +1,3 @@
-
 module "standards" {
   source    = "../../../modules/standards"
   providers = { aws = aws, aws.secondary = aws.secondary }
@@ -11,8 +10,10 @@ module "standards" {
 }
 
 module "datadog_dashboard" {
-  source = "../../../modules/datadog_dashboard"
-  app    = module.standards.app
+  source       = "../../../modules/datadog_dashboard"
+  app          = module.standards.app
+  name_rewrite = "cdap-tftesting-"
+  runbook_url  = "https://thisisatest.cdap.internal.cms.gov"
 
   custom_widgets = [
     {
@@ -46,5 +47,4 @@ module "datadog_dashboard" {
     s3     = true
     ecs    = true
   }
-
 }

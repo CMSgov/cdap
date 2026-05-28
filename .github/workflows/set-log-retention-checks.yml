@@ -1,5 +1,4 @@
 name: code-checks (set-log-retention-checks / cloudwatch log retention)
-description: Checks CDAP hosted check-log-retention for python vulnerabilities and code quality.
 
 on:
   workflow_dispatch:
@@ -7,7 +6,6 @@ on:
     paths:
       - 'scripts/set_log_retention/*.py'
       - 'scripts/set_log_retention/requirements.txt'
-      - 'terraform/modules/function/**'
       - '.github/workflows/set-log-retention-checks.yml'
       - '.github/workflows/checks-reusable.yml'
 

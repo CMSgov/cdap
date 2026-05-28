@@ -1,13 +1,11 @@
-name: code-checks (alarm-to-slack)
-description: Checks CDAP hosted alarm-to-slack function for python vulnerabilities and code quality.
+name: code-checks (alarm-to-slack-checks)
 
 on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'terraform/services/alarm-to-slack/lambda_src/**/*.py'
-      - 'terraform/services/alarm-to-slack/lambda_src/**/requirements.txt'
-      - 'terraform/modules/function/**'
+      - 'terraform/services/alarm-to-slack/lambda_src/*.py'
+      - 'terraform/services/alarm-to-slack/lambda_src/requirements.txt'
       - '.github/workflows/alarm-to-slack-checks.yml'
       - '.github/workflows/checks-reusable.yml'
 
@@ -19,5 +17,5 @@ jobs:
     uses: ./.github/workflows/checks-reusable.yml
     secrets: inherit
     with:
-      source_path: terraform/services/alarm-to-slack/lambda_src
+      source_path: terraform/services/alarm-to-slack
       sonar_project_key: cdap-alarm-to-slack
