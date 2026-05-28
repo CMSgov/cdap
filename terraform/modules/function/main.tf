@@ -15,7 +15,6 @@ locals {
   runtime_layer_map = {
     "java21"     = "dd-trace-java"
     "java25"     = "dd-trace-java"
-    "nodejs22.x" = "Datadog-Node22-x"
     "nodejs24.x" = "Datadog-Node24-x"
     "python3.12" = "Datadog-Python312-ARM"
     "python3.13" = "Datadog-Python313-ARM"
