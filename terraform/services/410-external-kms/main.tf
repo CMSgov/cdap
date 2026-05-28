@@ -10,7 +10,7 @@ locals {
           key                = "${app}-${env}"
           app                = app
           env                = env
-          principal_ssm_path = "/cdap/${var.env}/sensitive/external/${cfg.principal_ssm_key}"
+          principal_ssm_path = "/cdap/${var.env}/external/${app}/sensitive/${cfg.principal_ssm_key}"
         }
       ]
     ]) : entry.key => entry
@@ -51,7 +51,7 @@ resource "aws_kms_key" "shares" {
       },
       # External account limited to: decrypt via SSM only, even if they set permissive IAM
       {
-        Sid    = "AllowExternalDecryptViaSSM"
+        Sid    = "AllowExternalDecryptViaSecretsManager"
         Effect = "Allow"
         Principal = {
           AWS = data.aws_ssm_parameter.principal[each.value.principal_ssm_path].value
@@ -63,7 +63,7 @@ resource "aws_kms_key" "shares" {
         Resource = "*"
         Condition = {
           StringEquals = {
-            "kms:ViaService" = "ssm.${module.standards.primary_region.name}.amazonaws.com"
+            "kms:ViaService" = "secretsmanager.${module.standards.primary_region.name}.amazonaws.com"
           }
         }
       }
