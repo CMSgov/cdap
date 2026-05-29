@@ -4,7 +4,7 @@ locals {
   env             = var.platform.env
 
   full_name_string = "${local.app}-${local.env}-${var.name}"
-  
+
   # Datadog layer configuration adapted from https://github.com/DataDog/terraform-aws-lambda-datadog/blob/1b28d51a1a5323b37611908cbd1a9de70adace2e/main.tf#L95
   runtime_base = regex("[a-z]+", var.runtime)
   runtime_base_handler_map = {
@@ -25,23 +25,23 @@ locals {
     nodejs = var.dd_node_layer_version
     python = var.dd_python_layer_version
   }
-  datadog_lambda_layer_runtime = lookup(local.runtime_layer_map, var.runtime, null)
+  datadog_lambda_layer_runtime  = lookup(local.runtime_layer_map, var.runtime, null)
   datadog_runtime_layer_version = lookup(local.runtime_layer_version_map, local.runtime_base, null)
-  dd_extension_layer_arn = "arn:aws:lambda:${var.platform.primary_region.name}:464622532012:layer:Datadog-Extension-ARM:${var.dd_extension_layer_version}"
-  dd_runtime_layer_arn = local.datadog_lambda_layer_runtime != null ? "arn:aws:lambda:${var.platform.primary_region.name}:464622532012:layer:${local.datadog_lambda_layer_runtime}:${local.datadog_runtime_layer_version}" : null
+  dd_extension_layer_arn        = "arn:aws:lambda:${var.platform.primary_region.name}:464622532012:layer:Datadog-Extension-ARM:${var.dd_extension_layer_version}"
+  dd_runtime_layer_arn          = local.datadog_lambda_layer_runtime != null ? "arn:aws:lambda:${var.platform.primary_region.name}:464622532012:layer:${local.datadog_lambda_layer_runtime}:${local.datadog_runtime_layer_version}" : null
   # Use compact to remove nulls if dd_runtime_layer_arn is not set
-  dd_layer_arns    = compact([
+  dd_layer_arns = compact([
     local.dd_extension_layer_arn,
     local.dd_runtime_layer_arn
   ])
-  dd_env_vars        = {
-    DD_API_KEY_SSM_ARN          : data.aws_ssm_parameter.dd_api_key.arn
-    DD_ENV                      : local.env
-    DD_SERVICE                  : var.platform.service
-    DD_SITE                     : "ddog-gov.com"
-    DD_VERSION                  : var.source_code_version
-    DD_SERVERLESS_LOGS_ENABLED  : false
-    DD_LAMBDA_HANDLER           : var.handler
+  dd_env_vars = {
+    DD_API_KEY_SSM_ARN : data.aws_ssm_parameter.dd_api_key.arn
+    DD_ENV : local.env
+    DD_SERVICE : var.platform.service
+    DD_SITE : "ddog-gov.com"
+    DD_VERSION : var.source_code_version
+    DD_SERVERLESS_LOGS_ENABLED : false
+    DD_LAMBDA_HANDLER : var.handler
   }
 }
 
