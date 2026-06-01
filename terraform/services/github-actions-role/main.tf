@@ -307,6 +307,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "kms:ListResourceTags"
     ]
     resources = concat(
+        values(data.aws_kms_alias.additional_kms)[*].target_key_arn,
       [data.aws_kms_alias.environment_key.target_key_arn],
       [data.aws_kms_alias.account_env_old.target_key_arn],
       [data.aws_kms_alias.account_env_old_secondary.target_key_arn],
@@ -320,7 +321,6 @@ data "aws_iam_policy_document" "github_actions_policy" {
         data.aws_kms_alias.bcda_aco_creds[*].target_key_arn,
         data.aws_kms_alias.bcda_app_config[*].target_key_arn
       ) : [],
-      var.app == "cdap" ? data.aws_kms_alias.bb[*].target_key_arn : [],
       var.app == "dpc" ? concat(
         data.aws_kms_alias.dpc_app_config[*].target_key_arn,
         data.aws_kms_alias.dpc_ecr[*].target_key_arn

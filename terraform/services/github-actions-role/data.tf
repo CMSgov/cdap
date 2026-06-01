@@ -43,10 +43,17 @@ data "aws_kms_alias" "account_env_old_secondary" {
   name     = "alias/${local.account_env_old}"
 }
 
-data "aws_kms_alias" "bb" {
-  count = var.app == "cdap" ? 1 : 0
-  name  = "alias/bb-${var.env}"
+#FixMe add other accounts to config setup
+locals {
+  env_config           = yamldecode(file("${path.module}/config/${var.app}/${var.env}.yml"))
+  additional_kms_aliases  = try(local.env_config.additional_kms, [])
 }
+
+data "aws_kms_alias" "additional_kms" {
+  for_each = toset(local.additional_kms_aliases)
+  name     = "alias/${each.key}"
+}
+
 
 data "aws_kms_alias" "account_env" {
   name = "alias/${local.account_env}"

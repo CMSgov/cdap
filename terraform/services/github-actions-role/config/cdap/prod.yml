@@ -1,0 +1,7 @@
+additional_kms:
+  - "ab2d-sandbox"
+  - "ab2d-prod"
+  - "dpc-sandbox"
+  - "dpc-prod"
+  - "bb-sandbox" # used to share Datadog API keys
+  - "bb-prod" # used to share Datadog API keys
