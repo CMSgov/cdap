@@ -45,8 +45,8 @@ data "aws_kms_alias" "account_env_old_secondary" {
 
 #FixMe add other accounts to config setup
 locals {
-  env_config           = yamldecode(file("${path.module}/config/${var.app}/${var.env}.yml"))
-  additional_kms_aliases  = try(local.env_config.additional_kms, [])
+  env_config             = yamldecode(file("${path.module}/config/${var.app}/${var.env}.yml"))
+  additional_kms_aliases = try(local.env_config.additional_kms, [])
 }
 
 data "aws_kms_alias" "additional_kms" {
