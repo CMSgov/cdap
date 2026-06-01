@@ -29,9 +29,6 @@ data "aws_kms_alias" "shares" {
 #----------------------
 ### Application KEY ###
 #----------------------
-#----------------------
-### Application KEY ###
-#----------------------
 module "additional_datadog_application_key" {
   for_each = local.cross_account_shares
   source   = "../../modules/datadog_application_key"
