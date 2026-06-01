@@ -37,12 +37,12 @@ module "platform" {
   source    = "../../modules/platform"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app          = "cdap"
-  env          = var.env
-  root_module  = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
-  service      = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
+  app         = "cdap"
+  env         = var.env
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
+  service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
   ssm_root_map = {
-      datadog = "/cdap/${var.env}/datadog/cicd/"
+    datadog = "/cdap/${var.env}/datadog/cicd/"
 
   }
 }
