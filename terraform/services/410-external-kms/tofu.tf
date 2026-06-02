@@ -1,24 +1,7 @@
 terraform {
-  required_providers {
-    datadog = {
-      source  = "DataDog/datadog"
-      version = "~>4.4"
-    }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~>6.0"
-    }
-  }
-
   backend "s3" {
-    key = "501-datadog-cicd-keys/terraform.tfstate"
+    key = "bb-kms/terraform.tfstate"
   }
-}
-
-provider "datadog" {
-  api_key = sensitive(module.standards.ssm.init_datadog.init_api_key.value)
-  app_key = sensitive(module.standards.ssm.init_datadog.init_application_key.value)
-  api_url = "https://api.ddog-gov.com"
 }
 
 provider "aws" {
@@ -40,13 +23,8 @@ module "standards" {
   source    = "../../modules/standards"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app         = var.app
+  app         = "cdap"
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
   service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
-  ssm_root_map = merge({
-    init_datadog = "/dasgapi/sensitive/datadog/"
-    },
-    local.shares_ssm_roots
-  )
 }

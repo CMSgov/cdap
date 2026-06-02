@@ -1,3 +1,7 @@
+locals {
+  config_file_path = "${path.module}/config/${var.env}/${var.app}.yml"
+  config_data      = fileexists(local.config_file_path) ? yamldecode(file(local.config_file_path)) : null
+}
 #--------------
 ### API KEY ### Used for agents, Associated with the organization
 #--------------
@@ -12,16 +16,4 @@ module "datadog_api_key" {
 
 locals {
   cdap_env = contains(["sandbox", "prod"], var.env) ? "prod" : "test"
-}
-
-
-module "standards" {
-  source    = "../../modules/standards"
-  providers = { aws = aws, aws.secondary = aws.secondary }
-
-  app          = var.app
-  env          = var.env
-  root_module  = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
-  service      = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
-  ssm_root_map = { datadog = "/cdap/${local.cdap_env}/datadog/cicd/" }
 }

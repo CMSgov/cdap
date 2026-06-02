@@ -1,9 +1,9 @@
 variable "app" {
-  description = "The application name (ab2d, bbapi, bcda, cdap dpc)"
+  description = "The application name (ab2d, bb, bcda, cdap dpc)"
   type        = string
   validation {
-    condition     = contains(["ab2d", "bbapi", "bcda", "cdap", "dpc"], var.app)
-    error_message = "Valid value for app is ab2d, bbapi, bcda, cdap or dpc."
+    condition     = contains(["ab2d", "bb", "bcda", "cdap", "dpc"], var.app)
+    error_message = "Valid value for app is ab2d, bb, bcda, cdap or dpc."
   }
 }
 

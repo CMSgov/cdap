@@ -1,0 +1,5 @@
+additional_kms:
+  - "ab2d-test"
+  - "dpc-test"
+  - "bcda-test"
+  - "bb-test" # used to share Datadog API keys

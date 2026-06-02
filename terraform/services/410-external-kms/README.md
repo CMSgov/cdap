@@ -1,4 +1,14 @@
-Update this module with booleans for privilege sets as applications increase their use of datadog via Tofu.
+# bb KMS
+
+Sets up a KMS key with alias per ["dev", "test", "sandbox", "prod"] associated with "bb". 
+Makes this KMS key usable with the relevant bb AWS account, based on a SOPs stored parameter with Account ID. 
+
+## Permissions 
+bb AWS accounts will need IAM permissions to access and use this KMS key. 
+
+### RAM Share
+These keys can be used to share resources through SSM or other encrypted exchange, using AWS RAM share.
+
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -9,8 +19,7 @@ Update this module with booleans for privilege sets as applications increase the
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~>5 |
-| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | ~>4.4 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -19,10 +28,7 @@ Update this module with booleans for privilege sets as applications increase the
 -->
 ## Requirements
 
-| Name | Version |
-|------|---------|
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~>5 |
-| <a name="requirement_datadog"></a> [datadog](#requirement\_datadog) | ~>4.4 |
+No requirements.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -31,14 +37,7 @@ Update this module with booleans for privilege sets as applications increase the
 -->
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_app"></a> [app](#input\_app) | ["ab2d", "bcda", "dpc", "cdap", "bb"] The application name. | `string` | n/a | yes |
-| <a name="input_env"></a> [env](#input\_env) | ["dev", "test", "sandbox", "prod", "non-prod"] The environment that leverages this key. | `string` | n/a | yes |
-| <a name="input_api_key_manager"></a> [api\_key\_manager](#input\_api\_key\_manager) | n/a | `bool` | `false` | no |
-| <a name="input_dashboard_manager"></a> [dashboard\_manager](#input\_dashboard\_manager) | n/a | `bool` | `false` | no |
-| <a name="input_monitors_manager"></a> [monitors\_manager](#input\_monitors\_manager) | n/a | `bool` | `false` | no |
-| <a name="input_users_manager"></a> [users\_manager](#input\_users\_manager) | n/a | `bool` | `false` | no |
+No inputs.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -47,7 +46,9 @@ Update this module with booleans for privilege sets as applications increase the
 -->
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_standards"></a> [standards](#module\_standards) | ../../modules/standards | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -58,9 +59,8 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_ssm_parameter.datadog_application_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
-| [datadog_application_key.this](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/application_key) | resource |
-| [aws_kms_alias.primary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias) | data source |
+| [aws_kms_alias.bb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
+| [aws_kms_key.bb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -69,7 +69,5 @@ No modules.
 -->
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_datadog_application_key"></a> [datadog\_application\_key](#output\_datadog\_application\_key) | Application key for CICD use |
+No outputs.
 <!-- END_TF_DOCS -->
