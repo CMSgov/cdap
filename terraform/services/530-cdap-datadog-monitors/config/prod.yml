@@ -1,8 +1,7 @@
 shadow_mode: true
 
 notifications:
-  slack: true
-  victorops: false
+  victorops: true
 
 lambda:
   error_rate_threshold: 1

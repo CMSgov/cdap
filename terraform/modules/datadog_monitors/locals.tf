@@ -2,7 +2,7 @@ locals {
   _notif = try(var.monitor_config.notifications, {})
 
   _email_channels      = [for e in try(tolist(local._notif.emails), []) : "@${trimprefix(e, "@")}"]
-  _victorops_channels  = try(local._notif.victorops, false) ? ["@victorops-${var.app}"] : []
+  _victorops_channels  = try(local._notif.victorops, false) ? ["@webhook-victorops-${var.app}"] : []
   _slack_webhooks      = try(local._notif.slack, false) ? ["@webhook-slack-${var.app}"] : []
   _additional_webhooks = try(tolist(local._notif.additional_webhooks), [])
 
