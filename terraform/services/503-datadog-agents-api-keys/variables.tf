@@ -1,5 +1,5 @@
 variable "app" {
-  description = "The application name (ab2d, bcda, dpc, cdap, bbapi)"
+  description = "The application name (ab2d, bcda, dpc, cdap, bb)"
   type        = string
   validation {
     condition     = contains(["ab2d", "bcda", "dpc", "cdap"], var.app)

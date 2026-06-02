@@ -1,0 +1,4 @@
+shares:
+  bb:
+    envs: ["test"]
+    principal_ssm_key: "aws_account_id"

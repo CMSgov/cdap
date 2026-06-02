@@ -43,10 +43,17 @@ data "aws_kms_alias" "account_env_old_secondary" {
   name     = "alias/${local.account_env_old}"
 }
 
-data "aws_kms_alias" "all_managed_account_envs" {
-  for_each = toset(["ab2d", "dpc", "bcda"])
-  name     = "alias/${each.key}-${var.env}"
+#FixMe add other accounts to config setup
+locals {
+  env_config             = yamldecode(file("${path.module}/config/${var.app}/${var.env}.yml"))
+  additional_kms_aliases = try(local.env_config.additional_kms, [])
 }
+
+data "aws_kms_alias" "additional_kms" {
+  for_each = toset(local.additional_kms_aliases)
+  name     = "alias/${each.key}"
+}
+
 
 data "aws_kms_alias" "account_env" {
   name = "alias/${local.account_env}"
@@ -75,11 +82,6 @@ data "aws_kms_alias" "bcda_app_config" {
 data "aws_kms_alias" "bcda_aco_creds" {
   count = var.app == "bcda" ? contains(["dev, test"], var.env) ? 1 : 0 : 0
   name  = "alias/bcda-aco-creds-kms"
-}
-
-data "aws_kms_alias" "bcda_insights_data_sampler" {
-  count = var.app == "bcda" ? var.env == "dev" ? 1 : 0 : 0
-  name  = "alias/bcda-insights-data-sampler-${var.env}-key"
 }
 
 data "aws_kms_alias" "dpc_app_config" {

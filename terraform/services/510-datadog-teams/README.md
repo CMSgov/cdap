@@ -1,5 +1,5 @@
 Creates teams in the DASG APIs Datadog Organization. Membership to the teams can be managed by Administrators. 
-This service demonstrates and code-ifies the integration of BBAPI team to the DASG APIs organization.
+This service demonstrates and code-ifies the integration of bb team to the DASG APIs organization.
 
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
