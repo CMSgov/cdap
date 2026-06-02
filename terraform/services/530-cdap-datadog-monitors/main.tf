@@ -52,23 +52,27 @@ locals {
         name    = "[${upper(module.platform.account_env_suffix)}] [${repo}] CodeBuild — Failed Builds"
         type    = "metric alert"
         message = "CodeBuild project ${repo}-${module.platform.account_env_suffix} has failing builds."
-        query   = "sum(last_30m):sum:aws.codebuild.failed_builds{projectname:${repo}-${module.platform.account_env_suffix}} > 1"
+        # fill missing windows with 0
+        query = "sum(last_30m):sum:aws.codebuild.failed_builds{projectname:${repo}-${module.platform.account_env_suffix}}.fill(zero, 1800).as_count() > 1"
         thresholds = {
           critical = 1
         }
-        notify_no_data            = true
+        notify_no_data            = false
+        require_full_window       = false
         no_data_timeframe_minutes = 60
       },
       {
         name    = "[${upper(module.platform.account_env_suffix)}] [${repo}] CodeBuild — Builds Backing Up in Queue"
         type    = "metric alert"
         message = "CodeBuild project ${repo}-${module.platform.account_env_suffix} builds are queuing — runners may be unavailable."
-        query   = "avg(last_10m):avg:aws.codebuild.queued_duration{projectname:${repo}-${module.platform.account_env_suffix}} > 120"
+        # fill missing windows with 0
+        query = "avg(last_10m):avg:aws.codebuild.queued_duration{projectname:${repo}-${module.platform.account_env_suffix}}.fill(zero, 600) > 120"
         thresholds = {
           critical = 120
           warning  = 72
         }
         notify_no_data            = false
+        require_full_window       = false
         no_data_timeframe_minutes = 60
       }
     ]

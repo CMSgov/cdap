@@ -102,6 +102,7 @@ variable "custom_monitors" {
     })
     notify_no_data            = optional(bool, false)
     no_data_timeframe_minutes = optional(number, 60)
+    require_full_window       = optional(bool, true)
     tags                      = optional(list(string), [])
   }))
   default = []
