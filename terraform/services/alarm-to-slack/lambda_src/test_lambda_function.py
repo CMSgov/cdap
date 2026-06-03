@@ -28,12 +28,6 @@ def mock_boto3_client():
     with patch('lambda_function.boto3.client') as mock_client:
         yield mock_client
 
-def reload_lambda():
-    """Reload the lambda_function module to pick up environment variable changes."""
-    if 'lambda_function' in sys.modules:
-        importlib.reload(sys.modules['lambda_function'])
-    return sys.modules['lambda_function']
-
 def test_cloudwatch_message_sqs_record():
     """Test parsing a valid CloudWatch message from an SQS record."""
     cloudwatch_message = {
@@ -77,7 +71,6 @@ def test_enriched_cloudwatch_message_alarm_record():
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_alarm_record_ok_ignored():
     """Test enrichment when IGNORE_OK is false and state is ALARM."""
-    reload_lambda()
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'OK',
@@ -121,7 +114,6 @@ def test_enriched_cloudwatch_message_ok_record():
 @patch.dict(os.environ, {'IGNORE_OK': 'false'}, clear=True)
 def test_enriched_cloudwatch_message_ok_record_ignore_false():
     """Test OK state message with IGNORE_OK explicitly set to false."""
-    reload_lambda()
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'ALARM',
@@ -144,7 +136,6 @@ def test_enriched_cloudwatch_message_ok_record_ignore_false():
 @patch.dict(os.environ, {'IGNORE_OK': 'true'}, clear=True)
 def test_enriched_cloudwatch_message_ok_record_ok_ignored():
     """Test that OK state message is ignored when IGNORE_OK is true."""
-    reload_lambda()
     cloudwatch_message = {
         'AlarmName': 'bcda-dev-SomeAlarm',
         'OldStateValue': 'ALARM',
@@ -259,3 +250,81 @@ def test_logger(capsys):
     log_output = json.loads(captured.out)
     assert log_output['test'] == 'log'
     assert 'time' in log_output
+
+@patch.dict(os.environ, {'APPS': 'bcda,cdap,dpc'}, clear=True)
+def test_get_app_list_returns_list():
+    """Test that APPS env var is parsed into a list correctly."""
+    assert lambda_function.get_app_list() == ['bcda', 'cdap', 'dpc']
+
+@patch.dict(os.environ, {}, clear=True)
+def test_get_app_list_empty():
+    """Test that missing APPS env var returns empty list."""
+    assert lambda_function.get_app_list() == []
+
+# ── ping_slack_webhook ─────────────────────────────────────────────────────
+
+@patch('urllib.request.urlopen')
+def test_ping_slack_webhook_success(mock_urlopen):
+    """200 response → reachable."""
+    cm = MagicMock()
+    cm.status = 200
+    cm.__enter__.return_value = cm
+    mock_urlopen.return_value = cm
+    assert lambda_function.ping_slack_webhook('https://hooks.slack.com/test', 'bcda') is True
+
+
+@patch('urllib.request.urlopen')
+def test_ping_slack_webhook_400_treated_as_alive(mock_urlopen):
+    """Slack's 400 for empty payload still means the URL is reachable."""
+    from urllib.error import HTTPError
+    mock_urlopen.side_effect = HTTPError(
+        url='https://hooks.slack.com/test', code=400,
+        msg='no_text', hdrs=None, fp=None,
+    )
+    assert lambda_function.ping_slack_webhook('https://hooks.slack.com/test', 'bcda') is True
+
+
+@patch('urllib.request.urlopen')
+def test_ping_slack_webhook_network_failure(mock_urlopen):
+    """Genuine network error → not reachable."""
+    from urllib.error import URLError
+    mock_urlopen.side_effect = URLError('connection refused')
+    assert lambda_function.ping_slack_webhook('https://hooks.slack.com/test', 'bcda') is False
+
+
+# ── liveness_check ─────────────────────────────────────────────────────────
+
+@patch.dict(os.environ, {'APPS': 'bcda,dpc'}, clear=True)
+@patch('lambda_function.ping_slack_webhook', return_value=True)
+@patch('lambda_function.get_ssm_parameter', return_value='https://hooks.slack.com/test')
+def test_liveness_check_all_ok(mock_ssm, mock_ping):
+    """All apps pass → all_ok is True."""
+    result = lambda_function.liveness_check()
+    assert result['all_ok'] is True
+
+
+@patch.dict(os.environ, {'APPS': 'bcda'}, clear=True)
+@patch('lambda_function.get_ssm_parameter', return_value=None)
+def test_liveness_check_ssm_missing(mock_ssm):
+    """Missing SSM parameter → app fails, all_ok is False."""
+    result = lambda_function.liveness_check()
+    assert result['all_ok'] is False
+    assert result['results']['bcda']['ssm_ok'] is False
+
+
+@patch.dict(os.environ, {'APPS': 'bcda'}, clear=True)
+@patch('lambda_function.ping_slack_webhook', return_value=True)
+@patch('lambda_function.get_ssm_parameter', return_value='https://hooks.slack.com/test')
+def test_handle_liveness_event_passes(mock_ssm, mock_ping):
+    """Returns 200 when all checks pass."""
+    response = lambda_function.handle_liveness_event({'RequestType': 'LivenessCheck'})
+    assert response['statusCode'] == 200
+
+
+@patch.dict(os.environ, {'APPS': 'bcda'}, clear=True)
+@patch('lambda_function.ping_slack_webhook', return_value=False)
+@patch('lambda_function.get_ssm_parameter', return_value='https://hooks.slack.com/test')
+def test_handle_liveness_event_raises_on_failure(mock_ssm, mock_ping):
+    """Raises RuntimeError when a check fails — surfaces as Lambda error in Tofu."""
+    with pytest.raises(RuntimeError, match='bcda'):
+        lambda_function.handle_liveness_event({'RequestType': 'LivenessCheck'})

@@ -1,4 +1,5 @@
 -- Number of beneficiaries per job request
+-- Tracking: We used to track for last one year, now tracking all job data
 -- NO PHI/PII allowed!
 CREATE OR REPLACE VIEW bcda_prod_beneficiaries_per_job AS
 select sub.job_id,
@@ -15,7 +16,6 @@ from (
 			END AS max_benes
 		from jobs
 			join job_keys jk ON jk.job_id = jobs.id
-		where jobs.created_at > DATE(NOW() - interval '1 year')
 	) sub
 group by sub.job_id
 order by sub.job_id;

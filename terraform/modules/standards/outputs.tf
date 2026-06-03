@@ -40,6 +40,12 @@ output "env" {
   value       = local.env
 }
 
+output "account_env_suffix" {
+  description = "[\"prod\" or \"non-prod\"] The AWS account shorthand to distinguish environment hierarchy."
+  sensitive   = false
+  value       = (var.env == "prod" || var.env == "sandbox") ? "prod" : "non-prod"
+}
+
 output "default_tags" {
   description = "Map of tags for use in AWS provider block `default_tags`. Merges collection of standard tags with optional, user-specificed `additional_tags`"
   sensitive   = false
@@ -56,4 +62,9 @@ output "cdap_vpc" {
   description = "The CDAP VPC used to remotely manage the VPC hosting this platform."
   sensitive   = false
   value       = data.aws_vpc.cdap_vpc
+}
+
+output "ssm" {
+  description = "SSM parameter resources available based on the `var.ssm_root_map` input variable."
+  value       = { for named_root, data in data.aws_ssm_parameters_by_path.ssm : named_root => { for each in [for arn, value in zipmap(data.arns, data.values) : { "value" = value, "arn" = arn }] : reverse(split("/", each.arn))[0] => each } }
 }

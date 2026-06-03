@@ -1,11 +1,3 @@
-module "standards" {
-  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=0bd3eeae6b03cc8883b7dbdee5f04deb33468260"
-  app         = var.app
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/github-actions-role"
-  service     = "github-actions-role"
-}
-
 locals {
   provider_domain = "token.actions.githubusercontent.com"
   repos = {
@@ -131,6 +123,24 @@ data "aws_iam_policy_document" "github_actions_policy" {
     ]
     resources = ["*"]
   }
+  # Codebuild
+  statement {
+    actions = [
+      "codebuild:BatchGetProjects",
+      "codebuild:CreateInvalidation",
+      "codebuild:CreateProject",
+      "codebuild:CreateWebhook",
+      "codebuild:DeleteProject",
+      "codebuild:DeleteWebhook",
+      "codebuild:ListCuratedEnvironmentImages",
+      "codebuild:ListProjects",
+      "codebuild:ListSourceCredentials",
+      "codebuild:UpdateProject",
+      "codebuild:UpdateProjectVisibility",
+      "codebuild:UpdateWebhook"
+    ]
+    resources = ["*"]
+  }
   # CloudFront
   statement {
     actions = [
@@ -144,7 +154,9 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # CloudWatch
   statement {
     actions = [
-      "cloudwatch:DescribeAlarms"
+      "cloudwatch:DescribeAlarms",
+      "cloudwatch:ListTagsForResource",
+      "cloudwatch:SetAlarmState"
     ]
     resources = ["*"]
   }
@@ -193,6 +205,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ecr:DescribeRepositories",
       "ecr:GetAuthorizationToken",
       "ecr:InitiateLayerUpload",
+      "ecr:ListTagsForResource",
       "ecr:PutImage",
       "ecr:UploadLayerPart"
     ]
@@ -206,6 +219,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ecs:DescribeServices",
       "ecs:DescribeTaskDefinition",
       "ecs:DescribeTasks",
+      "ecs:ListClusters",
       "ecs:ListTaskDefinitions",
       "ecs:ListTasks",
       "ecs:RegisterTaskDefinition",
@@ -257,9 +271,13 @@ data "aws_iam_policy_document" "github_actions_policy" {
   statement {
     actions = [
       "events:DescribeRule",
+      "events:ListTagsForResource",
+      "events:ListTagsForResource",
       "events:ListTargetsByRule",
       "events:PutRule",
-      "events:PutTargets"
+      "events:PutTargets",
+      "events:TagResource",
+      "events:UntagResource"
     ]
     resources = ["*"]
   }
@@ -289,6 +307,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "kms:ListResourceTags"
     ]
     resources = concat(
+      values(data.aws_kms_alias.additional_kms)[*].target_key_arn,
       [data.aws_kms_alias.environment_key.target_key_arn],
       [data.aws_kms_alias.account_env_old.target_key_arn],
       [data.aws_kms_alias.account_env_old_secondary.target_key_arn],
@@ -300,11 +319,9 @@ data "aws_iam_policy_document" "github_actions_policy" {
       ) : [],
       var.app == "bcda" ? concat(
         data.aws_kms_alias.bcda_aco_creds[*].target_key_arn,
-        data.aws_kms_alias.bcda_app_config[*].target_key_arn,
-        data.aws_kms_alias.bcda_insights_data_sampler[*].target_key_arn,
+        data.aws_kms_alias.bcda_app_config[*].target_key_arn
       ) : [],
       var.app == "dpc" ? concat(
-        [for key in data.aws_kms_alias.dpc_cloudwatch_keys : key.target_key_arn],
         data.aws_kms_alias.dpc_app_config[*].target_key_arn,
         data.aws_kms_alias.dpc_ecr[*].target_key_arn
       ) : []
@@ -328,6 +345,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "iam:CreateRole",
       "iam:DeletePolicy",
       "iam:DeleteRole",
+      "iam:DeleteRolePolicy",
       "iam:DetachRolePolicy",
       "iam:GetInstanceProfile",
       "iam:GetOpenIDConnectProvider",
@@ -342,7 +360,9 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "iam:ListPolicies",
       "iam:ListPolicyVersions",
       "iam:ListRolePolicies",
+      "iam:PassRole",
       "iam:PutRolePolicy",
+      "iam:TagRole",
       "iam:UpdateAssumeRolePolicy",
       "iam:UpdateOpenIDConnectProviderThumbprint"
     ]
@@ -351,16 +371,20 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # Lambda
   statement {
     actions = [
+      "lambda:AddPermission",
       "lambda:CreateEventSourceMapping",
-      "lambda:UpdateFunctionCode",
+      "lambda:CreateFunction",
+      "lambda:GetAlias",
+      "lambda:GetFunction",
+      "lambda:GetEventSourceMapping",
       "lambda:GetFunctionCodeSigningConfig",
       "lambda:GetPolicy",
-      "lambda:GetFunction",
+      "lambda:InvokeFunction",
+      "lambda:ListTags",
       "lambda:ListVersionsByFunction",
-      "lambda:GetEventSourceMapping",
-      "lambda:UpdateFunctionConfiguration",
-      "lambda:CreateFunction",
-      "lambda:AddPermission"
+      "lambda:TagResource",
+      "lambda:UpdateFunctionCode",
+      "lambda:UpdateFunctionConfiguration"
     ]
     resources = ["*"]
   }
@@ -372,6 +396,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "logs:DescribeLogGroups",
       "logs:DescribeLogStreams",
       "logs:DescribeSubscriptionFilters",
+      "logs:ListTagsForResource",
       "logs:PutRetentionPolicy"
     ]
     resources = ["*"]
@@ -405,7 +430,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "route53:GetChange",
       "route53:GetHostedZone",
       "route53:ListHostedZones",
-      "route53:ListResourceRecordSets"
+      "route53:ListResourceRecordSets",
+      "route53:ListTagsForResource"
     ]
     resources = ["*"]
   }
@@ -430,15 +456,26 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "s3:GetEncryptionConfiguration",
       "s3:GetLifecycleConfiguration",
       "s3:GetReplicationConfiguration",
+      "s3:ListBucket",
       "s3:PutBucketLogging",
       "s3:PutBucketNotification",
       "s3:PutBucketOwnershipControls",
       "s3:PutBucketPolicy",
+      "s3:PutBucketTagging",
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
-      "s3:ListBucket",
+    ]
+    resources = ["*"]
+  }
+  # S3Objects
+  statement {
+    actions = [
+      "s3:ListObjectVersions",
+      "s3:PutObjectTagging",
       "s3:GetObject",
+      "s3:GetObjectTagging",
+      "s3:GetObjectVersion",
       "s3:PutObject",
       "s3:DeleteObject"
     ]
@@ -447,9 +484,13 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # Secrets Manager
   statement {
     actions = [
+      "secretsmanager:DeleteResourcePolicy",
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetResourcePolicy",
-      "secretsmanager:GetSecretValue"
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:PutSecretValue",
+      "secretsmanager:TagResource",
+      "secretsmanager:UntagResource"
     ]
     resources = ["*"]
   }
@@ -457,7 +498,11 @@ data "aws_iam_policy_document" "github_actions_policy" {
   statement {
     actions = [
       "sqs:CreateQueue",
-      "sqs:SetQueueAttributes"
+      "sqs:GetQueueAttributes",
+      "sqs:ListQueueAttributes",
+      "sqs:ListQueueTags",
+      "sqs:SetQueueAttributes",
+      "sqs:TagQueue"
     ]
     resources = ["*"]
   }

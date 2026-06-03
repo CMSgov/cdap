@@ -1,0 +1,13 @@
+shadow_mode: false
+
+notifications:
+  slack: true
+  victorops: true # for current testing
+
+enabled:
+  ecs: false
+  sqs: true
+  sns: false
+  lambda: true
+  s3: true
+  rds: false

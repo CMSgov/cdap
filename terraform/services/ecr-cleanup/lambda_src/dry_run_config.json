@@ -1,0 +1,10 @@
+{
+    "dpc-api": {
+        "opt_in": true,
+        "strategies": [
+            ["count_image", "rls-r", 5],
+            ["days_older_than", "", 14],
+            ["days_older_than", null, 14]
+        ]
+    }
+}

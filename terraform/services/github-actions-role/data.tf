@@ -43,6 +43,18 @@ data "aws_kms_alias" "account_env_old_secondary" {
   name     = "alias/${local.account_env_old}"
 }
 
+#FixMe add other accounts to config setup
+locals {
+  env_config             = yamldecode(file("${path.module}/config/${var.app}/${var.env}.yml"))
+  additional_kms_aliases = try(local.env_config.additional_kms, [])
+}
+
+data "aws_kms_alias" "additional_kms" {
+  for_each = toset(local.additional_kms_aliases)
+  name     = "alias/${each.key}"
+}
+
+
 data "aws_kms_alias" "account_env" {
   name = "alias/${local.account_env}"
 }
@@ -72,11 +84,6 @@ data "aws_kms_alias" "bcda_aco_creds" {
   name  = "alias/bcda-aco-creds-kms"
 }
 
-data "aws_kms_alias" "bcda_insights_data_sampler" {
-  count = var.app == "bcda" ? var.env == "dev" ? 1 : 0 : 0
-  name  = "alias/bcda-insights-data-sampler-${var.env}-key"
-}
-
 data "aws_kms_alias" "dpc_app_config" {
   count = var.app == "dpc" ? 1 : 0
   name  = "alias/dpc-${var.env}-master-key"
@@ -85,9 +92,4 @@ data "aws_kms_alias" "dpc_app_config" {
 data "aws_kms_alias" "dpc_ecr" {
   count = var.app == "dpc" ? 1 : 0
   name  = "alias/dpc-ecr"
-}
-
-data "aws_kms_alias" "dpc_cloudwatch_keys" {
-  for_each = toset([for k in local.dpc_services : k if var.app == "dpc"])
-  name     = "alias/dpc-${var.env}-${each.key}-cloudwatch-key"
 }

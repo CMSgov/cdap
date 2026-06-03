@@ -1,5 +1,5 @@
 import {SSMClient, GetParametersCommand} from '@aws-sdk/client-ssm'
-import {expect, test, jest} from '@jest/globals'
+import {expect, test, jest, beforeEach} from '@jest/globals'
 import {getValues} from '../src/get-values'
 import {mockClient} from 'aws-sdk-client-mock'
 import {parseParams} from '../src/parse-params'
@@ -10,6 +10,11 @@ jest.mock('@actions/core')
 const mockedExportVariable = jest.mocked(exportVariable)
 const mockedSetFailed = jest.mocked(setFailed)
 const mockedSetSecret = jest.mocked(setSecret)
+
+beforeEach(() => {
+  client.reset()
+  jest.clearAllMocks()
+})
 
 test('parse input params', () => {
   const params = `

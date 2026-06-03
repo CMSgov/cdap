@@ -17,16 +17,17 @@ data "aws_kms_alias" "environment_key" {
 }
 
 module "api_waf_sync_function" {
-  source = "github.com/CMSgov/cdap//terraform/modules/function?ref=2f21bef1de2d6fd1326e7106699250f610f4c66c"
+  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=2874c72ccd4c4821e5e3f77ccf61cf77ed05169f"
 
-  app = var.app
-  env = var.env
+  app          = var.app
+  env          = var.env
+  architecture = var.app == "dpc" ? "arm64" : "x86_64"
 
   name        = local.full_name
   description = "Synchronizes the IP whitelist in ${var.app} with the WAF IP Set"
 
   handler = "bootstrap"
-  runtime = "provided.al2"
+  runtime = "provided.al2023"
 
   function_role_inline_policies = {
     waf-access = data.aws_iam_policy_document.aws_waf_access.json
