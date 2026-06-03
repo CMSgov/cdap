@@ -5,35 +5,56 @@ resource "datadog_team" "this" {
   name        = "${upper(each.key)} Team"
 }
 
-
 data "datadog_permissions" "all" {}
 
-# Engineering Incident Response (standard)
-# Read-only access + ability to mute monitors during incidents
-# Built on the "standard" base permission
-resource "datadog_role" "engineer" {
-  name = "Incident Response"
+# recreate a read-only role that can be modified as needed
+resource "datadog_role" "observer" {
+  name = "Observer"
 
-  # Base "Standard" access — grants general read across the platform
+  # Standard read permissions
   permission {
-    id = data.datadog_permissions.all.permissions["standard"]
+    id = data.datadog_permissions.all.permissions["monitors_read"]
   }
-
-  # Explicit read permissions
+  permission {
+    id = data.datadog_permissions.all.permissions["dashboards_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["metrics_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["apm_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["infrastructure_read"]
+  }
   permission {
     id = data.datadog_permissions.all.permissions["synthetics_read"]
   }
-  permission {
-    id = data.datadog_permissions.all.permissions["apm_service_catalog_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["integrations_read"]
-  }
-  permission {
-    id = data.datadog_permissions.all.permissions["watchdog_insights_read"]
-  }
+}
 
-  # Incident response: mute/downtime monitors
+# role that can silence incidents
+resource "datadog_role" "incident_responder" {
+  name = "Engineering - Incident Responder"
+
+  # Standard read permissions
+  permission {
+    id = data.datadog_permissions.all.permissions["monitors_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["dashboards_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["metrics_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["apm_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["infrastructure_read"]
+  }
+  permission {
+    id = data.datadog_permissions.all.permissions["synthetics_read"]
+  }
   permission {
     id = data.datadog_permissions.all.permissions["monitors_downtime"]
   }
@@ -64,3 +85,4 @@ resource "datadog_role" "user_admin" {
     id = data.datadog_permissions.all.permissions["user_access_manage"]
   }
 }
+
