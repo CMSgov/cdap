@@ -12,7 +12,7 @@ defaults.yml < ${env}.yml.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | 4.9.0 |
+| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | 4.10.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
