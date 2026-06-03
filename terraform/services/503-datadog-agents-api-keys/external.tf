@@ -37,7 +37,7 @@ module "additional_datadog_api_key" {
 
 resource "aws_secretsmanager_secret" "datadog_api_key" {
   for_each    = local.cross_account_shares
-  name        = "${var.app}/${each.value.service}/${each.value.env}/datadog/api-key-agents"
+  name        = "${var.app}/${each.value.service}/${each.value.env}/datadog/agents/api-key"
   description = "Datadog agents API key for ${each.value.service} ${each.value.env} — shared cross-account"
   kms_key_id  = data.aws_kms_alias.shares[each.key].target_key_arn
 
