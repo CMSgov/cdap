@@ -1,5 +1,4 @@
 Creates teams in the DASG APIs Datadog Organization. Membership to the teams can be managed by Administrators. 
-This service demonstrates and code-ifies the integration of BBAPI team to the DASG APIs organization.
 
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -11,7 +10,7 @@ This service demonstrates and code-ifies the integration of BBAPI team to the DA
 
 | Name | Version |
 |------|---------|
-| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | 4.5.0 |
+| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | ~>4.4 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -31,9 +30,7 @@ This service demonstrates and code-ifies the integration of BBAPI team to the DA
 -->
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_app_teams"></a> [app\_teams](#input\_app\_teams) | List of teams with access in DASG APIs Datadog | `list(string)` | <pre>[<br/>  "ab2d",<br/>  "bbapi",<br/>  "bcda",<br/>  "cdap",<br/>  "dpc"<br/>]</pre> | no |
+No inputs.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -42,9 +39,7 @@ This service demonstrates and code-ifies the integration of BBAPI team to the DA
 -->
 ## Modules
 
-| Name | Source | Version |
-|------|--------|---------|
-| <a name="module_standards"></a> [standards](#module\_standards) | ../../modules/standards | n/a |
+No modules.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -55,9 +50,7 @@ This service demonstrates and code-ifies the integration of BBAPI team to the DA
 
 | Name | Type |
 |------|------|
-| [datadog_role.incident_responder](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/role) | resource |
-| [datadog_team.this](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/team) | resource |
-| [datadog_permissions.dd_perms](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/data-sources/permissions) | data source |
+| [datadog_team.foo](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/team) | resource |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
