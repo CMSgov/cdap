@@ -30,8 +30,12 @@ shadow_mode: true
 
 # -----------------------------------------------------------------------------
 notifications:
-  slack:
-    - "cdap-users"
+  slack: true
+  victorops: false
+  emails:
+    - "test@test.test.cms.gov"
+  additional_webhooks-
+    - "@webhook-my-webhook"
 
 # -----------------------------------------------------------------------------
 # Enabled Flags
