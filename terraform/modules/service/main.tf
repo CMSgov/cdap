@@ -1,6 +1,6 @@
 locals {
   service_name      = coalesce(var.service_name_override, var.platform.service)
-  service_name_full = "${var.platform.app}-${var.platform.env}-${var.platform.service}"
+  service_name_full = "${var.platform.app}-${var.platform.env}-${coalesce(var.service_name_override, var.platform.service)}"
 
   # Build a name → containerPort lookup from port_mappings
   port_map = {
