@@ -1,4 +1,9 @@
 shares:
   bb:
-    envs: ["test"]
+    envs:
+      - test
+    principal_ssm_key: "aws_account_id"
+  bfd:
+    envs:
+      - test
     principal_ssm_key: "aws_account_id"
