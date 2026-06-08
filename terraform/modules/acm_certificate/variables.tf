@@ -12,7 +12,7 @@ variable "platform" {
 }
 
 # -------------------------------------------------------
-# Internal endpoint (VPC-only, cmscloud.internal)
+# Internal endpoint (VPC-only, <>.internal.cms.gov)
 # -------------------------------------------------------
 variable "enable_internal_endpoint" {
   type        = bool
