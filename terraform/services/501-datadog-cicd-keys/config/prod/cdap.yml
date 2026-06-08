@@ -3,10 +3,10 @@ cross_account_shares:
     env_labels:
       - prod
       - sandbox
-
-#  bfd:
-#    env_labels:
-#      - prod
+  bfd:
+    env_labels:
+      - prod
+      - sandbox
 
 key_permissions:
   api_key_manager: true

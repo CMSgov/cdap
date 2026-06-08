@@ -4,6 +4,7 @@ variable "app_teams" {
   default = [
     "ab2d",
     "bb",
+    "bfd",
     "bcda",
     "cdap",
     "dpc"
