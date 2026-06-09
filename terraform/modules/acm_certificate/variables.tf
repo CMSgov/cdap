@@ -12,16 +12,16 @@ variable "platform" {
 }
 
 # -------------------------------------------------------
-# Internal endpoint (VPC-only, cmscloud.internal)
+# Internal endpoint (VPC-only, internal.cms.gov)
 # -------------------------------------------------------
 variable "enable_internal_endpoint" {
   type        = bool
   default     = false
   description = <<-EOT
     Issue a PCA-backed certificate for the VPC-internal endpoint.
-    Domain: <app>-<env>-<service>.internal
+    Domain: <app>-<env>-<service>.internal.cms.gov
     Use for Lambda/ECS-to-ECS calls that do not need Zscaler or public access.
-    Route 53 is NOT managed here — DNS for .internal is handled by CMS.
+    Route 53 is NOT managed here — DNS for .internal.cms.gov is handled by CMS.
   EOT
 }
 

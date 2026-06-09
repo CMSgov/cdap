@@ -1,5 +1,5 @@
 locals {
-  hosted_zone_base_internal = "${var.platform.env}.${var.platform.app}.cmscloud.internal"
+  hosted_zone_base_internal = "${var.platform.env}.${var.platform.app}.internal.cms.gov"
   hosted_zone_base_zscaler  = "${var.platform.env}.${var.platform.app}.cmscloud.local"
 }
 
