@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "function_assume_role" {
       condition {
         test     = "StringLike"
         variable = "${local.provider_domain}:sub"
-        values   = var.github_actions_repos
+        values   = [for repo in var.github_actions_repos : "repo:CMSgov/${repo}"]
       }
     }
   }

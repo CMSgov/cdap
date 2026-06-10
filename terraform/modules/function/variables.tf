@@ -186,7 +186,7 @@ variable "github_actions_repos" {
     function zip key.
 
     Example:
-      github_actions_repos = ["CMSgov/bcda-app", "CMSgov/dpc-app"]
+      github_actions_repos = ["bcda-app", "dpc-app"]
 
     Leave empty ([]) to disable CI/CD write access to the bucket entirely.
   EOT
