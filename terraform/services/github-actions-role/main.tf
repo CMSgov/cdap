@@ -290,7 +290,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "kms:GetKeyRotationStatus",
       "kms:EnableKeyRotation",
       "kms:CreateAlias",
-      "kms:CreateKey"
+      "kms:CreateKey",
+      "kms:TagResource"
     ]
     resources = ["*"]
   }
@@ -304,7 +305,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "kms:GenerateDataKeyWithoutPlaintext",
       "kms:DescribeKey",
       "kms:CreateGrant",
-      "kms:ListResourceTags"
+      "kms:ListResourceTags",
+      "kms:PutKeyPolicy"
     ]
     resources = concat(
       values(data.aws_kms_alias.additional_kms)[*].target_key_arn,

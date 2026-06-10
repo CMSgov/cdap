@@ -5,3 +5,5 @@ additional_kms:
   - "dpc-prod"
   - "bb-sandbox" # used to share Datadog API keys
   - "bb-prod" # used to share Datadog API keys
+  - "bfd-sandbox" # used to share Datadog API keys
+  - "bfd-prod" # used to share Datadog API keys
