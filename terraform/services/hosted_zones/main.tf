@@ -9,7 +9,7 @@ module "platform" {
 }
 
 resource "aws_route53_zone" "internal" {
-  name = "${var.env}.${var.app}.cmscloud.internal"
+  name = "${var.env}.${var.app}.internal.cms.gov"
 
   vpc {
     vpc_id = module.platform.vpc_id

@@ -12,16 +12,16 @@ variable "platform" {
 }
 
 # -------------------------------------------------------
-# Internal endpoint (VPC-only, cmscloud.internal)
+# Internal endpoint (VPC-only, internal.cms.gov)
 # -------------------------------------------------------
 variable "enable_internal_endpoint" {
   type        = bool
   default     = false
   description = <<-EOT
     Issue a PCA-backed certificate for the VPC-internal endpoint.
-    Domain: <app>-<env>-<service>.internal
+    Domain: <service>.<env>.<app>.internal.cms.gov
     Use for Lambda/ECS-to-ECS calls that do not need Zscaler or public access.
-    Route 53 is NOT managed here — DNS for .internal is handled by CMS.
+    Route 53 is NOT managed here.
   EOT
 }
 
@@ -33,14 +33,14 @@ variable "enable_zscaler_endpoint" {
   default     = false
   description = <<-EOT
     Issue a PCA-backed certificate for the Zscaler-accessible endpoint.
-    Domain: <app>-<env>-<service>.cmscloud.local
+    Domain: <service>.<env>.<app>.cmscloud.local
     Route 53 is NOT managed here — DNS for cmscloud.local is handled by CMS.
 
     -------------------------------------------------------------------------
     CMS DOMAIN REGISTRATION — ACTION REQUIRED AFTER APPLY
     -------------------------------------------------------------------------
     After applying this module, submit a request to CMS to register:
-      <app>-<env>-<service>.cmscloud.local
+      <service>.<env>.<app>.cmscloud.local
     and point it at the ALB DNS name from the alb module output.
     Use the zscaler_domain output from this module for the request.
     -------------------------------------------------------------------------
