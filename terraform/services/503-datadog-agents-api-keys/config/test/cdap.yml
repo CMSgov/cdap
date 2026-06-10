@@ -3,4 +3,5 @@ cross_account_shares:
     env_labels:
       - test
   bfd:
-    env_labels: ["test"]
+    env_labels:
+      - test

@@ -3,3 +3,4 @@ additional_kms:
   - "dpc-test"
   - "bcda-test"
   - "bb-test" # used to share Datadog API keys
+  - "bfd-test" # used to share Datadog API keys
