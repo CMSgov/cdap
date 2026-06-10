@@ -15,6 +15,6 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "hosted_zones/terraform.tfstate"
+    key = "030-hosted-zones/terraform.tfstate"
   }
 }
