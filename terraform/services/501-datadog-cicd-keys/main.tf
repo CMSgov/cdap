@@ -8,6 +8,7 @@ locals {
     api_key_manager    = false
     dashboard_manager  = true
     monitors_manager   = true
+    synthetics_manager = true
     users_manager      = false
     org_config_manager = false
   }
