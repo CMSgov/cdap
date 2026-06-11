@@ -20,9 +20,8 @@ locals {
 data "aws_security_group" "datadog_private_location" {
   filter {
     name   = "group-name"
-    values = ["cdap-${local.cdap_env[var.env]}-datadog-private-location"]
+    values = ["cdap-${local.cdap_env[var.env]}-datadog-private-location-task-sg"]
   }
-
   filter {
     name   = "vpc-id"
     values = [module.standards.cdap_vpc.id]
