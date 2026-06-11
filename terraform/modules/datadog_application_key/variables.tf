@@ -31,6 +31,14 @@ variable "monitors_manager" {
   default = false
 }
 
+variable "synthetics_manager" {
+  description = "Allows for creation and deletion of synthetics. All subscriber repos can use."
+
+  type    = bool
+  default = false
+}
+
+
 variable "users_manager" {
   description = "Allows for management of users into teams. Currently no use cases."
   type        = bool

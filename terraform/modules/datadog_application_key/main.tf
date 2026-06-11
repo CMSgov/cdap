@@ -2,6 +2,7 @@ locals {
   api_key_manager    = var.api_key_manager ? ["api_keys_read", "api_keys_write", "api_keys_delete"] : []
   dashboard_manager  = var.dashboard_manager ? ["dashboards_read", "dashboards_write", "teams_read"] : []
   monitors_manager   = var.monitors_manager ? ["monitors_read", "monitors_write", "monitors_downtime", "integrations_read"] : []
+  synthetics_manager = var.synthetics_manager ? ["synthetics_read", "synthetics_write"] : []
   users_manager      = var.users_manager ? ["user_access_manage", "user_access_read", "teams_manage"] : []
   org_config_manager = var.org_config_manager ? ["monitor_config_policy_write", "create_webhooks"] : []
 
@@ -10,7 +11,8 @@ locals {
     local.dashboard_manager,
     local.monitors_manager,
     local.users_manager,
-    local.org_config_manager
+    local.org_config_manager,
+    local.synthetics_manager
   )
 }
 
