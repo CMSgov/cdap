@@ -21,7 +21,7 @@ The API key will not need to be regenerated for operations continue, though you 
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~>5 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -32,7 +32,7 @@ The API key will not need to be regenerated for operations continue, though you 
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~>5 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~>6.0 |
 | <a name="requirement_datadog"></a> [datadog](#requirement\_datadog) | ~>4.4 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -44,9 +44,8 @@ The API key will not need to be regenerated for operations continue, though you 
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_app"></a> [app](#input\_app) | n/a | `any` | n/a | yes |
-| <a name="input_env"></a> [env](#input\_env) | The application environment (test, prod) | `string` | n/a | yes |
-| <a name="input_app_permissions"></a> [app\_permissions](#input\_app\_permissions) | Per-app Datadog permission overrides. Any app not listed will use the default permissions. | <pre>map(object({<br/>    api_key_manager   = optional(bool, false)<br/>    dashboard_manager = optional(bool, true)<br/>    monitors_manager  = optional(bool, true)<br/>    users_manager     = optional(bool, false)<br/>  }))</pre> | <pre>{<br/>  "cdap-prod": {<br/>    "api_key_manager": true<br/>  },<br/>  "cdap-test": {<br/>    "api_key_manager": true<br/>  }<br/>}</pre> | no |
+| <a name="input_app"></a> [app](#input\_app) | ["ab2d", "bcda", "dpc", "cdap", "bb"] The application name. | `string` | n/a | yes |
+| <a name="input_env"></a> [env](#input\_env) | The application environment (dev, test, sandbox, prod) | `string` | n/a | yes |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -57,6 +56,8 @@ The API key will not need to be regenerated for operations continue, though you 
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_additional_datadog_api_key"></a> [additional\_datadog\_api\_key](#module\_additional\_datadog\_api\_key) | ../../modules/datadog_api_key | n/a |
+| <a name="module_additional_datadog_application_key"></a> [additional\_datadog\_application\_key](#module\_additional\_datadog\_application\_key) | ../../modules/datadog_application_key | n/a |
 | <a name="module_datadog_api_key"></a> [datadog\_api\_key](#module\_datadog\_api\_key) | ../../modules/datadog_api_key | n/a |
 | <a name="module_datadog_application_key"></a> [datadog\_application\_key](#module\_datadog\_application\_key) | ../../modules/datadog_application_key | n/a |
 | <a name="module_standards"></a> [standards](#module\_standards) | ../../modules/standards | n/a |
@@ -70,8 +71,13 @@ The API key will not need to be regenerated for operations continue, though you 
 
 | Name | Type |
 |------|------|
-| [aws_ssm_parameter.datadog_init_api_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
-| [aws_ssm_parameter.datadog_init_app_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
+| [aws_secretsmanager_secret.datadog_api_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
+| [aws_secretsmanager_secret.datadog_application_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
+| [aws_secretsmanager_secret_policy.datadog_api_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_policy) | resource |
+| [aws_secretsmanager_secret_policy.datadog_application_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_policy) | resource |
+| [aws_secretsmanager_secret_version.datadog_api_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
+| [aws_secretsmanager_secret_version.datadog_application_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
+| [aws_kms_alias.shares](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
