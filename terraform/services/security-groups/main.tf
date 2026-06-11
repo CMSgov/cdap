@@ -7,6 +7,8 @@ module "standards" {
   service     = "security-groups"
 }
 
+
+# TODO replace this with module.standards.cdap_vpc.cidr_block_associations.cidr_block
 data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
   name = "/cdap/sensitive/mgmt-vpc/cidr"
 }
@@ -17,6 +19,8 @@ module "vpc" {
   env    = var.env
 }
 
+# TODO replace the cdap-private sync with a lookup to the an SSM parameter with the public zscaler IPs
+# TODO set the SSM parameter with public zscaler IPs
 resource "aws_security_group" "zscaler_public" {
   name        = "zscaler-public"
   description = "Allow public zscaler traffic"
@@ -26,6 +30,8 @@ resource "aws_security_group" "zscaler_public" {
   }
 }
 
+# TODO replace the cdap-private sync with a lookup to the an SSM parameter with the private zscaler IPs
+# TODO set the SSM parameter with private zscaler IPs
 resource "aws_security_group" "zscaler_private" {
   name        = "zscaler-private"
   description = "Allow internet zscaler traffic private"
@@ -44,6 +50,7 @@ resource "aws_security_group" "internet" {
   }
 }
 
+# When we introduce the network firewall, we can remove this in favor of always 443
 resource "aws_vpc_security_group_egress_rule" "internet_http" {
   security_group_id = aws_security_group.internet.id
 
@@ -54,6 +61,7 @@ resource "aws_vpc_security_group_egress_rule" "internet_http" {
   to_port     = 80
 }
 
+# When we introduce the network firewall, we can also scope this down
 resource "aws_vpc_security_group_egress_rule" "internet_https" {
   security_group_id = aws_security_group.internet.id
 
@@ -73,6 +81,7 @@ resource "aws_security_group" "remote_management" {
   }
 }
 
+# TODO remove this as cdap-test and cdap-prod VPCs are permitted via below rule
 resource "aws_vpc_security_group_ingress_rule" "remote_management_allow_all" {
   security_group_id = aws_security_group.remote_management.id
 
