@@ -1,11 +1,5 @@
 locals {
   is_sandbox = contains(["sbx", "sandbox"], var.env)
-  ab2d_env_lbs = {
-    dev  = "ab2d-dev"
-    test = "ab2d-east-impl"
-    sbx  = "ab2d-sbx-sandbox"
-    prod = "api-ab2d-east-prod"
-  }
   load_balancers = {
     ab2d = "ab2d-${var.env}-api"
     bcda = "bcda-api-${var.env}-01"
