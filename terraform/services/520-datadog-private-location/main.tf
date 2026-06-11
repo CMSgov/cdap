@@ -31,7 +31,7 @@ module "cdap_cluster" {
 # Service
 ###
 module "ecs_datadog_synthetics" {
-  source             = "../../../modules/service/"
+  source      = "../../../modules/service/"
   cluster_arn = aws_ecs_cluster.datadog.arn
 
   platform = module.platform
@@ -39,7 +39,7 @@ module "ecs_datadog_synthetics" {
   image            = "datadog/synthetics-private-location-worker:1.68.0"
   cpu              = 512
   memory           = 1024
-  cpu_architecture = "X86_64"  # Datadog worker image is x86 only — do not use ARM64
+  cpu_architecture = "X86_64" # Datadog worker image is x86 only — do not use ARM64
   desired_count    = 1
 
   container_secrets = [
@@ -74,12 +74,19 @@ module "ecs_datadog_synthetics" {
   # No inbound ports needed, Datadog private location is a pull based service
   port_mappings = null
 
-  enable_datadog_agent = false  # Don't run a DD agent sidecar inside the DD agent itself
+  enable_datadog_agent = false # Don't run a DD agent sidecar inside the DD agent itself
 
   deployment_circuit_breaker = {
     enable   = true
-    rollback = true  # Auto-rollback is safe here — no stateful issues
+    rollback = true # Auto-rollback is safe here — no stateful issues
   }
 
-  ignore_desired_count_changes = false  # Currently no autoscaling needed for the PL worker
+  ignore_desired_count_changes = false # Currently no autoscaling needed for the PL worker
+}
+
+resource "aws_ssm_parameter" "private_location_id" {
+  name        = "/cdap/${module.platform.account_env_suffix}/common/nonsensitive/datadog/synthetics_location_id"
+  description = "Datadog synthetics private location ID for CDAP in VPC ${var.env} in account ${module.platform.account_env_suffix}"
+  type        = "String"
+  value       = datadog_synthetics_private_location.cdap.id
 }
