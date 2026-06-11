@@ -69,8 +69,6 @@ locals {
     ]
     secrets = [{ name = "DD_API_KEY", valueFrom = data.aws_ssm_parameter.datadog_api_key.name }]
   }
-
-  container_keys = var.container_secrets != null ? { for secret in var.container_secrets : secret.name => secret } : {}
 }
 
 resource "aws_cloudwatch_log_group" "app" {

@@ -1,5 +1,5 @@
 data "aws_ssm_parameter" "secrets" {
-  for_each = local.container_keys
+  for_each = { for secret in try(var.container_secrets, []) : secret.name => secret if secret != null }
 
   # valueFrom may be a full ARN or a plain path — normalize to path
   name = can(regex("^arn:aws:ssm:", each.value.valueFrom)) ? (
