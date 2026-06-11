@@ -12,7 +12,7 @@ resource "aws_ssm_parameter" "private_location_config" {
   name        = "/cdap/${var.env}/datadog/sensitive/private-location-config"
   description = "Datadog synthetic private location configuration JSON"
   type        = "SecureString"
-  value       = datadog_synthetics_private_location.cdap.config
+  value       = datadog_synthetics_private_location.this.config
 
   tags = {
     Name = "/cdap/${var.env}/datadog/sensitive/private-location-config"
@@ -24,8 +24,9 @@ resource "aws_ssm_parameter" "private_location_config" {
 ##
 module "cdap_cluster" {
   # TODO set commit hash for version
-  source   = "../../modules/cluster"
-  platform = module.standards.platform
+  source                = "../../modules/cluster"
+  platform              = module.platform
+  cluster_name_override = "${module.platform.app}-${module.platform.env}-datadog"
 }
 
 ##
@@ -34,7 +35,7 @@ module "cdap_cluster" {
 module "ecs_datadog_synthetics" {
   # TODO set commit hash for version
   source      = "../../modules/service/"
-  cluster_arn = aws_ecs_cluster.datadog.arn
+  cluster_arn = module.cdap_cluster.this.arn
 
   platform = module.platform
 
@@ -90,5 +91,5 @@ resource "aws_ssm_parameter" "private_location_id" {
   name        = "/cdap/${module.platform.account_env_suffix}/common/nonsensitive/datadog/synthetics-location-id"
   description = "Datadog synthetics private location ID for CDAP in VPC ${var.env} in account ${module.platform.account_env_suffix}"
   type        = "String"
-  value       = datadog_synthetics_private_location.cdap.id
+  value       = datadog_synthetics_private_location.this.id
 }
