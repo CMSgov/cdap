@@ -1,0 +1,9 @@
+vpcs:
+  - ab2d-prod
+  - ab2d-sandbox
+  - bcda-prod
+  - bcda-sandbox
+  - cdap-prod
+  - cdap-sandbox
+  - dpc-prod
+  - dpc-sandbox

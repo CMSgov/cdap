@@ -7,6 +7,45 @@ module "standards" {
   service     = "security-groups"
 }
 
+locals {
+  # Map app env -> cdap env
+  cdap_env = {
+    dev  = "test"
+    test = "test"
+    prod = "prod"
+    sbx  = "prod"
+  }
+}
+
+data "aws_security_group" "datadog_private_location" {
+  filter {
+    name   = "group-name"
+    values = ["cdap-${local.cdap_env[var.env]}-datadog-private-location"]
+  }
+
+  filter {
+    name   = "vpc-id"
+    values = [module.standards.cdap_vpc.id]
+  }
+}
+
+resource "aws_security_group" "datadog_synthetics" {
+  name        = "datadog-synthetics"
+  description = "Allow ingress from Datadog private location synthetic test runner"
+  vpc_id      = module.vpc.id
+
+  tags = {
+    Name = "datadog-synthetics"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "datadog_synthetics" {
+  security_group_id            = aws_security_group.datadog_synthetics.id
+  description                  = "Allow synthetic test traffic from Datadog private location in CDAP ${local.cdap_env[var.env]} VPC"
+  referenced_security_group_id = data.aws_security_group.datadog_private_location.id
+  ip_protocol                  = "-1"
+}
+
 data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
   name = "/cdap/sensitive/mgmt-vpc/cidr"
 }
