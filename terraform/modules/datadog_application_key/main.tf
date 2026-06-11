@@ -5,7 +5,7 @@ locals {
   synthetics_manager       = var.synthetics_manager ? ["synthetics_read", "synthetics_write"] : []
   users_manager            = var.users_manager ? ["user_access_manage", "user_access_read", "teams_manage"] : []
   org_config_manager       = var.org_config_manager ? ["monitor_config_policy_write", "create_webhooks"] : []
-  private_location_manager = var.private_location_manager ? ["synthetics_private_location_write"] : []
+  private_location_manager = var.private_location_manager ? ["synthetics_private_location_write", "synthetics_private_location_read"] : []
 
   application_key_permissions = concat(
     local.api_key_manager,

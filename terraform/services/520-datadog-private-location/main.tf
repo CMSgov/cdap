@@ -13,7 +13,7 @@ resource "aws_ssm_parameter" "private_location_config" {
   description = "Datadog synthetic private location configuration JSON"
   type        = "SecureString"
   value       = datadog_synthetics_private_location.this.config
-
+  tier        = "Intelligent-Tiering"
   tags = {
     Name = "/cdap/${var.env}/datadog/sensitive/private-location-config"
   }
@@ -92,4 +92,5 @@ resource "aws_ssm_parameter" "private_location_id" {
   description = "Datadog synthetics private location ID for CDAP in VPC ${var.env} in account ${module.platform.account_env_suffix}"
   type        = "String"
   value       = datadog_synthetics_private_location.this.id
+  tier        = "Intelligent-Tiering"
 }
