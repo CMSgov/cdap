@@ -63,6 +63,30 @@ module "ecs_datadog_synthetics" {
     }
   ]
 
+  volumes = [
+    { name = "run" },
+    { name = "tmp" },
+    { name = "var-run" },
+  ]
+
+  mount_points = [
+    {
+      sourceVolume  = "run"
+      containerPath = "/run"
+      readOnly      = false
+    },
+    {
+      sourceVolume  = "tmp"
+      containerPath = "/tmp"
+      readOnly      = false
+    },
+    {
+      sourceVolume  = "var-run"
+      containerPath = "/var/run"
+      readOnly      = false
+    }
+  ]
+
   health_check = {
     command     = ["CMD", "/usr/local/bin/synthetics-pl", "healthcheck"]
     interval    = 30
