@@ -1,9 +1,9 @@
 vpcs:
-  - ab2d-test
-  - ab2d-dev
-  - bcda-test
-  - bcda-dev
-  - cdap-test
-  - cdap-dev
-  - dpc-test
-  - dpc-dev
+  - ab2d-east-test
+  - ab2d-east-dev
+  - bcda-east-test
+  - bcda-east-dev
+  - cdap-east-test
+  - cdap-east-dev
+  - dpc-east-test
+  - dpc-east-dev
