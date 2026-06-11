@@ -1,5 +1,5 @@
 data "aws_ssm_parameter" "secrets" {
-  for_each = var.container_secrets != null ? {
+  for_each = toset(keys(var.container_secrets)) != null ? {
     for secret in var.container_secrets : secret.name => secret
   } : {}
 
