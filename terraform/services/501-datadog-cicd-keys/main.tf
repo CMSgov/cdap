@@ -31,6 +31,7 @@ module "datadog_application_key" {
   api_key_manager    = local.resolved_permissions.api_key_manager
   dashboard_manager  = local.resolved_permissions.dashboard_manager
   monitors_manager   = local.resolved_permissions.monitors_manager
+  synthetics_manager = local.resolved_permissions.synthetics_manager
   users_manager      = local.resolved_permissions.users_manager
   org_config_manager = local.resolved_permissions.org_config_manager
 }
