@@ -4,6 +4,5 @@ vpcs:
   - bcda-east-prod
   - bcda-east-sandbox
   - cdap-east-prod
-  - cdap-east-sandbox
   - dpc-east-prod
   - dpc-east-sandbox

@@ -4,6 +4,5 @@ vpcs:
   - bcda-east-test
   - bcda-east-dev
   - cdap-east-test
-  - cdap-east-dev
   - dpc-east-test
   - dpc-east-dev
