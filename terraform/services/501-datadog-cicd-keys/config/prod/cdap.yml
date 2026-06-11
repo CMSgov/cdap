@@ -12,3 +12,4 @@ key_permissions:
   api_key_manager: true
   org_config_manager: true
   users_manager      : true
+  private_location_manager: true

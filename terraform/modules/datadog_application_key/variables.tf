@@ -38,7 +38,6 @@ variable "synthetics_manager" {
   default = false
 }
 
-
 variable "users_manager" {
   description = "Allows for management of users into teams. Currently no use cases."
   type        = bool
@@ -49,3 +48,9 @@ variable "org_config_manager" {
   type    = bool
   default = false
 }
+
+variable "private_location_manager" {
+  type    = bool
+  default = false
+}
+
