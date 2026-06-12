@@ -252,6 +252,12 @@ variable "alb_path_patterns" {
   description = "Path pattern conditions for the ALB listener rule. Required when alb_listener_arn is set."
 }
 
+variable "alb_target_group_protocol" {
+  type        = string
+  default     = "HTTP"
+  description = "Protocol for the ALB target group. Use HTTPS if the container expects TLS traffic."
+}
+
 # reference:  https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size
 variable "memory" {
   description = "Amount (in MiB) of memory used by the task."
