@@ -489,11 +489,13 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # Secrets Manager
   statement {
     actions = [
+      "secretsmanager:CreateSecret",
       "secretsmanager:DeleteResourcePolicy",
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetResourcePolicy",
       "secretsmanager:GetSecretValue",
       "secretsmanager:PutSecretValue",
+      "secretsmanager:PutResourcePolicy",
       "secretsmanager:TagResource",
       "secretsmanager:UntagResource"
     ]
