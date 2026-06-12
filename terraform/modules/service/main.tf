@@ -250,7 +250,7 @@ resource "aws_lb_target_group" "this" {
 
   name        = "${local.service_name_full}-tg"
   port        = local.alb_container_port
-  protocol    = "HTTP"
+  protocol    = var.alb_target_group_protocol
   vpc_id      = var.platform.vpc_id
   target_type = "ip"
 
