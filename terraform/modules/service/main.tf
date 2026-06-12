@@ -180,7 +180,7 @@ resource "aws_ecs_service" "this" {
     for_each = local.enable_alb_integration ? [1] : []
     content {
       target_group_arn = aws_lb_target_group.this[0].arn
-      container_name   = var.service_name != null ? var.service_name : local.service_name
+      container_name   = var.service_name_override != null ? var.service_name_override : local.service_name
       container_port   = local.alb_container_port
     }
   }
