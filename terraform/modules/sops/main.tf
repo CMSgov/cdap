@@ -20,10 +20,10 @@ locals {
   decrypted_parent_data = yamldecode(data.external.decrypted_sops.result.decrypted_sops)
   parent_ssm_config = {
     for key, val in nonsensitive(local.decrypted_parent_data) : key => {
-      str_val      = tostring(val)
+      str_val      = can(tostring(val)) ? tostring(val) : jsonencode(val)
       is_sensitive = length(regexall(local.sopsw_nonsensitive_regex, key)) == 0
       source       = basename(local.sopsw_parent_yaml_file)
-    } if lower(tostring(val)) != "undefined"
+    } if !(can(tostring(val)) && lower(tostring(val)) == "undefined")
   }
 
   ephemeral_yaml_file = "${local.sopsw_values_dir}/ephemeral.yaml"
@@ -38,10 +38,10 @@ locals {
   ephemeral_vals = {
     for key, val in lookup(local.ephemeral_data, "values", {})
     : key => {
-      str_val      = tostring(val)
+      str_val      = can(tostring(val)) ? tostring(val) : jsonencode(val)
       is_sensitive = false
       source       = basename(local.ephemeral_yaml_file)
-    } if lower(tostring(val)) != "undefined"
+    } if !(can(tostring(val)) && lower(tostring(val)) == "undefined")
   }
 
   untemplated_env_config = local.is_ephemeral_env ? merge(
