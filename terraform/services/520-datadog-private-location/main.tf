@@ -2,21 +2,26 @@
 # Datadog Synthetics
 ##
 
-resource "datadog_synthetics_private_location" "this" {
-  name        = "cdap-${module.platform.account_env_suffix}"
-  description = "Private location running in CDAP VPC for synthetic testing"
-  tags        = ["environment:${var.env}", "managed-by:tofu"]
-}
+# resource "datadog_synthetics_private_location" "this" {
+#   name        = "cdap-${module.platform.account_env_suffix}"
+#   description = "Private location running in CDAP VPC for synthetic testing"
+#   tags        = ["environment:${var.env}", "managed-by:tofu"]
+# }
 
-resource "aws_ssm_parameter" "private_location_config" {
-  name        = "/cdap/${var.env}/datadog/sensitive/private-location-config"
-  description = "Datadog synthetic private location configuration JSON"
-  type        = "SecureString"
-  value       = datadog_synthetics_private_location.this.config
-  tier        = "Intelligent-Tiering"
-  tags = {
-    Name = "/cdap/${var.env}/datadog/sensitive/private-location-config"
-  }
+# resource "aws_ssm_parameter" "private_location_config" {
+#   name        = "/cdap/${var.env}/datadog/sensitive/private-location-config"
+#   description = "Datadog synthetic private location configuration JSON"
+#   type        = "SecureString"
+#   value       = datadog_synthetics_private_location.this.config
+#   tier        = "Intelligent-Tiering"
+#   tags = {
+#     Name = "/cdap/${var.env}/datadog/sensitive/private-location-config"
+#   }
+# }
+
+# must be created manually, as creating datadog_synthetics_private_location via Terraform results in sensitive data in tfstate
+data "aws_ssm_parameter" "private_location_config" {
+  name = "/cdap/${var.env}/datadog/sensitive/private-location-config"
 }
 
 ##
@@ -48,7 +53,7 @@ module "ecs_datadog_synthetics" {
   container_secrets = [
     {
       name      = "DD_PRIVATE_LOCATION_CONFIG"
-      valueFrom = aws_ssm_parameter.private_location_config.arn
+      valueFrom = data.aws_ssm_parameter.private_location_config.value
     }
   ]
 
@@ -115,6 +120,6 @@ resource "aws_ssm_parameter" "private_location_id" {
   name        = "/cdap/${module.platform.account_env_suffix}/common/nonsensitive/datadog/synthetics-location-id"
   description = "Datadog synthetics private location ID for CDAP in VPC ${var.env} in account ${module.platform.account_env_suffix}"
   type        = "String"
-  value       = datadog_synthetics_private_location.this.id
+  value       = data.aws_ssm_parameter.private_location_config.id
   tier        = "Intelligent-Tiering"
 }
