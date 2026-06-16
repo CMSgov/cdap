@@ -17,7 +17,7 @@ data "aws_kms_alias" "primary" {
 }
 
 module "sops" {
-  source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=8874310"
+  source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=93820ca"
 
   platform = {
     app               = module.standards.app
