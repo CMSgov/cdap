@@ -148,3 +148,9 @@ output "splunk_logging_bucket" {
   description = "Bucket created by the CMS Hybrid Cloud team where logs are ingested into Splunk"
   value       = data.aws_s3_bucket.logs_to_splunk
 }
+
+output "account_env_suffix" {
+  description = "[\"prod\" or \"non-prod\"] The AWS account shorthand to distinguish environment hierarchy."
+  sensitive   = false
+  value       = (var.env == "prod" || var.env == "sandbox" || var.env == "stage" || var.env == "staging") ? "prod" : "non-prod"
+}

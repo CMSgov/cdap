@@ -1,0 +1,12 @@
+shares:
+  bb:
+    envs:
+     - prod
+     - sandbox
+    principal_ssm_key: "aws_account_id"
+  bfd:
+    envs:
+      - prod
+      - sandbox
+    principal_ssm_key: "aws_account_id"
+    

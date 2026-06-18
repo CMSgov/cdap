@@ -1,5 +1,13 @@
-Creates teams in the DASG APIs Datadog Organization. Membership to the teams can be managed by Administrators. 
-This service demonstrates and code-ifies the integration of BBAPI team to the DASG APIs organization.
+# bb KMS
+
+Sets up a KMS key with alias per ["dev", "test", "sandbox", "prod"] associated with "bb". 
+Makes this KMS key usable with the relevant bb AWS account, based on a SOPs stored parameter with Account ID. 
+
+## Permissions 
+bb AWS accounts will need IAM permissions to access and use this KMS key. 
+
+### RAM Share
+These keys can be used to share resources through SSM or other encrypted exchange, using AWS RAM share.
 
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -11,7 +19,7 @@ This service demonstrates and code-ifies the integration of BBAPI team to the DA
 
 | Name | Version |
 |------|---------|
-| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | ~>4.4 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -20,9 +28,7 @@ This service demonstrates and code-ifies the integration of BBAPI team to the DA
 -->
 ## Requirements
 
-| Name | Version |
-|------|---------|
-| <a name="requirement_datadog"></a> [datadog](#requirement\_datadog) | ~>4.4 |
+No requirements.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -40,7 +46,9 @@ No inputs.
 -->
 ## Modules
 
-No modules.
+| Name | Source | Version |
+|------|--------|---------|
+| <a name="module_standards"></a> [standards](#module\_standards) | ../../modules/standards | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -51,7 +59,8 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [datadog_team.foo](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/team) | resource |
+| [aws_kms_alias.bb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias) | resource |
+| [aws_kms_key.bb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

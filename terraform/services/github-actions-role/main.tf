@@ -1,11 +1,3 @@
-module "standards" {
-  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=0bd3eeae6b03cc8883b7dbdee5f04deb33468260"
-  app         = var.app
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/github-actions-role"
-  service     = "github-actions-role"
-}
-
 locals {
   provider_domain = "token.actions.githubusercontent.com"
   repos = {
@@ -298,7 +290,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "kms:GetKeyRotationStatus",
       "kms:EnableKeyRotation",
       "kms:CreateAlias",
-      "kms:CreateKey"
+      "kms:CreateKey",
+      "kms:TagResource"
     ]
     resources = ["*"]
   }
@@ -312,9 +305,11 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "kms:GenerateDataKeyWithoutPlaintext",
       "kms:DescribeKey",
       "kms:CreateGrant",
-      "kms:ListResourceTags"
+      "kms:ListResourceTags",
+      "kms:PutKeyPolicy"
     ]
     resources = concat(
+      values(data.aws_kms_alias.additional_kms)[*].target_key_arn,
       [data.aws_kms_alias.environment_key.target_key_arn],
       [data.aws_kms_alias.account_env_old.target_key_arn],
       [data.aws_kms_alias.account_env_old_secondary.target_key_arn],
@@ -326,10 +321,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       ) : [],
       var.app == "bcda" ? concat(
         data.aws_kms_alias.bcda_aco_creds[*].target_key_arn,
-        data.aws_kms_alias.bcda_app_config[*].target_key_arn,
-        data.aws_kms_alias.bcda_insights_data_sampler[*].target_key_arn,
+        data.aws_kms_alias.bcda_app_config[*].target_key_arn
       ) : [],
-      var.app == "cdap" ? values(data.aws_kms_alias.all_managed_account_envs)[*].target_key_arn : [],
       var.app == "dpc" ? concat(
         data.aws_kms_alias.dpc_app_config[*].target_key_arn,
         data.aws_kms_alias.dpc_ecr[*].target_key_arn
@@ -493,9 +486,15 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # Secrets Manager
   statement {
     actions = [
+      "secretsmanager:CreateSecret",
+      "secretsmanager:DeleteResourcePolicy",
       "secretsmanager:DescribeSecret",
       "secretsmanager:GetResourcePolicy",
-      "secretsmanager:GetSecretValue"
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:PutSecretValue",
+      "secretsmanager:PutResourcePolicy",
+      "secretsmanager:TagResource",
+      "secretsmanager:UntagResource"
     ]
     resources = ["*"]
   }

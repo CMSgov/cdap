@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "function_assume_role" {
       condition {
         test     = "StringLike"
         variable = "${local.provider_domain}:sub"
-        values   = var.github_actions_repos
+        values   = [for repo in var.github_actions_repos : "repo:CMSgov/${repo}"]
       }
     }
   }
@@ -68,6 +68,10 @@ data "aws_iam_policy_document" "function_assume_role" {
 
 data "aws_caller_identity" "current" {}
 
+data "aws_ssm_parameter" "dd_api_key" {
+  name = "/${local.app}/${local.env}/datadog/agents/api_key"
+}
+
 data "aws_iam_policy_document" "default_function" {
   dynamic "statement" {
     for_each = length(local.ssm_parameter_arns) > 0 ? [1] : []
@@ -77,7 +81,10 @@ data "aws_iam_policy_document" "default_function" {
         "ssm:GetParameter",
         "ssm:GetParameters",
       ]
-      resources = local.ssm_parameter_arns
+      resources = concat(
+        local.ssm_parameter_arns,
+        [data.aws_ssm_parameter.dd_api_key.arn]
+      )
     }
   }
 

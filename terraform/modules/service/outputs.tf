@@ -8,6 +8,11 @@ output "ecs_service_name" {
   value       = aws_ecs_service.this.name
 }
 
+output "full_name_override" {
+  description = "Full name of the ECS service."
+  value       = local.service_name_full
+}
+
 output "ecs_service_id" {
   description = "ID of the ECS service."
   value       = aws_ecs_service.this.id

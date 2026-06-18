@@ -1,0 +1,49 @@
+terraform {
+  required_providers {
+    datadog = {
+      source  = "DataDog/datadog"
+      version = "~>4.4"
+    }
+  }
+
+  backend "s3" {
+    key = "datadog-webhooks/terraform.tfstate"
+  }
+}
+
+provider "datadog" {
+  api_key = sensitive(module.standards.ssm.datadog_cicd.api_key.value)
+  app_key = sensitive(module.standards.ssm.datadog_cicd.application_key.value)
+  api_url = "https://api.ddog-gov.com"
+}
+
+provider "aws" {
+  region = "us-east-1"
+  default_tags {
+    tags = module.standards.default_tags
+  }
+}
+
+provider "aws" {
+  alias  = "secondary"
+  region = "us-west-2"
+  default_tags {
+    tags = module.standards.default_tags
+  }
+}
+
+
+module "standards" {
+  source    = "../../modules/standards"
+  providers = { aws = aws, aws.secondary = aws.secondary }
+
+  app         = "cdap"
+  env         = "prod"
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
+  service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
+  ssm_root_map = {
+    datadog_cicd               = "/cdap/prod/datadog/cicd/"
+    datadog_slack_webhooks     = "/cdap/prod/datadog/slack_webhook_urls/"
+    datadog_victorops_webhooks = "/cdap/prod/datadog/victorops_webhook_urls/"
+  }
+}

@@ -5,7 +5,7 @@ output "function_name" {
 
 output "function_arn" {
   description = "ARN of the test Lambda function"
-  value       = module.tftesting_function.alias_arn
+  value       = module.tftesting_function.function_arn
 }
 
 output "function_version" {

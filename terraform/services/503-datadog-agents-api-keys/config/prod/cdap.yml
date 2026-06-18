@@ -1,0 +1,9 @@
+cross_account_shares:
+  bb:
+    env_labels:
+      - prod
+      - sandbox
+  bfd:
+    env_labels:
+      - prod
+      - sandbox

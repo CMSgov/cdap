@@ -10,7 +10,6 @@ logger.setLevel(logging.INFO)
 
 ssm = boto3.client("ssm")
 
-
 def function_handler(event, context):
     logger.info("Received event: %s", json.dumps(event))
 
@@ -19,8 +18,35 @@ def function_handler(event, context):
     if request_type == "LivenessCheck":
         return _liveness_check()
 
+    if os.environ.get("DD_SERVICE") is not None:
+        _run_datadog_test()
+
     logger.warning("Unknown RequestType: %s", request_type)
     return {"status": "ok", "event": event}
+
+
+def _run_datadog_test():
+    from ddtrace import tracer
+    from datadog_lambda.metric import lambda_metric
+
+    try:
+        # DATADOG TEST: add custom tags to the lambda function span
+        current_span = tracer.current_span()
+        if current_span:
+            current_span.set_tag("cdap_test.id", "123456")
+
+        # Submit custom span
+        with tracer.trace("cdap_test.span_test"):
+            print("CDAP Lambda test span.")
+
+        # Submit custom metric
+        lambda_metric(
+            metric_name="cdap_test.metric_value_test",
+            value=12.45,
+            tags=["product:latte", "order:online"],
+        )
+    except Exception:
+        logger.warning("Datadog test skipped due to runtime error", exc_info=True)
 
 
 def _liveness_check():

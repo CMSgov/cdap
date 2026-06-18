@@ -1,6 +1,6 @@
 locals {
   service_name      = coalesce(var.service_name_override, var.platform.service)
-  service_name_full = "${var.platform.app}-${var.platform.env}-${var.platform.service}"
+  service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
 
   # Build a name → containerPort lookup from port_mappings
   port_map = {
@@ -31,11 +31,21 @@ locals {
     portMappings           = var.port_mappings
     mountPoints            = var.mount_points
     secrets                = var.container_secrets
-    environment            = var.container_environment
+    environment = concat(
+      var.container_environment,
+      [
+        { name = "DD_ENV", value = var.platform.env },
+        { name = "DD_SERVICE", value = var.platform.app },
+      ],
+      var.enable_datadog_agent ? [
+        { name = "DD_AGENT_HOST", value = "localhost" },
+        { name = "DD_TRACE_AGENT_PORT", value = "8126" },
+      ] : []
+    )
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+        awslogs-group         = aws_cloudwatch_log_group.app.name
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
       }
@@ -44,13 +54,50 @@ locals {
   }
 
   datadog_container = {
-    name      = "datadog-agent"
-    image     = "public.ecr.aws/datadog/agent:7.50.0"
-    essential = false # Do not impact task health if this container fails
+    name                   = "datadog-agent"
+    image                  = "public.ecr.aws/datadog/agent:7.50.0"
+    essential              = false # Do not impact task health if this container fails
+    readonlyRootFilesystem = true
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.datadog[0].name
+        awslogs-region        = var.platform.primary_region.name
+        awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
+      }
+    }
+
+    mountPoints = [
+      {
+        sourceVolume  = "datadog-run"
+        containerPath = "/var/run/datadog"
+        readOnly      = false
+      },
+      {
+        sourceVolume  = "datadog-tmp"
+        containerPath = "/tmp"
+        readOnly      = false
+      },
+      {
+        sourceVolume  = "datadog-etc"
+        containerPath = "/etc/datadog-agent"
+        readOnly      = false
+      },
+      {
+        sourceVolume  = "datadog-confd"
+        containerPath = "/etc/datadog-agent/conf.d"
+        readOnly      = false
+      }
+    ]
+
     environment = [
       { name = "ECS_FARGATE", value = "true" },
+      { name = "DD_ENV", value = var.platform.env },
+      { name = "DD_TAGS", value = "environment:${var.platform.env},application:${var.platform.app}" },
       { name = "DD_SITE", value = "ddog-gov.com" },
       { name = "DD_APM_ENABLED", value = "true" },
+      { name = "DD_APM_NON_LOCAL_TRAFFIC", value = "true" },
       { name = "DD_LOGS_ENABLED", value = "false" }, # DD logging is currently not approved
       { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" }
     ]
@@ -71,6 +118,17 @@ resource "aws_cloudwatch_log_group" "app" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "datadog" {
+  count             = var.enable_datadog_agent ? 1 : 0
+  name              = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
+  retention_in_days = var.log_retention_days
+  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
+
+  tags = {
+    Name = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
+  }
+}
+
 resource "aws_ecs_task_definition" "this" {
   family                   = local.service_name_full
   network_mode             = "awsvpc"
@@ -81,11 +139,28 @@ resource "aws_ecs_task_definition" "this" {
   memory                   = var.memory
 
   # Concat the main container with the datadog container
-  container_definitions = nonsensitive(jsonencode(concat([local.app_container], [local.datadog_container])))
+  container_definitions = nonsensitive(jsonencode(
+    concat(
+      [local.app_container],
+      var.enable_datadog_agent ? [local.datadog_container] : []
+    )
+  ))
 
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = var.cpu_architecture
+  }
+
+  dynamic "volume" {
+    for_each = var.enable_datadog_agent ? [
+      "datadog-run",
+      "datadog-tmp",
+      "datadog-etc",
+      "datadog-confd"
+    ] : []
+    content {
+      name = volume.value
+    }
   }
 
   dynamic "volume" {
@@ -162,7 +237,7 @@ resource "aws_ecs_service" "this" {
     for_each = local.enable_alb_integration ? [1] : []
     content {
       target_group_arn = aws_lb_target_group.this[0].arn
-      container_name   = var.service_name != null ? var.service_name : local.service_name
+      container_name   = var.service_name_override != null ? var.service_name_override : local.service_name
       container_port   = local.alb_container_port
     }
   }
@@ -208,6 +283,8 @@ resource "aws_ecs_service" "this" {
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 
   depends_on = [
+    aws_cloudwatch_log_group.app,
+    aws_cloudwatch_log_group.datadog,
     aws_lb_listener_rule.this,
     aws_iam_role_policy_attachment.service_connect,
     aws_iam_role.service_connect
@@ -232,7 +309,7 @@ resource "aws_lb_target_group" "this" {
 
   name        = "${local.service_name_full}-tg"
   port        = local.alb_container_port
-  protocol    = "HTTP"
+  protocol    = var.alb_target_group_protocol
   vpc_id      = var.platform.vpc_id
   target_type = "ip"
 
