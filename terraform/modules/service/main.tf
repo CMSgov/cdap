@@ -45,7 +45,7 @@ locals {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+        awslogs-group         = aws_cloudwatch_log_group.app.name
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
       }
@@ -54,9 +54,43 @@ locals {
   }
 
   datadog_container = {
-    name      = "datadog-agent"
-    image     = "public.ecr.aws/datadog/agent:7.50.0"
-    essential = false # Do not impact task health if this container fails
+    name                   = "datadog-agent"
+    image                  = "public.ecr.aws/datadog/agent:7.50.0"
+    essential              = false # Do not impact task health if this container fails
+    readonlyRootFilesystem = true
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.datadog[0].name
+        awslogs-region        = var.platform.primary_region.name
+        awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
+      }
+    }
+
+    mountPoints = [
+      {
+        sourceVolume  = "datadog-run"
+        containerPath = "/var/run/datadog"
+        readOnly      = false
+      },
+      {
+        sourceVolume  = "datadog-tmp"
+        containerPath = "/tmp"
+        readOnly      = false
+      },
+      {
+        sourceVolume  = "datadog-etc"
+        containerPath = "/etc/datadog-agent"
+        readOnly      = false
+      },
+      {
+        sourceVolume  = "datadog-confd"
+        containerPath = "/etc/datadog-agent/conf.d"
+        readOnly      = false
+      }
+    ]
+
     environment = [
       { name = "ECS_FARGATE", value = "true" },
       { name = "DD_ENV", value = var.platform.env },
@@ -84,6 +118,17 @@ resource "aws_cloudwatch_log_group" "app" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "datadog" {
+  count             = var.enable_datadog_agent ? 1 : 0
+  name              = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
+  retention_in_days = var.log_retention_days
+  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
+
+  tags = {
+    Name = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
+  }
+}
+
 resource "aws_ecs_task_definition" "this" {
   family                   = local.service_name_full
   network_mode             = "awsvpc"
@@ -104,6 +149,18 @@ resource "aws_ecs_task_definition" "this" {
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = var.cpu_architecture
+  }
+
+  dynamic "volume" {
+    for_each = var.enable_datadog_agent ? [
+      "datadog-run",
+      "datadog-tmp",
+      "datadog-etc",
+      "datadog-confd"
+    ] : []
+    content {
+      name = volume.value
+    }
   }
 
   dynamic "volume" {
@@ -226,6 +283,8 @@ resource "aws_ecs_service" "this" {
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 
   depends_on = [
+    aws_cloudwatch_log_group.app,
+    aws_cloudwatch_log_group.datadog,
     aws_lb_listener_rule.this,
     aws_iam_role_policy_attachment.service_connect,
     aws_iam_role.service_connect
