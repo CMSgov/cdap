@@ -35,7 +35,7 @@ variable "synthetics_manager" {
   description = "Allows for creation and deletion of synthetics. All subscriber repos can use."
 
   type    = bool
-  default = false
+  default = true
 }
 
 variable "users_manager" {
