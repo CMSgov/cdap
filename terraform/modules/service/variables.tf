@@ -392,3 +392,9 @@ variable "enable_datadog_agent" {
   type        = bool
   default     = true
 }
+
+variable "readonly_root_filesystem" {
+  description = "Whether to set the container root filesystem as read-only. ONLY set to false for containers that require write access (e.g., Datadog Private Location worker)."
+  type        = bool
+  default     = true
+}

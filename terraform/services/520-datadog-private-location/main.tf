@@ -1,30 +1,4 @@
 ##
-# Datadog Synthetics
-##
-
-# resource "datadog_synthetics_private_location" "this" {
-#   name        = "cdap-${module.platform.account_env_suffix}"
-#   description = "Private location running in CDAP VPC for synthetic testing"
-#   tags        = ["environment:${var.env}", "managed-by:tofu"]
-# }
-
-# resource "aws_ssm_parameter" "private_location_config" {
-#   name        = "/cdap/${var.env}/datadog/sensitive/private-location-config"
-#   description = "Datadog synthetic private location configuration JSON"
-#   type        = "SecureString"
-#   value       = datadog_synthetics_private_location.this.config
-#   tier        = "Intelligent-Tiering"
-#   tags = {
-#     Name = "/cdap/${var.env}/datadog/sensitive/private-location-config"
-#   }
-# }
-
-# must be created manually, as creating datadog_synthetics_private_location via Terraform results in sensitive data in tfstate
-data "aws_ssm_parameter" "private_location_config" {
-  name = "/cdap/${var.env}/datadog/sensitive/private-location-config"
-}
-
-##
 # Cluster
 ##
 module "cdap_cluster" {
@@ -39,8 +13,10 @@ module "cdap_cluster" {
 ###
 module "ecs_datadog_synthetics" {
   # TODO set commit hash for version
-  source      = "../../modules/service/"
-  cluster_arn = module.cdap_cluster.this.arn
+  source = "../../modules/service"
+  #source                   = "github.com/CMSgov/cdap//terraform/modules/service?ref=49d3147bdcfd0cb3847bfccc6a883d33d017be3d"
+  cluster_arn              = module.cdap_cluster.this.arn
+  readonly_root_filesystem = false # Write permission required by Datadog private location worker
 
   platform = module.platform
 
@@ -52,53 +28,51 @@ module "ecs_datadog_synthetics" {
 
   container_secrets = [
     {
-      name      = "DD_PRIVATE_LOCATION_CONFIG"
-      valueFrom = data.aws_ssm_parameter.private_location_config.value
+      name      = "DATADOG_ACCESS_KEY",
+      valueFrom = module.platform.ssm.dd_private_location.access_key.arn
+    },
+    {
+      name      = "DATADOG_API_KEY",
+      valueFrom = module.platform.ssm.datadog.api_key.arn
+    },
+    {
+      name      = "DATADOG_PUBLIC_KEY_PEM",
+      valueFrom = module.platform.ssm.dd_private_location.pem.arn
+    },
+    {
+      name      = "DATADOG_PRIVATE_KEY",
+      valueFrom = module.platform.ssm.dd_private_location.private_key.arn
+    },
+    {
+      name      = "DATADOG_SECRET_ACCESS_KEY",
+      valueFrom = module.platform.ssm.dd_private_location.secret_access_key.arn
+    },
+    {
+      name      = "DATADOG_SITE",
+      valueFrom = module.platform.ssm.dd_private_location.site.arn
     }
   ]
 
   container_environment = [
     {
-      name  = "DD_SITE"
-      value = "ddog-gov.com"
-    },
-    {
       name  = "LOG_LEVEL"
       value = "info"
-    }
-  ]
-
-  volumes = [
-    { name = "run" },
-    { name = "tmp" },
-    { name = "var-run" },
-  ]
-
-  mount_points = [
-    {
-      sourceVolume  = "run"
-      containerPath = "/run"
-      readOnly      = false
     },
     {
-      sourceVolume  = "tmp"
-      containerPath = "/tmp"
-      readOnly      = false
-    },
-    {
-      sourceVolume  = "var-run"
-      containerPath = "/var/run"
-      readOnly      = false
+      name  = "DATADOG_WORKER_ENABLE_STATUS_PROBES"
+      value = "true"
     }
+
   ]
 
   health_check = {
-    command     = ["CMD", "/usr/local/bin/synthetics-pl", "healthcheck"]
+    command     = ["CMD", "wget", "-O", "/dev/null", "-q", "http://localhost:8080/liveness"]
     interval    = 30
     retries     = 3
     startPeriod = 60
     timeout     = 5
   }
+
 
   # No ALB needed as this service makes outbound calls only
   alb_listener_arn = null
@@ -116,10 +90,36 @@ module "ecs_datadog_synthetics" {
   ignore_desired_count_changes = false # Currently no autoscaling needed for the PL worker
 }
 
-resource "aws_ssm_parameter" "private_location_id" {
-  name        = "/cdap/${module.platform.account_env_suffix}/common/nonsensitive/datadog/synthetics-location-id"
-  description = "Datadog synthetics private location ID for CDAP in VPC ${var.env} in account ${module.platform.account_env_suffix}"
-  type        = "String"
-  value       = data.aws_ssm_parameter.private_location_config.id
-  tier        = "Intelligent-Tiering"
+##
+# Datadog Synthetics Test
+##
+resource "datadog_synthetics_test" "cdap_test_private_location_connectivity" {
+  type      = "api"
+  subtype   = "tcp"
+  name      = "cdap-${module.platform.env}-private-location-connectivity"
+  message   = ""
+  status    = "live"
+  tags      = ["environment:${module.platform.env}", "app:cdap", "managed-by:tofu"]
+  locations = [module.platform.ssm.dd_private_location.id.value]
+  request_definition {
+    host = "api.ddog-gov.com"
+    port = 443
+  }
+  options_list {
+    tick_every          = 60
+    min_location_failed = 1
+    retry {
+      count    = 1
+      interval = 300
+    }
+    monitor_options {
+      notification_preset_name = "show_all"
+    }
+  }
+
+  assertion {
+    type     = "responseTime"
+    operator = "lessThan"
+    target   = "2000"
+  }
 }

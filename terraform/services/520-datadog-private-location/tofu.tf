@@ -42,6 +42,7 @@ module "platform" {
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
   service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
   ssm_root_map = {
-    datadog = "/cdap/${var.env}/datadog/cicd/"
+    datadog             = "/cdap/${var.env}/datadog/cicd/",
+    dd_private_location = "/cdap/${var.env}/datadog/sensitive/private-location-config/"
   }
 }
