@@ -21,7 +21,7 @@ resource "datadog_synthetics_test" "private_location_connectivity" {
 
   request_definition {
     host = "api.ddog-gov.com" # arbitrary selection that validates connectivity to Datadog simultaneously
-    port = "443"
+    port = 443
   }
 
   assertion {
