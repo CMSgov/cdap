@@ -29,7 +29,7 @@ module "ecs_datadog_synthetics" {
   container_secrets = [
     {
       name      = "DATADOG_ACCESS_KEY",
-      valueFrom = module.platform.ssm.dd_private_location.access_key.arn
+      valueFrom = module.platform.ssm.dd_pl_sensitive.private_location_config_access_key.arn
     },
     {
       name      = "DATADOG_API_KEY",
@@ -37,19 +37,19 @@ module "ecs_datadog_synthetics" {
     },
     {
       name      = "DATADOG_PUBLIC_KEY_PEM",
-      valueFrom = module.platform.ssm.dd_private_location.pem.arn
+      valueFrom = module.platform.ssm.dd_pl_sensitive.private_location_config_public_key_pem.arn
     },
     {
       name      = "DATADOG_PRIVATE_KEY",
-      valueFrom = module.platform.ssm.dd_private_location.private_key.arn
+      valueFrom = module.platform.ssm.dd_pl_sensitive.private_location_config_private_key.arn
     },
     {
       name      = "DATADOG_SECRET_ACCESS_KEY",
-      valueFrom = module.platform.ssm.dd_private_location.secret_access_key.arn
+      valueFrom = module.platform.ssm.dd_pl_sensitive.private_location_config_secret_access_key.arn
     },
     {
       name      = "DATADOG_SITE",
-      valueFrom = module.platform.ssm.dd_private_location.site.arn
+      valueFrom = module.platform.ssm.dd_pl_nonsensitive.private_location_config_site.arn
     }
   ]
 
@@ -100,7 +100,7 @@ resource "datadog_synthetics_test" "cdap_test_private_location_connectivity" {
   message   = ""
   status    = "live"
   tags      = ["environment:${module.platform.env}", "app:cdap", "managed-by:tofu"]
-  locations = [module.platform.ssm.dd_private_location.id.value]
+  locations = [module.platform.ssm.dd_pl_nonsensitive.private_location_config_id.value]
   request_definition {
     host = "api.ddog-gov.com"
     port = 443
