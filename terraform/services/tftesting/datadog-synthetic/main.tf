@@ -1,12 +1,5 @@
 locals {
-  cdap_env = {
-    dev     = "non-prod"
-    test    = "non-prod"
-    prod    = "prod"
-    sandbox = "prod"
-  }
-
-  private_location_ssm_path = "/cdap/${local.cdap_env[module.platform.env]}/common/nonsensitive/datadog/synthetics-location-id"
+  private_location_ssm_path = "/cdap/${module.platform.env}/datadog/nonsensitive/private_location_config_id"
 }
 
 data "aws_ssm_parameter" "private_location_id" {
