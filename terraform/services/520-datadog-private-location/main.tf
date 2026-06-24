@@ -89,37 +89,3 @@ module "ecs_datadog_synthetics" {
 
   ignore_desired_count_changes = false # Currently no autoscaling needed for the PL worker
 }
-
-##
-# Datadog Synthetics Test
-##
-resource "datadog_synthetics_test" "cdap_test_private_location_connectivity" {
-  type      = "api"
-  subtype   = "tcp"
-  name      = "cdap-${module.platform.env}-private-location-connectivity"
-  message   = ""
-  status    = "live"
-  tags      = ["environment:${module.platform.env}", "app:cdap", "managed-by:tofu"]
-  locations = [module.platform.ssm.dd_pl_nonsensitive.private_location_config_id.value]
-  request_definition {
-    host = "api.ddog-gov.com"
-    port = 443
-  }
-  options_list {
-    tick_every          = 60
-    min_location_failed = 1
-    retry {
-      count    = 1
-      interval = 300
-    }
-    monitor_options {
-      notification_preset_name = "show_all"
-    }
-  }
-
-  assertion {
-    type     = "responseTime"
-    operator = "lessThan"
-    target   = "2000"
-  }
-}
