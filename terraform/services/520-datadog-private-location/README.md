@@ -15,7 +15,6 @@ The PL uses outbound traffic only for communicating with Datadog and running syn
 | Name | Version |
 | ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
-| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | 4.12.1 |
 
 ## Modules
 
@@ -30,7 +29,6 @@ The PL uses outbound traffic only for communicating with Datadog and running syn
 | Name | Type |
 | ---- | ---- |
 | [aws_vpc_security_group_egress_rule.private_location_app_vpcs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [datadog_synthetics_test.cdap_test_private_location_connectivity](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/synthetics_test) | resource |
 | [aws_vpc.app](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc) | data source |
 
 ## Inputs
