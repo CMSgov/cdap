@@ -7,7 +7,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "datadog-synthetics/terraform.tfstate"
+    key = "520-datadog-private-location/terraform.tfstate"
   }
 }
 
