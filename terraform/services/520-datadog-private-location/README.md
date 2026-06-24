@@ -1,5 +1,5 @@
 Establishes a Datadog private location (synthetics test runner) within CDAP's VPCs.
-Teams can point their synthetics tests at this PL via its ID parameter in SSM: /cdap/${env}/datadog/sensitive/private-location-config/id
+Teams can point their synthetics tests at this PL via its ID parameter in SSM: /cdap/${env}/datadog/nonsensitive/private_location_config_id
 This service's security groups allow outbound traffic from the PL worker to API teams' app VPCs.
 The PL uses outbound traffic only for communicating with Datadog and running synthetics tests.
 
