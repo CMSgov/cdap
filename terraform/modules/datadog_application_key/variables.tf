@@ -50,7 +50,8 @@ variable "org_config_manager" {
 }
 
 variable "private_location_manager" {
-  type    = bool
-  default = false
+  description = "Allows creation and management of Synthetics Private Locations. Intended for CDAP-managed infrastructure only."
+  type        = bool
+  default     = false
 }
 
