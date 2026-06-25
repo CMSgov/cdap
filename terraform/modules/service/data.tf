@@ -1,6 +1,6 @@
 data "aws_ssm_parameter" "secrets" {
   for_each = nonsensitive({
-    for index, secret in try(var.container_secrets, []) :
+    for index, secret in coalesce(var.container_secrets, []) :
     tostring(index) => secret
     if secret != null
   })
