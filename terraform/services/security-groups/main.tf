@@ -10,10 +10,12 @@ module "standards" {
 locals {
   # Map app env -> cdap env
   cdap_env = {
-    dev  = "test"
-    test = "test"
-    prod = "prod"
-    sbx  = "prod"
+    dev     = "test"
+    test    = "test"
+    prod    = "prod"
+    sbx     = "prod"
+    sandbox = "prod"
+    mgmt    = "prod"
   }
 }
 
