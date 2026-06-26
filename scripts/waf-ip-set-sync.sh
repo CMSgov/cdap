@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# TODO Remove this logic as AB2D is managing their own list of allowed_ips associated with customers
 set -euo pipefail
 
 echo "Generating IP set"
