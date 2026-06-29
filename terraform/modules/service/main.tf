@@ -27,7 +27,7 @@ locals {
   app_container = {
     name                   = local.service_name
     image                  = var.image
-    readonlyRootFilesystem = true
+    readonlyRootFilesystem = var.readonly_root_filesystem
     portMappings           = var.port_mappings
     mountPoints            = var.mount_points
     secrets                = var.container_secrets
@@ -62,7 +62,7 @@ locals {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = aws_cloudwatch_log_group.datadog[0].name
+        awslogs-group         = var.enable_datadog_agent ? aws_cloudwatch_log_group.datadog[0].name : ""
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
       }
