@@ -49,7 +49,7 @@ module "ecs_datadog_synthetics" {
     },
     {
       name      = "DATADOG_SITE",
-      valueFrom = module.platform.ssm.dd_pl_nonsensitive.private_location_config_site.arn
+      valueFrom = module.platform.ssm.dd_common.site.arn
     }
   ]
 

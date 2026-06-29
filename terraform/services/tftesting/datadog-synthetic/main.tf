@@ -1,10 +1,4 @@
-locals {
-  private_location_ssm_path = "/cdap/${module.platform.env}/datadog/nonsensitive/private_location_config_id"
-}
-
-data "aws_ssm_parameter" "private_location_id" {
-  name = local.private_location_ssm_path
-}
+data "datadog_synthetics_locations" "test" {}
 
 resource "datadog_synthetics_test" "private_location_connectivity" {
   name    = "cdap-test-private-location-connectivity"
@@ -23,7 +17,13 @@ resource "datadog_synthetics_test" "private_location_connectivity" {
     target   = "2000"
   }
 
-  locations = [data.aws_ssm_parameter.private_location_id.value]
+  locations = [
+    one([
+      for location_id, location in data.datadog_synthetics_locations.test.locations :
+      location_id
+      if startswith(lower(location), "cdap-non-prod") # for prod: "cdap-prod"
+    ])
+  ]
 
   options_list {
     tick_every = 60

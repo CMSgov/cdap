@@ -14,7 +14,7 @@ The PL uses outbound traffic only for communicating with Datadog and running syn
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.50.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.52.0 |
 
 ## Modules
 
