@@ -50,7 +50,7 @@ variable "org_config_manager" {
 }
 
 variable "private_location_manager" {
-  description = "Allows creation and management of Synthetics Private Locations. Intended for CDAP-managed infrastructure only."
+  description = "Allows creation and management of Synthetics Private Locations. Intended for infrastructure managers (e.g. CDAP, BB, BFD) on per-AWS account basis."
   type        = bool
   default     = false
 }
