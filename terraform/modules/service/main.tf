@@ -36,6 +36,7 @@ locals {
       [
         { name = "DD_ENV", value = var.platform.env },
         { name = "DD_SERVICE", value = local.service_name },
+        { name = "DD_TAGS", value = "environment:${var.platform.env}, application:${var.platform.app}", "service:${local.service_name}" }
       ],
       var.enable_datadog_agent ? [
         { name = "DD_AGENT_HOST", value = "localhost" },
