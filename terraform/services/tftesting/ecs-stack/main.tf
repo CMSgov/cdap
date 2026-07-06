@@ -318,6 +318,91 @@ resource "aws_lb_target_group" "legacy_test" {
   }
 }
 
+##
+# APM Testing
+##
+
+module "service_apm" {
+  enable_datadog_agent   = true
+  log_retention_days     = 1
+  source                 = "../../../modules/service/"
+  enable_execute_command = true
+
+  # No readonly, no nginx volumes needed
+  mount_points = []
+  volumes      = []
+
+  cluster_arn = aws_ecs_cluster.test.arn
+  image       = "public.ecr.aws/docker/library/python:3.11-slim"
+  cpu         = 256
+  memory      = 512
+
+  command = [
+    "/bin/sh", "-c",
+    "pip install -q ddtrace flask && cat > /app.py << 'EOF'\nfrom flask import Flask\napp = Flask(__name__)\n\n@app.route('/')\ndef index():\n    return 'APM Test OK', 200\n\n@app.route('/health')\ndef health():\n    return 'OK', 200\nEOF\nddtrace-run python app.py"
+  ]
+
+  port_mappings = [
+    {
+      name          = "http"
+      containerPort = 8080
+      protocol      = "tcp"
+      appProtocol   = "http"
+    }
+  ]
+
+  service_connect_port_name = "http"
+
+  health_check = {
+    command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+    interval    = 30
+    retries     = 3
+    startPeriod = 60
+    timeout     = 5
+  }
+
+  desired_count        = 1
+  force_new_deployment = true
+
+  container_environment = [
+    { name = "DD_SERVICE", value = "tftesting-apm" },
+    { name = "DD_ENV", value = "dev" },
+    { name = "DD_VERSION", value = "1.0.0" },
+    { name = "DD_APM_ENABLED", value = "true" },
+    { name = "DD_LOGS_INJECTION", value = "true" },
+    { name = "FLASK_RUN_HOST", value = "0.0.0.0" },
+    { name = "FLASK_RUN_PORT", value = "8080" }
+  ]
+
+  container_secrets = []
+
+  # Still on the same namespace so service_a can reach it via service connect
+  enable_ecs_service_connect = true
+  service_connect_namespace  = aws_service_discovery_http_namespace.test
+
+  deployment_circuit_breaker = {
+    enable   = true
+    rollback = true
+  }
+
+  platform = {
+    app     = module.platform.app
+    env     = module.platform.env
+    service = "tftesting-apm" # ← Different service name, no conflict
+
+    kms_alias_primary = {
+      target_key_arn = module.platform.kms_alias_primary.target_key_arn
+    }
+    primary_region = {
+      name = module.platform.primary_region.name
+    }
+    private_subnets = module.platform.private_subnets
+    vpc_id          = module.platform.vpc_id
+    account_id      = module.platform.aws_caller_identity.account_id
+  }
+}
+
+
 # -------------------------------------------------------
 # Backwards compatibility test — uses load_balancers, not alb_listener_arn
 # -------------------------------------------------------

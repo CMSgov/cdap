@@ -100,6 +100,12 @@ variable "enable_execute_command" {
   description = "Used only for testing. Requires task role to have ssm Permissions for ECS Exec."
 }
 
+variable "command" {
+  description = "Only for testing. Using will cause SecHub alert. Override the default command for the container"
+  type        = list(string)
+  default     = null
+}
+
 # -------------------------------------------------------
 # ECS Task (optional)
 # -------------------------------------------------------
@@ -393,14 +399,3 @@ variable "enable_datadog_agent" {
   default     = true
 }
 
-variable "enable_datadog_synthetics_ingress" {
-  description = "Whether to include the security group ingress rule allowing traffic from the CDAP Datadog private location synthetic test runner."
-  type        = bool
-  default     = false
-}
-
-variable "readonly_root_filesystem" {
-  description = "Whether to set the container root filesystem as read-only. ONLY set to false for containers that require write access (e.g., Datadog Private Location worker)."
-  type        = bool
-  default     = true
-}
