@@ -36,11 +36,14 @@ locals {
       [
         { name = "DD_ENV", value = var.platform.env },
         { name = "DD_SERVICE", value = local.service_name },
-        { name = "DD_TAGS", value = "environment:${var.platform.env}, application:${var.platform.app}, service:${local.service_name}" }
+        { name = "DD_TAGS", value = "environment:${var.platform.env}, application:${var.platform.app}, service:${local.service_name}" },
+        { name = "DD_VERSION", value = var.dd_version }
       ],
       var.enable_datadog_agent ? [
         { name = "DD_AGENT_HOST", value = "localhost" },
-        { name = "DD_TRACE_AGENT_PORT", value = "8126" },
+        { name = "DD_APM_ENABLED", value = "true" },
+        { name = "DD_DOGSTATSD_PORT", value = "8125" },   # Default
+        { name = "DD_TRACE_AGENT_PORT", value = "8126" }, # Default
       ] : []
     )
     logConfiguration = {
@@ -94,14 +97,20 @@ locals {
 
     environment = [
       { name = "ECS_FARGATE", value = "true" },
-      { name = "DD_ENV", value = var.platform.env },
-      { name = "DD_TAGS", value = "environment:${var.platform.env}, application:${var.platform.app}, service:${local.service_name}" },
-      { name = "DD_SITE", value = "ddog-gov.com" },
       { name = "DD_APM_ENABLED", value = "true" },
-      { name = "DD_APM_TELEMETRY_ENABLED", value = "false" },
       { name = "DD_APM_NON_LOCAL_TRAFFIC", value = "true" },
+      { name = "DD_APM_RECEIVER_PORT", value = "8126" },
+      { name = "DD_APM_TELEMETRY_ENABLED", value = "false" },
+      { name = "DD_DOGSTATSD_NON_LOCAL_TRAFFIC", value = "true" },
+      { name = "DD_DOGSTATSD_PORT", value = "8125" }, # Default
+      { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" },
+      { name = "DD_ENV", value = var.platform.env },
       { name = "DD_LOGS_ENABLED", value = "false" }, # DD logging is currently not approved
-      { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" }
+      { name = "DD_PROCESS_AGENT_ENABLED", value = "true" },
+      { name = "DD_SERVICE", value = local.service_name },
+      { name = "DD_SITE", value = "ddog-gov.com" },
+      { name = "DD_TAGS", value = "environment:${var.platform.env}, application:${var.platform.app}, service:${local.service_name}" },
+      { name = "DD_VERSION", value = var.dd_version }
     ]
     secrets = [{ name = "DD_API_KEY", valueFrom = data.aws_ssm_parameter.datadog_api_key.name }]
   }

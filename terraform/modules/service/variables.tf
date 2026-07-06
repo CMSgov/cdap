@@ -399,3 +399,8 @@ variable "enable_datadog_agent" {
   default     = true
 }
 
+variable "dd_version" {
+  description = "Version of the application reported to Datadog APM"
+  type        = string
+  default     = "1.0.0"
+}
