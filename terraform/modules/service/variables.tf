@@ -101,7 +101,7 @@ variable "enable_execute_command" {
 }
 
 variable "command" {
-  description = "Only for testing. Using will cause SecHub alert. Override the default command for the container"
+  description = "Only for testing. Setting this will trigger a SecurityHub alert. Overrides the default container command."
   type        = list(string)
   default     = null
 }
