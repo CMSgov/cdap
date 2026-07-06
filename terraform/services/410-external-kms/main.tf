@@ -108,7 +108,10 @@ resource "aws_secretsmanager_secret_policy" "kms_key_arn" {
         Principal = {
           AWS = data.aws_ssm_parameter.principal[each.value.principal_ssm_path].value
         }
-        Action   = "secretsmanager:GetSecretValue"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
         Resource = "*"
       }
     ]
