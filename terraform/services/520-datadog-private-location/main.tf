@@ -89,3 +89,10 @@ module "ecs_datadog_synthetics" {
 
   ignore_desired_count_changes = false # Currently no autoscaling needed for the PL worker
 }
+
+resource "aws_ssm_parameter" "task_security_group_id" {
+  name        = "/cdap/${var.env}/datadog-private-location/task-security-group-id"
+  value       = module.ecs_datadog_synthetics.task_security_group_id
+  type        = "String"
+  description = "Security group ID for the Datadog private location ECS task"
+}

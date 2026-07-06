@@ -216,6 +216,14 @@ resource "aws_vpc_security_group_egress_rule" "https" {
   description       = "Allow HTTPS outbound (ECR, CloudWatch, SSM)"
 }
 
+resource "aws_vpc_security_group_ingress_rule" "datadog_synthetics" {
+  count                        = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
+  security_group_id            = aws_security_group.task[0].id
+  referenced_security_group_id = data.aws_ssm_parameter.datadog_private_location_sg[0].value
+  ip_protocol                  = "-1"
+  description                  = "Allow all traffic from Datadog private location synthetic test runner"
+}
+
 resource "aws_ecs_service" "this" {
   name                   = local.service_name_full
   cluster                = var.cluster_arn

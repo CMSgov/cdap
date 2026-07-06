@@ -16,3 +16,8 @@ data "aws_ram_resource_share" "pace_ca" {
 data "aws_ssm_parameter" "datadog_api_key" {
   name = "/${var.platform.app}/${var.platform.env}/datadog/agents/api_key"
 }
+
+data "aws_ssm_parameter" "datadog_private_location_sg" {
+  count = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
+  name  = "/cdap/${var.platform.env}/datadog-private-location/task-security-group-id"
+}
