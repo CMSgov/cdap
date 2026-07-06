@@ -81,3 +81,39 @@ resource "aws_kms_alias" "shares" {
   name          = "alias/${each.value.app}-${each.value.env}"
   target_key_id = aws_kms_key.shares[each.key].key_id
 }
+
+resource "aws_secretsmanager_secret" "kms_key_arn" {
+  for_each    = local.kms_shares
+  name        = "/cdap/${each.value.app}/${each.value.env}/kms/key-arn"
+  description = "KMS key ARN for ${each.value.app} ${each.value.env} — for use in external account IAM policies"
+  kms_key_id  = aws_kms_alias.shares[each.key].target_key_arn
+}
+
+resource "aws_secretsmanager_secret_version" "kms_key_arn" {
+  for_each      = local.kms_shares
+  secret_id     = aws_secretsmanager_secret.kms_key_arn[each.key].id
+  secret_string = aws_kms_key.shares[each.key].arn
+}
+
+resource "aws_secretsmanager_secret_policy" "kms_key_arn" {
+  for_each   = local.kms_shares
+  secret_arn = aws_secretsmanager_secret.kms_key_arn[each.key].arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowExternalAccountRead"
+        Effect = "Allow"
+        Principal = {
+          AWS = data.aws_ssm_parameter.principal[each.value.principal_ssm_path].value
+        }
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}

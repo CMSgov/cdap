@@ -1,4 +1,5 @@
 output "kms_key_arns" {
+  sensitive   = true
   description = "Map of KMS key ARNs keyed by app-env"
   value = {
     for k, v in aws_kms_key.shares : k => v.arn
@@ -6,6 +7,7 @@ output "kms_key_arns" {
 }
 
 output "kms_key_arns_by_app" {
+  sensitive   = true
   description = "KMS key ARNs grouped by app name, then by env"
   value = {
     for app in distinct([for v in local.kms_shares : v.app]) :
