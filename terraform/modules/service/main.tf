@@ -110,7 +110,7 @@ locals {
       { name = "DD_PROCESS_AGENT_ENABLED", value = "true" },
       { name = "DD_SERVICE", value = local.service_name },
       { name = "DD_SITE", value = "ddog-gov.com" },
-      { name = "DD_TAGS", value = "environment:${var.platform.env}, application:${var.platform.app}, service:${local.service_name}" },
+      { name = "DD_TAGS", value = "application:${var.platform.app}, service:${local.service_name}" },
       { name = "DD_VERSION", value = var.dd_version }
     ]
     secrets = [{ name = "DD_API_KEY", valueFrom = data.aws_ssm_parameter.datadog_api_key.name }]
@@ -124,9 +124,6 @@ resource "aws_cloudwatch_log_group" "app" {
 
   tags = {
     Name        = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
-    Application = var.platform.app
-    Environment = var.platform.env
-    Service     = local.service_name
   }
 }
 
