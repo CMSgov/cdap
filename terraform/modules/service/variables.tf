@@ -100,6 +100,12 @@ variable "enable_execute_command" {
   description = "Used only for testing. Requires task role to have ssm Permissions for ECS Exec."
 }
 
+variable "command" {
+  description = "Only for testing. Using will cause SecHub alert. Override the default command for the container"
+  type        = list(string)
+  default     = null
+}
+
 # -------------------------------------------------------
 # ECS Task (optional)
 # -------------------------------------------------------
@@ -392,3 +398,4 @@ variable "enable_datadog_agent" {
   type        = bool
   default     = true
 }
+
