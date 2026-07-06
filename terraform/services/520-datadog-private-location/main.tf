@@ -91,7 +91,7 @@ module "ecs_datadog_synthetics" {
 }
 
 resource "aws_ssm_parameter" "task_security_group_id" {
-  name        = "/cdap/${var.env}/datadog-private-location/task-security-group-id"
+  name        = "/cdap/${var.env}/datadog/nonsensitive/private_location_task_security_group_id"
   value       = module.ecs_datadog_synthetics.task_security_group_id
   type        = "String"
   description = "Security group ID for the Datadog private location ECS task"

@@ -19,5 +19,5 @@ data "aws_ssm_parameter" "datadog_api_key" {
 
 data "aws_ssm_parameter" "datadog_private_location_sg" {
   count = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
-  name  = "/cdap/${var.platform.env}/datadog-private-location/task-security-group-id"
+  name  = "/cdap/${var.platform.env}/datadog/nonsensitive/private_location_task_security_group_id"
 }
