@@ -328,7 +328,6 @@ module "service_apm" {
   source                 = "../../../modules/service/"
   enable_execute_command = true
 
-  # No readonly, no nginx volumes needed
   mount_points = []
   volumes      = []
 
@@ -339,7 +338,7 @@ module "service_apm" {
 
   command = [
     "/bin/sh", "-c",
-    "pip install -q ddtrace flask && cat > /app.py << 'EOF'\nfrom flask import Flask\napp = Flask(__name__)\n\n@app.route('/')\ndef index():\n    return 'APM Test OK', 200\n\n@app.route('/health')\ndef health():\n    return 'OK', 200\nEOF\nddtrace-run python app.py"
+    "pip install -q ddtrace flask && ddtrace-run python -c \"from flask import Flask; app = Flask(__name__); app.route('/')(lambda: ('APM Test OK', 200)); app.route('/health')(lambda: ('OK', 200)); app.run(host='0.0.0.0', port=8080)\""
   ]
 
   port_mappings = [
@@ -365,11 +364,6 @@ module "service_apm" {
   force_new_deployment = true
 
   container_environment = [
-    { name = "DD_SERVICE", value = "tftesting-apm" },
-    { name = "DD_ENV", value = "dev" },
-    { name = "DD_VERSION", value = "1.0.0" },
-    { name = "DD_APM_ENABLED", value = "true" },
-    { name = "DD_LOGS_INJECTION", value = "true" },
     { name = "FLASK_RUN_HOST", value = "0.0.0.0" },
     { name = "FLASK_RUN_PORT", value = "8080" }
   ]
@@ -388,7 +382,7 @@ module "service_apm" {
   platform = {
     app     = module.platform.app
     env     = module.platform.env
-    service = "tftesting-apm" # ← Different service name, no conflict
+    service = "tftesting-apm"
 
     kms_alias_primary = {
       target_key_arn = module.platform.kms_alias_primary.target_key_arn
