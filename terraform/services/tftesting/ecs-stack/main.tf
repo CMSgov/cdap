@@ -337,8 +337,9 @@ module "service_apm" {
   memory      = 512
 
   command = [
-    "/bin/sh", "-c",
-    "pip install -q ddtrace flask && ddtrace-run python -c \"from flask import Flask; app = Flask(__name__); app.route('/')(lambda: ('APM Test OK', 200)); app.route('/health')(lambda: ('OK', 200)); app.run(host='0.0.0.0', port=8080)\""
+    "/bin/sh",
+    "-c",
+    "pip install -q ddtrace flask && DD_TRACE_AGENT_URL=http://localhost:8126 ddtrace-run python -c 'import os; from flask import Flask; app = Flask(__name__); app.add_url_rule(\"/\", \"index\", lambda: (\"APM Test OK\", 200)); app.add_url_rule(\"/health\", \"health\", lambda: (\"OK\", 200)); app.run(host=\"0.0.0.0\", port=8080)'"
   ]
 
   port_mappings = [
