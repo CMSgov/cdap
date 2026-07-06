@@ -31,6 +31,7 @@ locals {
     portMappings           = var.port_mappings
     mountPoints            = var.mount_points
     secrets                = var.container_secrets
+    command                = var.command
     environment = concat(
       var.container_environment,
       [
