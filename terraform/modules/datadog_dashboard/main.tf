@@ -119,6 +119,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         # should look at to determine if action is needed.
         # -------------------------------------------------------
 
+        # Unhealthy Tasks
         widget {
           query_value_definition {
             title     = "Unhealthy Tasks (Desired - Running)"
@@ -127,7 +128,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             precision = 0
             request {
               q          = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
-              aggregator = "sum"
+              aggregator = "last" # ← Fix: was "sum", now "last"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -142,6 +143,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
           }
         }
 
+        # Pending Tasks
         widget {
           query_value_definition {
             title     = "Pending Tasks (Stuck Starting)"
@@ -150,7 +152,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             precision = 0
             request {
               q          = "sum:aws.ecs.service.pending{application:${var.app}, $env}"
-              aggregator = "sum"
+              aggregator = "last" # ← Fix: was "sum", now "last"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -164,7 +166,6 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
-
         # -------------------------------------------------------
         # TASK TRENDS
         # Running tasks over time shows service stability.
@@ -173,26 +174,58 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         # scaling events which are visible in the event stream.
         # -------------------------------------------------------
 
+        # Running Tasks by Service — current snapshot
         widget {
-          timeseries_definition {
-            title     = "Running Tasks Over Time by Service"
+          toplist_definition {
+            title     = "Running Tasks by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
-              display_type = "line"
-              style {
-                palette = "green"
+              q          = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              aggregator = "last" # ← Most recent value, not average over time window
+              conditional_formats {
+                comparator = "<"
+                value      = 1
+                palette    = "white_on_red"
+              }
+              conditional_formats {
+                comparator = ">="
+                value      = 1
+                palette    = "white_on_green"
               }
             }
           }
         }
 
+        # Missing Tasks by Service — current snapshot
+        widget {
+          toplist_definition {
+            title     = "Missing Tasks by Service (Desired - Running)"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q          = "clamp_min(avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
+              aggregator = "last" # ← Most recent delta, not average
+              conditional_formats {
+                comparator = ">"
+                value      = 0
+                palette    = "white_on_red"
+              }
+              conditional_formats {
+                comparator = "<="
+                value      = 0
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+
+        # Pending Tasks by Service — current snapshot
         widget {
           toplist_definition {
             title     = "Pending Tasks by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q = "sum:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
+              q          = "sum:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
+              aggregator = "last" # ← Most recent value
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -206,21 +239,6 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
-
-        widget {
-          timeseries_definition {
-            title     = "Pending Tasks Over Time by Service"
-            live_span = var.widget_live_spans.ecs
-            request {
-              q            = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
-              display_type = "bars"
-              style {
-                palette = "yellow"
-              }
-            }
-          }
-        }
-
         # -------------------------------------------------------
         # TASK COUNTS
         # Current snapshot of running tasks per service.
