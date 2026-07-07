@@ -1,6 +1,6 @@
 resource "datadog_dashboard" "application_metrics_dashboard" {
   layout_type = "ordered"
-  title       = "${var.name_rewrite != null ? var.name_rewrite : var.app} Metrics Dashboard"
+  title       = "${var.name_rewrite != null ? var.name_rewrite : upper(var.app)} Metrics Dashboard"
   template_variable {
     name     = "env"
     prefix   = "environment"
@@ -55,52 +55,55 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
     }
   }
 
-  widget {
-    group_definition {
-      layout_type = "ordered"
-      title       = "${var.app} Custom Metrics"
+  dynamic "widget" {
+    for_each = length(var.custom_widgets) > 0 ? [1] : []
+    content {
+      group_definition {
+        layout_type = "ordered"
+        title       = "${var.app} Custom Metrics"
 
-      # Loop through every widget passed by the team
-      dynamic "widget" {
-        for_each = var.custom_widgets
-        content {
+        # Loop through every widget passed by the team
+        dynamic "widget" {
+          for_each = var.custom_widgets
+          content {
 
-          # Render ONLY IF type == "timeseries"
-          dynamic "timeseries_definition" {
-            for_each = widget.value.type == "timeseries" ? [widget.value] : []
-            content {
-              title = timeseries_definition.value.title
-              request {
-                q            = timeseries_definition.value.query
-                display_type = timeseries_definition.value.display_type
+            # Render ONLY IF type == "timeseries"
+            dynamic "timeseries_definition" {
+              for_each = widget.value.type == "timeseries" ? [widget.value] : []
+              content {
+                title = timeseries_definition.value.title
+                request {
+                  q            = timeseries_definition.value.query
+                  display_type = timeseries_definition.value.display_type
+                }
               }
             }
-          }
 
-          # Render ONLY IF type == "query_value"
-          dynamic "query_value_definition" {
-            for_each = widget.value.type == "query_value" ? [widget.value] : []
-            content {
-              title     = query_value_definition.value.title
-              autoscale = true
-              precision = query_value_definition.value.precision
-              request {
-                q = query_value_definition.value.query
+            # Render ONLY IF type == "query_value"
+            dynamic "query_value_definition" {
+              for_each = widget.value.type == "query_value" ? [widget.value] : []
+              content {
+                title     = query_value_definition.value.title
+                autoscale = true
+                precision = query_value_definition.value.precision
+                request {
+                  q = query_value_definition.value.query
+                }
               }
             }
-          }
 
-          # Render ONLY IF type == "toplist"
-          dynamic "toplist_definition" {
-            for_each = widget.value.type == "toplist" ? [widget.value] : []
-            content {
-              title = toplist_definition.value.title
-              request {
-                q = toplist_definition.value.query
+            # Render ONLY IF type == "toplist"
+            dynamic "toplist_definition" {
+              for_each = widget.value.type == "toplist" ? [widget.value] : []
+              content {
+                title = toplist_definition.value.title
+                request {
+                  q = toplist_definition.value.query
+                }
               }
             }
-          }
 
+          }
         }
       }
     }
@@ -142,29 +145,6 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
           }
         }
 
-        # Pending Tasks
-        widget {
-          query_value_definition {
-            title     = "Pending Tasks (Stuck Starting)"
-            live_span = var.widget_live_spans.current
-            autoscale = true
-            precision = 0
-            request {
-              q          = "sum:aws.ecs.service.pending{application:${var.app}, $env}"
-              aggregator = "last"
-              conditional_formats {
-                comparator = ">"
-                value      = 0
-                palette    = "white_on_yellow"
-              }
-              conditional_formats {
-                comparator = "<="
-                value      = 0
-                palette    = "white_on_green"
-              }
-            }
-          }
-        }
         # -------------------------------------------------------
         # TASK TRENDS
         # Running tasks over time shows service stability.
@@ -324,27 +304,26 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Network Throughput (MB/s) by Container"
+            title     = "Network Throughput (kB/s) by Task (data displays for all envs without env filter)"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:container.net.rcvd{cluster_name:${var.app}*, $env} by {containername}.as_rate()/1048576"
+              q            = "avg:container.net.rcvd{task_family:${var.app}*} by {task_name}.as_rate()/1024"
               display_type = "line"
               metadata {
-                expression = "avg:container.net.rcvd{cluster_name:${var.app}*, $env} by {containername}.as_rate()/1048576"
-                alias_name = "MB/s In"
+                expression = "avg:container.net.rcvd{task_family:${var.app}*} by {task_name}.as_rate()/1024"
+                alias_name = "kB/s In"
               }
             }
             request {
-              q            = "avg:container.net.sent{cluster_name:${var.app}*, $env} by {containername}.as_rate()/1048576"
+              q            = "avg:container.net.sent{task_family:${var.app}*} by {task_name}.as_rate()/1024" # ← Fixed: added closing }
               display_type = "line"
               metadata {
-                expression = "avg:container.net.sent{cluster_name:${var.app}*, $env} by {containername}.as_rate()/1048576"
-                alias_name = "MB/s Out"
+                expression = "avg:container.net.sent{task_family:${var.app}*} by {task_name}.as_rate()/1024"
+                alias_name = "kB/s Out"
               }
             }
-            # Adjust this threshold to match your team's expected peak throughput
             marker {
-              value        = "y > 100"
+              value        = "y > 10000"
               display_type = "warning dashed"
               label        = "High Throughput"
             }
@@ -353,21 +332,21 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Total Data Transferred (GB) by Service"
+            title     = "Total Data Transferred (GB) by Container"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:container.net.rcvd{cluster_name:${var.app}*, $env} by {servicename}/1073741824"
+              q            = "sum:container.net.rcvd{task_family:${var.app}*} by {task_name}/1073741824"
               display_type = "bars"
               metadata {
-                expression = "sum:container.net.rcvd{cluster_name:${var.app}*, $env} by {servicename}/1073741824"
+                expression = "sum:container.net.rcvd{task_family:${var.app}*} by {task_name}/1073741824"
                 alias_name = "GB In"
               }
             }
             request {
-              q            = "sum:container.net.sent{cluster_name:${var.app}*, $env} by {servicename}/1073741824"
+              q            = "sum:container.net.sent{image_name:${var.app}*} by {task_name}/1073741824"
               display_type = "bars"
               metadata {
-                expression = "sum:container.net.sent{cluster_name:${var.app}*, $env} by {servicename}/1073741824"
+                expression = "sum:container.net.sent{image_name:${var.app}*} by {task_name}/1073741824"
                 alias_name = "GB Out"
               }
             }
