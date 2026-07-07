@@ -323,16 +323,23 @@ resource "aws_lb_target_group" "legacy_test" {
 ##
 
 module "service_apm" {
-  enable_datadog_agent = true
-  log_retention_days   = 1
-  source               = "../../../modules/service/"
+  enable_datadog_agent   = true
+  log_retention_days     = 1
+  source                 = "../../../modules/service/"
+  enable_execute_command = true
+
+  additional_task_role_policies = {
+    ecs_exec = aws_iam_policy.ecs_exec.arn
+  }
 
   mount_points = [
-    { containerPath = "/tmp", sourceVolume = "tmp", readOnly = false }
+    { containerPath = "/tmp", sourceVolume = "tmp", readOnly = false },
+    { containerPath = "/var/lib/amazon/ssm", sourceVolume = "ssm_agent", readOnly = false }
   ]
 
   volumes = [
-    { name = "tmp", configure_at_launch = false }
+    { name = "tmp", configure_at_launch = false },
+    { name = "ssm_agent", configure_at_launch = false }
   ]
 
   cluster_arn = aws_ecs_cluster.test.arn
@@ -357,11 +364,11 @@ module "service_apm" {
   service_connect_port_name = "http"
 
   health_check = {
-    command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+    command     = ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/health')\" || exit 1"]
     interval    = 30
     retries     = 3
-    startPeriod = 60
-    timeout     = 5
+    startPeriod = 120
+    timeout     = 10
   }
 
   desired_count        = 1
