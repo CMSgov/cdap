@@ -123,7 +123,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         widget {
           query_value_definition {
             title     = "Unhealthy Tasks (Desired - Running)"
-            live_span = var.widget_live_spans.ecs
+            live_span = var.widget_live_spans.current
             autoscale = true
             precision = 0
             request {
@@ -146,11 +146,12 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         widget {
           query_value_definition {
             title     = "Pending Tasks (Stuck Starting)"
-            live_span = var.widget_live_spans.ecs
+            live_span = var.widget_live_spans.current
             autoscale = true
             precision = 0
             request {
-              q = "sum:aws.ecs.service.pending{application:${var.app}, $env}"
+              q          = "sum:aws.ecs.service.pending{application:${var.app}, $env}"
+              aggregator = "last"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -176,9 +177,9 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         widget {
           toplist_definition {
             title     = "Running Tasks by Service"
-            live_span = var.widget_live_spans.ecs
+            live_span = var.widget_live_spans.current
             request {
-              q = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              q = "sum:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
               conditional_formats {
                 comparator = "<"
                 value      = 1
@@ -197,9 +198,9 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         widget {
           toplist_definition {
             title     = "Missing Tasks by Service (Desired - Running)"
-            live_span = var.widget_live_spans.ecs
+            live_span = var.widget_live_spans.current
             request {
-              q = "clamp_min(avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
+              q = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -218,59 +219,13 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         widget {
           toplist_definition {
             title     = "Pending Tasks by Service"
-            live_span = var.widget_live_spans.ecs
+            live_span = var.widget_live_spans.current
             request {
               q = "sum:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
               conditional_formats {
                 comparator = ">"
                 value      = 0
                 palette    = "white_on_yellow"
-              }
-              conditional_formats {
-                comparator = "<="
-                value      = 0
-                palette    = "white_on_green"
-              }
-            }
-          }
-        }
-        # -------------------------------------------------------
-        # TASK COUNTS
-        # Current snapshot of running tasks per service.
-        # Red = no tasks running. Use alongside the timeseries
-        # below to understand both current state and trends.
-        # -------------------------------------------------------
-
-        widget {
-          toplist_definition {
-            title     = "Running Tasks by Service"
-            live_span = var.widget_live_spans.ecs
-            request {
-              q = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
-              conditional_formats {
-                comparator = "<"
-                value      = 1
-                palette    = "white_on_red"
-              }
-              conditional_formats {
-                comparator = ">="
-                value      = 1
-                palette    = "white_on_green"
-              }
-            }
-          }
-        }
-
-        widget {
-          toplist_definition {
-            title     = "Missing Tasks by Service (Desired - Running)"
-            live_span = var.widget_live_spans.ecs
-            request {
-              q = "clamp_min(avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
-              conditional_formats {
-                comparator = ">"
-                value      = 0
-                palette    = "white_on_red"
               }
               conditional_formats {
                 comparator = "<="
@@ -293,7 +248,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Container Restarts by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:aws.ecs.container.restarts{application:${var.app}, $env} by {servicename}"
+              q            = "sum:container.restarts{application:${var.app}, $env} by {servicename}"
               display_type = "bars"
               style {
                 palette = "warm"
@@ -372,18 +327,18 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Network Throughput (MB/s) by Container"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {containername}.as_rate()/1048576"
+              q            = "avg:container.net.rcvd{cluster_name:${var.app}*, $env} by {containername}.as_rate()/1048576"
               display_type = "line"
               metadata {
-                expression = "avg:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {containername}.as_rate()/1048576"
+                expression = "avg:container.net.rcvd{cluster_name:${var.app}*, $env} by {containername}.as_rate()/1048576"
                 alias_name = "MB/s In"
               }
             }
             request {
-              q            = "avg:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {containername}.as_rate()/1048576"
+              q            = "avg:container.net.sent{cluster_name:${var.app}*, $env} by {containername}.as_rate()/1048576"
               display_type = "line"
               metadata {
-                expression = "avg:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {containername}.as_rate()/1048576"
+                expression = "avg:container.net.sent{cluster_name:${var.app}*, $env} by {containername}.as_rate()/1048576"
                 alias_name = "MB/s Out"
               }
             }
@@ -401,18 +356,18 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Total Data Transferred (GB) by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {servicename}/1073741824"
+              q            = "sum:container.net.rcvd{cluster_name:${var.app}*, $env} by {servicename}/1073741824"
               display_type = "bars"
               metadata {
-                expression = "sum:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {servicename}/1073741824"
+                expression = "sum:container.net.rcvd{cluster_name:${var.app}*, $env} by {servicename}/1073741824"
                 alias_name = "GB In"
               }
             }
             request {
-              q            = "sum:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {servicename}/1073741824"
+              q            = "sum:container.net.sent{cluster_name:${var.app}*, $env} by {servicename}/1073741824"
               display_type = "bars"
               metadata {
-                expression = "sum:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {servicename}/1073741824"
+                expression = "sum:container.net.sent{cluster_name:${var.app}*, $env} by {servicename}/1073741824"
                 alias_name = "GB Out"
               }
             }
@@ -441,7 +396,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Container Restarts — Selected Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:aws.ecs.container.restarts{application:${var.app}, $env, $servicename} by {containername}"
+              q            = "sum:container.restarts{application:${var.app}, $env, $servicename} by {containername}"
               display_type = "bars"
               style {
                 palette = "warm"
@@ -505,7 +460,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         widget {
           query_value_definition {
             title     = "Apdex Score"
-            live_span = var.widget_live_spans.apm
+            live_span = var.widget_live_spans.current
             autoscale = true
             precision = 2
             request {
