@@ -34,7 +34,7 @@ This module asserts immutability and retention by default, though variance for r
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | <pre>object({<br/>    app = string,<br/>    env = string,<br/>    kms_alias_primary = object({<br/>      target_key_arn = string<br/>    }),<br/>    service          = string,<br/>    is_ephemeral_env = string<br/>  })</pre> | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the plaform module. | <pre>object({<br/>    app               = string<br/>    env               = string<br/>    service           = string<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>    primary_region    = object({ name = string })<br/>    account_id        = string<br/>  })</pre> | n/a | yes |
 | <a name="input_num_retained_images"></a> [num\_retained\_images](#input\_num\_retained\_images) | Prefer this default for prod account. The number of images retained in the ECR repository. | `number` | `5` | no |
 | <a name="input_repo_name_override"></a> [repo\_name\_override](#input\_repo\_name\_override) | When possible, do not use. Override for the name of the ecr repository. | `string` | `null` | no |
 | <a name="input_service"></a> [service](#input\_service) | Custom service name in case multiple ECR repos made in the same terraservice. If null, defaults to platform service value. | `string` | `null` | no |

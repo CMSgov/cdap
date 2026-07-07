@@ -44,8 +44,8 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_datadog_apm"></a> [datadog\_apm](#module\_datadog\_apm) | ../../modules/ecr_repo | n/a |
 | <a name="module_platform"></a> [platform](#module\_platform) | ../../modules/platform | n/a |
+| <a name="module_repo"></a> [repo](#module\_repo) | ../../modules/ecr_repo | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
