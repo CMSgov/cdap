@@ -188,6 +188,26 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         }
 
         widget {
+          toplist_definition {
+            title     = "Pending Tasks by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q = "sum:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
+              conditional_formats {
+                comparator = ">"
+                value      = 0
+                palette    = "white_on_yellow"
+              }
+              conditional_formats {
+                comparator = "<="
+                value      = 0
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+
+        widget {
           timeseries_definition {
             title     = "Pending Tasks Over Time by Service"
             live_span = var.widget_live_spans.ecs
