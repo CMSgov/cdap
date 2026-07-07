@@ -102,6 +102,7 @@ locals {
       { name = "DD_APM_NON_LOCAL_TRAFFIC", value = "true" },
       { name = "DD_APM_RECEIVER_PORT", value = "8126" },
       { name = "DD_APM_TELEMETRY_ENABLED", value = "false" },
+      { name = "DD_DATA_STREAMS_ENABLED", value = "false" },
       { name = "DD_DOGSTATSD_NON_LOCAL_TRAFFIC", value = "true" },
       { name = "DD_DOGSTATSD_PORT", value = "8125" }, # Default
       { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" },

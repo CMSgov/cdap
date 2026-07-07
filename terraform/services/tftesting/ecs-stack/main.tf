@@ -344,8 +344,8 @@ module "service_apm" {
 
   cluster_arn = aws_ecs_cluster.test.arn
   image       = "public.ecr.aws/docker/library/python:3.11-slim"
-  cpu         = 256
-  memory      = 512
+  cpu         = 512
+  memory      = 1024
   command = [
     "/bin/sh",
     "-c",
@@ -375,7 +375,8 @@ module "service_apm" {
   force_new_deployment = true
 
   container_environment = [
-    { name = "PYTHONPATH", value = "/tmp/packages" }
+    { name = "PYTHONPATH", value = "/tmp/packages" },
+    { name = "DD_TRACE_AGENT_URL", value = "http://localhost:8126" }, # ← Force TCP
   ]
 
   container_secrets = []
