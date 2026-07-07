@@ -17,6 +17,44 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
     }
   }
 
+  dynamic "widget" {
+    for_each = var.enable_default_widgets.monitors ? [1] : []
+    content {
+      group_definition {
+        title       = "Monitor Health"
+        layout_type = "ordered"
+
+        # Alerting only — filters to just triggered monitors
+        widget {
+          manage_status_definition {
+            title               = "Alerting Monitors — ${var.app}"
+            color_preference    = "text"
+            display_format      = "counts"
+            hide_zero_counts    = true
+            show_last_triggered = true
+            sort                = "status,asc"
+            summary_type        = "monitors"
+            query               = "tag:application:${var.app} status:alert"
+          }
+        }
+
+        # Shows all monitors tagged with application:<app>
+        widget {
+          manage_status_definition {
+            title               = "All Monitors — ${var.app}"
+            color_preference    = "text"
+            display_format      = "counts"
+            hide_zero_counts    = true
+            show_last_triggered = true
+            sort                = "status,asc"
+            summary_type        = "monitors"
+            query               = "tag:application:${var.app}"
+          }
+        }
+      }
+    }
+  }
+
   widget {
     group_definition {
       layout_type = "ordered"
@@ -75,6 +113,178 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         title       = "ECS"
         layout_type = "ordered"
 
+        # -------------------------------------------------------
+        # ROW 1: At-a-glance health summary
+        # -------------------------------------------------------
+
+        widget {
+          query_value_definition {
+            title     = "Unhealthy Tasks (Desired - Running)"
+            live_span = var.widget_live_spans.ecs
+            autoscale = true
+            precision = 0
+            request {
+              q          = "sum:aws.ecs.service.desired{application:${var.app}, $env} - sum:aws.ecs.service.running{application:${var.app}, $env}"
+              aggregator = "sum"
+              conditional_formats {
+                comparator = ">"
+                value      = 0
+                palette    = "white_on_red"
+              }
+              conditional_formats {
+                comparator = "<="
+                value      = 0
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+
+        widget {
+          query_value_definition {
+            title     = "Pending Tasks (Stuck Starting)"
+            live_span = var.widget_live_spans.ecs
+            autoscale = true
+            precision = 0
+            request {
+              q          = "sum:aws.ecs.service.pending{application:${var.app}, $env}"
+              aggregator = "sum"
+              conditional_formats {
+                comparator = ">"
+                value      = 0
+                palette    = "white_on_yellow"
+              }
+              conditional_formats {
+                comparator = "<="
+                value      = 0
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+
+        # -------------------------------------------------------
+        # ROW 2: Task failure events — surfaces tftesting-apm
+        # -------------------------------------------------------
+
+        widget {
+          event_stream_definition {
+            title      = "ECS Task & Deployment Events"
+            live_span  = var.widget_live_spans.ecs
+            query      = "source:amazon_ecs application:${var.app}"
+            event_size = "s"
+          }
+        }
+
+
+        #  Container restarts
+        widget {
+          timeseries_definition {
+            title     = "Container Restarts by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "sum:aws.ecs.container.restarts{application:${var.app}, $env} by {servicename}"
+              display_type = "bars"
+              style {
+                palette = "warm"
+              }
+            }
+          }
+        }
+
+
+        # -------------------------------------------------------
+        # ROW 3: Running vs Desired vs Pending
+        # -------------------------------------------------------
+
+        widget {
+          timeseries_definition {
+            title     = "Running vs Desired vs Pending by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              display_type = "line"
+              style {
+                palette = "green"
+              }
+              metadata {
+                expression = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+                alias_name = "Running"
+              }
+            }
+            request {
+              q            = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
+              display_type = "line"
+              style {
+                palette = "blue"
+              }
+              metadata {
+                expression = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
+                alias_name = "Desired"
+              }
+            }
+            request {
+              q            = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
+              display_type = "line"
+              style {
+                palette = "yellow"
+              }
+              metadata {
+                expression = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
+                alias_name = "Pending"
+              }
+            }
+          }
+        }
+
+        # -------------------------------------------------------
+        # ROW 4: Which services have missing tasks
+        # -------------------------------------------------------
+
+        widget {
+          toplist_definition {
+            title     = "Running Tasks by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              conditional_formats {
+                comparator = "<"
+                value      = 1
+                palette    = "white_on_red"
+              }
+              conditional_formats {
+                comparator = ">="
+                value      = 1
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+
+        # Widget 2 — Delta only (failure signal, only interesting when non-zero)
+        widget {
+          toplist_definition {
+            title     = "Missing Tasks by Service (Desired - Running)"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              conditional_formats {
+                comparator = ">"
+                value      = 0
+                palette    = "white_on_red"
+              }
+              conditional_formats {
+                comparator = "<="
+                value      = 0
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+        # -------------------------------------------------------
+        # ROW 5: Resource utilization
+        # -------------------------------------------------------
+
         widget {
           timeseries_definition {
             title     = "CPU Utilization by Service"
@@ -82,6 +292,16 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             request {
               q            = "avg:aws.ecs.cpuutilization{application:${var.app}, $env} by {servicename}"
               display_type = "line"
+            }
+            marker {
+              value        = "y > 80"
+              display_type = "error dashed"
+              label        = "Critical CPU"
+            }
+            marker {
+              value        = "y > 60"
+              display_type = "warning dashed"
+              label        = "High CPU"
             }
           }
         }
@@ -94,56 +314,95 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
               q            = "avg:aws.ecs.memory_utilization{application:${var.app}, $env} by {servicename}"
               display_type = "line"
             }
+            marker {
+              value        = "y > 85"
+              display_type = "error dashed"
+              label        = "Critical Memory"
+            }
+            marker {
+              value        = "y > 70"
+              display_type = "warning dashed"
+              label        = "High Memory"
+            }
           }
         }
 
+        # -------------------------------------------------------
+        # ROW 6: Network I/O for data transfer
+        # -------------------------------------------------------
         widget {
           timeseries_definition {
-            title     = "Running vs Desired vs Pending by Service"
+            title     = "Network Throughput (MB/s) by Container"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              q            = "avg:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {containername}.as_rate()/1048576"
               display_type = "line"
+              metadata {
+                expression = "avg:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {containername}.as_rate()/1048576"
+                alias_name = "MB/s In"
+              }
             }
             request {
-              q            = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
+              q            = "avg:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {containername}.as_rate()/1048576"
               display_type = "line"
+              metadata {
+                expression = "avg:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {containername}.as_rate()/1048576"
+                alias_name = "MB/s Out"
+              }
             }
-            request {
-              q            = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
-              display_type = "line"
+            # Marker for unusually high transfer — adjust threshold for your team
+            marker {
+              value        = "y > 100"
+              display_type = "warning dashed"
+              label        = "High Throughput"
             }
           }
         }
 
-        widget {
-          toplist_definition {
-            title     = "Desired Task Count by Service"
-            live_span = var.widget_live_spans.ecs
-            request {
-              q = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
-            }
-          }
-        }
-
+        # Total bytes transferred per job run — useful for data jobs
         widget {
           timeseries_definition {
-            title     = "Network I/O (Bytes In/Out) by Container"
+            title     = "Total Data Transferred (GB) by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {containername}.as_rate()"
-              display_type = "line"
+              q            = "sum:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {servicename}/1073741824"
+              display_type = "bars"
+              metadata {
+                expression = "sum:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {servicename}/1073741824"
+                alias_name = "GB In"
+              }
             }
             request {
-              q            = "avg:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {containername}.as_rate()"
-              display_type = "line"
+              q            = "sum:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {servicename}/1073741824"
+              display_type = "bars"
+              metadata {
+                expression = "sum:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {servicename}/1073741824"
+                alias_name = "GB Out"
+              }
             }
+          }
+        }
+        # -------------------------------------------------------
+        # ROW 7: Active monitor alerts
+        # -------------------------------------------------------
+
+        widget {
+          manage_status_definition {
+            title               = "Active Monitor Alerts"
+            color_preference    = "text"
+            display_format      = "counts"
+            hide_zero_counts    = true
+            show_last_triggered = true
+            sort                = "status,asc"
+            summary_type        = "monitors"
+            query               = "tag:application:${var.app}"
           }
         }
 
       }
     }
   }
+
   dynamic "widget" {
     for_each = var.enable_default_widgets.apm ? [1] : []
     content {
@@ -156,7 +415,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Request Rate"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.http.request.hits{service:${var.app}, $env}.as_rate()"
+              q            = "sum:trace.http.request.hits{application:${var.app}, $env}.as_rate()"
               display_type = "line"
             }
           }
@@ -167,15 +426,15 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "p50 / p95 / p99 Latency"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "p50:trace.http.request{service:${var.app}, $env}"
+              q            = "p50:trace.http.request{application:${var.app}, $env}"
               display_type = "line"
             }
             request {
-              q            = "p95:trace.http.request{service:${var.app}, $env}"
+              q            = "p95:trace.http.request{application:${var.app}, $env}"
               display_type = "line"
             }
             request {
-              q            = "p99:trace.http.request{service:${var.app}, $env}"
+              q            = "p99:trace.http.request{application:${var.app}, $env}"
               display_type = "line"
             }
           }
@@ -186,7 +445,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Error Rate"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.http.request.errors{service:${var.app}, $env}.as_rate()"
+              q            = "sum:trace.http.request.errors{application:${var.app}, $env}.as_rate()"
               display_type = "bars"
             }
           }
@@ -199,7 +458,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             autoscale = true
             precision = 2
             request {
-              q = "avg:trace.http.request.apdex{service:${var.app}, $env}"
+              q = "avg:trace.http.request.apdex{application:${var.app}, $env}"
             }
           }
         }

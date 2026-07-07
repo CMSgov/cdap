@@ -27,14 +27,15 @@ variable "widget_live_spans" {
 variable "enable_default_widgets" {
   description = "Toggle default infrastructure widgets on or off for the dashboard."
   type = object({
-    ecs    = optional(bool, true)
-    lambda = optional(bool, true)
-    alb    = optional(bool, true)
-    sns    = optional(bool, true)
-    sqs    = optional(bool, true)
-    aurora = optional(bool, true)
-    s3     = optional(bool, true)
-    apm    = optional(bool, true)
+    monitors = optional(bool, true)
+    ecs      = optional(bool, true)
+    lambda   = optional(bool, true)
+    alb      = optional(bool, true)
+    sns      = optional(bool, true)
+    sqs      = optional(bool, true)
+    aurora   = optional(bool, true)
+    s3       = optional(bool, true)
+    apm      = optional(bool, true)
   })
   default = {} # Evaluates to all true based on the optional defaults above
 }

@@ -323,10 +323,10 @@ resource "aws_lb_target_group" "legacy_test" {
 ##
 
 module "service_apm" {
-  enable_datadog_agent   = true
-  log_retention_days     = 1
-  source                 = "../../../modules/service/"
-  enable_execute_command = true
+  enable_datadog_agent = true
+  log_retention_days   = 1
+  source               = "../../../modules/service/"
+
   mount_points = [
     { containerPath = "/tmp", sourceVolume = "tmp", readOnly = false }
   ]
@@ -344,7 +344,6 @@ module "service_apm" {
     "-c",
     "pip install -q --target=/tmp/packages ddtrace flask && PYTHONPATH=/tmp/packages /tmp/packages/bin/ddtrace-run python -c \"from flask import Flask; app = Flask(__name__); app.add_url_rule('/', 'index', lambda: ('APM Test OK', 200)); app.add_url_rule('/health', 'health', lambda: ('OK', 200)); app.run(host='0.0.0.0', port=8080)\""
   ]
-
 
   port_mappings = [
     {
@@ -374,13 +373,11 @@ module "service_apm" {
 
   container_secrets = []
 
-  # Still on the same namespace so service_a can reach it via service connect
-  enable_ecs_service_connect = true
-  service_connect_namespace  = aws_service_discovery_http_namespace.test
+  enable_ecs_service_connect = false
 
   deployment_circuit_breaker = {
     enable   = true
-    rollback = true
+    rollback = false
   }
 
   platform = {

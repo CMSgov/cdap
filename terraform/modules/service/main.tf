@@ -60,7 +60,7 @@ locals {
 
   datadog_container = {
     name                   = "datadog-agent"
-    image                  = "public.ecr.aws/datadog/agent:7.50.0"
+    image                  = "public.ecr.aws/datadog/agent:7.80.4"
     essential              = false # Do not impact task health if this container fails
     readonlyRootFilesystem = true
 
@@ -123,7 +123,7 @@ resource "aws_cloudwatch_log_group" "app" {
   kms_key_id        = var.platform.kms_alias_primary.target_key_arn
 
   tags = {
-    Name        = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+    Name = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
   }
 }
 
