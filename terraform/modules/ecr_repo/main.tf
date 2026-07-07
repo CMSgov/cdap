@@ -16,7 +16,7 @@ resource "aws_ecr_repository" "this" {
   }
 
   tags = {
-    Name        = var.repo_name_override != null ? var.repo_name_override : "${var.platform.app}-${var.platform.env}-${var.platform}"
+    Name        = var.repo_name_override != null ? var.repo_name_override : "${var.platform.app}-${var.platform.env}-${local.service}"
     Environment = var.platform.env
   }
 }

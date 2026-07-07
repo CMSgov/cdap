@@ -1,13 +1,12 @@
 variable "platform" {
-  description = "Object that describes standardized platform values."
+  description = "Object representing the plaform module."
   type = object({
-    app = string,
-    env = string,
-    kms_alias_primary = object({
-      target_key_arn = string
-    }),
-    service          = string,
-    is_ephemeral_env = string
+    app               = string
+    env               = string
+    service           = string
+    kms_alias_primary = object({ target_key_arn = string })
+    primary_region    = object({ name = string })
+    account_id        = string
   })
 }
 
