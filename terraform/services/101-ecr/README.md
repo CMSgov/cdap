@@ -2,7 +2,7 @@
 
 This service is established for CDAP managed container storage. 
 Each image category gets its own repository to support fully immutable tags. 
-Currently, images are used only in the non-prod context, though 
+Currently, images are used only in the non-prod context.
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
