@@ -1,5 +1,5 @@
 variable "platform" {
-  description = "Object representing the plaform module."
+  description = "Object representing the platform module."
   type = object({
     app               = string
     env               = string
