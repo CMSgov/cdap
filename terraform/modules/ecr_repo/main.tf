@@ -28,7 +28,7 @@ resource "aws_ecr_lifecycle_policy" "this" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last 5 images"
+        description  = "Keep last ${var.num_retained_images} images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
