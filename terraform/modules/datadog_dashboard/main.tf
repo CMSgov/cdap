@@ -114,7 +114,9 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         layout_type = "ordered"
 
         # -------------------------------------------------------
-        # ROW 1: At-a-glance health summary
+        # HEALTH SUMMARY
+        # Quick red/green/yellow indicators — first thing anyone
+        # should look at to determine if action is needed.
         # -------------------------------------------------------
 
         widget {
@@ -124,7 +126,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             autoscale = true
             precision = 0
             request {
-              q          = "sum:aws.ecs.service.desired{application:${var.app}, $env} - sum:aws.ecs.service.running{application:${var.app}, $env}"
+              q          = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
               aggregator = "sum"
               conditional_formats {
                 comparator = ">"
@@ -164,81 +166,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         }
 
         # -------------------------------------------------------
-        # ROW 2: Task failure events — surfaces tftesting-apm
-        # -------------------------------------------------------
-
-        widget {
-          event_stream_definition {
-            title      = "ECS Task & Deployment Events"
-            live_span  = var.widget_live_spans.ecs
-            query      = "source:amazon_ecs application:${var.app}"
-            event_size = "s"
-          }
-        }
-
-
-        #  Container restarts
-        widget {
-          timeseries_definition {
-            title     = "Container Restarts by Service"
-            live_span = var.widget_live_spans.ecs
-            request {
-              q            = "sum:aws.ecs.container.restarts{application:${var.app}, $env} by {servicename}"
-              display_type = "bars"
-              style {
-                palette = "warm"
-              }
-            }
-          }
-        }
-
-
-        # -------------------------------------------------------
-        # ROW 3: Running vs Desired vs Pending
-        # -------------------------------------------------------
-
-        widget {
-          timeseries_definition {
-            title     = "Running vs Desired vs Pending by Service"
-            live_span = var.widget_live_spans.ecs
-            request {
-              q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
-              display_type = "line"
-              style {
-                palette = "green"
-              }
-              metadata {
-                expression = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
-                alias_name = "Running"
-              }
-            }
-            request {
-              q            = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
-              display_type = "line"
-              style {
-                palette = "blue"
-              }
-              metadata {
-                expression = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
-                alias_name = "Desired"
-              }
-            }
-            request {
-              q            = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
-              display_type = "line"
-              style {
-                palette = "yellow"
-              }
-              metadata {
-                expression = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
-                alias_name = "Pending"
-              }
-            }
-          }
-        }
-
-        # -------------------------------------------------------
-        # ROW 4: Which services have missing tasks
+        # TASK COUNTS
+        # Current snapshot of running tasks per service.
+        # Red = no tasks running. Use alongside the timeseries
+        # below to understand both current state and trends.
         # -------------------------------------------------------
 
         widget {
@@ -261,13 +192,12 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
           }
         }
 
-        # Widget 2 — Delta only (failure signal, only interesting when non-zero)
         widget {
           toplist_definition {
             title     = "Missing Tasks by Service (Desired - Running)"
             live_span = var.widget_live_spans.ecs
             request {
-              q = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              q = "clamp_min(avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -281,8 +211,78 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
+
         # -------------------------------------------------------
-        # ROW 5: Resource utilization
+        # TASK TRENDS
+        # Running tasks over time shows service stability.
+        # Pending tasks over time surfaces stuck deployments.
+        # Desired is omitted — it only changes during intentional
+        # scaling events which are visible in the event stream.
+        # -------------------------------------------------------
+
+        widget {
+          timeseries_definition {
+            title     = "Running Tasks Over Time by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              display_type = "line"
+              style {
+                palette = "green"
+              }
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Pending Tasks Over Time by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
+              display_type = "bars"
+              style {
+                palette = "yellow"
+              }
+            }
+          }
+        }
+
+        # -------------------------------------------------------
+        # FAILURE SIGNALS
+        # Container restarts and ECS events help identify
+        # crash-looping tasks and failed deployments that may
+        # not be obvious from task counts alone.
+        # -------------------------------------------------------
+
+        widget {
+          timeseries_definition {
+            title     = "Container Restarts by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "sum:aws.ecs.container.restarts{application:${var.app}, $env} by {servicename}"
+              display_type = "bars"
+              style {
+                palette = "warm"
+              }
+            }
+          }
+        }
+
+        widget {
+          event_stream_definition {
+            title      = "ECS Task & Deployment Events"
+            live_span  = var.widget_live_spans.ecs
+            query      = "source:amazon_ecs application:${var.app}"
+            event_size = "s"
+          }
+        }
+
+        # -------------------------------------------------------
+        # RESOURCE UTILIZATION
+        # CPU and memory consumption per service over time.
+        # High utilization can cause task failures or throttling
+        # before a crash is visible in task count metrics.
         # -------------------------------------------------------
 
         widget {
@@ -328,8 +328,12 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         }
 
         # -------------------------------------------------------
-        # ROW 6: Network I/O for data transfer
+        # NETWORK I/O
+        # Real-time throughput and cumulative data transfer
+        # per service. Most relevant for data pipeline and
+        # batch processing services moving large volumes of data.
         # -------------------------------------------------------
+
         widget {
           timeseries_definition {
             title     = "Network Throughput (MB/s) by Container"
@@ -350,7 +354,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
                 alias_name = "MB/s Out"
               }
             }
-            # Marker for unusually high transfer — adjust threshold for your team
+            # Adjust this threshold to match your team's expected peak throughput
             marker {
               value        = "y > 100"
               display_type = "warning dashed"
@@ -359,7 +363,6 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
           }
         }
 
-        # Total bytes transferred per job run — useful for data jobs
         widget {
           timeseries_definition {
             title     = "Total Data Transferred (GB) by Service"
@@ -382,20 +385,35 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
+
         # -------------------------------------------------------
-        # ROW 7: Active monitor alerts
+        # DRILL-DOWN
+        # Use the $servicename template variable to filter all
+        # widgets to a specific service. These widgets show
+        # task-level detail to help identify exactly what is
+        # failing and why.
         # -------------------------------------------------------
 
         widget {
-          manage_status_definition {
-            title               = "Active Monitor Alerts"
-            color_preference    = "text"
-            display_format      = "counts"
-            hide_zero_counts    = true
-            show_last_triggered = true
-            sort                = "status,asc"
-            summary_type        = "monitors"
-            query               = "tag:application:${var.app}"
+          event_stream_definition {
+            title      = "Task Events — Selected Service"
+            live_span  = var.widget_live_spans.ecs
+            query      = "source:amazon_ecs application:${var.app} $servicename"
+            event_size = "l"
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Container Restarts — Selected Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "sum:aws.ecs.container.restarts{application:${var.app}, $env, $servicename} by {containername}"
+              display_type = "bars"
+              style {
+                palette = "warm"
+              }
+            }
           }
         }
 
