@@ -64,6 +64,14 @@ locals {
     essential              = false # Do not impact task health if this container fails
     readonlyRootFilesystem = true
 
+    healthCheck = {
+      command     = ["CMD", "/opt/datadog-agent/bin/agent/agent", "health"]
+      interval    = 30
+      retries     = 3
+      startPeriod = 15
+      timeout     = 5
+    }
+
     logConfiguration = {
       logDriver = "awslogs"
       options = {
