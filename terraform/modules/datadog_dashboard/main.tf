@@ -127,8 +127,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             autoscale = true
             precision = 0
             request {
-              q          = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
-              aggregator = "last" # ← Fix: was "sum", now "last"
+              q = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -151,8 +150,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             autoscale = true
             precision = 0
             request {
-              q          = "sum:aws.ecs.service.pending{application:${var.app}, $env}"
-              aggregator = "last" # ← Fix: was "sum", now "last"
+              q = "sum:aws.ecs.service.pending{application:${var.app}, $env}"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -180,8 +178,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Running Tasks by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q          = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
-              aggregator = "last" # ← Most recent value, not average over time window
+              q = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
               conditional_formats {
                 comparator = "<"
                 value      = 1
@@ -202,8 +199,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Missing Tasks by Service (Desired - Running)"
             live_span = var.widget_live_spans.ecs
             request {
-              q          = "clamp_min(avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
-              aggregator = "last" # ← Most recent delta, not average
+              q = "clamp_min(avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -224,8 +220,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Pending Tasks by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q          = "sum:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
-              aggregator = "last" # ← Most recent value
+              q = "sum:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
               conditional_formats {
                 comparator = ">"
                 value      = 0
