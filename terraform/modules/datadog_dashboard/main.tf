@@ -166,6 +166,42 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         }
 
         # -------------------------------------------------------
+        # TASK TRENDS
+        # Running tasks over time shows service stability.
+        # Pending tasks over time surfaces stuck deployments.
+        # Desired is omitted — it only changes during intentional
+        # scaling events which are visible in the event stream.
+        # -------------------------------------------------------
+
+        widget {
+          timeseries_definition {
+            title     = "Running Tasks Over Time by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
+              display_type = "line"
+              style {
+                palette = "green"
+              }
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Pending Tasks Over Time by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
+              display_type = "bars"
+              style {
+                palette = "yellow"
+              }
+            }
+          }
+        }
+
+        # -------------------------------------------------------
         # TASK COUNTS
         # Current snapshot of running tasks per service.
         # Red = no tasks running. Use alongside the timeseries
@@ -207,42 +243,6 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
                 comparator = "<="
                 value      = 0
                 palette    = "white_on_green"
-              }
-            }
-          }
-        }
-
-        # -------------------------------------------------------
-        # TASK TRENDS
-        # Running tasks over time shows service stability.
-        # Pending tasks over time surfaces stuck deployments.
-        # Desired is omitted — it only changes during intentional
-        # scaling events which are visible in the event stream.
-        # -------------------------------------------------------
-
-        widget {
-          timeseries_definition {
-            title     = "Running Tasks Over Time by Service"
-            live_span = var.widget_live_spans.ecs
-            request {
-              q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
-              display_type = "line"
-              style {
-                palette = "green"
-              }
-            }
-          }
-        }
-
-        widget {
-          timeseries_definition {
-            title     = "Pending Tasks Over Time by Service"
-            live_span = var.widget_live_spans.ecs
-            request {
-              q            = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
-              display_type = "bars"
-              style {
-                palette = "yellow"
               }
             }
           }
