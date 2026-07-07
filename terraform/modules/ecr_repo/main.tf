@@ -1,5 +1,9 @@
+locals {
+  service = var.service != null ? var.service : var.platform.service
+}
+
 resource "aws_ecr_repository" "this" {
-  name                 = var.repo_name_override != null ? var.repo_name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}"
+  name                 = var.repo_name_override != null ? var.repo_name_override : "${var.platform.app}-${var.platform.env}-${local.service}"
   image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
