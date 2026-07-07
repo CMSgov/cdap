@@ -1,6 +1,11 @@
-module "datadog_apm" {
-  source = "../../modules/ecr_repo"
+locals {
+  config = yamldecode(file("${path.module}/config/${var.env}.yml"))
+}
+
+module "repo" {
+  for_each = toset(local.config.services)
+  source   = "../../modules/ecr_repo"
 
   platform = module.platform
-  service  = "datadog-apm"
+  service  = each.value
 }
