@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# TODO remove this logic in favor of SOPS stored IP lists retrieved and set via Tofu
 set -euo pipefail
 
 IPV4_LIST=$(grep -v '^#' temp/ip-sets/external-services/allowed_ips.txt | jq -Rs '{Addresses: split("\n") | map(select(length > 0))}' | jq -rc .Addresses)

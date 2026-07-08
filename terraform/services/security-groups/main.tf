@@ -7,14 +7,75 @@ module "standards" {
   service     = "security-groups"
 }
 
-data "aws_ssm_parameter" "cdap_mgmt_vpc_cidr" {
-  name = "/cdap/sensitive/mgmt-vpc/cidr"
+# Codebuild access to application VPC
+data "aws_security_groups" "codebuild_runners" {
+  filter {
+    name   = "group-name"
+    # include all codebuild projects for repos with var.app in the name
+    values = ["${var.app}*-${module.standards.account_env_suffix}-codebuild-project"]
+  }
+
+  filter {
+    name   = "vpc-id"
+    values = [module.standards.cdap_vpc.id]
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_codebuild_runners" {
+  for_each = toset(data.aws_security_groups.codebuild_runners.ids)
+
+  security_group_id            = aws_security_group.remote_management.id
+  description                  = "Allow traffic from CodeBuild runner SG"
+  referenced_security_group_id = each.value
+  ip_protocol                  = "-1"
+}
+
+resource "aws_security_group" "remote_management" {
+  name        = "remote-management"
+  description = "Allow access from remote management VPC"
+  vpc_id      = module.vpc.id
+  tags = {
+    Name = "remote-management"
+  }
 }
 
 module "vpc" {
   source = "../../modules/vpc"
   app    = var.app
   env    = var.env
+}
+
+data "aws_ssm_parameter" "zscaler_public_ips" {
+  name            = "/cdap/sensitive/zscaler/public-ips"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "zscaler_private_ips" {
+  name            = "/cdap/sensitive/zscaler/private-ips"
+  with_decryption = true
+}
+
+locals {
+  zscaler_public_cidrs  = [for ip in split(",", data.aws_ssm_parameter.zscaler_public_ips.value) : trimspace(ip)]
+  zscaler_private_cidrs = [for ip in split(",", data.aws_ssm_parameter.zscaler_private_ips.value) : trimspace(ip)]
+}
+
+resource "aws_vpc_security_group_ingress_rule" "zscaler_public" {
+  for_each = toset(local.zscaler_public_cidrs)
+
+  security_group_id = aws_security_group.zscaler_public.id
+  description       = "Zscaler public IP"
+  cidr_ipv4         = each.value
+  ip_protocol       = "-1"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "zscaler_private" {
+  for_each = toset(local.zscaler_private_cidrs)
+
+  security_group_id = aws_security_group.zscaler_private.id
+  description       = "Zscaler private IP"
+  cidr_ipv4         = each.value
+  ip_protocol       = "-1"
 }
 
 resource "aws_security_group" "zscaler_public" {
@@ -44,6 +105,7 @@ resource "aws_security_group" "internet" {
   }
 }
 
+# When we introduce the network firewall, we can remove this in favor of always 443
 resource "aws_vpc_security_group_egress_rule" "internet_http" {
   security_group_id = aws_security_group.internet.id
 
@@ -54,6 +116,7 @@ resource "aws_vpc_security_group_egress_rule" "internet_http" {
   to_port     = 80
 }
 
+# When we introduce the network firewall, we can also scope this down
 resource "aws_vpc_security_group_egress_rule" "internet_https" {
   security_group_id = aws_security_group.internet.id
 
@@ -62,29 +125,4 @@ resource "aws_vpc_security_group_egress_rule" "internet_https" {
   from_port   = 443
   ip_protocol = "tcp"
   to_port     = 443
-}
-
-resource "aws_security_group" "remote_management" {
-  name        = "remote-management"
-  description = "Allow access from remote management VPC"
-  vpc_id      = module.vpc.id
-  tags = {
-    Name = "remote-management"
-  }
-}
-
-resource "aws_vpc_security_group_ingress_rule" "remote_management_allow_all" {
-  security_group_id = aws_security_group.remote_management.id
-
-  description = "Allow all traffic from CDAP management VPC"
-  cidr_ipv4   = data.aws_ssm_parameter.cdap_mgmt_vpc_cidr.value
-  ip_protocol = -1
-}
-
-resource "aws_vpc_security_group_ingress_rule" "allow_cdap_vpc" {
-  security_group_id = aws_security_group.remote_management.id
-
-  description = "Allow all traffic from ${module.standards.cdap_vpc.id} VPC"
-  cidr_ipv4   = module.standards.cdap_vpc.cidr_block
-  ip_protocol = -1
 }
