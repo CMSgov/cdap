@@ -1,16 +1,11 @@
 data "aws_ssm_parameter" "secrets" {
-  for_each = { for secret in try(var.container_secrets, []) : secret.name => secret if secret != null }
+  for_each = nonsensitive({
+    for index, secret in coalesce(var.container_secrets, []) :
+    tostring(index) => secret
+    if secret != null
+  })
 
-  # valueFrom may be a full ARN or a plain path — normalize to path
-  name = can(regex("^arn:aws:ssm:", each.value.valueFrom)) ? (
-    # Extract the parameter name from the ARN
-    # ARN format: arn:aws:ssm:region:account:parameter/path/to/param
-    replace(
-      regex("parameter(.+)$", each.value.valueFrom)[0],
-      "parameter",
-      ""
-    )
-  ) : each.value.valueFrom
+  name = can(regex("^arn:aws:ssm:", each.value.valueFrom)) ? regex("parameter(/[^:]+)$", each.value.valueFrom)[0] : each.value.valueFrom
 }
 
 data "aws_ram_resource_share" "pace_ca" {
@@ -20,4 +15,9 @@ data "aws_ram_resource_share" "pace_ca" {
 
 data "aws_ssm_parameter" "datadog_api_key" {
   name = "/${var.platform.app}/${var.platform.env}/datadog/agents/api_key"
+}
+
+data "aws_ssm_parameter" "datadog_private_location_sg" {
+  count = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
+  name  = "/cdap/${var.platform.env}/datadog/nonsensitive/private_location_task_security_group_id"
 }

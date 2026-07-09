@@ -27,7 +27,7 @@ locals {
   app_container = {
     name                   = local.service_name
     image                  = var.image
-    readonlyRootFilesystem = true
+    readonlyRootFilesystem = var.readonly_root_filesystem
     portMappings           = var.port_mappings
     mountPoints            = var.mount_points
     secrets                = var.container_secrets
@@ -62,7 +62,7 @@ locals {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = aws_cloudwatch_log_group.datadog[0].name
+        awslogs-group         = var.enable_datadog_agent ? aws_cloudwatch_log_group.datadog[0].name : ""
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
       }
@@ -214,6 +214,14 @@ resource "aws_vpc_security_group_egress_rule" "https" {
   ip_protocol       = "tcp"
   cidr_ipv4         = "0.0.0.0/0"
   description       = "Allow HTTPS outbound (ECR, CloudWatch, SSM)"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "datadog_synthetics" {
+  count                        = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
+  security_group_id            = aws_security_group.task[0].id
+  referenced_security_group_id = data.aws_ssm_parameter.datadog_private_location_sg[0].value
+  ip_protocol                  = "-1"
+  description                  = "Allow all traffic from Datadog private location synthetic test runner"
 }
 
 resource "aws_ecs_service" "this" {

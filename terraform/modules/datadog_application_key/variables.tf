@@ -31,6 +31,13 @@ variable "monitors_manager" {
   default = false
 }
 
+variable "synthetics_manager" {
+  description = "Allows for creation and deletion of synthetics. All subscriber repos can use."
+
+  type    = bool
+  default = true
+}
+
 variable "users_manager" {
   description = "Allows for management of users into teams. Currently no use cases."
   type        = bool
@@ -41,3 +48,10 @@ variable "org_config_manager" {
   type    = bool
   default = false
 }
+
+variable "private_location_manager" {
+  description = "Allows creation and management of Synthetics Private Locations. Intended for infrastructure managers (e.g. CDAP, BB, BFD) on per-AWS account basis."
+  type        = bool
+  default     = false
+}
+

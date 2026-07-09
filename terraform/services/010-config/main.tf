@@ -3,7 +3,7 @@ module "standards" {
   providers   = { aws = aws, aws.secondary = aws.secondary }
   app         = "cdap"
   env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/config"
+  root_module = "https://github.com/CMSgov/cdap/tree/91429b47148ae0092ba57f003e4ab3467c9ff055/terraform/services/010-config"
   service     = local.service
 }
 

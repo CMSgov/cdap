@@ -1,0 +1,8 @@
+vpcs:
+  - ab2d-east-test
+  - ab2d-east-dev
+  - bcda-east-test
+  - bcda-east-dev
+  - cdap-east-test
+  - dpc-east-test
+  - dpc-east-dev
