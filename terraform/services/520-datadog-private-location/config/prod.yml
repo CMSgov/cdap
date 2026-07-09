@@ -1,0 +1,8 @@
+vpcs:
+  - ab2d-east-prod
+  - ab2d-east-sandbox
+  - bcda-east-prod
+  - bcda-east-sandbox
+  - cdap-east-prod
+  - dpc-east-prod
+  - dpc-east-sandbox

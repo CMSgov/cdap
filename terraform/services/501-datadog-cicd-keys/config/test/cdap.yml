@@ -8,3 +8,4 @@ cross_account_shares:
 
 key_permissions:
   api_key_manager: true
+  private_location_manager: true
