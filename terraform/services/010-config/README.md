@@ -21,65 +21,39 @@ bin/sopsw -e values/prod.sopsw.yaml
 **NOTE** The values file encodes which KMS keys are necessary for encryption/decryption. The shell must be authenticated with the right account and role in order to access the specified KMS keys.
 
 <!-- BEGIN_TF_DOCS -->
-<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
-     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
-     Manually updating sections between TF_DOCS tags may be overwritten.
-     See https://terraform-docs.io/user-guide/configuration/ for more information.
--->
-## Providers
-
-No providers.
-
-<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
-     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
-     Manually updating sections between TF_DOCS tags may be overwritten.
-     See https://terraform-docs.io/user-guide/configuration/ for more information.
--->
 ## Requirements
 
 No requirements.
 
-<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
-     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
-     Manually updating sections between TF_DOCS tags may be overwritten.
-     See https://terraform-docs.io/user-guide/configuration/ for more information.
--->
-## Inputs
+## Providers
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_env"></a> [env](#input\_env) | The application environment (test, prod) | `string` | n/a | yes |
-| <a name="input_create_local_sops_wrapper"></a> [create\_local\_sops\_wrapper](#input\_create\_local\_sops\_wrapper) | When `true`, creates sops wrapper file at `bin/sopsw`. | `bool` | `false` | no |
+| Name | Version |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
 
-<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
-     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
-     Manually updating sections between TF_DOCS tags may be overwritten.
-     See https://terraform-docs.io/user-guide/configuration/ for more information.
--->
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
-| <a name="module_platform"></a> [platform](#module\_platform) | github.com/CMSgov/cdap//terraform/modules/platform | 9389a80e100ec6cbdf0e2fc25123678c9156ff73 |
-| <a name="module_sops"></a> [sops](#module\_sops) | github.com/CMSgov/cdap//terraform/modules/sops | 8874310 |
+| ---- | ------ | ------- |
+| <a name="module_sops"></a> [sops](#module\_sops) | github.com/CMSgov/cdap//terraform/modules/sops | 93820ca |
+| <a name="module_standards"></a> [standards](#module\_standards) | github.com/CMSgov/cdap//terraform/modules/standards | 0bd3eeae6b03cc8883b7dbdee5f04deb33468260 |
 
-<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
-     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
-     Manually updating sections between TF_DOCS tags may be overwritten.
-     See https://terraform-docs.io/user-guide/configuration/ for more information.
--->
 ## Resources
 
-No resources.
+| Name | Type |
+| ---- | ---- |
+| [aws_kms_alias.primary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias) | data source |
 
-<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
-     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
-     Manually updating sections between TF_DOCS tags may be overwritten.
-     See https://terraform-docs.io/user-guide/configuration/ for more information.
--->
+## Inputs
+
+| Name | Description | Type | Default | Required |
+| ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_create_local_sops_wrapper"></a> [create\_local\_sops\_wrapper](#input\_create\_local\_sops\_wrapper) | When `true`, creates sops wrapper file at `bin/sopsw`. | `bool` | `false` | no |
+| <a name="input_env"></a> [env](#input\_env) | The application environment (test, prod) | `string` | n/a | yes |
+
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_edit"></a> [edit](#output\_edit) | n/a |
 <!-- END_TF_DOCS -->
