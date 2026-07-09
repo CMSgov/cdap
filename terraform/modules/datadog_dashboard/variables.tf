@@ -49,3 +49,9 @@ variable "runbook_url" {
   description = "URL where on-call engineers can find actions to remediate issues, including escalation."
   type        = string
 }
+
+variable "apm_primary_operation" {
+  description = "Primary operation / span name to use for APM metrics in the dashboard."
+  type        = string
+  default     = "http.request"
+}
