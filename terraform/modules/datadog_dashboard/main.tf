@@ -358,7 +358,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Target Response Time p95 by Target Group"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "p95:aws.applicationelb.target_response_time{application:${var.app}, $env} by {targetgroup}"
+              q            = "avg:aws.applicationelb.target_response_time.p95{application:${var.app}, $env} by {targetgroup}"
               display_type = "line"
             }
           }
