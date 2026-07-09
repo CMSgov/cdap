@@ -214,6 +214,9 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # ECS
   statement {
     actions = [
+      "ecs:CreateCluster",
+      "ecs:CreateService",
+      "ecs:DeleteCluster",
       "ecs:DeregisterTaskDefinition",
       "ecs:DescribeClusters",
       "ecs:DescribeServices",
@@ -223,6 +226,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ecs:ListTaskDefinitions",
       "ecs:ListTasks",
       "ecs:RegisterTaskDefinition",
+      "ecs:TagResource",
       "ecs:UpdateService"
     ]
     resources = ["*"]
