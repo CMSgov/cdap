@@ -259,7 +259,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Container Restarts by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:container.restarts{task_family:${var.app}*} by {servicename}"
+              q            = "sum:container.restarts{application:${var.app}, $env} by {servicename}"
               display_type = "bars"
               style {
                 palette = "warm"
@@ -406,7 +406,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Container Restarts — Selected Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:container.restarts{task_family:${var.app}*, $servicename} by {containername}"
+              q            = "sum:container.restarts{application:${var.app}, $env, $servicename} by {containername}"
               display_type = "bars"
               style {
                 palette = "warm"
@@ -414,7 +414,6 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             }
           }
         }
-
       }
     }
   }
