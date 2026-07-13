@@ -21,15 +21,15 @@ module "repo_release_pipeline" {
   tag_rules = [
     {
       tag_prefix      = "r"
-      retained_images = 3
-      description     = "Keep last 3 release images"
+      retained_images = local.config.default_retained_images
+      description     = "Keep last ${local.config.default_retained_images} release images"
     },
     {
       tag_prefix      = "temp-"
-      retained_images = 3
-      description     = "Keep last 3 temp images"
+      retained_images = local.config.default_retained_images
+      description     = "Keep last ${local.config.default_retained_images} temp images"
     }
   ]
 
-  untagged_expiry_days = 30
+  untagged_expiry_days = local.config.untagged_images_retained
 }
