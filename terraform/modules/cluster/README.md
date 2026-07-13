@@ -24,36 +24,68 @@ module "cluster" {
 ```
 
 <!-- BEGIN_TF_DOCS -->
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Providers
+
+| Name | Version |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.54.0 |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Requirements
 
 No requirements.
 
-## Providers
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
+## Inputs
 
-| Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
+| Name | Description | Type | Default | Required |
+| ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | <pre>object({<br/>    app = string,<br/>    env = string,<br/>    kms_alias_primary = object({<br/>      target_key_arn = string<br/>    }),<br/>    service          = string,<br/>    is_ephemeral_env = string<br/>  })</pre> | n/a | yes |
+| <a name="input_cluster_name_override"></a> [cluster\_name\_override](#input\_cluster\_name\_override) | Name of the ecs cluster. | `string` | `null` | no |
+| <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | Number of days to retain ECS task logs in CloudWatch. Required for production is minimum 180. | `number` | `180` | no |
 
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Modules
 
 No modules.
 
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
+| [aws_cloudwatch_log_group.ecs_container_insights_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_ecs_cluster.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster) | resource |
 
-## Inputs
-
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_cluster_name_override"></a> [cluster\_name\_override](#input\_cluster\_name\_override) | Name of the ecs cluster. | `string` | `null` | no |
-| <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | `any` | n/a | yes |
-
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+     'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
+     Manually updating sections between TF_DOCS tags may be overwritten.
+     See https://terraform-docs.io/user-guide/configuration/ for more information.
+-->
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_this"></a> [this](#output\_this) | The ecs cluster for the given inputs. |
 <!-- END_TF_DOCS -->
