@@ -1,0 +1,5 @@
+services:
+  - datadog-apm
+
+default_retained_images: 3
+untagged_images_retained: 10

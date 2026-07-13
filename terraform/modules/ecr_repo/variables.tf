@@ -17,13 +17,29 @@ variable "service" {
 }
 
 variable "repo_name_override" {
-  description = "When possible, do not use. Override for the name of the ecr repository."
+  description = "When possible, do not use. Override for the name of the ECR repository."
   type        = string
   default     = null
 }
 
-variable "num_retained_images" {
-  description = "Prefer this default for prod account. The number of images retained in the ECR repository."
+variable "default_retained_images" {
+  description = "Number of images to retain. Recommended default is 3 (latest 3 releases) per platform container image policy."
   type        = number
-  default     = 5
+  default     = 3
+
+  validation {
+    condition     = var.default_retained_images >= 1
+    error_message = "Must retain at least 1 image to avoid service disruption during scaling events."
+  }
+}
+
+variable "untagged_images_retained" {
+  description = "Number of untagged images to retain before cleanup."
+  type        = number
+  default     = 10
+
+  validation {
+    condition     = var.untagged_images_retained >= 0
+    error_message = "untagged_images_retained must be a non-negative number."
+  }
 }

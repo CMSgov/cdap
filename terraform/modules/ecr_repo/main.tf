@@ -1,13 +1,14 @@
 locals {
-  service = var.service != null ? var.service : var.platform.service
+  service   = var.service != null ? var.service : var.platform.service
+  repo_name = var.repo_name_override != null ? var.repo_name_override : "${var.platform.app}-${var.platform.env}-${local.service}"
 }
 
 resource "aws_ecr_repository" "this" {
-  name                 = var.repo_name_override != null ? var.repo_name_override : "${var.platform.app}-${var.platform.env}-${local.service}"
+  name                 = local.repo_name
   image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
-    scan_on_push = true
+    scan_on_push = false # Attestation ECR.1 permits this as false and coverage is achieved through Snyk
   }
 
   encryption_configuration {
@@ -16,11 +17,10 @@ resource "aws_ecr_repository" "this" {
   }
 
   tags = {
-    Name        = var.repo_name_override != null ? var.repo_name_override : "${var.platform.app}-${var.platform.env}-${local.service}"
+    Name        = local.repo_name
     Environment = var.platform.env
   }
 }
-
 resource "aws_ecr_lifecycle_policy" "this" {
   repository = aws_ecr_repository.this.name
 
@@ -28,15 +28,23 @@ resource "aws_ecr_lifecycle_policy" "this" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last ${var.num_retained_images} images"
+        description  = "Keep last ${var.default_retained_images} images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = var.num_retained_images
+          countNumber = var.default_retained_images
         }
-        action = {
-          type = "expire"
+        action = { type = "expire" }
+      },
+      {
+        rulePriority = 2
+        description  = "Keep last ${var.untagged_images_retained} untagged images"
+        selection = {
+          tagStatus   = "untagged"
+          countType   = "imageCountMoreThan"
+          countNumber = var.untagged_images_retained
         }
+        action = { type = "expire" }
       }
     ]
   })
