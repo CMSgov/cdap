@@ -31,7 +31,10 @@ variable "tag_rules" {
       - "imageCountMoreThan" (default): retain up to `retained_images` images
       - "sinceImagePushed": expire images older than `expiry_days` days
 
-    A null tag_prefix produces a catch-all rule (tagStatus: any).
+   A null tag_prefix produces a catch-all rule targeting all TAGGED images
+    (tagStatus: "tagged", no tagPrefixList). "any" is intentionally avoided
+    to ensure untagged image cleanup is controlled exclusively by
+    untagged_expiry_days as the lowest-priority rule.
 
     Default: keep last 3 images (all tags) per platform policy.
 

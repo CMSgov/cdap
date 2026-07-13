@@ -42,19 +42,21 @@ resource "aws_ecr_lifecycle_policy" "this" {
             action       = { type = "expire" }
             }) : rule.tag_prefix == null && coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed" ? jsonencode({
             rulePriority = idx + 1
-            description  = coalesce(rule.description, "Expire all images older than ${rule.expiry_days} days")
-            selection    = { tagStatus = "any", countType = "sinceImagePushed", countUnit = "days", countNumber = rule.expiry_days }
+            description  = coalesce(rule.description, "Expire all tagged images older than ${rule.expiry_days} days")
+            selection    = { tagStatus = "tagged", countType = "sinceImagePushed", countUnit = "days", countNumber = rule.expiry_days }
             action       = { type = "expire" }
             }) : jsonencode({
             rulePriority = idx + 1
-            description  = coalesce(rule.description, "Keep last ${rule.retained_images} images (all tags)")
-            selection    = { tagStatus = "any", countType = "imageCountMoreThan", countNumber = rule.retained_images }
+            description  = coalesce(rule.description, "Keep last ${rule.retained_images} tagged images")
+            selection    = { tagStatus = "tagged", countType = "imageCountMoreThan", countNumber = rule.retained_images }
             action       = { type = "expire" }
           })
         )
       ],
 
-      # Untagged images rule — always appended last (lowest priority)
+      # Untagged images rule — always appended last (lowest priority).
+      # Exclusively controls untagged image cleanup — catch-all rules above
+      # intentionally use tagStatus "tagged" to avoid pre-empting this rule.
       [
         {
           rulePriority = length(var.tag_rules) + 1
