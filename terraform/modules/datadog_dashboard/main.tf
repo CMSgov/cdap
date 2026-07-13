@@ -7,6 +7,13 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
     defaults = ["*"]
   }
 
+
+  template_variable {
+    name     = "servicename"
+    prefix   = "servicename"
+    defaults = ["*"]
+  }
+
   widget {
     note_definition {
       content          = "## ${upper(var.app)}\nMonitoring dashboard. Filters apply via the **env** template variable above.\n\n [Runbook](${var.runbook_url}) | Alerts managed via Tofu monitors module"
