@@ -4,9 +4,18 @@ variable "app" {
 }
 
 variable "custom_widgets" {
-  description = "Custom widgets to add to the dashboard. See README for details."
-  type        = list(any)
-  default     = []
+  description = "List of custom widgets to render in the dashboard group"
+  type = list(object({
+    type         = string
+    title        = string
+    display_type = optional(string, "line") # for timeseries
+    precision    = optional(number, 2)      # for query_value
+    queries = list(object({
+      q            = string
+      display_type = optional(string, "line") # per-request override
+    }))
+  }))
+  default = []
 }
 
 variable "widget_live_spans" {

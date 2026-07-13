@@ -62,43 +62,54 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         layout_type = "ordered"
         title       = "${var.app} Custom Metrics"
 
-        # Loop through every widget passed by the team
         dynamic "widget" {
           for_each = var.custom_widgets
           content {
 
-            # Render ONLY IF type == "timeseries"
+            # Timeseries: supports multiple requests
             dynamic "timeseries_definition" {
               for_each = widget.value.type == "timeseries" ? [widget.value] : []
               content {
                 title = timeseries_definition.value.title
-                request {
-                  q            = timeseries_definition.value.query
-                  display_type = timeseries_definition.value.display_type
+
+                dynamic "request" {
+                  for_each = timeseries_definition.value.queries
+                  content {
+                    q            = request.value.q
+                    display_type = request.value.display_type
+                  }
                 }
               }
             }
 
-            # Render ONLY IF type == "query_value"
+            # Query Value: typically one query, but list keeps it consistent
             dynamic "query_value_definition" {
               for_each = widget.value.type == "query_value" ? [widget.value] : []
               content {
                 title     = query_value_definition.value.title
                 autoscale = true
                 precision = query_value_definition.value.precision
-                request {
-                  q = query_value_definition.value.query
+
+                dynamic "request" {
+                  for_each = query_value_definition.value.queries
+                  content {
+                    q = request.value.q
+                  }
                 }
               }
             }
 
-            # Render ONLY IF type == "toplist"
+            # Toplist: supports multiple requests
             dynamic "toplist_definition" {
               for_each = widget.value.type == "toplist" ? [widget.value] : []
               content {
                 title = toplist_definition.value.title
-                request {
-                  q = toplist_definition.value.query
+
+                dynamic "request" {
+                  for_each = toplist_definition.value.queries
+                  content {
+                    q = request.value.q
+                  }
                 }
               }
             }
