@@ -329,9 +329,6 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         # -------------------------------------------------------
         # NETWORK I/O
         # Real-time throughput and cumulative data transfer.
-        # Filtered by task_family prefix — env filter not
-        # available on container.net.* metrics until Unified
-        # Service Tagging is fully applied across all services.
         # -------------------------------------------------------
 
         widget {
