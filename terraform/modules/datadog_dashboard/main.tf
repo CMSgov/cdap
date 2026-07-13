@@ -7,6 +7,11 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
     defaults = ["*"]
   }
 
+  template_variable {
+    name     = "service"
+    prefix   = "service"
+    defaults = ["*"]
+  }
 
   template_variable {
     name     = "servicename"
@@ -16,7 +21,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
   widget {
     note_definition {
-      content          = "## ${upper(var.app)}\nMonitoring dashboard. Filters apply via the **env** template variable above.\n\n [Runbook](${var.runbook_url}) | Alerts managed via Tofu monitors module"
+      content          = "## ${upper(var.app)}\nMonitoring dashboard. Filter by environment and service using the **env** and **servicename** template variables above.\n\n[Runbook](${var.runbook_url}) | Alerts managed via Tofu monitors module"
       background_color = "blue"
       font_size        = "14"
       text_align       = "left"
@@ -246,7 +251,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Container Restarts by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:container.restarts{application:${var.app}, $env} by {servicename}"
+              q            = "sum:container.restarts{application:${var.app}, $env} by {service}"
               display_type = "bars"
               style {
                 palette = "warm"
@@ -259,7 +264,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
           event_stream_definition {
             title      = "ECS Task & Deployment Events"
             live_span  = var.widget_live_spans.ecs
-            query      = "source:amazon_ecs application:${var.app}"
+            query      = "source:amazon_ecs application:${var.app} $env $servicename"
             event_size = "s"
           }
         }
@@ -276,7 +281,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "CPU Utilization by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.cpuutilization{application:${var.app}, $env} by {servicename}"
+              q            = "avg:aws.ecs.cpuutilization{application:${var.app}, $env} by {service}"
               display_type = "line"
             }
             marker {
@@ -297,7 +302,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Memory Utilization by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.memory_utilization{application:${var.app}, $env} by {servicename}"
+              q            = "avg:aws.ecs.memory_utilization{application:${var.app}, $env} by {service}"
               display_type = "line"
             }
             marker {
@@ -322,21 +327,21 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Network Throughput (kB/s) by Task (data displays for all envs without env filter)"
+            title     = "Network Throughput (kB/s) by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:container.net.rcvd{task_family:${var.app}*} by {task_name}.as_rate()/1024"
+              q            = "avg:container.net.rcvd{task_family:${var.app}*} by {service}.as_rate()/1024" # ← service
               display_type = "line"
               metadata {
-                expression = "avg:container.net.rcvd{task_family:${var.app}*} by {task_name}.as_rate()/1024"
+                expression = "avg:container.net.rcvd{task_family:${var.app}*} by {service}.as_rate()/1024"
                 alias_name = "kB/s In"
               }
             }
             request {
-              q            = "avg:container.net.sent{task_family:${var.app}*} by {task_name}.as_rate()/1024" # ← Fixed: added closing }
+              q            = "avg:container.net.sent{task_family:${var.app}*} by {service}.as_rate()/1024" # ← service
               display_type = "line"
               metadata {
-                expression = "avg:container.net.sent{task_family:${var.app}*} by {task_name}.as_rate()/1024"
+                expression = "avg:container.net.sent{task_family:${var.app}*} by {service}.as_rate()/1024"
                 alias_name = "kB/s Out"
               }
             }
@@ -350,21 +355,21 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Total Data Transferred (GB) by Container"
+            title     = "Total Data Transferred (GB) by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:container.net.rcvd{task_family:${var.app}*} by {task_name}/1073741824"
+              q            = "sum:container.net.rcvd{task_family:${var.app}*} by {service}/1073741824" # ← service
               display_type = "bars"
               metadata {
-                expression = "sum:container.net.rcvd{task_family:${var.app}*} by {task_name}/1073741824"
+                expression = "sum:container.net.rcvd{task_family:${var.app}*} by {service}/1073741824"
                 alias_name = "GB In"
               }
             }
             request {
-              q            = "sum:container.net.sent{task_family:${var.app}*} by {task_name}/1073741824"
+              q            = "sum:container.net.sent{task_family:${var.app}*} by {service}/1073741824" # ← service
               display_type = "bars"
               metadata {
-                expression = "sum:container.net.sent{task_family:${var.app}*} by {task_name}/1073741824"
+                expression = "sum:container.net.sent{task_family:${var.app}*} by {service}/1073741824"
                 alias_name = "GB Out"
               }
             }
@@ -383,7 +388,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
           event_stream_definition {
             title      = "Task Events — Selected Service"
             live_span  = var.widget_live_spans.ecs
-            query      = "source:amazon_ecs application:${var.app} $servicename"
+            query      = "source:amazon_ecs application:${var.app} $env $servicename"
             event_size = "l"
           }
         }
@@ -393,7 +398,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Container Restarts — Selected Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:container.restarts{application:${var.app}, $env, $servicename} by {containername}"
+              q            = "sum:container.restarts{application:${var.app}, $env, $service} by {containername}"
               display_type = "bars"
               style {
                 palette = "warm"
@@ -415,10 +420,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Request Rate"
+            title     = "Request Rate by Service"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.${var.apm_primary_operation}.hits{service:${var.app}, $env}.as_rate()"
+              q            = "sum:trace.${var.apm_primary_operation}.hits{application:${var.app}, $env, $service} by {service}.as_rate()"
               display_type = "line"
             }
           }
@@ -429,15 +434,15 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "p50 / p95 / p99 Latency"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "p50:trace.${var.apm_primary_operation}{service:${var.app}, $env}"
+              q            = "p50:trace.${var.apm_primary_operation}{application:${var.app}, $env, $service} by {service}"
               display_type = "line"
             }
             request {
-              q            = "p95:trace.${var.apm_primary_operation}{service:${var.app}, $env}"
+              q            = "p95:trace.${var.apm_primary_operation}{application:${var.app}, $env, $service} by {service}"
               display_type = "line"
             }
             request {
-              q            = "p99:trace.${var.apm_primary_operation}{service:${var.app}, $env}"
+              q            = "p99:trace.${var.apm_primary_operation}{application:${var.app}, $env, $service} by {service}"
               display_type = "line"
             }
           }
@@ -445,10 +450,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Error Rate"
+            title     = "Error Rate by Service"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.${var.apm_primary_operation}.errors{service:${var.app}, $env}.as_rate()"
+              q            = "sum:trace.${var.apm_primary_operation}.errors{application:${var.app}, $env, $service} by {service}.as_rate()"
               display_type = "bars"
             }
           }
@@ -461,7 +466,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             autoscale = true
             precision = 2
             request {
-              q = "avg:trace.${var.apm_primary_operation}.apdex{service:${var.app}, $env}"
+              q = "avg:trace.${var.apm_primary_operation}.apdex{application:${var.app}, $env, $service}"
             }
           }
         }
