@@ -343,10 +343,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
               }
             }
             request {
-              q            = "sum:container.net.sent{image_name:${var.app}*} by {task_name}/1073741824"
+              q            = "sum:container.net.sent{task_family:${var.app}*} by {task_name}/1073741824"
               display_type = "bars"
               metadata {
-                expression = "sum:container.net.sent{image_name:${var.app}*} by {task_name}/1073741824"
+                expression = "sum:container.net.sent{task_family:${var.app}*} by {task_name}/1073741824"
                 alias_name = "GB Out"
               }
             }
@@ -522,6 +522,17 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
+            title     = "Duration (avg) by Function"
+            live_span = var.widget_live_spans.lambda
+            request {
+              q            = "avg:aws.lambda.duration{application:${var.app}, $env} by {functionname}"
+              display_type = "line"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
             title     = "Errors by Function"
             live_span = var.widget_live_spans.lambda
             request {
@@ -537,17 +548,6 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             live_span = var.widget_live_spans.lambda
             request {
               q            = "sum:aws.lambda.errors{application:${var.app}, $env} by {functionname}.as_count() / sum:aws.lambda.invocations{application:${var.app}, $env} by {functionname}.as_count() * 100"
-              display_type = "line"
-            }
-          }
-        }
-
-        widget {
-          timeseries_definition {
-            title     = "Duration (avg) by Function"
-            live_span = var.widget_live_spans.lambda
-            request {
-              q            = "avg:aws.lambda.duration{application:${var.app}, $env} by {functionname}"
               display_type = "line"
             }
           }
