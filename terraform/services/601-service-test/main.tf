@@ -16,7 +16,7 @@ module "repo_release_pipeline" {
   source = "../../modules/ecr_repo"
 
   platform = module.platform
-  service  = "release-pipeline"
+  service  = "service-test"
 
   tag_rules = [
     {
