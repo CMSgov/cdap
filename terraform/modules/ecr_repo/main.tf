@@ -27,25 +27,55 @@ resource "aws_ecr_lifecycle_policy" "this" {
 
   policy = jsonencode({
     rules = concat(
-      # Tagged/catch-all rules — one per tag_rules entry, in priority order
+
+      # Rules with an explicit tag prefix (tagStatus: tagged)
       [
         for idx, rule in var.tag_rules : {
           rulePriority = idx + 1
           description = rule.description != null ? rule.description : (
             coalesce(rule.count_type, "imageCountMoreThan") == "imageCountMoreThan"
-            ? "Keep last ${rule.retained_images} images${rule.tag_prefix != null ? " for tag prefix '${rule.tag_prefix}'" : ""}"
-            : "Expire images${rule.tag_prefix != null ? " with tag prefix '${rule.tag_prefix}'" : ""} older than ${rule.expiry_days} days"
+            ? "Keep last ${rule.retained_images} images for tag prefix '${rule.tag_prefix}'"
+            : "Expire images with tag prefix '${rule.tag_prefix}' older than ${rule.expiry_days} days"
           )
-          selection = merge(
-            rule.tag_prefix != null
-            ? { tagStatus = "tagged", tagPrefixList = [rule.tag_prefix] }
-            : { tagStatus = "any" },
-            coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed"
-            ? { countType = "sinceImagePushed", countUnit = "days", countNumber = rule.expiry_days }
-            : { countType = "imageCountMoreThan", countNumber = rule.retained_images }
-          )
+          selection = coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed" ? {
+            tagStatus     = "tagged"
+            tagPrefixList = [rule.tag_prefix]
+            countType     = "sinceImagePushed"
+            countUnit     = "days"
+            countNumber   = rule.expiry_days
+            } : {
+            tagStatus     = "tagged"
+            tagPrefixList = [rule.tag_prefix]
+            countType     = "imageCountMoreThan"
+            countNumber   = rule.retained_images
+          }
           action = { type = "expire" }
         }
+        if rule.tag_prefix != null
+      ],
+
+      # Catch-all rules (tagStatus: any) — no tagPrefixList
+      [
+        for idx, rule in var.tag_rules : {
+          rulePriority = idx + 1
+          description = rule.description != null ? rule.description : (
+            coalesce(rule.count_type, "imageCountMoreThan") == "imageCountMoreThan"
+            ? "Keep last ${rule.retained_images} images (all tags)"
+            : "Expire all images older than ${rule.expiry_days} days"
+          )
+          selection = coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed" ? {
+            tagStatus   = "any"
+            countType   = "sinceImagePushed"
+            countUnit   = "days"
+            countNumber = rule.expiry_days
+            } : {
+            tagStatus   = "any"
+            countType   = "imageCountMoreThan"
+            countNumber = rule.retained_images
+          }
+          action = { type = "expire" }
+        }
+        if rule.tag_prefix == null
       ],
 
       # Untagged images rule — always appended last (lowest priority)
