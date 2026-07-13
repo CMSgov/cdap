@@ -27,55 +27,31 @@ resource "aws_ecr_lifecycle_policy" "this" {
 
   policy = jsonencode({
     rules = concat(
-
-      # Rules with an explicit tag prefix (tagStatus: tagged)
       [
-        for idx, rule in var.tag_rules : {
-          rulePriority = idx + 1
-          description = rule.description != null ? rule.description : (
-            coalesce(rule.count_type, "imageCountMoreThan") == "imageCountMoreThan"
-            ? "Keep last ${rule.retained_images} images for tag prefix '${rule.tag_prefix}'"
-            : "Expire images with tag prefix '${rule.tag_prefix}' older than ${rule.expiry_days} days"
-          )
-          selection = coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed" ? {
-            tagStatus     = "tagged"
-            tagPrefixList = [rule.tag_prefix]
-            countType     = "sinceImagePushed"
-            countUnit     = "days"
-            countNumber   = rule.expiry_days
-            } : {
-            tagStatus     = "tagged"
-            tagPrefixList = [rule.tag_prefix]
-            countType     = "imageCountMoreThan"
-            countNumber   = rule.retained_images
-          }
-          action = { type = "expire" }
-        }
-        if rule.tag_prefix != null
-      ],
-
-      # Catch-all rules (tagStatus: any) — no tagPrefixList
-      [
-        for idx, rule in var.tag_rules : {
-          rulePriority = idx + 1
-          description = rule.description != null ? rule.description : (
-            coalesce(rule.count_type, "imageCountMoreThan") == "imageCountMoreThan"
-            ? "Keep last ${rule.retained_images} images (all tags)"
-            : "Expire all images older than ${rule.expiry_days} days"
-          )
-          selection = coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed" ? {
-            tagStatus   = "any"
-            countType   = "sinceImagePushed"
-            countUnit   = "days"
-            countNumber = rule.expiry_days
-            } : {
-            tagStatus   = "any"
-            countType   = "imageCountMoreThan"
-            countNumber = rule.retained_images
-          }
-          action = { type = "expire" }
-        }
-        if rule.tag_prefix == null
+        for idx, rule in var.tag_rules :
+        jsondecode(
+          rule.tag_prefix != null && coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed" ? jsonencode({
+            rulePriority = idx + 1
+            description  = coalesce(rule.description, "Expire images with tag prefix '${rule.tag_prefix}' older than ${rule.expiry_days} days")
+            selection    = { tagStatus = "tagged", tagPrefixList = [rule.tag_prefix], countType = "sinceImagePushed", countUnit = "days", countNumber = rule.expiry_days }
+            action       = { type = "expire" }
+            }) : rule.tag_prefix != null && coalesce(rule.count_type, "imageCountMoreThan") == "imageCountMoreThan" ? jsonencode({
+            rulePriority = idx + 1
+            description  = coalesce(rule.description, "Keep last ${rule.retained_images} images for tag prefix '${rule.tag_prefix}'")
+            selection    = { tagStatus = "tagged", tagPrefixList = [rule.tag_prefix], countType = "imageCountMoreThan", countNumber = rule.retained_images }
+            action       = { type = "expire" }
+            }) : rule.tag_prefix == null && coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed" ? jsonencode({
+            rulePriority = idx + 1
+            description  = coalesce(rule.description, "Expire all images older than ${rule.expiry_days} days")
+            selection    = { tagStatus = "any", countType = "sinceImagePushed", countUnit = "days", countNumber = rule.expiry_days }
+            action       = { type = "expire" }
+            }) : jsonencode({
+            rulePriority = idx + 1
+            description  = coalesce(rule.description, "Keep last ${rule.retained_images} images (all tags)")
+            selection    = { tagStatus = "any", countType = "imageCountMoreThan", countNumber = rule.retained_images }
+            action       = { type = "expire" }
+          })
+        )
       ],
 
       # Untagged images rule — always appended last (lowest priority)
