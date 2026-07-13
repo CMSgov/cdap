@@ -21,31 +21,47 @@ resource "aws_ecr_repository" "this" {
     Environment = var.platform.env
   }
 }
+
 resource "aws_ecr_lifecycle_policy" "this" {
   repository = aws_ecr_repository.this.name
 
   policy = jsonencode({
-    rules = [
-      {
-        rulePriority = 1
-        description  = "Keep last ${var.default_retained_images} images"
-        selection = {
-          tagStatus   = "any"
-          countType   = "imageCountMoreThan"
-          countNumber = var.default_retained_images
+    rules = concat(
+      # Tagged/catch-all rules — one per tag_rules entry, in priority order
+      [
+        for idx, rule in var.tag_rules : {
+          rulePriority = idx + 1
+          description  = rule.description != null ? rule.description : (
+            coalesce(rule.count_type, "imageCountMoreThan") == "imageCountMoreThan"
+              ? "Keep last ${rule.retained_images} images${rule.tag_prefix != null ? " for tag prefix '${rule.tag_prefix}'" : ""}"
+              : "Expire images${rule.tag_prefix != null ? " with tag prefix '${rule.tag_prefix}'" : ""} older than ${rule.expiry_days} days"
+          )
+          selection = merge(
+            rule.tag_prefix != null
+              ? { tagStatus = "tagged", tagPrefixList = [rule.tag_prefix] }
+              : { tagStatus = "any" },
+            coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed"
+              ? { countType = "sinceImagePushed", countUnit = "days", countNumber = rule.expiry_days }
+              : { countType = "imageCountMoreThan", countNumber = rule.retained_images }
+          )
+          action = { type = "expire" }
         }
-        action = { type = "expire" }
-      },
-      {
-        rulePriority = 2
-        description  = "Keep last ${var.untagged_images_retained} untagged images"
-        selection = {
-          tagStatus   = "untagged"
-          countType   = "imageCountMoreThan"
-          countNumber = var.untagged_images_retained
+      ],
+
+      # Untagged images rule — always appended last (lowest priority)
+      [
+        {
+          rulePriority = length(var.tag_rules) + 1
+          description  = "Expire untagged images after ${var.untagged_expiry_days} days"
+          selection = {
+            tagStatus   = "untagged"
+            countType   = "sinceImagePushed"
+            countUnit   = "days"
+            countNumber = var.untagged_expiry_days
+          }
+          action = { type = "expire" }
         }
-        action = { type = "expire" }
-      }
-    ]
+      ]
+    )
   })
 }
