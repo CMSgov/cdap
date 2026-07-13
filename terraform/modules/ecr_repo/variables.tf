@@ -66,7 +66,7 @@ variable "tag_rules" {
   validation {
     condition = alltrue([
       for r in var.tag_rules :
-        contains(["imageCountMoreThan", "sinceImagePushed"], coalesce(r.count_type, "imageCountMoreThan"))
+      contains(["imageCountMoreThan", "sinceImagePushed"], coalesce(r.count_type, "imageCountMoreThan"))
     ])
     error_message = "count_type must be either 'imageCountMoreThan' or 'sinceImagePushed'."
   }
@@ -74,8 +74,8 @@ variable "tag_rules" {
   validation {
     condition = alltrue([
       for r in var.tag_rules :
-        (coalesce(r.count_type, "imageCountMoreThan") == "imageCountMoreThan" && r.retained_images != null) ||
-        (r.count_type == "sinceImagePushed" && r.expiry_days != null)
+      (coalesce(r.count_type, "imageCountMoreThan") == "imageCountMoreThan" && r.retained_images != null) ||
+      (r.count_type == "sinceImagePushed" && r.expiry_days != null)
     ])
     error_message = "Each rule must provide retained_images for imageCountMoreThan, or expiry_days for sinceImagePushed."
   }
@@ -83,7 +83,7 @@ variable "tag_rules" {
   validation {
     condition = alltrue([
       for r in var.tag_rules :
-        r.retained_images == null || r.retained_images >= 1
+      r.retained_images == null || r.retained_images >= 1
     ])
     error_message = "retained_images must be at least 1 to prevent service disruption during scaling events."
   }
@@ -91,7 +91,7 @@ variable "tag_rules" {
   validation {
     condition = alltrue([
       for r in var.tag_rules :
-        r.expiry_days == null || (r.expiry_days >= 1 && r.expiry_days <= 60)
+      r.expiry_days == null || (r.expiry_days >= 1 && r.expiry_days <= 60)
     ])
     error_message = "expiry_days must be between 1 and 60 per platform container image policy."
   }
@@ -103,8 +103,8 @@ variable "untagged_expiry_days" {
     Defaults to 30 days per platform policy (max 30-60 day retention guidance).
     Untagged images are always cleaned up as the lowest priority rule.
   EOT
-  type    = number
-  default = 30
+  type        = number
+  default     = 30
 
   validation {
     condition     = var.untagged_expiry_days >= 1 && var.untagged_expiry_days <= 60

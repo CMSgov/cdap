@@ -31,18 +31,18 @@ resource "aws_ecr_lifecycle_policy" "this" {
       [
         for idx, rule in var.tag_rules : {
           rulePriority = idx + 1
-          description  = rule.description != null ? rule.description : (
+          description = rule.description != null ? rule.description : (
             coalesce(rule.count_type, "imageCountMoreThan") == "imageCountMoreThan"
-              ? "Keep last ${rule.retained_images} images${rule.tag_prefix != null ? " for tag prefix '${rule.tag_prefix}'" : ""}"
-              : "Expire images${rule.tag_prefix != null ? " with tag prefix '${rule.tag_prefix}'" : ""} older than ${rule.expiry_days} days"
+            ? "Keep last ${rule.retained_images} images${rule.tag_prefix != null ? " for tag prefix '${rule.tag_prefix}'" : ""}"
+            : "Expire images${rule.tag_prefix != null ? " with tag prefix '${rule.tag_prefix}'" : ""} older than ${rule.expiry_days} days"
           )
           selection = merge(
             rule.tag_prefix != null
-              ? { tagStatus = "tagged", tagPrefixList = [rule.tag_prefix] }
-              : { tagStatus = "any" },
+            ? { tagStatus = "tagged", tagPrefixList = [rule.tag_prefix] }
+            : { tagStatus = "any" },
             coalesce(rule.count_type, "imageCountMoreThan") == "sinceImagePushed"
-              ? { countType = "sinceImagePushed", countUnit = "days", countNumber = rule.expiry_days }
-              : { countType = "imageCountMoreThan", countNumber = rule.retained_images }
+            ? { countType = "sinceImagePushed", countUnit = "days", countNumber = rule.expiry_days }
+            : { countType = "imageCountMoreThan", countNumber = rule.retained_images }
           )
           action = { type = "expire" }
         }
