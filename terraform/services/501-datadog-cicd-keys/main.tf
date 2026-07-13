@@ -5,11 +5,13 @@ locals {
   key_permissions = try(local.config_data["key_permissions"], {})
 
   default_permissions = {
-    api_key_manager    = false
-    dashboard_manager  = true
-    monitors_manager   = true
-    users_manager      = false
-    org_config_manager = false
+    api_key_manager          = false
+    dashboard_manager        = true
+    monitors_manager         = true
+    synthetics_manager       = true
+    users_manager            = false
+    org_config_manager       = false
+    private_location_manager = false
   }
 
   resolved_permissions = {
@@ -27,11 +29,13 @@ module "datadog_application_key" {
   env    = var.env
 
   # permissions can be set per application via a map as needed, this current sets default permissions for all
-  api_key_manager    = local.resolved_permissions.api_key_manager
-  dashboard_manager  = local.resolved_permissions.dashboard_manager
-  monitors_manager   = local.resolved_permissions.monitors_manager
-  users_manager      = local.resolved_permissions.users_manager
-  org_config_manager = local.resolved_permissions.org_config_manager
+  api_key_manager          = local.resolved_permissions.api_key_manager
+  dashboard_manager        = local.resolved_permissions.dashboard_manager
+  monitors_manager         = local.resolved_permissions.monitors_manager
+  synthetics_manager       = local.resolved_permissions.synthetics_manager
+  users_manager            = local.resolved_permissions.users_manager
+  org_config_manager       = local.resolved_permissions.org_config_manager
+  private_location_manager = local.resolved_permissions.private_location_manager
 }
 
 #--------------
