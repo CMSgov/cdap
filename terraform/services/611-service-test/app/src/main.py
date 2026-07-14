@@ -84,5 +84,5 @@ if __name__ == "__main__":
         try:
             run_trace_example()
         except Exception as e:
-            logger.error(f"Error during trace/metric emission: {e}")
+            logger.exception(f"Error during trace/metric emission: {e}")
         time.sleep(interval)
