@@ -3,9 +3,8 @@ import time
 import logging
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from ddtrace import tracer, patch_all
-
-patch_all()
+import ddtrace.auto
+from ddtrace import tracer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

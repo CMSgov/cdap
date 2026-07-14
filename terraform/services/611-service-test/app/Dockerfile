@@ -1,10 +1,17 @@
-FROM python:3.13-alpine
+FROM python:3.13-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN python -m pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ .
 
-CMD ["python", "main.py"]
+ENV DD_TRACE_AGENT_URL=http://localhost:8126
+
+EXPOSE 8080
+
+CMD ["ddtrace-run", "python", "main.py"]
