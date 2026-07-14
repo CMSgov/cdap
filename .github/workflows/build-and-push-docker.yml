@@ -176,81 +176,21 @@ jobs:
     name: Code Checks — ${{ matrix.service }} (${{ matrix.environment }})
     needs: [detect-changes]
     if: needs.detect-changes.outputs.any_changed == 'true'
-    runs-on: codebuild-cdap-${{ matrix.environment == 'prod' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
-    permissions:
-      id-token: write
-      contents: read
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          fetch-depth: 0
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37
-        with:
-          role-to-assume: arn:aws:iam::${{ matrix.environment == 'prod' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-${{ matrix.environment }}-github-actions
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Build Image
-        run: |
-          docker build \
-            -t ${{ matrix.service_name }}:${{ github.sha }} \
-            -f terraform/services/${{ matrix.service }}/app/Dockerfile \
-            terraform/services/${{ matrix.service }}/app/
-
-      - name: Run Tests and Extract Coverage
-        run: |
-          # Run tests with coverage, mount a local dir to extract the report
-          mkdir -p /tmp/coverage
-          docker run --rm \
-            -v /tmp/coverage:/app/coverage \
-            -e DD_SERVICE=apm-test \
-            -e DD_ENV=test \
-            -e DD_VERSION=0.0.1 \
-            ${{ matrix.service_name }}:${{ github.sha }} \
-            python -m pytest tests/ -v \
-              --cov=. \
-              --cov-report=xml:/app/coverage/coverage.xml \
-              --cov-report=term
-
-          # Copy coverage report to where SonarQube expects it
-          cp /tmp/coverage/coverage.xml \
-            terraform/services/${{ matrix.service }}/app/coverage.xml
-
-      - name: Retrieve SonarQube Credentials
-        uses: ./actions/aws-params-env-action
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
-        with:
-          params: |
-            SONAR_HOST_URL=/sonarqube/url
-            SONAR_TOKEN=/sonarqube/token
-
-      - name: Run SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4
-        with:
-          projectBaseDir: terraform/services/${{ matrix.service }}/app
-          args: >
-            -Dsonar.projectKey=cdap-${{ matrix.service_name }}
-            -Dsonar.projectName=cdap-${{ matrix.service_name }}
-            -Dsonar.sources=src
-            -Dsonar.tests=src/tests
-            -Dsonar.python.version=3.13
-            -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.ci.autoconfig.disabled=true
-            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/requirements.in
-
-      - name: SonarQube Quality Gate Check
-        uses: sonarsource/sonarqube-quality-gate-action@cf038b0e0cdecfa9e56c198bbb7d21d751d62c3b
-        timeout-minutes: 5
-        with:
-          scanMetadataReportFile: terraform/services/${{ matrix.service }}/app/.scannerwork/report-task.txt
+    uses: ./.github/workflows/checks-reusable.yml
+    secrets: inherit
+    with:
+      source_path: terraform/services/${{ matrix.service }}/app
+      sonar_project_key: cdap-${{ matrix.service_name }}
+      docker_image_tag: ${{ github.sha }}
+      docker_context: terraform/services/${{ matrix.service }}/app
+      dockerfile: terraform/services/${{ matrix.service }}/app/Dockerfile
+      service_name: ${{ matrix.service_name }}
+      environment: ${{ matrix.environment }}
+      test_command: ${{ matrix.test_command }}
 
   push-to-ecr:
     name: Push to ECR — ${{ matrix.service }} (${{ matrix.environment }})
