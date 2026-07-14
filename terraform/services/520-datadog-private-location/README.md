@@ -30,46 +30,9 @@ module "your_api" {
 
 Use the `datadog_synthetics_test` resource. Look up the private location ID by name using `data.datadog_synthetics_locations`:
 
-```hcl
-data "datadog_synthetics_locations" "all" {}
-
-resource "datadog_synthetics_test" "your_api_health" {
-  name    = "your-app-${var.env}-api-health"
-  type    = "api"
-  subtype = "http"
-  status  = "live"
-
-  request_definition {
-    method = "GET"
-    url    = "http://your-internal-alb-dns/health"
-  }
-
-  assertion {
-    type     = "statusCode"
-    operator = "is"
-    target   = "200"
-  }
-
-  # Resolve the private location ID by display name
-  locations = [
-    one([
-      for id, name in data.datadog_synthetics_locations.all.locations :
-      id
-      if startswith(lower(name), "cdap-non-prod")  # use "cdap-prod" for prod
-    ])
-  ]
-
-  options_list {
-    tick_every = 60  # seconds between runs
-  }
-
-  tags = ["environment:${var.env}", "app:your-app", "managed-by:tofu"]
-}
-```
+See terraform/services/tftesting/datadog-synthetic for example.
 
 The display name prefix for each environment:
-| Environment | Name filter |
-|---|---|
 | `test` | `cdap-non-prod` |
 | `prod` | `cdap-prod` |
 
