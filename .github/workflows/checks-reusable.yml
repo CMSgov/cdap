@@ -92,6 +92,7 @@ jobs:
             -e DD_SERVICE=${{ inputs.service_name }} \
             -e DD_ENV=${{ inputs.environment }} \
             -e DD_VERSION=$SHORT_SHA \
+            -e DD_TRACE_ENABLED=false \
             ${{ inputs.service_name }}:${{ inputs.docker_image_tag }} \
             ${{ inputs.test_command }}
 
