@@ -44,6 +44,14 @@ ECR_REGISTRY   := $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_DEFAULT_REGION).amazonaws.com
 ECR_REPOSITORY := cdap-$(ENV)-$(SERVICE_NAME)
 IMAGE_TAG      ?= $(shell git rev-parse HEAD)
 
+requirements:
+	docker run --rm \
+	  -v $(PWD):/app \
+	  -w /app \
+	  python:3.13-slim \
+	  /bin/sh -c "pip install --quiet pip-tools && pip-compile --generate-hashes requirements.in --output-file requirements.txt"
+	@echo "requirements.txt updated with hashes"
+
 # -------------------------------------------------------
 # ECR push targets are for LOCAL USE ONLY.
 # GitHub Actions uses OIDC + secrets for ECR access.
