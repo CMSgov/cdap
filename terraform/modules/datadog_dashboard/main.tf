@@ -418,9 +418,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
   # -------------------------------------------------------
   # APM / TRACES
   # Filtered by application tag — shows all services under
-  # this application. Use $servicename to narrow down.
-  # Note: APM traces use the `service` tag internally but
-  # are also tagged with `application` for cross-service views.
+  # this application (APM uses the Datadog `service` tag, not `servicename`).
+  # Select a specific service from the legend (or add a separate template
+  # variable with prefix `service` if template-driven filtering is desired).
+  # Note: APM traces are also tagged with `application` for cross-service views.
   # -------------------------------------------------------
 
   dynamic "widget" {
