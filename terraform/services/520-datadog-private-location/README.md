@@ -22,7 +22,7 @@ module "your_api" {
 - The service module reads the PL worker's security group ID from SSM at `/cdap/${env}/datadog/nonsensitive/private_location_task_security_group_id`
 - It creates an `aws_vpc_security_group_ingress_rule` on your task's SG that references the PL's SG, allowing all inbound traffic from the PL runner
 
-> **Prerequisite:** Your service must be in a VPC already listed in the PL's config file (terraform/services/520-datadog-private-location/config/). If your VPC is not listed, open a PR to add it.
+> **Prerequisite:** Your service must be in a VPC already listed in the PL's config file (terraform/services/520-datadog-private-location/config/). If your VPC is not listed, open a PR to add it. VPC must also be peered with CDAP's for private network traffic
 
 ---
 
