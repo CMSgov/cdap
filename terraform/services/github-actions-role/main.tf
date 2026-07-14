@@ -201,12 +201,14 @@ data "aws_iam_policy_document" "github_actions_policy" {
     actions = [
       "ecr:BatchCheckLayerAvailability",
       "ecr:CompleteLayerUpload",
+      "ecr:DeleteLifecyclePolicy",
       "ecr:DescribeImages",
       "ecr:DescribeRepositories",
       "ecr:GetAuthorizationToken",
       "ecr:InitiateLayerUpload",
       "ecr:ListTagsForResource",
       "ecr:PutImage",
+      "ecr:TagResource",
       "ecr:UploadLayerPart"
     ]
     resources = ["*"]
@@ -407,6 +409,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
     actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
+      "logs:DeleteLogGroup",
       "logs:DescribeLogGroups",
       "logs:DescribeLogStreams",
       "logs:DescribeSubscriptionFilters",
