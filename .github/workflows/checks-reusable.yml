@@ -71,7 +71,7 @@ jobs:
             -Dsonar.projectName=${{ inputs.sonar_project_key }}
             -Dsonar.sources=.
             -Dsonar.ci.autoconfig.disabled=true
-            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**,**/node_modules/**,**/dist/**,**/lib/**
+            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**,**/node_modules/**,**/dist/**,**/lib/**,**/requirements.in
 
       - name: SonarQube Quality Gate Check
         if: inputs.source_path != '' && inputs.sonar_project_key != ''
