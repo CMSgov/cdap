@@ -101,7 +101,7 @@ variable "enable_execute_command" {
 }
 
 variable "command" {
-  description = "Only for testing. Using will cause SecHub alert. Override the default command for the container"
+  description = "Only for testing. Setting this will trigger a SecurityHub alert. Overrides the default container command."
   type        = list(string)
   default     = null
 }
@@ -116,7 +116,7 @@ variable "container_environment" {
     name  = string
     value = string
   }))
-  default = null
+  default = []
 }
 
 variable "container_secrets" {
@@ -270,6 +270,12 @@ variable "memory" {
   type        = number
 }
 
+variable "readonly_root_filesystem" {
+  description = "Whether to set the container root filesystem as read-only. ONLY set to false for containers that require write access (e.g., Datadog Private Location worker)."
+  type        = bool
+  default     = true
+}
+
 variable "mount_points" {
   description = "The mount points for data volumes in your container"
   type = list(object({
@@ -399,3 +405,14 @@ variable "enable_datadog_agent" {
   default     = true
 }
 
+variable "enable_datadog_synthetics_ingress" {
+  description = "Whether to include the security group ingress rule allowing traffic from the CDAP Datadog private location synthetic test runner."
+  type        = bool
+  default     = false
+}
+
+variable "dd_version" {
+  description = "Version of the application reported to Datadog APM"
+  type        = string
+  default     = "1.0.0"
+}
