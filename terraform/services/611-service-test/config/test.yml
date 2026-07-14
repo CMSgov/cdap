@@ -3,7 +3,7 @@ untagged_images_retained: 10
 
 image:
   enabled: true
-  test_command: python -m pytest tests/ -v --cov=. --cov-report=xml:coverage.xml --cov-report=term
+  test_command: python -m pytest tests/ -v
 
 ecs:
   enabled: true

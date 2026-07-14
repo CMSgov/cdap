@@ -96,6 +96,15 @@ jobs:
             ${{ inputs.service_name }}:${{ inputs.docker_image_tag }} \
             ${{ inputs.test_command }}
 
+           # verification steps
+          echo "Coverage dir after run:"
+          ls -la /tmp/coverage/
+        
+          if [ ! -f /tmp/coverage/coverage.xml ]; then
+            echo "ERROR: coverage.xml not found in /tmp/coverage/"
+            exit 1
+          fi
+          
           cp /tmp/coverage/coverage.xml ${{ inputs.source_path }}/coverage.xml
 
       - name: Retrieve credentials
