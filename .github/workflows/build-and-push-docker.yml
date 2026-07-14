@@ -207,15 +207,18 @@ jobs:
         run: |
           docker run --rm ${{ matrix.service_name }}:${{ github.sha }} ${{ matrix.test_command }}
 
-  code-checks:
+  checks:
     name: Code Checks — ${{ matrix.service }} (${{ matrix.environment }})
     needs: [detect-changes, build-and-test]
+    permissions:
+      contents: read
+      id-token: write
     if: needs.detect-changes.outputs.any_changed == 'true'
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
-    uses: ./.github/workflows/checks_reusable.yml
+    uses: ./.github/workflows/checks-reusable.yml
     secrets: inherit
     with:
       source_path: terraform/services/${{ matrix.service }}/app
@@ -224,7 +227,7 @@ jobs:
   push-to-ecr:
     name: Push to ECR — ${{ matrix.service }} (${{ matrix.environment }})
     runs-on: codebuild-cdap-${{ matrix.environment == 'prod' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
-    needs: [detect-changes, build-and-test, code-checks]
+    needs: [detect-changes, build-and-test, checks]
     if: |
       needs.detect-changes.outputs.any_changed == 'true' &&
       (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'main'))
