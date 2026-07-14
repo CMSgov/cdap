@@ -175,6 +175,9 @@ jobs:
   code-checks:
     name: Code Checks — ${{ matrix.service }} (${{ matrix.environment }})
     needs: [detect-changes]
+    permissions:
+      contents: read
+      id-token: write
     if: needs.detect-changes.outputs.any_changed == 'true'
     strategy:
       fail-fast: false
