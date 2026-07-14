@@ -3,16 +3,11 @@ locals {
 }
 
 # CloudWatch Log Group for ECS Container Insights. If we don't manage this explicitly, it will be created automatically by AWS and we won't be able to manage the retention period via Terraform.
-resource "aws_cloudwatch_log_group" "ecs_container_insights_logs" {
-  name              = "/aws/ecs/containerinsights/${local.cluster_name}/performance"
-  retention_in_days = var.log_retention_days
-  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
-
-  tags = {
-    Application = var.platform.app
-    Environment = var.platform.env
-    Service     = var.platform.service
-  }
+module "ecs_container_insights_logs" {
+  source             = "../cloudwatch_log_group"
+  name               = "/aws/ecs/containerinsights/${local.cluster_name}/performance"
+  log_retention_days = var.log_retention_days
+  kms_key_id         = var.platform.kms_alias_primary.target_key_arn
 }
 
 resource "aws_ecs_cluster" "this" {
@@ -24,7 +19,7 @@ resource "aws_ecs_cluster" "this" {
   }
 
   depends_on = [
-    aws_cloudwatch_log_group.ecs_container_insights_logs
+    module.ecs_container_insights_logs
   ]
 
   configuration {
