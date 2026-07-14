@@ -200,7 +200,9 @@ data "aws_iam_policy_document" "github_actions_policy" {
   statement {
     actions = [
       "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
       "ecr:CompleteLayerUpload",
+      "ecr:CreateRepository",
       "ecr:DescribeImages",
       "ecr:DescribeRepositories",
       "ecr:GetAuthorizationToken",
