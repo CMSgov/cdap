@@ -403,7 +403,6 @@ data "aws_iam_policy_document" "github_actions_policy" {
     actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
-      "logs:DeleteLogGroup",
       "logs:DescribeLogGroups",
       "logs:DescribeLogStreams",
       "logs:DescribeSubscriptionFilters",
