@@ -14,8 +14,9 @@ SELECT acos.cms_id,
         WHEN acos.cms_id ~ '^V\d{3}$' THEN 'NGACO'
         WHEN acos.cms_id ~ '^TEST\d{3}$' THEN 'TEST'
         WHEN acos.cms_id ~ '^CT\d{6}$' THEN 'MDTCOC'
-        WHEN acos.cms_id ~ '^GUIDE-\d{5}$' THEN 'GUIDE'
+        WHEN acos.cms_id ~ '^GUIDE-\d{4}$' THEN 'GUIDE'
         WHEN acos.cms_id ~ '^IOTA\d{3}$' THEN 'IOTA'
+        WHEN acos.cms_id ~ '^ACCES\d{5}$' THEN 'ACCESS' -- only one 's' due to character limits
         ELSE 'Other'
     END AS alternative_payment_model,
     (acos.termination_details->>'TerminationDate')::timestamptz AS termination_date
