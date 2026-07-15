@@ -7,17 +7,18 @@ SELECT acos.cms_id,
     CASE
         WHEN acos.cms_id ~ '^A\d{4}$' THEN 'SSP'
         WHEN acos.cms_id ~ '^DA\d{4}$' THEN 'CDAC'
-        WHEN acos.cms_id ~ '^D\d{4}$' THEN 'DC'
-        WHEN acos.cms_id ~ '^C\d{4}$' THEN 'CKCC'
-        WHEN acos.cms_id ~ '^K\d{4}$' THEN 'KCF'
+        WHEN acos.cms_id ~ '^D\d{4}$' THEN 'ACO REACH'
+        WHEN acos.cms_id ~ '^C\d{4}$' THEN 'KCC'
+        WHEN acos.cms_id ~ '^K\d{4}$' THEN 'KCC'
         WHEN acos.cms_id ~ '^E\d{4}$' THEN 'CEC'
         WHEN acos.cms_id ~ '^V\d{3}$' THEN 'NGACO'
         WHEN acos.cms_id ~ '^TEST\d{3}$' THEN 'TEST'
-        WHEN acos.cms_id ~ '^CT\d{6}$' THEN 'MDTCOC'
-        WHEN acos.cms_id ~ '^GUIDE-\d{5}$' THEN 'GUIDE'
+        WHEN acos.cms_id ~ '^CT\d{6}$' THEN 'MD TCoC'
+        WHEN acos.cms_id ~ '^GUIDE-\d{4}$' THEN 'GUIDE'
         WHEN acos.cms_id ~ '^IOTA\d{3}$' THEN 'IOTA'
+        WHEN acos.cms_id ~ '^ACCES\d{5}$' THEN 'ACCESS' -- only one 's' due to character limits
         ELSE 'Other'
-    END AS alternative_payment_model,
+    END AS model_name,
     (acos.termination_details->>'TerminationDate')::timestamptz AS termination_date
 FROM acos
 WHERE acos.cms_id IS NOT NULL

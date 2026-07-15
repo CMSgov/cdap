@@ -14,19 +14,20 @@ SELECT
     sq.benes_with_data,
     sq.benes_retrieved_percent,
     CASE
-        WHEN acos.cms_id ~ 'D\d{4}' THEN 'ACO REACH'
-        WHEN acos.cms_id ~ 'K\d{4}' THEN 'KCC'
-        WHEN acos.cms_id ~ 'C\d{4}' THEN 'KCC'
-        WHEN acos.cms_id ~ 'CT\d{6}' THEN 'MD TCoC'
-        WHEN acos.cms_id ~ '^A\d{4}' THEN 'SSP'
-        WHEN acos.cms_id ~ 'IOTA\d{3}' THEN 'IOTA'
-        WHEN acos.cms_id ~ 'GUIDE-\d{5}' THEN 'GUIDE'
-        WHEN acos.cms_id ~ 'DA\d{4}' THEN 'CDAC'
-        WHEN acos.cms_id ~ 'TEST\d{3}' THEN 'TEST'
-        WHEN acos.cms_id ~ 'V\d{3}' THEN 'NGACO'
-        WHEN acos.cms_id ~ 'E\d{4}' THEN 'CEC'
-        ELSE 'Unknown'
-    END AS model_name
+        WHEN acos.cms_id ~ '^A\d{4}$' THEN 'SSP'
+        WHEN acos.cms_id ~ '^DA\d{4}$' THEN 'CDAC'
+        WHEN acos.cms_id ~ '^D\d{4}$' THEN 'ACO REACH'
+        WHEN acos.cms_id ~ '^C\d{4}$' THEN 'KCC'
+        WHEN acos.cms_id ~ '^K\d{4}$' THEN 'KCC'
+        WHEN acos.cms_id ~ '^E\d{4}$' THEN 'CEC'
+        WHEN acos.cms_id ~ '^V\d{3}$' THEN 'NGACO'
+        WHEN acos.cms_id ~ '^TEST\d{3}$' THEN 'TEST'
+        WHEN acos.cms_id ~ '^CT\d{6}$' THEN 'MD TCoC'
+        WHEN acos.cms_id ~ '^GUIDE-\d{4}$' THEN 'GUIDE'
+        WHEN acos.cms_id ~ '^IOTA\d{3}$' THEN 'IOTA'
+        WHEN acos.cms_id ~ '^ACCES\d{5}$' THEN 'ACCESS' -- only one 's' due to character limits
+        ELSE 'Other'
+    END AS model_name,
 FROM jobs
 LEFT JOIN acos ON acos.uuid = jobs.aco_id
 JOIN (
