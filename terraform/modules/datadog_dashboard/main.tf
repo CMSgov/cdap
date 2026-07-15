@@ -183,19 +183,19 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title = "Avg Time per Request"
+            title     = "Avg Time per Request"
             live_span = var.widget_live_spans.apm
             request {
               display_type = "area"
               query {
                 metric_query {
-                  name = "query1"
+                  name  = "query1"
                   query = "sum:trace.${var.apm_primary_operation}.exec_time.by_service{service:${var.app}, $env} by {sublayer_service, sublayer_inferred}.rollup(sum).fill(zero)"
                 }
               }
               query {
                 metric_query {
-                  name = "query2"
+                  name  = "query2"
                   query = "sum:trace.${var.apm_primary_operation}.hits{service:${var.app}, $env}.rollup(sum).fill(zero).as_count()"
                 }
               }
