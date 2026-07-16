@@ -201,6 +201,12 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             request {
               q = "avg:trace.${var.apm_primary_operation}.apdex{service:${var.app}, $env}"
             }
+            timeseries_background {
+              type = "area"
+              yaxis {
+                include_zero = true
+              }
+            }
           }
         }
 
