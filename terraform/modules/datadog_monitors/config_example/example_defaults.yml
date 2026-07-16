@@ -34,7 +34,7 @@ notifications:
   victorops: false
   emails:
     - "test@test.test.cms.gov"
-  additional_webhooks-
+  additional_webhooks:
     - "@webhook-my-webhook"
 
 # -----------------------------------------------------------------------------
