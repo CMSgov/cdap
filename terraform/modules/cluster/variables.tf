@@ -16,3 +16,9 @@ variable "cluster_name_override" {
   type        = string
   default     = null
 }
+
+variable "log_retention_days" {
+  type        = number
+  default     = 180
+  description = "Number of days to retain ECS task logs in CloudWatch. Required for production is minimum 180."
+}
