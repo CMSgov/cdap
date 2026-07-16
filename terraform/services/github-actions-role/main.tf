@@ -203,6 +203,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ecr:BatchGetImage",
       "ecr:CompleteLayerUpload",
       "ecr:CreateRepository",
+      "ecr:DeleteLifecyclePolicy",
       "ecr:DescribeImages",
       "ecr:DescribeRepositories",
       "ecr:GetAuthorizationToken",
@@ -210,6 +211,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ecr:InitiateLayerUpload",
       "ecr:ListTagsForResource",
       "ecr:PutImage",
+      "ecr:TagResource",
       "ecr:UploadLayerPart"
     ]
     resources = ["*"]
@@ -217,6 +219,9 @@ data "aws_iam_policy_document" "github_actions_policy" {
   # ECS
   statement {
     actions = [
+      "ecs:CreateCluster",
+      "ecs:CreateService",
+      "ecs:DeleteCluster",
       "ecs:DeregisterTaskDefinition",
       "ecs:DescribeClusters",
       "ecs:DescribeServices",
@@ -226,6 +231,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ecs:ListTaskDefinitions",
       "ecs:ListTasks",
       "ecs:RegisterTaskDefinition",
+      "ecs:TagResource",
       "ecs:UpdateService"
     ]
     resources = ["*"]
@@ -406,6 +412,7 @@ data "aws_iam_policy_document" "github_actions_policy" {
     actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
+      "logs:DeleteLogGroup",
       "logs:DescribeLogGroups",
       "logs:DescribeLogStreams",
       "logs:DescribeSubscriptionFilters",
