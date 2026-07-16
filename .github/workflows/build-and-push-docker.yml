@@ -172,29 +172,28 @@ jobs:
             echo "matrix=$ENTRIES" >> $GITHUB_OUTPUT
           fi
 
-# TODO FIXME: PLT-1729 to ensure tests are completing
-#  code-checks:
-#    name: Code Checks — ${{ matrix.service }} (${{ matrix.environment }})
-#    needs: [detect-changes]
-#    permissions:
-#      contents: read
-#      id-token: write
-#    if: needs.detect-changes.outputs.any_changed == 'true'
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
-#    uses: ./.github/workflows/checks-reusable.yml
-#    secrets: inherit
-#    with:
-#      source_path: terraform/services/${{ matrix.service }}/app
-#      sonar_project_key: cdap-${{ matrix.service_name }}
-#      docker_image_tag: ${{ github.sha }}
-#      docker_context: terraform/services/${{ matrix.service }}/app
-#      dockerfile: terraform/services/${{ matrix.service }}/app/Dockerfile
-#      service_name: ${{ matrix.service_name }}
-#      environment: ${{ matrix.environment }}
-#      test_command: ${{ matrix.test_command }}
+  code-checks:
+    name: Code Checks — ${{ matrix.service }} (${{ matrix.environment }})
+    needs: [detect-changes]
+    permissions:
+      contents: read
+      id-token: write
+    if: needs.detect-changes.outputs.any_changed == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    uses: ./.github/workflows/checks-reusable.yml
+    secrets: inherit
+    with:
+      source_path: terraform/services/${{ matrix.service }}/app
+      sonar_project_key: cdap-${{ matrix.service_name }}
+      docker_image_tag: ${{ github.sha }}
+      docker_context: terraform/services/${{ matrix.service }}/app
+      dockerfile: terraform/services/${{ matrix.service }}/app/Dockerfile
+      service_name: ${{ matrix.service_name }}
+      environment: ${{ matrix.environment }}
+      test_command: ${{ matrix.test_command }}
 
   push-to-ecr:
     name: Push to ECR — ${{ matrix.service }} (${{ matrix.environment }})
