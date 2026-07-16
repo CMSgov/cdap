@@ -394,10 +394,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Active Connection Count by Target Group"
+            title     = "Active Connection Count by Load Balancer"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "sum:aws.applicationelb.active_connection_count{application:${var.app}, $env} by {targetgroup}.as_count()"
+              q            = "sum:aws.applicationelb.active_connection_count{application:${var.app}, $env} by {loadbalancer}.as_count()"
               display_type = "line"
             }
           }
