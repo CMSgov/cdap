@@ -84,7 +84,7 @@ variable "monitor_config" {
 }
 
 variable "custom_monitors" {
-  description = "Custom monitors to create. Module handles notify, shadow_mode, and base_tags automatically."
+  description = "Custom monitors to create. Module handles notify, shadow_mode, and base_tags automatically. Use create to conditionally create the monitor (i.e. on only certain environments)--use this option sparingly."
   type = list(object({
     name    = string
     type    = optional(string, "metric alert")
