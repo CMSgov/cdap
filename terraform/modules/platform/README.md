@@ -118,6 +118,7 @@ No modules.
 | [aws_s3_bucket.logs_to_splunk](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/s3_bucket) | data source |
 | [aws_security_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_security_groups.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_groups) | data source |
+| [aws_sns_topic.cloudwatch_alarms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/sns_topic) | data source |
 | [aws_ssm_parameter.platform_cidr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
 | [aws_ssm_parameters_by_path.ssm](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameters_by_path) | data source |
 | [aws_subnet.private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet) | data source |
@@ -157,6 +158,7 @@ No modules.
 | <a name="output_secondary_region"></a> [secondary\_region](#output\_secondary\_region) | The secondary data.aws\_region object associated with the secondary region. |
 | <a name="output_security_groups"></a> [security\_groups](#output\_security\_groups) | Map of current VPC's common [aws\_security\_group data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group#attribute-reference), keyed by `name` |
 | <a name="output_service"></a> [service](#output\_service) | The name of the current service or terraservice. |
+| <a name="output_sns_topic_slack_alarms"></a> [sns\_topic\_slack\_alarms](#output\_sns\_topic\_slack\_alarms) | SNS topic managed by CDAP for alarm action that publishes to Slack |
 | <a name="output_splunk_logging_bucket"></a> [splunk\_logging\_bucket](#output\_splunk\_logging\_bucket) | Bucket created by the CMS Hybrid Cloud team where logs are ingested into Splunk |
 | <a name="output_ssm"></a> [ssm](#output\_ssm) | SSM parameter resources available based on the `var.ssm_root_map` input variable. |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The current environment VPC ID value |
