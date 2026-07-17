@@ -1,15 +1,32 @@
 resource "datadog_dashboard" "application_metrics_dashboard" {
   layout_type = "ordered"
-  title       = "${var.name_rewrite != null ? var.name_rewrite : var.app} Metrics Dashboard"
+  title       = "${var.name_rewrite != null ? var.name_rewrite : upper(var.app)} Metrics Dashboard"
+
+  # -------------------------------------------------------
+  # TEMPLATE VARIABLES
+  # $env     — filter by environment (e.g. dev, test, prod)
+  # $servicename — drill down to a specific ECS service
+  #                (globally unique, e.g. cdap-test-tftesting-a)
+  # -------------------------------------------------------
   template_variable {
     name     = "env"
     prefix   = "environment"
     defaults = ["*"]
   }
 
+  template_variable {
+    name     = "servicename"
+    prefix   = "servicename"
+    defaults = ["*"]
+  }
+
+  # -------------------------------------------------------
+  # HEADER
+  # -------------------------------------------------------
+
   widget {
     note_definition {
-      content          = "## ${upper(var.app)}\nMonitoring dashboard. Filters apply via the **env** template variable above.\n\n [Runbook](${var.runbook_url}) | Alerts managed via Tofu monitors module"
+      content          = "## ${upper(var.app)}\nMonitoring dashboard for all services under **${var.app}**.\n\nUse **$env** to filter by environment and **$servicename** to drill down to a specific service.\n\n[Runbook](${var.runbook_url}) | Alerts managed via Tofu monitors module"
       background_color = "blue"
       font_size        = "14"
       text_align       = "left"
@@ -17,56 +34,113 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
     }
   }
 
-  widget {
-    group_definition {
-      layout_type = "ordered"
-      title       = "${var.app} Custom Metrics"
+  # -------------------------------------------------------
+  # MONITOR HEALTH
+  # -------------------------------------------------------
 
-      # Loop through every widget passed by the team
-      dynamic "widget" {
-        for_each = var.custom_widgets
-        content {
+  dynamic "widget" {
+    for_each = var.enable_default_widgets.monitors ? [1] : []
+    content {
+      group_definition {
+        title       = "Monitor Health"
+        layout_type = "ordered"
 
-          # Render ONLY IF type == "timeseries"
-          dynamic "timeseries_definition" {
-            for_each = widget.value.type == "timeseries" ? [widget.value] : []
-            content {
-              title = timeseries_definition.value.title
-              request {
-                q            = timeseries_definition.value.query
-                display_type = timeseries_definition.value.display_type
-              }
-            }
+        widget {
+          manage_status_definition {
+            title               = "Alerting Monitors — ${var.app}"
+            color_preference    = "text"
+            display_format      = "counts"
+            hide_zero_counts    = true
+            show_last_triggered = true
+            sort                = "status,asc"
+            summary_type        = "monitors"
+            query               = "tag:application:${var.app} status:alert"
           }
+        }
 
-          # Render ONLY IF type == "query_value"
-          dynamic "query_value_definition" {
-            for_each = widget.value.type == "query_value" ? [widget.value] : []
-            content {
-              title     = query_value_definition.value.title
-              autoscale = true
-              precision = query_value_definition.value.precision
-              request {
-                q = query_value_definition.value.query
-              }
-            }
+        widget {
+          manage_status_definition {
+            title               = "All Monitors — ${var.app}"
+            color_preference    = "text"
+            display_format      = "counts"
+            hide_zero_counts    = true
+            show_last_triggered = true
+            sort                = "status,asc"
+            summary_type        = "monitors"
+            query               = "tag:application:${var.app}"
           }
-
-          # Render ONLY IF type == "toplist"
-          dynamic "toplist_definition" {
-            for_each = widget.value.type == "toplist" ? [widget.value] : []
-            content {
-              title = toplist_definition.value.title
-              request {
-                q = toplist_definition.value.query
-              }
-            }
-          }
-
         }
       }
     }
   }
+
+  # -------------------------------------------------------
+  # CUSTOM METRICS
+  # Only rendered when custom_widgets are provided.
+  # -------------------------------------------------------
+
+  dynamic "widget" {
+    for_each = length(var.custom_widgets) > 0 ? [1] : []
+    content {
+      group_definition {
+        layout_type = "ordered"
+        title       = "${var.app} Custom Metrics"
+
+        dynamic "widget" {
+          for_each = var.custom_widgets
+          content {
+
+            dynamic "timeseries_definition" {
+              for_each = widget.value.type == "timeseries" ? [widget.value] : []
+              content {
+                title = timeseries_definition.value.title
+                dynamic "request" {
+                  for_each = timeseries_definition.value.queries
+                  content {
+                    q            = request.value.q
+                    display_type = request.value.display_type
+                  }
+                }
+              }
+            }
+
+            dynamic "query_value_definition" {
+              for_each = widget.value.type == "query_value" ? [widget.value] : []
+              content {
+                title     = query_value_definition.value.title
+                autoscale = true
+                precision = query_value_definition.value.precision
+                dynamic "request" {
+                  for_each = query_value_definition.value.queries
+                  content {
+                    q = request.value.q
+                  }
+                }
+              }
+            }
+
+            dynamic "toplist_definition" {
+              for_each = widget.value.type == "toplist" ? [widget.value] : []
+              content {
+                title = toplist_definition.value.title
+                dynamic "request" {
+                  for_each = toplist_definition.value.queries
+                  content {
+                    q = request.value.q
+                  }
+                }
+              }
+            }
+
+          }
+        }
+      }
+    }
+  }
+
+  # -------------------------------------------------------
+  # ECS
+  # -------------------------------------------------------
 
   dynamic "widget" {
     for_each = var.enable_default_widgets.ecs ? [1] : []
@@ -75,13 +149,158 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         title       = "ECS"
         layout_type = "ordered"
 
+        # -------------------------------------------------------
+        # HEALTH SUMMARY
+        # Quick red/green/yellow indicators — first thing anyone
+        # should look at to determine if action is needed.
+        # All widgets use servicename which is globally unique
+        # and consistent across all metric sources here.
+        # -------------------------------------------------------
+
+        widget {
+          query_value_definition {
+            title     = "Unhealthy Tasks (Desired - Running)"
+            live_span = var.widget_live_spans.current
+            autoscale = true
+            precision = 0
+            request {
+              q = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
+              conditional_formats {
+                comparator = ">"
+                value      = 0
+                palette    = "white_on_red"
+              }
+              conditional_formats {
+                comparator = "<="
+                value      = 0
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+
+        # -------------------------------------------------------
+        # TASK COUNTS
+        # Current snapshot of running, missing, and pending tasks
+        # per service. Use $servicename to drill down.
+        # -------------------------------------------------------
+
+        widget {
+          toplist_definition {
+            title     = "Running Tasks by Service"
+            live_span = var.widget_live_spans.current
+            request {
+              q = "sum:aws.ecs.service.running{application:${var.app}, $env, $servicename} by {servicename}"
+              conditional_formats {
+                comparator = "<"
+                value      = 1
+                palette    = "white_on_red"
+              }
+              conditional_formats {
+                comparator = ">="
+                value      = 1
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+
+        widget {
+          toplist_definition {
+            title     = "Missing Tasks by Service (Desired - Running)"
+            live_span = var.widget_live_spans.current
+            request {
+              q = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $env, $servicename} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $env, $servicename} by {servicename}, 0)"
+              conditional_formats {
+                comparator = ">"
+                value      = 0
+                palette    = "white_on_red"
+              }
+              conditional_formats {
+                comparator = "<="
+                value      = 0
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+
+        widget {
+          toplist_definition {
+            title     = "Pending Tasks by Service"
+            live_span = var.widget_live_spans.current
+            request {
+              q = "sum:aws.ecs.service.pending{application:${var.app}, $env, $servicename} by {servicename}"
+              conditional_formats {
+                comparator = ">"
+                value      = 0
+                palette    = "white_on_yellow"
+              }
+              conditional_formats {
+                comparator = "<="
+                value      = 0
+                palette    = "white_on_green"
+              }
+            }
+          }
+        }
+
+        # -------------------------------------------------------
+        # FAILURE SIGNALS
+        # Container restarts and ECS events help identify
+        # crash-looping tasks and failed deployments.
+        # Note: container.restarts is grouped by servicename
+        # for consistency. Once Unified Service Tagging is
+        # fully applied, this can be refined further.
+        # -------------------------------------------------------
+
+        widget {
+          timeseries_definition {
+            title     = "Container Restarts by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "sum:container.restarts{application:${var.app}, $env} by {servicename}"
+              display_type = "bars"
+              style {
+                palette = "warm"
+              }
+            }
+          }
+        }
+
+        widget {
+          event_stream_definition {
+            title      = "ECS Task & Deployment Events"
+            live_span  = var.widget_live_spans.ecs
+            query      = "source:amazon_ecs application:${var.app} $env $servicename"
+            event_size = "s"
+          }
+        }
+
+        # -------------------------------------------------------
+        # RESOURCE UTILIZATION
+        # CPU and memory consumption per service over time.
+        # High utilization can cause task failures or throttling
+        # before a crash is visible in task count metrics.
+        # -------------------------------------------------------
+
         widget {
           timeseries_definition {
             title     = "CPU Utilization by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.cpuutilization{application:${var.app}, $env} by {servicename}"
+              q            = "avg:aws.ecs.cpuutilization{application:${var.app}, $env, $servicename} by {servicename}"
               display_type = "line"
+            }
+            marker {
+              value        = "y > 80"
+              display_type = "error dashed"
+              label        = "Critical CPU"
+            }
+            marker {
+              value        = "y > 60"
+              display_type = "warning dashed"
+              label        = "High CPU"
             }
           }
         }
@@ -91,59 +310,120 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Memory Utilization by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.memory_utilization{application:${var.app}, $env} by {servicename}"
+              q            = "avg:aws.ecs.memory_utilization{application:${var.app}, $env, $servicename} by {servicename}"
               display_type = "line"
+            }
+            marker {
+              value        = "y > 85"
+              display_type = "error dashed"
+              label        = "Critical Memory"
+            }
+            marker {
+              value        = "y > 70"
+              display_type = "warning dashed"
+              label        = "High Memory"
+            }
+          }
+        }
+
+        # -------------------------------------------------------
+        # NETWORK I/O
+        # Real-time throughput and cumulative data transfer.
+        # -------------------------------------------------------
+
+        widget {
+          timeseries_definition {
+            title     = "Network Throughput (kB/s) by Service"
+            live_span = var.widget_live_spans.ecs
+            request {
+              q            = "avg:container.net.rcvd{application:${var.app}, $env, $servicename} by {servicename}.as_rate()/1024"
+              display_type = "line"
+              metadata {
+                expression = "avg:container.net.rcvd{application:${var.app}, $env, $servicename} by {servicename}.as_rate()/1024"
+                alias_name = "kB/s In"
+              }
+            }
+            request {
+              q            = "avg:container.net.sent{application:${var.app}, $env, $servicename} by {servicename}.as_rate()/1024"
+              display_type = "line"
+              metadata {
+                expression = "avg:container.net.sent{application:${var.app}, $env, $servicename} by {servicename}.as_rate()/1024"
+                alias_name = "kB/s Out"
+              }
+            }
+            marker {
+              value        = "y > 10000"
+              display_type = "warning dashed"
+              label        = "High Throughput"
             }
           }
         }
 
         widget {
           timeseries_definition {
-            title     = "Running vs Desired vs Pending by Service"
+            title     = "Total Data Transferred (GB) by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.service.running{application:${var.app}, $env} by {servicename}"
-              display_type = "line"
+              q            = "sum:container.net.rcvd{application:${var.app}, $env, $servicename} by {servicename}/1073741824"
+              display_type = "bars"
+              metadata {
+                expression = "sum:container.net.rcvd{application:${var.app}, $env, $servicename} by {servicename}/1073741824"
+                alias_name = "GB In"
+              }
             }
             request {
-              q            = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
-              display_type = "line"
-            }
-            request {
-              q            = "avg:aws.ecs.service.pending{application:${var.app}, $env} by {servicename}"
-              display_type = "line"
+              q            = "sum:container.net.sent{application:${var.app}, $env, $servicename} by {servicename}/1073741824"
+              display_type = "bars"
+              metadata {
+                expression = "sum:container.net.sent{application:${var.app}, $env, $servicename} by {servicename}/1073741824"
+                alias_name = "GB Out"
+              }
             }
           }
         }
 
+        # -------------------------------------------------------
+        # DRILL-DOWN
+        # Select a specific $servicename from the template
+        # variable dropdown above to filter these widgets to
+        # a single service. Shows task-level failure detail.
+        # -------------------------------------------------------
+
         widget {
-          toplist_definition {
-            title     = "Desired Task Count by Service"
-            live_span = var.widget_live_spans.ecs
-            request {
-              q = "avg:aws.ecs.service.desired{application:${var.app}, $env} by {servicename}"
-            }
+          event_stream_definition {
+            title      = "Task Events — Selected Service"
+            live_span  = var.widget_live_spans.ecs
+            query      = "source:amazon_ecs application:${var.app} $env $servicename"
+            event_size = "l"
           }
         }
 
         widget {
           timeseries_definition {
-            title     = "Network I/O (Bytes In/Out) by Container"
+            title     = "Container Restarts — Selected Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.container.net.rcvd_bytes{application:${var.app}, $env} by {containername}.as_rate()"
-              display_type = "line"
-            }
-            request {
-              q            = "avg:aws.ecs.container.net.sent_bytes{application:${var.app}, $env} by {containername}.as_rate()"
-              display_type = "line"
+              q            = "sum:container.restarts{application:${var.app}, $env, $servicename} by {containername}"
+              display_type = "bars"
+              style {
+                palette = "warm"
+              }
             }
           }
         }
-
       }
     }
   }
+
+  # -------------------------------------------------------
+  # APM / TRACES
+  # Filtered by application tag — shows all services under
+  # this application (APM uses the Datadog `service` tag, not `servicename`).
+  # Select a specific service from the legend (or add a separate template
+  # variable with prefix `service` if template-driven filtering is desired).
+  # Note: APM traces are also tagged with `application` for cross-service views.
+  # -------------------------------------------------------
+
   dynamic "widget" {
     for_each = var.enable_default_widgets.apm ? [1] : []
     content {
@@ -153,10 +433,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Request Rate"
+            title     = "Request Rate by Service"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.${var.apm_primary_operation}.hits{service:${var.app}, $env}.as_rate()"
+              q            = "sum:trace.${var.apm_primary_operation}.hits{application:${var.app}, $env} by {service}.as_rate()"
               display_type = "line"
             }
           }
@@ -167,15 +447,15 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "p50 / p95 / p99 Latency"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "p50:trace.${var.apm_primary_operation}{service:${var.app}, $env}"
+              q            = "p50:trace.${var.apm_primary_operation}{application:${var.app}, $env} by {service}"
               display_type = "line"
             }
             request {
-              q            = "p95:trace.${var.apm_primary_operation}{service:${var.app}, $env}"
+              q            = "p95:trace.${var.apm_primary_operation}{application:${var.app}, $env} by {service}"
               display_type = "line"
             }
             request {
-              q            = "p99:trace.${var.apm_primary_operation}{service:${var.app}, $env}"
+              q            = "p99:trace.${var.apm_primary_operation}{application:${var.app}, $env} by {service}"
               display_type = "line"
             }
           }
@@ -190,13 +470,13 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
               query {
                 metric_query {
                   name  = "query1"
-                  query = "sum:trace.${var.apm_primary_operation}.exec_time.by_service{service:${var.app}, $env} by {sublayer_service, sublayer_inferred}.rollup(sum).fill(zero)"
+                  query = "sum:trace.${var.apm_primary_operation}.exec_time.by_service{application:${var.app}, $env} by {sublayer_service, sublayer_inferred}.rollup(sum).fill(zero)"
                 }
               }
               query {
                 metric_query {
                   name  = "query2"
-                  query = "sum:trace.${var.apm_primary_operation}.hits{service:${var.app}, $env}.rollup(sum).fill(zero).as_count()"
+                  query = "sum:trace.${var.apm_primary_operation}.hits{application:${var.app}, $env}.rollup(sum).fill(zero).as_count()"
                 }
               }
               formula {
@@ -215,10 +495,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Error Rate"
+            title     = "Error Rate by Service"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.${var.apm_primary_operation}.errors{service:${var.app}, $env}.as_rate()"
+              q            = "sum:trace.${var.apm_primary_operation}.errors{application:${var.app}, $env} by {service}.as_rate()"
               display_type = "bars"
             }
           }
@@ -227,11 +507,11 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         widget {
           query_value_definition {
             title     = "Apdex Score"
-            live_span = var.widget_live_spans.apm
+            live_span = var.widget_live_spans.current
             autoscale = true
             precision = 2
             request {
-              q = "avg:trace.${var.apm_primary_operation}.apdex{service:${var.app}, $env}"
+              q = "avg:trace.${var.apm_primary_operation}.apdex{application:${var.app}, $env}"
             }
             timeseries_background {
               type = "area"
@@ -245,6 +525,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
       }
     }
   }
+
+  # -------------------------------------------------------
+  # S3
+  # -------------------------------------------------------
 
   dynamic "widget" {
     for_each = var.enable_default_widgets.s3 ? [1] : []
@@ -296,6 +580,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
     }
   }
 
+  # -------------------------------------------------------
+  # LAMBDA
+  # -------------------------------------------------------
+
   dynamic "widget" {
     for_each = var.enable_default_widgets.lambda ? [1] : []
     content {
@@ -310,6 +598,17 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             request {
               q            = "sum:aws.lambda.invocations{application:${var.app}, $env} by {functionname}.as_count()"
               display_type = "bars"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Duration (avg) by Function"
+            live_span = var.widget_live_spans.lambda
+            request {
+              q            = "avg:aws.lambda.duration{application:${var.app}, $env} by {functionname}"
+              display_type = "line"
             }
           }
         }
@@ -331,17 +630,6 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             live_span = var.widget_live_spans.lambda
             request {
               q            = "sum:aws.lambda.errors{application:${var.app}, $env} by {functionname}.as_count() / sum:aws.lambda.invocations{application:${var.app}, $env} by {functionname}.as_count() * 100"
-              display_type = "line"
-            }
-          }
-        }
-
-        widget {
-          timeseries_definition {
-            title     = "Duration (avg) by Function"
-            live_span = var.widget_live_spans.lambda
-            request {
-              q            = "avg:aws.lambda.duration{application:${var.app}, $env} by {functionname}"
               display_type = "line"
             }
           }
@@ -372,6 +660,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
       }
     }
   }
+
+  # -------------------------------------------------------
+  # ALB
+  # -------------------------------------------------------
 
   dynamic "widget" {
     for_each = var.enable_default_widgets.alb ? [1] : []
@@ -454,6 +746,9 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
     }
   }
 
+  # -------------------------------------------------------
+  # SQS
+  # -------------------------------------------------------
 
   dynamic "widget" {
     for_each = var.enable_default_widgets.sqs ? [1] : []
@@ -514,6 +809,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
     }
   }
 
+  # -------------------------------------------------------
+  # SNS
+  # -------------------------------------------------------
+
   dynamic "widget" {
     for_each = var.enable_default_widgets.sns ? [1] : []
     content {
@@ -554,6 +853,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
       }
     }
   }
+
+  # -------------------------------------------------------
+  # AURORA
+  # -------------------------------------------------------
 
   dynamic "widget" {
     for_each = var.enable_default_widgets.aurora ? [1] : []

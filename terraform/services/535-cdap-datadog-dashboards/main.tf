@@ -15,14 +15,15 @@ module "datadog_dashboard" {
   }
 
   widget_live_spans = {
-    ecs    = "4h"
-    alb    = "4h"
-    aurora = "4h"
-    sns    = "4h"
-    sqs    = "4h"
-    lambda = "1d"
-    s3     = "1w"
-    apm    = "1h"
+    current = "15m"
+    ecs     = "1d"
+    alb     = "4h"
+    aurora  = "4h"
+    sns     = "4h"
+    sqs     = "4h"
+    lambda  = "1d"
+    s3      = "1w"
+    apm     = "1d"
   }
 
   custom_widgets = []
