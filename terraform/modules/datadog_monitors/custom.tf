@@ -1,5 +1,5 @@
 resource "datadog_monitor" "custom" {
-  for_each = { for m in var.custom_monitors : m.name => m }
+  for_each = { for m in var.custom_monitors : m.name => m if m.create }
 
   name    = each.value.name
   type    = each.value.type
