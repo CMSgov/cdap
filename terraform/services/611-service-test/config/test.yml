@@ -3,7 +3,7 @@ untagged_images_retained: 10
 
 image:
   enabled: true
-  test_command: python -m pytest tests/ -v
+  test_command: "pytest"
 
 ecs:
   enabled: true

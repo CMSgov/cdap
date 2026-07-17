@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Read Datadog config from environment variables
-# These are injected by the service module automatically though can be overwritten by docker push:
+# These are injected by the service module automatically:
 # DD_SERVICE, DD_ENV, DD_VERSION, DD_TAGS
 # -------------------------------------------------------
 DD_SERVICE = os.environ.get("DD_SERVICE", "apm-test")
