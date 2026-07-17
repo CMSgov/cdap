@@ -1,0 +1,10 @@
+default_retained_images: 3
+untagged_images_retained: 10
+
+image:
+  enabled: true
+  test_command: python -m pytest tests/ -v
+
+ecs:
+  enabled: true
+  lifecycle: ephemeral

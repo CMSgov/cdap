@@ -24,93 +24,59 @@ variable "repo_name_override" {
 
 variable "tag_rules" {
   description = <<-EOT
-    List of lifecycle rules for images, applied in priority order.
-    Supports both count-based and time-based expiry per rule.
+    List of lifecycle rules to apply to the ECR repository, evaluated in priority order.
 
-    count_type options:
-      - "imageCountMoreThan" (default): retain up to `retained_images` images
-      - "sinceImagePushed": expire images older than `expiry_days` days
+    Each rule object supports the following attributes:
+      - priority    (required) : Rule evaluation order — lower numbers are evaluated first.
+      - tag_prefix  (optional) : Image tag prefix to match (e.g. "release-", "v").
+                                 When set, the rule targets only images whose tags start
+                                 with this prefix (tagStatus = "tagged").
+                                 When null, the rule targets ALL images regardless of
+                                 tag status (tagStatus = "any") — this includes both
+                                 tagged and untagged images not matched by earlier rules.
+      - keep_count  (required) : Number of images to retain matching this rule.
 
-   A null tag_prefix produces a catch-all rule targeting all TAGGED images
-    (tagStatus: "tagged", no tagPrefixList). "any" is intentionally avoided
-    to ensure untagged image cleanup is controlled exclusively by
-    untagged_expiry_days as the lowest-priority rule.
+    IMPORTANT — null tag_prefix behavior:
+    Rules with tag_prefix = null use tagStatus = "any", which means they act as a
+    catch-all and will expire BOTH tagged and untagged images beyond keep_count.
+    Untagged image retention is NOT exclusively controlled by untagged_expiry_days
+    when a null-prefix rule is present — the null-prefix rule will also affect
+    untagged images. If you need untagged images to be retained independently,
+    do not use a null-prefix tag_rule; rely solely on untagged_expiry_days instead.
 
-    Default: keep last 3 images (all tags) per platform policy.
-
-    Example — multiple tag classes in one repo:
+    Example:
       tag_rules = [
-        { tag_prefix = "rls-r", count_type = "imageCountMoreThan", retained_images = 5,  description = "Keep last 5 release images" },
-        { tag_prefix = "temp-", count_type = "imageCountMoreThan", retained_images = 3,  description = "Keep last 3 temp images" },
-        { tag_prefix = null,    count_type = "sinceImagePushed",   expiry_days     = 14, description = "Expire all other images older than 14 days" },
+        {
+          priority   = 10
+          tag_prefix = "release-"
+          keep_count = 10
+        },
+        {
+          priority   = 20
+          tag_prefix = null       # Catch-all: applies to ALL remaining images (tagged + untagged)
+          keep_count = 5
+        }
       ]
   EOT
   type = list(object({
-    tag_prefix      = optional(string)
-    count_type      = optional(string, "imageCountMoreThan")
-    retained_images = optional(number)
-    expiry_days     = optional(number)
-    description     = optional(string)
+    priority   = number
+    tag_prefix = optional(string, null)
+    keep_count = number
   }))
-  default = [
-    {
-      tag_prefix      = null
-      count_type      = "imageCountMoreThan"
-      retained_images = 3
-      description     = "Keep last 3 images (platform policy default)"
-    }
-  ]
-
-  validation {
-    condition     = length(var.tag_rules) >= 1
-    error_message = "At least one tag rule must be defined."
-  }
-
-  validation {
-    condition = alltrue([
-      for r in var.tag_rules :
-      contains(["imageCountMoreThan", "sinceImagePushed"], coalesce(r.count_type, "imageCountMoreThan"))
-    ])
-    error_message = "count_type must be either 'imageCountMoreThan' or 'sinceImagePushed'."
-  }
-
-  validation {
-    condition = alltrue([
-      for r in var.tag_rules :
-      (coalesce(r.count_type, "imageCountMoreThan") == "imageCountMoreThan" && r.retained_images != null) ||
-      (r.count_type == "sinceImagePushed" && r.expiry_days != null)
-    ])
-    error_message = "Each rule must provide retained_images for imageCountMoreThan, or expiry_days for sinceImagePushed."
-  }
-
-  validation {
-    condition = alltrue([
-      for r in var.tag_rules :
-      r.retained_images == null || r.retained_images >= 1
-    ])
-    error_message = "retained_images must be at least 1 to prevent service disruption during scaling events."
-  }
-
-  validation {
-    condition = alltrue([
-      for r in var.tag_rules :
-      r.expiry_days == null || (r.expiry_days >= 1 && r.expiry_days <= 60)
-    ])
-    error_message = "expiry_days must be between 1 and 60 per platform container image policy."
-  }
+  default = []
 }
 
 variable "untagged_expiry_days" {
   description = <<-EOT
     Number of days after which untagged images are expired.
-    Defaults to 30 days per platform policy (max 30-60 day retention guidance).
-    Untagged images are always cleaned up as the lowest priority rule.
+
+    NOTE: This variable only has exclusive control over untagged image retention
+    when no tag_rules entry has tag_prefix = null. If a null-prefix tag_rule exists,
+    that rule's tagStatus = "any" will also match untagged images and may expire them
+    before untagged_expiry_days is reached, depending on rule priority order.
+
+    Set to null to disable the untagged expiry rule entirely.
   EOT
   type        = number
-  default     = 30
-
-  validation {
-    condition     = var.untagged_expiry_days >= 1 && var.untagged_expiry_days <= 60
-    error_message = "untagged_expiry_days must be between 1 and 60 per platform container image policy."
-  }
+  default     = 14
 }

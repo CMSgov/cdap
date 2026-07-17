@@ -22,6 +22,36 @@ on:
         required: false
         type: string
         default: ''
+      dockerfile:
+        description: 'Path to Dockerfile'
+        required: false
+        type: string
+        default: ''
+      docker_context:
+        description: 'Docker build context path'
+        required: false
+        type: string
+        default: ''
+      docker_image_tag:
+        description: 'Tag for the built Docker image'
+        required: false
+        type: string
+        default: ''
+      service_name:
+        description: 'Service name — used for DD_SERVICE and image tag'
+        required: false
+        type: string
+        default: ''
+      environment:
+        description: 'Environment — used for DD_ENV'
+        required: false
+        type: string
+        default: ''
+      test_command:
+        description: 'Test command to run inside the Docker image'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   checks:
@@ -41,6 +71,41 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ github.ref_name == 'main' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ github.ref_name == 'main' && 'cdap-prod' || 'cdap-test' }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Build Image
+        if: inputs.dockerfile != ''
+        run: |
+          docker build \
+            -t ${{ inputs.service_name }}:${{ inputs.docker_image_tag }} \
+            -f ${{ inputs.dockerfile }} \
+            ${{ inputs.docker_context }}
+
+      # ← New: Run tests with coverage if test_command provided
+      - name: Run Tests and Generate Coverage
+        if: inputs.test_command != '' && inputs.dockerfile != ''
+        run: |
+          SHORT_SHA=$(echo "${{ inputs.docker_image_tag }}" | cut -c1-7)
+          mkdir -p /tmp/coverage
+
+          docker run --rm \
+            -v /tmp/coverage:/app/coverage \
+            -e DD_SERVICE=${{ inputs.service_name }} \
+            -e DD_ENV=${{ inputs.environment }} \
+            -e DD_VERSION=$SHORT_SHA \
+            -e DD_TRACE_ENABLED=false \
+            ${{ inputs.service_name }}:${{ inputs.docker_image_tag }} \
+            ${{ inputs.test_command }}
+
+           # verification steps
+          echo "Coverage dir after run:"
+          ls -la /tmp/coverage/
+        
+          if [ ! -f /tmp/coverage/coverage.xml ]; then
+            echo "ERROR: coverage.xml not found in /tmp/coverage/"
+            exit 1
+          fi
+          
+          cp /tmp/coverage/coverage.xml ${{ inputs.source_path }}/coverage.xml
 
       - name: Retrieve credentials
         uses: ./actions/aws-params-env-action
@@ -71,7 +136,7 @@ jobs:
             -Dsonar.projectName=${{ inputs.sonar_project_key }}
             -Dsonar.sources=.
             -Dsonar.ci.autoconfig.disabled=true
-            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**,**/node_modules/**,**/dist/**,**/lib/**
+            -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**,**/node_modules/**,**/dist/**,**/lib/**,**/requirements.in
 
       - name: SonarQube Quality Gate Check
         if: inputs.source_path != '' && inputs.sonar_project_key != ''

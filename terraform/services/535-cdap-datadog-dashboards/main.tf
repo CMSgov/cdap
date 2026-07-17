@@ -11,7 +11,7 @@ module "datadog_dashboard" {
     sqs    = true
     lambda = true
     s3     = true
-    apm    = false
+    apm    = true
   }
 
   widget_live_spans = {
