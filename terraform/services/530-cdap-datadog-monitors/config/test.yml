@@ -2,10 +2,10 @@ shadow_mode: false
 
 notifications:
   slack: true
-  victorops: true # for current testing
+  victorops: false
 
 enabled:
-  ecs: false
+  ecs: true
   sqs: true
   sns: false
   lambda: true
