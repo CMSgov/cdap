@@ -200,7 +200,9 @@ data "aws_iam_policy_document" "github_actions_policy" {
   statement {
     actions = [
       "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
       "ecr:CompleteLayerUpload",
+      "ecr:CreateRepository",
       "ecr:DeleteLifecyclePolicy",
       "ecr:DescribeImages",
       "ecr:DescribeRepositories",
@@ -415,7 +417,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "logs:DescribeLogStreams",
       "logs:DescribeSubscriptionFilters",
       "logs:ListTagsForResource",
-      "logs:PutRetentionPolicy"
+      "logs:PutRetentionPolicy",
+      "logs:TagResource"
     ]
     resources = ["*"]
   }

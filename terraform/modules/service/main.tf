@@ -31,15 +31,20 @@ locals {
     portMappings           = var.port_mappings
     mountPoints            = var.mount_points
     secrets                = var.container_secrets
+    command                = var.command
     environment = concat(
       var.container_environment,
       [
         { name = "DD_ENV", value = var.platform.env },
-        { name = "DD_SERVICE", value = var.platform.app },
+        { name = "DD_SERVICE", value = local.service_name },
+        { name = "DD_TAGS", value = "environment:${var.platform.env}, application:${var.platform.app}, service:${local.service_name}" },
+        { name = "DD_VERSION", value = var.dd_version }
       ],
       var.enable_datadog_agent ? [
         { name = "DD_AGENT_HOST", value = "localhost" },
-        { name = "DD_TRACE_AGENT_PORT", value = "8126" },
+        { name = "DD_APM_ENABLED", value = "true" },
+        { name = "DD_DOGSTATSD_PORT", value = "8125" },   # Default
+        { name = "DD_TRACE_AGENT_PORT", value = "8126" }, # Default
       ] : []
     )
     logConfiguration = {
@@ -55,9 +60,17 @@ locals {
 
   datadog_container = {
     name                   = "datadog-agent"
-    image                  = "public.ecr.aws/datadog/agent:7.50.0"
+    image                  = "public.ecr.aws/datadog/agent:7.80.4"
     essential              = false # Do not impact task health if this container fails
     readonlyRootFilesystem = true
+
+    healthCheck = {
+      command     = ["CMD", "/opt/datadog-agent/bin/agent/agent", "health"]
+      interval    = 30
+      retries     = 3
+      startPeriod = 15
+      timeout     = 5
+    }
 
     logConfiguration = {
       logDriver = "awslogs"
@@ -93,13 +106,21 @@ locals {
 
     environment = [
       { name = "ECS_FARGATE", value = "true" },
-      { name = "DD_ENV", value = var.platform.env },
-      { name = "DD_TAGS", value = "environment:${var.platform.env},application:${var.platform.app}" },
-      { name = "DD_SITE", value = "ddog-gov.com" },
       { name = "DD_APM_ENABLED", value = "true" },
       { name = "DD_APM_NON_LOCAL_TRAFFIC", value = "true" },
+      { name = "DD_APM_RECEIVER_PORT", value = "8126" },
+      { name = "DD_APM_TELEMETRY_ENABLED", value = "false" },
+      { name = "DD_DATA_STREAMS_ENABLED", value = "false" },
+      { name = "DD_DOGSTATSD_NON_LOCAL_TRAFFIC", value = "true" },
+      { name = "DD_DOGSTATSD_PORT", value = "8125" }, # Default
+      { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" },
+      { name = "DD_ENV", value = var.platform.env },
       { name = "DD_LOGS_ENABLED", value = "false" }, # DD logging is currently not approved
-      { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" }
+      { name = "DD_PROCESS_AGENT_ENABLED", value = "true" },
+      { name = "DD_SERVICE", value = local.service_name },
+      { name = "DD_SITE", value = "ddog-gov.com" },
+      { name = "DD_TAGS", value = "application:${var.platform.app}, service:${local.service_name}" },
+      { name = "DD_VERSION", value = var.dd_version }
     ]
     secrets = [{ name = "DD_API_KEY", valueFrom = data.aws_ssm_parameter.datadog_api_key.name }]
   }
@@ -111,10 +132,7 @@ resource "aws_cloudwatch_log_group" "app" {
   kms_key_id        = var.platform.kms_alias_primary.target_key_arn
 
   tags = {
-    Name        = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
-    Application = var.platform.app
-    Environment = var.platform.env
-    Service     = local.service_name
+    Name = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
   }
 }
 

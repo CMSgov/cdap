@@ -94,10 +94,12 @@ resource "aws_service_discovery_http_namespace" "test" {
 # ECS Service Module
 # -------------------------------------------------------
 module "service_a" {
-  log_retention_days = 1
-  source             = "../../../modules/service/"
+  enable_datadog_agent = true
+  log_retention_days   = 1
+  source               = "../../../modules/service/"
   # Use this service to test connections to service-b through service connect
   enable_execute_command = true
+
   additional_task_role_policies = {
     ecs_exec = aws_iam_policy.ecs_exec.arn
   }
