@@ -77,6 +77,6 @@ variable "untagged_expiry_days" {
 
     Set to null to disable the untagged expiry rule entirely.
   EOT
-  type    = number
-  default = 14
+  type        = number
+  default     = 14
 }
