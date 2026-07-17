@@ -23,10 +23,11 @@ locals {
 module "common_datadog_monitors" {
   source = "../../modules/datadog_monitors"
 
-  app             = "cdap"
-  env             = var.env
-  monitor_config  = local.monitor_config
-  custom_monitors = local.codebuild_custom_monitors
+  app              = "cdap"
+  env              = var.env
+  monitor_config   = local.monitor_config
+  custom_monitors  = concat(local.codebuild_custom_monitors, local.synthetics_custom_monitors)
+  synthetics_tests = local.synthetics_tests
 }
 
 ##########################
@@ -77,4 +78,19 @@ locals {
       }
     ]
   ])
+
+  synthetics_custom_monitors = try(local.monitor_config.enabled.synthetics, false) ? [
+    for test in local.synthetics_tests : {
+      name    = "[${upper(module.platform.account_env_suffix)}] [cdap] Synthetics — ${test.name} Failed"
+      type    = "synthetics alert"
+      message = "Synthetic test ${test.name} has failed in ${module.platform.account_env_suffix}."
+      query   = "synthetics(\"${test.public_id}\")"
+      thresholds = {
+        critical = local.monitor_config.synthetics.threshold
+      }
+      notify_no_data            = local.monitor_config.synthetics.notify_no_data
+      require_full_window       = false
+      no_data_timeframe_minutes = local.monitor_config.synthetics.no_data_timeframe_minutes
+    }
+  ] : []
 }

@@ -13,3 +13,4 @@ enabled:
   lambda: false
   s3: false
   rds: false
+  synthetics: true
