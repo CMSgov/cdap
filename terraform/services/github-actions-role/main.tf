@@ -417,7 +417,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "logs:DescribeLogStreams",
       "logs:DescribeSubscriptionFilters",
       "logs:ListTagsForResource",
-      "logs:PutRetentionPolicy"
+      "logs:PutRetentionPolicy",
+      "logs:TagResource"
     ]
     resources = ["*"]
   }
