@@ -199,9 +199,9 @@ jobs:
     name: Push to ECR — ${{ matrix.service }} (${{ matrix.environment }})
     runs-on: codebuild-cdap-${{ matrix.environment == 'prod' && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
     needs: [detect-changes]
-    if: |
-      needs.detect-changes.outputs.any_changed == 'true' &&
-      (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'main'))
+#    if: |
+#      needs.detect-changes.outputs.any_changed == 'true' &&
+#      (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'main'))
     permissions:
       id-token: write
       contents: read
