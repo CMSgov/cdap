@@ -470,13 +470,13 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
               query {
                 metric_query {
                   name  = "query1"
-                  query = "sum:trace.${var.apm_primary_operation}.exec_time.by_service{service:${var.app}, $env} by {sublayer_service, sublayer_inferred}.rollup(sum).fill(zero)"
+                  query = "sum:trace.${var.apm_primary_operation}.exec_time.by_service{application:${var.app}, $env} by {sublayer_service, sublayer_inferred}.rollup(sum).fill(zero)"
                 }
               }
               query {
                 metric_query {
                   name  = "query2"
-                  query = "sum:trace.${var.apm_primary_operation}.hits{service:${var.app}, $env}.rollup(sum).fill(zero).as_count()"
+                  query = "sum:trace.${var.apm_primary_operation}.hits{application:${var.app}, $env}.rollup(sum).fill(zero).as_count()"
                 }
               }
               formula {
