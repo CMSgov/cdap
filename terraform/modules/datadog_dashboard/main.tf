@@ -463,6 +463,38 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
+            title     = "Avg Time per Request"
+            live_span = var.widget_live_spans.apm
+            request {
+              display_type = "area"
+              query {
+                metric_query {
+                  name  = "query1"
+                  query = "sum:trace.${var.apm_primary_operation}.exec_time.by_service{service:${var.app}, $env} by {sublayer_service, sublayer_inferred}.rollup(sum).fill(zero)"
+                }
+              }
+              query {
+                metric_query {
+                  name  = "query2"
+                  query = "sum:trace.${var.apm_primary_operation}.hits{service:${var.app}, $env}.rollup(sum).fill(zero).as_count()"
+                }
+              }
+              formula {
+                formula_expression = "median_3(query1 / query2)"
+                number_format {
+                  unit {
+                    canonical {
+                      unit_name = "second"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
             title     = "Error Rate by Service"
             live_span = var.widget_live_spans.apm
             request {
@@ -480,6 +512,12 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             precision = 2
             request {
               q = "avg:trace.${var.apm_primary_operation}.apdex{application:${var.app}, $env}"
+            }
+            timeseries_background {
+              type = "area"
+              yaxis {
+                include_zero = true
+              }
             }
           }
         }
@@ -680,10 +718,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "Active Connection Count by Target Group"
+            title     = "Active Connection Count by Load Balancer"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "sum:aws.applicationelb.active_connection_count{application:${var.app}, $env} by {targetgroup}.as_count()"
+              q            = "sum:aws.applicationelb.active_connection_count{application:${var.app}, $env} by {loadbalancer}.as_count()"
               display_type = "line"
             }
           }
