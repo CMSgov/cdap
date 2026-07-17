@@ -101,7 +101,7 @@ variable "synthetics_tests" {
 }
 
 variable "custom_monitors" {
-  description = "Custom monitors to create. Module handles notify, shadow_mode, and base_tags automatically."
+  description = "Custom monitors to create. Module handles notify, shadow_mode, and base_tags automatically. Use create to conditionally create the monitor (i.e. on only certain environments)--use this option sparingly."
   type = list(object({
     name    = string
     type    = optional(string, "metric alert")
@@ -117,6 +117,7 @@ variable "custom_monitors" {
     no_data_timeframe_minutes = optional(number, 60)
     require_full_window       = optional(bool, true)
     tags                      = optional(list(string), [])
+    create                    = optional(bool, true)
   }))
   default = []
 }
