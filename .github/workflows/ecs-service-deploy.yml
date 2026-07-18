@@ -1,92 +1,158 @@
-name: ECS Service — Tofu Apply
+name: ECS Service Deployment
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      service:
-        description: 'Service name (must match a directory under terraform/services/)'
+      app:
+        description: 'App name (cdap, ab2d, bcda, dpc)'
+        required: false
+        type: string
+        default: 'cdap'
+      service_name:
+        description: 'Service name (matches SSM path and ECS service name)'
         required: true
         type: string
       environment:
-        description: 'Environment to apply to'
+        description: 'Environment to deploy to'
+        required: true
+        type: string
+      image_tag:
+        description: 'Image tag to deploy (full git SHA from build workflow)'
+        required: true
+        type: string
+      cluster_name:
+        description: 'ECS cluster name override — defaults to {app}-{env} if not provided'
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App name (cdap, ab2d, bcda, dpc)'
+        required: false
+        type: choice
+        options:
+          - cdap
+          - ab2d
+          - bcda
+          - dpc
+        default: 'cdap'
+      service_name:
+        description: 'Service name (matches SSM path and ECS service name)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to'
         required: true
         type: choice
         options:
+          - dev
           - test
+          - sandbox
           - prod
-  push:
-    branches:
-      - main
-    paths:
-      - 'terraform/services/**/app/**'
+      image_tag:
+        description: 'Image tag to deploy (full git SHA from build workflow)'
+        required: true
+        type: string
+      cluster_name:
+        description: 'ECS cluster name override — defaults to {app}-{env} if not provided'
+        required: false
+        type: string
+        default: ''
 
 concurrency:
-  group: tofu-plan-or-apply  # shares the lock with your broader apply workflow
-
-env:
-  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  group: deploy-${{ github.ref }}-${{ inputs.service_name || 'auto' }}
+  cancel-in-progress: false
 
 jobs:
-  detect-changes:
-    name: Detect Changed Services
-    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+  deploy:
+    name: Deploy — ${{ inputs.service_name }} (${{ inputs.environment }})
+    runs-on: codebuild-${{ inputs.app }}-${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
     permissions:
+      id-token: write
       contents: read
-    outputs:
-      matrix: ${{ steps.detect.outputs.matrix }}
-      any_changed: ${{ steps.detect.outputs.any_changed }}
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          fetch-depth: 0
-      - uses: cmsgov/cdap/actions/setup-yq@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ inputs.app }}-${{ inputs.environment }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Build matrix
-        id: detect
+      - name: Write image tag to SSM
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          INPUT_SERVICE: ${{ inputs.service }}
-          INPUT_ENV: ${{ inputs.environment }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-          HEAD_SHA: ${{ github.sha }}
+          APP: ${{ inputs.app }}
+          SERVICE_NAME: ${{ inputs.service_name }}
+          ENV: ${{ inputs.environment }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          strip_prefix() {
-            echo "$1" | sed 's/^[0-9]*-//'
-          }
+          echo "Writing image tag to SSM..."
+          aws ssm put-parameter \
+            --name "/${APP}/${ENV}/nonsensitive/${SERVICE_NAME}/image_tag" \
+            --value "$IMAGE_TAG" \
+            --type String \
+            --overwrite
+          echo "✅ SSM parameter updated"
 
-          build_entry() {
-            local svc="$1"
-            local env="$2"
-            local svc_name
-            svc_name=$(strip_prefix "$svc")
-            jq -cn \
-              --arg svc "$svc" \
-              --arg svc_name "$svc_name" \
-              --arg env "$env" \
-              '{service: $svc, service_name: $svc_name, environment: $env}'
-          }
+      - name: Deploy ECS Service
+        env:
+          APP: ${{ inputs.app }}
+          SERVICE_NAME: ${{ inputs.service_name }}
+          ENV: ${{ inputs.environment }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          CLUSTER_OVERRIDE: ${{ inputs.cluster_name }}
+          ACCOUNT_ID: ${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          echo "::add-mask::$ACCOUNT_ID"
 
-          ENTRIES="[]"
+          CLUSTER="${CLUSTER_OVERRIDE:-${APP}-${ENV}}"
+          ECS_SERVICE="${APP}-${ENV}-${SERVICE_NAME}"
+          ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          FULL_IMAGE="${ECR_REGISTRY}/${APP}-${SERVICE_NAME}:${IMAGE_TAG}"
 
-          if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
-            SERVICE="$INPUT_SERVICE"
-            SERVICE_DIR="terraform/services/$SERVICE"
-            CONFIG_FILE="$SERVICE_DIR/config/${INPUT_ENV}.yml"
+          echo "Fetching current task definition for $ECS_SERVICE..."
+          TASK_DEF_ARN=$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$ECS_SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text)
 
-            if [ ! -f "$SERVICE_DIR/conf.sh" ]; then
-              echo "No conf.sh found for $SERVICE — skipping"
-              echo "any_changed=false" >> $GITHUB_OUTPUT
-              echo "matrix=[]" >> $GITHUB_OUTPUT
-              exit 0
-            fi
+          if [ -z "$TASK_DEF_ARN" ] || [ "$TASK_DEF_ARN" == "None" ]; then
+            echo "::error::Could not find ECS service $ECS_SERVICE in cluster $CLUSTER"
+            exit 1
+          fi
 
-            if [ ! -f "$CONFIG_FILE" ]; then
-              echo "No config/${INPUT_ENV}.yml for $SERVICE — skipping"
-              echo "any_changed=false" >> $GITHUB_OUTPUT
-              echo "matrix=[]" >> $GITHUB_OUTPUT
-              exit 0
-            fi
+          echo "::add-mask::$TASK_DEF_ARN"
+          echo "Current task definition found"
 
-            ENTRY=$(build_entry "$SERVICE" "$INPUT_ENV")
-            ENTRIES=$(echo "$ENTRIES" | jq -c --argjson e "$ENTRY" 
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition "$TASK_DEF_ARN" \
+            --query 'taskDefinition' \
+            | jq \
+              --arg image "$FULL_IMAGE" \
+              'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+               | .containerDefinitions[0].image = $image')
+
+          echo "Registering new task definition revision..."
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$TASK_DEF" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "::add-mask::$NEW_TASK_DEF_ARN"
+          echo "New task definition registered"
+
+          echo "Updating ECS service..."
+          aws ecs update-service \
+            --cluster "$CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "$NEW_TASK_DEF_ARN" \
+            --force-new-deployment
+
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster "$CLUSTER" \
+            --services "$ECS_SERVICE"
+
+          echo "✅ Successfully deployed $ECS_SERVICE in $ENV"
