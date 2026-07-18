@@ -1,6 +1,8 @@
 locals {
   service_name      = coalesce(var.service_name_override, var.platform.service)
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
+  ecr_repository_url = var.ecr_repository_url != null ? var.ecr_repository_url : "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/${var.platform.app}-${local.service}"
+  current_image = var.image != null ? var.image : "${aws_ecr_repository.this.repository_url}:${aws_ssm_parameter.image_tag.value}"
 
   # Build a name → containerPort lookup from port_mappings
   port_map = {
@@ -26,11 +28,19 @@ locals {
   use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
   app_container = {
     name                   = local.service_name
-    image                  = var.image
+    image                  = local.current_image
     readonlyRootFilesystem = var.readonly_root_filesystem
     portMappings           = var.port_mappings
     mountPoints            = var.mount_points
-    secrets                = var.container_secrets
+    secrets                = concat(
+        var.container_secrets,
+        [
+            {
+              name      = "DD_VERSION"
+              valueFrom = aws_ssm_parameter.image_tag.arn
+            }
+        ]
+    )
     command                = var.command
     environment = concat(
       var.container_environment,
@@ -38,7 +48,6 @@ locals {
         { name = "DD_ENV", value = var.platform.env },
         { name = "DD_SERVICE", value = local.service_name },
         { name = "DD_TAGS", value = "environment:${var.platform.env}, application:${var.platform.app}, service:${local.service_name}" },
-        { name = "DD_VERSION", value = var.dd_version }
       ],
       var.enable_datadog_agent ? [
         { name = "DD_AGENT_HOST", value = "localhost" },
@@ -120,12 +129,12 @@ locals {
       { name = "DD_SERVICE", value = local.service_name },
       { name = "DD_SITE", value = "ddog-gov.com" },
       { name = "DD_TAGS", value = "application:${var.platform.app}, service:${local.service_name}" },
-      { name = "DD_VERSION", value = var.dd_version }
     ]
     secrets = [{ name = "DD_API_KEY", valueFrom = data.aws_ssm_parameter.datadog_api_key.name }]
   }
 }
 
+# Cloudwatch
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
   retention_in_days = var.log_retention_days
@@ -144,6 +153,20 @@ resource "aws_cloudwatch_log_group" "datadog" {
 
   tags = {
     Name = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
+  }
+}
+
+# Service
+resource "aws_ssm_parameter" "image_tag" {
+  name = "/${var.platform.app}/${var.platform.env}/nonsensitive/${local.service}/image_tag"
+  type = "SecureString"
+  key_id = var.platform.kms_alias_primary.target_key_arn
+  # Placeholder — will be overwritten by the build workflow on first push
+  value = "initial"
+
+  lifecycle {
+    # Never let Tofu overwrite a real tag written by the workflow
+    ignore_changes = [value]
   }
 }
 
@@ -224,6 +247,7 @@ resource "aws_security_group" "task" {
   }
 }
 
+# Network
 resource "aws_vpc_security_group_egress_rule" "https" {
   count             = (length(var.security_groups) == 0) ? 1 : 0
   security_group_id = aws_security_group.task[0].id
