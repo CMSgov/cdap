@@ -1,0 +1,92 @@
+name: ECS Service — Tofu Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service name (must match a directory under terraform/services/)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to apply to'
+        required: true
+        type: choice
+        options:
+          - test
+          - prod
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/services/**/app/**'
+
+concurrency:
+  group: tofu-plan-or-apply  # shares the lock with your broader apply workflow
+
+env:
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      any_changed: ${{ steps.detect.outputs.any_changed }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
+        with:
+          fetch-depth: 0
+      - uses: cmsgov/cdap/actions/setup-yq@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+
+      - name: Build matrix
+        id: detect
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_SERVICE: ${{ inputs.service }}
+          INPUT_ENV: ${{ inputs.environment }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          strip_prefix() {
+            echo "$1" | sed 's/^[0-9]*-//'
+          }
+
+          build_entry() {
+            local svc="$1"
+            local env="$2"
+            local svc_name
+            svc_name=$(strip_prefix "$svc")
+            jq -cn \
+              --arg svc "$svc" \
+              --arg svc_name "$svc_name" \
+              --arg env "$env" \
+              '{service: $svc, service_name: $svc_name, environment: $env}'
+          }
+
+          ENTRIES="[]"
+
+          if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
+            SERVICE="$INPUT_SERVICE"
+            SERVICE_DIR="terraform/services/$SERVICE"
+            CONFIG_FILE="$SERVICE_DIR/config/${INPUT_ENV}.yml"
+
+            if [ ! -f "$SERVICE_DIR/conf.sh" ]; then
+              echo "No conf.sh found for $SERVICE — skipping"
+              echo "any_changed=false" >> $GITHUB_OUTPUT
+              echo "matrix=[]" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            if [ ! -f "$CONFIG_FILE" ]; then
+              echo "No config/${INPUT_ENV}.yml for $SERVICE — skipping"
+              echo "any_changed=false" >> $GITHUB_OUTPUT
+              echo "matrix=[]" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            ENTRY=$(build_entry "$SERVICE" "$INPUT_ENV")
+            ENTRIES=$(echo "$ENTRIES" | jq -c --argjson e "$ENTRY" 
