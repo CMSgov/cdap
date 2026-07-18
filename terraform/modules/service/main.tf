@@ -1,8 +1,8 @@
 locals {
-  service_name      = coalesce(var.service_name_override, var.platform.service)
-  service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
+  service_name       = coalesce(var.service_name_override, var.platform.service)
+  service_name_full  = "${var.platform.app}-${var.platform.env}-${local.service_name}"
   ecr_repository_url = var.ecr_repository_url != null ? var.ecr_repository_url : "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/${var.platform.app}-${local.service}"
-  current_image = var.image != null ? var.image : "${aws_ecr_repository.this.repository_url}:${aws_ssm_parameter.image_tag.value}"
+  current_image      = var.image != null ? var.image : "${aws_ecr_repository.this.repository_url}:${aws_ssm_parameter.image_tag.value}"
 
   # Build a name → containerPort lookup from port_mappings
   port_map = {
@@ -32,16 +32,16 @@ locals {
     readonlyRootFilesystem = var.readonly_root_filesystem
     portMappings           = var.port_mappings
     mountPoints            = var.mount_points
-    secrets                = concat(
-        var.container_secrets,
-        [
-            {
-              name      = "DD_VERSION"
-              valueFrom = aws_ssm_parameter.image_tag.arn
-            }
-        ]
+    secrets = concat(
+      var.container_secrets,
+      [
+        {
+          name      = "DD_VERSION"
+          valueFrom = aws_ssm_parameter.image_tag.arn
+        }
+      ]
     )
-    command                = var.command
+    command = var.command
     environment = concat(
       var.container_environment,
       [
@@ -158,8 +158,8 @@ resource "aws_cloudwatch_log_group" "datadog" {
 
 # Service
 resource "aws_ssm_parameter" "image_tag" {
-  name = "/${var.platform.app}/${var.platform.env}/nonsensitive/${local.service}/image_tag"
-  type = "SecureString"
+  name   = "/${var.platform.app}/${var.platform.env}/nonsensitive/${local.service}/image_tag"
+  type   = "SecureString"
   key_id = var.platform.kms_alias_primary.target_key_arn
   # Placeholder — will be overwritten by the build workflow on first push
   value = "initial"

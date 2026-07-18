@@ -10,8 +10,8 @@ variable "image" {
     NOTE: Direct image injection via this variable may be removed in a
     future release. Migrate to the build-and-push-docker workflow.
   EOT
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "ecr_repository_url" {
@@ -20,8 +20,8 @@ variable "ecr_repository_url" {
     platform and service variables using the standard naming convention:
     {account}.dkr.ecr.{region}.amazonaws.com/{app}-{env}-{service}
   EOT
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 # -------------------------------------------------------
