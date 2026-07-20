@@ -100,6 +100,12 @@ variable "enable_execute_command" {
   description = "Used only for testing. Requires task role to have ssm Permissions for ECS Exec."
 }
 
+variable "command" {
+  description = "Only for testing. Setting this will trigger a SecurityHub alert. Overrides the default container command."
+  type        = list(string)
+  default     = null
+}
+
 # -------------------------------------------------------
 # ECS Task (optional)
 # -------------------------------------------------------
@@ -110,7 +116,7 @@ variable "container_environment" {
     name  = string
     value = string
   }))
-  default = null
+  default = []
 }
 
 variable "container_secrets" {
@@ -264,6 +270,12 @@ variable "memory" {
   type        = number
 }
 
+variable "readonly_root_filesystem" {
+  description = "Whether to set the container root filesystem as read-only. ONLY set to false for containers that require write access (e.g., Datadog Private Location worker)."
+  type        = bool
+  default     = true
+}
+
 variable "mount_points" {
   description = "The mount points for data volumes in your container"
   type = list(object({
@@ -399,8 +411,8 @@ variable "enable_datadog_synthetics_ingress" {
   default     = false
 }
 
-variable "readonly_root_filesystem" {
-  description = "Whether to set the container root filesystem as read-only. ONLY set to false for containers that require write access (e.g., Datadog Private Location worker)."
-  type        = bool
-  default     = true
+variable "dd_version" {
+  description = "Version of the application reported to Datadog APM"
+  type        = string
+  default     = "1.0.0"
 }

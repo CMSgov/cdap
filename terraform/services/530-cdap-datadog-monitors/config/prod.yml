@@ -1,4 +1,4 @@
-shadow_mode: true
+shadow_mode: false
 
 notifications:
   victorops: true
@@ -7,10 +7,10 @@ lambda:
   error_rate_threshold: 1
 
 enabled:
-  ecs: false
-  sqs: false
+  ecs: true
+  sqs: true
   sns: false
-  lambda: false
+  lambda: true
   s3: false
   rds: false
   synthetics: true

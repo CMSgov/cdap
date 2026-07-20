@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - DD_ENV=test
+      - DD_API_KEY=do-not-set # metrics will push to local agent but not out to Datadog
+      - DD_SERVICE=service-test
+      - DD_VERSION=0.0.1
+      - DD_AGENT_HOST=datadog-agent
+      - DD_TRACE_AGENT_PORT=8126
+      - DD_DOGSTATSD_PORT=8125
+      - EMIT_INTERVAL_SECONDS=10
+    depends_on:
+      - datadog-agent
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  datadog-agent:
+    image: ghcr.io/datadog/dd-apm-test-agent/ddapm-test-agent:latest
+    environment:
+      - DD_API_KEY=do-not-set
+      - DD_ENV=local
+      - DD_SITE=ddog-gov.com
+      - DD_APM_ENABLED=true
+      - DD_APM_NON_LOCAL_TRAFFIC=true
+      - DD_DOGSTATSD_NON_LOCAL_TRAFFIC=true
+      - ECS_FARGATE=false
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "8126:8126"  # APM traces
+      - "8125:8125/udp"  # DogStatsD
