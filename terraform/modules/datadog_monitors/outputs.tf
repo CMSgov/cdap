@@ -28,5 +28,8 @@ output "monitor_ids" {
       replica_lag_high    = length(datadog_monitor.rds_replica_lag_high) > 0 ? datadog_monitor.rds_replica_lag_high[0].id : null
       deadlocks           = length(datadog_monitor.rds_deadlocks) > 0 ? datadog_monitor.rds_deadlocks[0].id : null
     }
+    synthetics = {
+      for name, monitor in datadog_monitor.synthetics_test_failed : name => monitor.id
+    }
   }
 }

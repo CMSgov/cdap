@@ -1,7 +1,58 @@
-Establishes a Datadog private location (synthetics test runner) within CDAP's VPCs.
-Teams can point their synthetics tests at this PL via its ID parameter in SSM: /cdap/${env}/datadog/nonsensitive/private_location_config_id
-This service's security groups allow outbound traffic from the PL worker to API teams' app VPCs.
-The PL uses outbound traffic only for communicating with Datadog and running synthetics tests.
+## Using CDAP's Datadog Private Location for Synthetic API Tests
+
+### Overview
+
+CDAP runs a Datadog private location (PL) worker as an ECS Fargate service in cdap-test and cdap-prod VPCs. It polls Datadog for synthetic test jobs and executes them against internal APIs that are not internet-accessible. Your team's responsibility is two things: **open your service to receive traffic from the PL**, and **write the synthetic test in Terraform**.
+
+---
+
+### Step 1 — Enable Synthetics Ingress on Your ECS Service Module
+
+In your service's `module "service"` block, set the flag:
+
+```hcl
+module "your_api" {
+  source = "../../modules/service"
+  ...
+  enable_datadog_synthetics_ingress = true
+}
+```
+
+**What this does under the hood:**
+- The service module reads the PL worker's security group ID from SSM at `/cdap/${env}/datadog/nonsensitive/private_location_task_security_group_id`
+- It creates an `aws_vpc_security_group_ingress_rule` on your task's SG that references the PL's SG, allowing all inbound traffic from the PL runner
+
+> **Prerequisite:** Your service must be in a VPC already listed in the PL's config file (terraform/services/520-datadog-private-location/config/). If your VPC is not listed, open a PR to add it. VPC must also be peered with CDAP's for private network traffic
+
+---
+
+### Step 2 — Write the Synthetic Test in Terraform
+
+Use the `datadog_synthetics_test` resource. Look up the private location ID by name using `data.datadog_synthetics_locations`:
+
+See terraform/services/tftesting/datadog-synthetic for example.
+
+The display name prefix for each environment:
+| `test` | `cdap-non-prod` |
+| `prod` | `cdap-prod` |
+
+---
+
+### Step 3 — Wire it to a Monitor (Optional but Recommended)
+
+Once the synthetic test is created, attach a `datadog_monitor` of type `"synthetics alert"` referencing the test's ID to get alerting via the existing Datadog → Slack pipeline.
+
+---
+
+### Summary of What Each Team Owns
+
+| Responsibility | Owner |
+|---|---|
+| Running the PL worker | CDAP (520-datadog-private-location) |
+| PL egress rules to app VPCs | CDAP (add your VPC to the config yml) |
+| `enable_datadog_synthetics_ingress = true` on your service | **Your team** |
+| `datadog_synthetics_test` resource | **Your team** |
+| Datadog API/App keys for the provider | CDAP (via `501-datadog-cicd-keys`) |
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
