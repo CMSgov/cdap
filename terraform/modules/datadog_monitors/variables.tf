@@ -26,7 +26,7 @@ variable "monitor_config" {
       lambda     = optional(bool, true)
       s3         = optional(bool, true)
       rds        = optional(bool, true)
-      synthetics = optional(bool, false)
+      synthetics = optional(bool, true)
     }), {})
 
     ecs = optional(object({
