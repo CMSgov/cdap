@@ -4,7 +4,7 @@ locals {
 }
 
 data "aws_ecs_cluster" "cluster_test" {
-  cluster_name = "cdap-${var.env}"
+  cluster_name = "cdap-${var.env}-tftesting"
 }
 
 module "service_test_service" {
