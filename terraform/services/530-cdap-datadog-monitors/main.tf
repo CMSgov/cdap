@@ -58,9 +58,9 @@ locals {
         thresholds = {
           critical = 1
         }
-        notify_no_data            = false
-        require_full_window       = false
-        no_data_timeframe_minutes = 60
+        # TODO does this make sense for CDAP?
+        on_missing_data     = "default"
+        require_full_window = false
       },
       {
         name    = "[${upper(module.platform.account_env_suffix)}] [${repo}] CodeBuild — Builds Backing Up in Queue"
@@ -72,9 +72,9 @@ locals {
           critical = 120
           warning  = 72
         }
-        notify_no_data            = false
-        require_full_window       = false
-        no_data_timeframe_minutes = 60
+        # TODO does this make sense for CDAP?
+        on_missing_data     = "default"
+        require_full_window = false
       }
     ]
   ])
