@@ -1,3 +1,12 @@
 notifications:
   slack: true
   victorops: false
+
+enabled:
+  synthetics: false
+
+synthetics:
+  threshold: 1
+  notify_no_data: false
+  no_data_timeframe_minutes: 10
+  timeframe: "last_5m"
