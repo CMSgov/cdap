@@ -20,12 +20,13 @@ variable "monitor_config" {
     }), {})
 
     enabled = optional(object({
-      ecs    = optional(bool, true)
-      sqs    = optional(bool, true)
-      sns    = optional(bool, true)
-      lambda = optional(bool, true)
-      s3     = optional(bool, true)
-      rds    = optional(bool, true)
+      ecs        = optional(bool, true)
+      sqs        = optional(bool, true)
+      sns        = optional(bool, true)
+      lambda     = optional(bool, true)
+      s3         = optional(bool, true)
+      rds        = optional(bool, true)
+      synthetics = optional(bool, true)
     }), {})
 
     ecs = optional(object({
@@ -73,8 +74,24 @@ variable "monitor_config" {
       on_missing_data              = optional(string, "default")
       timeframe                    = optional(string, "last_10m")
     }), {})
+
+    synthetics = optional(object({
+      threshold                 = optional(number, 1)
+      notify_no_data            = optional(bool, false)
+      no_data_timeframe_minutes = optional(number, 10)
+      timeframe                 = optional(string, "last_5m")
+    }), {})
   })
   default = {}
+}
+
+variable "synthetics_tests" {
+  description = "List of Datadog synthetic tests to alert on. Each entry maps a display name to the test's public_id."
+  type = list(object({
+    name      = string
+    public_id = string
+  }))
+  default = []
 }
 
 variable "custom_monitors" {
