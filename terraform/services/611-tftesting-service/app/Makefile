@@ -39,9 +39,9 @@ clean:
 AWS_DEFAULT_REGION     ?= us-east-1
 ENV            ?= test
 AWS_ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text)
-SERVICE_NAME   := service-test
+SERVICE_NAME   := tftesting-service
 ECR_REGISTRY   := $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_DEFAULT_REGION).amazonaws.com
-ECR_REPOSITORY := cdap-$(ENV)-$(SERVICE_NAME)
+ECR_REPOSITORY := cdap-$(SERVICE_NAME)
 IMAGE_TAG      ?= $(shell git rev-parse HEAD)
 
 requirements:
@@ -69,7 +69,7 @@ push: ecr-login
 	  .
 	@docker push $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG)
 	@aws ssm put-parameter \
-	  --name "/cdap/$(ENV)/services/$(SERVICE_NAME)/image_tag" \
+	  --name "/cdap/$(ENV)/services/$(SERVICE_NAME)/image-tag" \
 	  --value "$(IMAGE_TAG)" \
 	  --type String \
 	  --overwrite
