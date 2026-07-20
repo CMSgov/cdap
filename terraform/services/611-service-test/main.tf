@@ -3,24 +3,16 @@ locals {
   ecs_enabled = var.ecs_enabled != null ? var.ecs_enabled : try(local.config.ecs.enabled, true)
 }
 
-module "service_test_repo" {
-  source   = "../../modules/ecr_repo"
-  platform = module.platform
-}
-
 data "aws_ecs_cluster" "cluster_test" {
-  cluster_name = "cdap-${var.env}-cluster-test"
+  cluster_name = "cdap-${var.env}"
 }
 
 module "service_test_service" {
-  count                = local.ecs_enabled && module.service_test_repo.image_tag != "initial" ? 1 : 0
   source               = "../../modules/service/"
   enable_datadog_agent = true
-  dd_version           = module.service_test_repo.image_version
   log_retention_days   = 30
 
   cluster_arn = data.aws_ecs_cluster.cluster_test.arn
-  image       = module.service_test_repo.image
   cpu         = 512
   memory      = 1024
 
