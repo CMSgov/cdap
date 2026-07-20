@@ -43,6 +43,7 @@ SERVICE_NAME   := tftesting-service
 ECR_REGISTRY   := $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_DEFAULT_REGION).amazonaws.com
 ECR_REPOSITORY := cdap-$(SERVICE_NAME)
 IMAGE_TAG      ?= $(shell git rev-parse HEAD)
+KMS_KEY_ALIAS  ?= alias/cdap-$(ENV)
 
 requirements:
 	docker run --rm \
@@ -71,6 +72,7 @@ push: ecr-login
 	@aws ssm put-parameter \
 	  --name "/cdap/$(ENV)/nonsensitive/$(SERVICE_NAME)/image-tag" \
 	  --value "$(IMAGE_TAG)" \
-	  --type String \
+	  --type SecureString \
+	  --key-id "$(KMS_KEY_ALIAS)" \
 	  --overwrite
 	@echo "Pushed $(SERVICE_NAME):$(IMAGE_TAG)"
