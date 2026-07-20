@@ -40,7 +40,7 @@ def start_health_server(port: int = 8080):
     server = HTTPServer(("0.0.0.0", port), HealthHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    logger.info(f"Health server listening on port {port}")
+    logger.info(f"Health server is listening on port {port}")
 
 
 # -------------------------------------------------------
