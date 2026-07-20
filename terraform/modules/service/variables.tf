@@ -146,7 +146,7 @@ variable "container_secrets" {
     name      = string
     valueFrom = string
   }))
-  default = null
+  default = []
 }
 
 variable "cpu" {
