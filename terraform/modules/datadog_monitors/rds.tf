@@ -11,8 +11,7 @@ resource "datadog_monitor" "rds_cpu_high" {
     warning  = floor(var.monitor_config.rds.cpu_threshold * 0.85)
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.rds.notify_no_data
-  no_data_timeframe = var.monitor_config.rds.no_data_timeframe_minutes
+  on_missing_data = var.monitor_config.rds.on_missing_data
 
   tags = local.base_tags
 }
@@ -30,8 +29,7 @@ resource "datadog_monitor" "rds_freeable_memory_low" {
     warning  = var.monitor_config.rds.freeable_memory_threshold_mb * 1000000 * 2
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.rds.notify_no_data
-  no_data_timeframe = var.monitor_config.rds.no_data_timeframe_minutes
+  on_missing_data = var.monitor_config.rds.on_missing_data
 
   tags = local.base_tags
 }
@@ -49,8 +47,7 @@ resource "datadog_monitor" "rds_db_connections_high" {
     warning  = floor(var.monitor_config.rds.db_connections_threshold * 0.80)
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.rds.notify_no_data
-  no_data_timeframe = var.monitor_config.rds.no_data_timeframe_minutes
+  on_missing_data = var.monitor_config.rds.on_missing_data
 
   tags = local.base_tags
 }
@@ -68,6 +65,8 @@ resource "datadog_monitor" "rds_replica_lag_high" {
     warning  = floor(var.monitor_config.rds.replica_lag_seconds * 1000 * 0.75)
   }
 
+  on_missing_data = var.monitor_config.rds.on_missing_data
+
   tags = local.base_tags
 }
 
@@ -82,6 +81,8 @@ resource "datadog_monitor" "rds_deadlocks" {
   monitor_thresholds {
     critical = var.monitor_config.rds.deadlock_threshold
   }
+
+  on_missing_data = var.monitor_config.rds.on_missing_data
 
   tags = local.base_tags
 }

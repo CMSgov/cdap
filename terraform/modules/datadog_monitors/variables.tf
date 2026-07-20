@@ -29,25 +29,22 @@ variable "monitor_config" {
     }), {})
 
     ecs = optional(object({
-      cpu_threshold             = optional(number, 85)
-      memory_threshold          = optional(number, 85)
-      notify_no_data            = optional(bool, false)
-      no_data_timeframe_minutes = optional(number, 10)
-      timeframe                 = optional(string, "last_10m")
+      cpu_threshold    = optional(number, 85)
+      memory_threshold = optional(number, 85)
+      on_missing_data  = optional(string, "default")
+      timeframe        = optional(string, "last_10m")
     }), {})
 
     sqs = optional(object({
-      dlq_message_threshold     = optional(number, 1)
-      max_message_age_seconds   = optional(number, 300)
-      notify_no_data            = optional(bool, false)
-      no_data_timeframe_minutes = optional(number, 10)
-      timeframe                 = optional(string, "last_5m")
+      dlq_message_threshold   = optional(number, 1)
+      max_message_age_seconds = optional(number, 300)
+      on_missing_data         = optional(string, "default")
+      timeframe               = optional(string, "last_5m")
     }), {})
 
     sns = optional(object({
       failed_notification_threshold = optional(number, 5)
-      notify_no_data                = optional(bool, false)
-      no_data_timeframe_minutes     = optional(number, 10)
+      on_missing_data               = optional(string, "default")
       timeframe                     = optional(string, "last_5m")
     }), {})
 
@@ -55,16 +52,14 @@ variable "monitor_config" {
       error_rate_threshold      = optional(number, 5)
       throttle_threshold        = optional(number, 10)
       duration_p99_threshold_ms = optional(number, 8000)
-      notify_no_data            = optional(bool, false)
-      no_data_timeframe_minutes = optional(number, 10)
+      on_missing_data           = optional(string, "default")
       timeframe                 = optional(string, "last_5m")
     }), {})
 
     s3 = optional(object({
       http_response_4xx_threshold = optional(number, 50)
       http_response_5xx_threshold = optional(number, 10)
-      notify_no_data              = optional(bool, false)
-      no_data_timeframe_minutes   = optional(number, 10)
+      on_missing_data             = optional(string, "default")
       timeframe                   = optional(string, "last_5m")
     }), {})
 
@@ -75,8 +70,7 @@ variable "monitor_config" {
       replica_lag_seconds          = optional(number, 30)
       deadlock_threshold           = optional(number, 1)
       deadlocks_enabled            = optional(bool, true)
-      notify_no_data               = optional(bool, false)
-      no_data_timeframe_minutes    = optional(number, 10)
+      on_missing_data              = optional(string, "default")
       timeframe                    = optional(string, "last_10m")
     }), {})
   })
@@ -96,11 +90,10 @@ variable "custom_monitors" {
       critical_recovery = optional(number)
       warning_recovery  = optional(number)
     })
-    notify_no_data            = optional(bool, false)
-    no_data_timeframe_minutes = optional(number, 60)
-    require_full_window       = optional(bool, true)
-    tags                      = optional(list(string), [])
-    create                    = optional(bool, true)
+    on_missing_data     = optional(string, "default")
+    require_full_window = optional(bool, true)
+    tags                = optional(list(string), [])
+    create              = optional(bool, true)
   }))
   default = []
 }

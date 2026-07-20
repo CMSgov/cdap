@@ -61,15 +61,11 @@ enabled:
 # Thresholds are percentages (0–100).
 # Warning threshold is automatically set to 85% of the critical threshold.
 #
-# notify_no_data: alert if ECS metrics stop reporting entirely.
-# no_data_timeframe_minutes: minutes of silence before a no-data alert fires.
-#   Minimum: 2. Recommended: at least 2x your metric collection interval.
 # -----------------------------------------------------------------------------
 ecs:
   cpu_threshold: 85
   memory_threshold: 85
-  notify_no_data: false
-  no_data_timeframe_minutes: 10
+  on_missing_data: "default"
   timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
@@ -88,8 +84,7 @@ ecs:
 sqs:
   dlq_message_threshold: 1       # any DLQ message is actionable
   max_message_age_seconds: 300   # 5 minutes — lower for real-time consumers
-  notify_no_data: false
-  no_data_timeframe_minutes: 10
+  on_missing_data: "default"
   timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
@@ -102,8 +97,7 @@ sqs:
 # -----------------------------------------------------------------------------
 sns:
   failed_notification_threshold: 5
-  notify_no_data: false
-  no_data_timeframe_minutes: 10
+  on_missing_data: "default"
   timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
@@ -122,17 +116,12 @@ sns:
 #   Set to approximately 80% of your function's configured timeout.
 #   Example: for a 10s timeout, use 8000. For a 30s timeout, use 24000.
 #
-# notify_no_data: useful for scheduled functions. For a weekly Lambda, set
-#   no_data_timeframe_minutes to 10140 (7 days + 1hr buffer).
-#   Note: this applies to ALL Lambda functions for this app. For per-function
-#   no-data timeframes, manage those monitors outside this module.
 # -----------------------------------------------------------------------------
 lambda:
   error_rate_threshold: 5
   throttle_threshold: 10
   duration_p99_threshold_ms: 8000
-  notify_no_data: false
-  no_data_timeframe_minutes: 10
+  on_missing_data: "default"
   timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
@@ -152,8 +141,7 @@ lambda:
 s3:
   error_threshold_4xx: 50
   error_threshold_5xx: 10
-  notify_no_data: false
-  no_data_timeframe_minutes: 10
+  on_missing_data: "default"
   timeframe: "last_10m"
 
 # -----------------------------------------------------------------------------
@@ -186,6 +174,5 @@ rds:
   replica_lag_seconds: 30
   deadlock_threshold: 1               # any deadlock is worth investigating
   deadlocks_enabled: true             # set false without Enhanced Monitoring / Performance Insights
-  notify_no_data: false
-  no_data_timeframe_minutes: 10
+  on_missing_data: "default"
   timeframe: "last_10m"
