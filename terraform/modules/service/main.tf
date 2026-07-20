@@ -158,7 +158,7 @@ resource "aws_cloudwatch_log_group" "datadog" {
 
 # Service
 resource "aws_ssm_parameter" "image_tag" {
-  name   = "/${var.platform.app}/${var.platform.env}/nonsensitive/${local.service_name}/image_tag"
+  name   = "/${var.platform.app}/${var.platform.env}/nonsensitive/${local.service_name}/image-tag"
   type   = "SecureString"
   key_id = var.platform.kms_alias_primary.target_key_arn
   # Placeholder — will be overwritten by the build workflow on first push
