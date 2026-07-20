@@ -27,7 +27,7 @@ module "common_datadog_monitors" {
   env              = var.env
   monitor_config   = local.monitor_config
   custom_monitors  = concat(local.codebuild_custom_monitors, local.synthetics_custom_monitors)
-  synthetics_tests = local.synthetics_tests
+  synthetics_tests = module.synthetics.synthetics_tests
 }
 
 ##########################
@@ -80,13 +80,13 @@ locals {
   ])
 
   synthetics_custom_monitors = try(local.monitor_config.enabled.synthetics, false) ? [
-    for test in local.synthetics_tests : {
+    for test in module.synthetics.synthetics_tests : {
       name    = "[${upper(module.platform.account_env_suffix)}] [cdap] Synthetics — ${test.name} Failed"
-      type    = "synthetics alert"
+      type    = "metric alert"
       message = "Synthetic test ${test.name} has failed in ${module.platform.account_env_suffix}."
-      query   = "synthetics(\"${test.public_id}\")"
+      query   = "sum(last_5m):sum:datadog.synthetics.test_runs{public_id:${test.public_id},result:failed}.as_count() > 0"
       thresholds = {
-        critical = local.monitor_config.synthetics.threshold
+        critical = 0
       }
       notify_no_data            = local.monitor_config.synthetics.notify_no_data
       require_full_window       = false
