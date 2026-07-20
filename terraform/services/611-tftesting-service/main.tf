@@ -7,7 +7,7 @@ data "aws_ecs_cluster" "cluster_test" {
   cluster_name = "cdap-${var.env}-tftesting"
 }
 
-module "service_test_service" {
+module "tftesting_service" {
   source               = "../../modules/service/"
   enable_datadog_agent = true
   log_retention_days   = 30

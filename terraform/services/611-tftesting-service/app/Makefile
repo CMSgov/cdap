@@ -69,7 +69,7 @@ push: ecr-login
 	  .
 	@docker push $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG)
 	@aws ssm put-parameter \
-	  --name "/cdap/$(ENV)/services/$(SERVICE_NAME)/image-tag" \
+	  --name "/cdap/$(ENV)/nonsensitive/$(SERVICE_NAME)/image-tag" \
 	  --value "$(IMAGE_TAG)" \
 	  --type String \
 	  --overwrite
