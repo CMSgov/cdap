@@ -1,7 +1,10 @@
 locals {
+  # Build one config entry per app-folder that has a matching env file.
+  # var.app is always "cdap" (the manager), but cdap manages ALL apps
+  # found under config/*/. The key is the app folder name (e.g. "ab2d", "cdap").
   app_configs = {
     for f in fileset("${path.module}/config", "*/*.yml") :
-    (dirname(f) == "cdap" ? "cdap" : trimsuffix(f, ".yml")) => {
+    dirname(f) => {
       app    = dirname(f)
       env    = trimsuffix(basename(f), ".yml")
       config = try(coalesce(yamldecode(file("${path.module}/config/${f}")), {}), {})
@@ -9,12 +12,14 @@ locals {
     if trimsuffix(basename(f), ".yml") == var.env
   }
 
+  # Flatten all services across all apps into a single map of ECR repos.
+  # key format: "<app>/<service>" e.g. "ab2d/api", "cdap/worker"
   all_repos = {
     for pair in flatten([
       for config_key, config_data in local.app_configs : [
         for svc in try(config_data.config.services, []) : {
           key     = "${config_data.app}/${svc}"
-          app     = config_data.app
+          app     = config_data.app # dirname
           service = svc
         }
       ]
