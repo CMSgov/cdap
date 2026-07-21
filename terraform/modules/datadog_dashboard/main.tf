@@ -54,7 +54,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             show_last_triggered = true
             sort                = "status,asc"
             summary_type        = "monitors"
-            query               = "tag:application:${var.app} status:alert"
+            query               = "tag:\"application:${var.app}\" status:alert"
           }
         }
 
@@ -67,7 +67,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             show_last_triggered = true
             sort                = "status,asc"
             summary_type        = "monitors"
-            query               = "tag:application:${var.app}"
+            query               = "tag:\"application:${var.app}\""
           }
         }
       }
