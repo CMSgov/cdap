@@ -56,13 +56,13 @@ data "aws_iam_policy_document" "execution" {
   }
 
   statement {
-    sid    = "AllowDatadogSSMAccess"
+    sid    = "AllowDatadogandImageTagSSMAccess"
     effect = "Allow"
     actions = [
       "ssm:GetParameters",
       "ssm:GetParameter"
     ]
-    resources = [data.aws_ssm_parameter.datadog_api_key.arn]
+    resources = [data.aws_ssm_parameter.datadog_api_key.arn, aws_ssm_parameter.image_tag.arn]
   }
 
   statement {
