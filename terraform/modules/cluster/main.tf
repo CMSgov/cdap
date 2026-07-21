@@ -1,5 +1,5 @@
 locals {
-  cluster_name = var.cluster_name_override != null ? var.cluster_name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}"
+  cluster_name = var.cluster_name_override != null ? var.cluster_name_override : "${var.platform.app}-${var.platform.env}"
 }
 
 # CloudWatch Log Group for ECS Container Insights. If we don't manage this explicitly, it will be created automatically by AWS and we won't be able to manage the retention period via Terraform.
