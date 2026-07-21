@@ -6,5 +6,5 @@ image:
   test_command: "pytest"
 
 ecs:
-  enabled: true
+  enabled: false
   lifecycle: ephemeral

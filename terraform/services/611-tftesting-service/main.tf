@@ -8,6 +8,7 @@ data "aws_ecs_cluster" "cluster_test" {
 }
 
 module "tftesting_service" {
+  count                = local.ecs_enabled ? 1 : 0
   source               = "../../modules/service/"
   enable_datadog_agent = true
   log_retention_days   = 30

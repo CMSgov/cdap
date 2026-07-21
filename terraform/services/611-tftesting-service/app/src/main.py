@@ -14,8 +14,8 @@ from ddtrace import tracer
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DD_SERVICE = os.environ.get("DD_SERVICE", "apm-test")
-DD_ENV     = os.environ.get("DD_ENV", "unknown")
+DD_SERVICE = os.environ.get("DD_SERVICE", "tftesting")
+DD_ENV     = os.environ.get("DD_ENV", "test")
 DD_VERSION = os.environ.get("DD_VERSION", "unknown")
 
 
