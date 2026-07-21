@@ -19,7 +19,7 @@ locals {
       for config_key, config_data in local.app_configs : [
         for svc in try(config_data.config.services, []) : {
           key     = "${config_data.app}/${svc}"
-          app     = config_data.app   # dirname
+          app     = config_data.app # dirname
           service = svc
         }
       ]
