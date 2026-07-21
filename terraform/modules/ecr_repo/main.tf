@@ -1,6 +1,6 @@
 locals {
   service   = var.service != null ? var.service : var.platform.service
-  repo_name = var.repo_name_override != null ? var.repo_name_override : "${var.platform.app}-${var.platform.env}-${local.service}"
+  repo_name = var.repo_name_override != null ? var.repo_name_override : "${var.platform.app}-${local.service}"
 }
 
 resource "aws_ecr_repository" "this" {
@@ -73,24 +73,3 @@ resource "aws_ecr_lifecycle_policy" "this" {
   })
 }
 
-resource "aws_ssm_parameter" "image_tag" {
-  name = "/${var.platform.app}/${var.platform.env}/services/${local.service}/image_tag"
-  type = "String"
-  # Placeholder — will be overwritten by the build workflow on first push
-  value = "initial"
-
-  lifecycle {
-    # Never let Tofu overwrite a real tag written by the workflow
-    ignore_changes = [value]
-  }
-}
-
-resource "aws_ssm_parameter" "image_version" {
-  name  = "/${var.platform.app}/${var.platform.env}/services/${local.service}/image_version"
-  type  = "String"
-  value = "initial"
-
-  lifecycle {
-    ignore_changes = [value]
-  }
-}
