@@ -718,6 +718,28 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
+            title     = "HTTP 5XX by Load Balancer"
+            live_span = var.widget_live_spans.alb
+            request {
+              q            = "sum:aws.applicationelb.httpcode_elb_5xx{application:${var.app}, $env} by {loadbalancer}.as_count()"
+              display_type = "bars"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "HTTP 4XX by Load Balancer"
+            live_span = var.widget_live_spans.alb
+            request {
+              q            = "sum:aws.applicationelb.httpcode_elb_4xx{application:${var.app}, $env} by {loadbalancer}.as_count()"
+              display_type = "bars"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
             title     = "Active Connection Count by Load Balancer"
             live_span = var.widget_live_spans.alb
             request {
