@@ -34,10 +34,9 @@ resource "datadog_synthetics_test" "this" {
 
   locations = each.value.use_private_location ? [local.private_location_id] : local.non_private_location_ids
 
-  dynamic "lifecycle" {
-    for_each = each.value.use_private_location ? [1] : []
+  lifecycle {
     precondition {
-      condition     = local.private_location_id != null
+      condition     = !each.value.use_private_location || local.private_location_id != null
       error_message = "No Datadog private location found with prefix '${local.location_prefix}'. Verify the private location agent is registered for this environment."
     }
   }
