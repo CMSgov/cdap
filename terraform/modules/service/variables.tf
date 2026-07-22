@@ -3,6 +3,27 @@ variable "cluster_arn" {
   type        = string
 }
 
+variable "image" {
+  description = <<-EOT
+    Optional image URI override. If not provided, the service module will
+    use the image_tag SSM parameter written by the build pipeline.
+    NOTE: Direct image injection via this variable may be removed in a
+    future release. Migrate to the build-and-push-docker workflow.
+  EOT
+  type        = string
+  default     = null
+}
+
+variable "ecr_repository_url" {
+  description = <<-EOT
+    ECR repository URL. If not provided, will be constructed from
+    platform and service variables using the standard naming convention:
+    {account}.dkr.ecr.{region}.amazonaws.com/{app}-{env}-{service}
+  EOT
+  type        = string
+  default     = null
+}
+
 # -------------------------------------------------------
 # ECS Service Connect (optional)
 # -------------------------------------------------------
@@ -125,7 +146,7 @@ variable "container_secrets" {
     name      = string
     valueFrom = string
   }))
-  default = null
+  default = []
 }
 
 variable "cpu" {
@@ -175,11 +196,6 @@ variable "force_new_deployment" {
   description = "When *changed* to `true`, trigger a new deployment of the ECS Service even when a deployment wouldn't otherwise be triggered by other changes. **Note**: This has no effect when the value is `false`, changed to `false`, or set to `true` between consecutive applies."
   type        = bool
   default     = false
-}
-
-variable "image" {
-  description = "The image used to start a container. This string is passed directly to the Docker daemon. By default, images in the Docker Hub registry are available. Other repositories are specified with either `repository-url/image:tag` or `repository-url/image@digest`"
-  type        = string
 }
 
 variable "cpu_architecture" {

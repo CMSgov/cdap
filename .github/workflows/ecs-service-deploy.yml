@@ -1,0 +1,158 @@
+name: ECS Service Deployment
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: 'App name (cdap, ab2d, bcda, dpc)'
+        required: false
+        type: string
+        default: 'cdap'
+      service_name:
+        description: 'Service name (matches SSM path and ECS service name)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: string
+      image_tag:
+        description: 'Image tag to deploy (full git SHA from build workflow)'
+        required: true
+        type: string
+      cluster_name:
+        description: 'ECS cluster name override — defaults to {app}-{env} if not provided'
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'App name (cdap, ab2d, bcda, dpc)'
+        required: false
+        type: choice
+        options:
+          - cdap
+          - ab2d
+          - bcda
+          - dpc
+        default: 'cdap'
+      service_name:
+        description: 'Service name (matches SSM path and ECS service name)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+          - prod
+      image_tag:
+        description: 'Image tag to deploy (full git SHA from build workflow)'
+        required: true
+        type: string
+      cluster_name:
+        description: 'ECS cluster name override — defaults to {app}-{env} if not provided'
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: deploy-${{ github.ref }}-${{ inputs.service_name || 'auto' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy — ${{ inputs.service_name }} (${{ inputs.environment }})
+    runs-on: codebuild-${{ inputs.app }}-${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && 'prod' || 'non-prod' }}-${{ github.run_id }}-${{ github.run_attempt }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ inputs.app }}-${{ inputs.environment }}-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Write image tag to SSM
+        env:
+          APP: ${{ inputs.app }}
+          SERVICE_NAME: ${{ inputs.service_name }}
+          ENV: ${{ inputs.environment }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          echo "Writing image tag to SSM..."
+          aws ssm put-parameter \
+            --name "/${APP}/${ENV}/nonsensitive/${SERVICE_NAME}/image-tag" \
+            --value "$IMAGE_TAG" \
+            --type String \
+            --overwrite
+          echo "✅ SSM parameter updated"
+
+      - name: Deploy ECS Service
+        env:
+          APP: ${{ inputs.app }}
+          SERVICE_NAME: ${{ inputs.service_name }}
+          ENV: ${{ inputs.environment }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          CLUSTER_OVERRIDE: ${{ inputs.cluster_name }}
+          ACCOUNT_ID: ${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          echo "::add-mask::$ACCOUNT_ID"
+
+          CLUSTER="${CLUSTER_OVERRIDE:-${APP}-${ENV}}"
+          ECS_SERVICE="${APP}-${ENV}-${SERVICE_NAME}"
+          ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          FULL_IMAGE="${ECR_REGISTRY}/${APP}-${SERVICE_NAME}:${IMAGE_TAG}"
+
+          echo "Fetching current task definition for $ECS_SERVICE..."
+          TASK_DEF_ARN=$(aws ecs describe-services \
+            --cluster "$CLUSTER" \
+            --services "$ECS_SERVICE" \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          if [ -z "$TASK_DEF_ARN" ] || [ "$TASK_DEF_ARN" == "None" ]; then
+            echo "::error::Could not find ECS service $ECS_SERVICE in cluster $CLUSTER"
+            exit 1
+          fi
+
+          echo "::add-mask::$TASK_DEF_ARN"
+          echo "Current task definition found"
+
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition "$TASK_DEF_ARN" \
+            --query 'taskDefinition' \
+            | jq \
+              --arg image "$FULL_IMAGE" \
+              'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+               | .containerDefinitions[0].image = $image')
+
+          echo "Registering new task definition revision..."
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$TASK_DEF" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "::add-mask::$NEW_TASK_DEF_ARN"
+          echo "New task definition registered"
+
+          echo "Updating ECS service..."
+          aws ecs update-service \
+            --cluster "$CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "$NEW_TASK_DEF_ARN" \
+            --force-new-deployment
+
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster "$CLUSTER" \
+            --services "$ECS_SERVICE"
+
+          echo "✅ Successfully deployed $ECS_SERVICE in $ENV"
