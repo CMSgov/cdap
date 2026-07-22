@@ -4,6 +4,8 @@ module "synthetics" {
   app = "cdap"
   env = var.env
 
+  shadow_mode = local.monitor_config.shadow_mode
+
   tests = {
     private_location_connectivity = {
       name    = "private-location-connectivity"
