@@ -23,10 +23,10 @@ locals {
 module "common_datadog_monitors" {
   source = "../../modules/datadog_monitors"
 
-  app              = "cdap"
-  env              = var.env
-  monitor_config   = local.monitor_config
-  custom_monitors  = concat(local.codebuild_custom_monitors, local.synthetics_custom_monitors)
+  app             = "cdap"
+  env             = var.env
+  monitor_config  = local.monitor_config
+  custom_monitors = concat(local.codebuild_custom_monitors, local.synthetics_custom_monitors)
 }
 
 ##########################
