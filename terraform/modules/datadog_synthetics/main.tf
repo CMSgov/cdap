@@ -5,6 +5,7 @@ resource "datadog_synthetics_test" "this" {
   type    = each.value.type
   subtype = each.value.subtype
   status  = each.value.status
+  message = "Synthetics test ${var.app}-${var.env}-${each.value.name} has failed. ${var.notify}"
 
   request_definition {
     host   = each.value.request_definition.host
@@ -42,7 +43,9 @@ resource "datadog_synthetics_test" "this" {
   }
 
   options_list {
-    tick_every = each.value.tick_every
+    tick_every           = each.value.tick_every
+    monitor_name         = "[${upper(var.env)}] [${var.app}] Synthetics — ${each.value.name}"
+    min_failure_duration = var.min_failure_duration
   }
 
   tags = concat(local.base_tags, each.value.tags)
