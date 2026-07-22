@@ -20,6 +20,15 @@ resource "datadog_synthetics_test" "this" {
       operator = assertion.value.operator
       target   = assertion.value.target
       property = assertion.value.property
+
+      dynamic "targetjsonpath" {
+        for_each = assertion.value.targetjsonpath != null ? [assertion.value.targetjsonpath] : []
+        content {
+          jsonpath    = targetjsonpath.value.jsonpath
+          operator    = targetjsonpath.value.operator
+          targetvalue = targetjsonpath.value.targetvalue
+        }
+      }
     }
   }
 

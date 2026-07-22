@@ -43,8 +43,13 @@ variable "tests" {
     assertions = list(object({
       type     = string
       operator = string
-      target   = string
+      target   = optional(string)
       property = optional(string)
+      targetjsonpath = optional(object({
+        jsonpath    = string
+        operator    = string
+        targetvalue = string
+      }))
     }))
 
     tick_every = optional(number, 60)
