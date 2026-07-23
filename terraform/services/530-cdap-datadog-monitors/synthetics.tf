@@ -4,8 +4,8 @@ module "synthetics" {
   app = "cdap"
   env = var.env
 
-  tests = {
-    private_location_connectivity = {
+  tests = [
+    {
       name    = "private-location-connectivity"
       subtype = "tcp"
       request_definition = {
@@ -20,5 +20,5 @@ module "synthetics" {
         }
       ]
     }
-  }
+  ]
 }
