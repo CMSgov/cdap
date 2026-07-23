@@ -11,6 +11,12 @@ services:
     environment:
       UPSTREAM_URL: "http://upstream:8080"
       LISTEN_PORT: "8443"
+      TLS_CERT_FILE: "/etc/certs/server.crt"
+      TLS_KEY_FILE: "/etc/certs/server.key"
+      TLS_CA_FILE: "/etc/certs/ca.pem"
+      REQUIRE_CLIENT_CERT: "true"
+    volumes:
+      - ./certs:/etc/certs:ro
     depends_on:
       - upstream
 
