@@ -6,8 +6,8 @@ module "synthetics" {
 
   shadow_mode = local.monitor_config.shadow_mode
 
-  tests = {
-    private_location_connectivity = {
+  tests = [
+    {
       name    = "private-location-connectivity"
       subtype = "tcp"
       request_definition = {
@@ -22,5 +22,5 @@ module "synthetics" {
         }
       ]
     }
-  }
+  ]
 }

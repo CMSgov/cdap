@@ -16,7 +16,7 @@ variable "shadow_mode" {
 
 variable "tests" {
   description = <<-EOT
-    Map of synthetic tests to create. Each test is automatically routed through the
+    List of synthetic tests to create. Each test is automatically routed through the
     CDAP-provided Datadog private location for the given environment.
 
     Supported subtypes and their required request_definition fields:
@@ -30,7 +30,7 @@ variable "tests" {
     If use_private_location is set to false, the synthetic test will be run on
     Datadog-managed infrastructure (on all US gov locations).
   EOT
-  type = map(object({
+  type = list(object({
     name    = string
     type    = optional(string, "api")
     subtype = string
@@ -60,5 +60,5 @@ variable "tests" {
 
     use_private_location = optional(bool, true)
   }))
-  default = {}
+  default = []
 }
