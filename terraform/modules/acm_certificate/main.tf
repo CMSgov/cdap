@@ -31,6 +31,17 @@ resource "aws_acm_certificate" "private" {
   }
 }
 
+resource "aws_ssm_parameter" "proxy_cert_arn" {
+  count = (var.enable_internal_endpoint || var.enable_zscaler_endpoint) ? 1 : 0
+
+  name   = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/proxy/acm-certificate-arn"
+  type   = "SecureString"
+  value  = aws_acm_certificate.private[0].arn
+  key_id = var.platform.kms_alias_primary.target_key_arn
+
+  tags = { Name = "${var.platform.app}-${var.platform-env}-${var.platform.service}-proxy-cert-arn" }
+}
+
 # -------------------------------------------------------
 # PUBLIC PATH: Import CMS-signed cert (developer note: use SOPS encrypted values)
 # -------------------------------------------------------
