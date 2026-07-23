@@ -1,9 +1,9 @@
-output "synthetics_tests" {
-  description = "List of {name, public_id} objects formatted for the datadog_monitors module's synthetics_tests input."
-  value = [
-    for key, test in datadog_synthetics_test.this : {
-      name      = test.name
-      public_id = test.id
-    }
-  ]
+output "base_tags" {
+  description = "Base tags applied to synthetics tests in this module."
+  value       = local.base_tags
+}
+
+output "non_private_location_ids" {
+  description = "Datadog location IDs for all aws:us-gov* locations"
+  value       = local.non_private_location_ids
 }
