@@ -14,6 +14,16 @@ variable "shadow_mode" {
   default     = false
 }
 
+variable "notify" {
+  description = "Notify string from the monitors module."
+  type        = string
+}
+
+variable "min_failure_duration" {
+  description = "Minimum failure time to trigger alert in seconds. Should be set to the corresponding value from the monitor config passed to the monitors module."
+  type        = number
+}
+
 variable "tests" {
   description = <<-EOT
     List of synthetic tests to create. Each test is automatically routed through the
