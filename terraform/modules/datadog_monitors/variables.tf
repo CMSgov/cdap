@@ -82,22 +82,10 @@ variable "monitor_config" {
     }), {})
 
     synthetics = optional(object({
-      threshold                 = optional(number, 1)
-      notify_no_data            = optional(bool, false)
-      no_data_timeframe_minutes = optional(number, 10)
-      timeframe                 = optional(string, "last_5m")
+      min_failure_duration = optional(number, 300)
     }), {})
   })
   default = {}
-}
-
-variable "synthetics_tests" {
-  description = "List of Datadog synthetic tests to alert on. Each entry maps a display name to the test's public_id."
-  type = list(object({
-    name      = string
-    public_id = string
-  }))
-  default = []
 }
 
 variable "custom_monitors" {
@@ -113,11 +101,10 @@ variable "custom_monitors" {
       critical_recovery = optional(number)
       warning_recovery  = optional(number)
     })
-    notify_no_data            = optional(bool, false)
-    no_data_timeframe_minutes = optional(number, 60)
-    require_full_window       = optional(bool, false)
-    tags                      = optional(list(string), [])
-    create                    = optional(bool, true)
+    on_missing_data     = optional(string, "default")
+    tags                = optional(list(string), [])
+    create              = optional(bool, true)
+    require_full_window = optional(bool, false)
   }))
   default = []
 }

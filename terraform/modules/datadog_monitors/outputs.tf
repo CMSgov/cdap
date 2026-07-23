@@ -1,3 +1,8 @@
+output "notify" {
+  description = "Notify string used in monitors from this module."
+  value       = local.notify
+}
+
 output "monitor_ids" {
   description = "All Datadog monitor IDs created by this module, grouped by service"
   value = {
@@ -27,9 +32,6 @@ output "monitor_ids" {
       db_connections_high = length(datadog_monitor.rds_db_connections_high) > 0 ? datadog_monitor.rds_db_connections_high[0].id : null
       replica_lag_high    = length(datadog_monitor.rds_replica_lag_high) > 0 ? datadog_monitor.rds_replica_lag_high[0].id : null
       deadlocks           = length(datadog_monitor.rds_deadlocks) > 0 ? datadog_monitor.rds_deadlocks[0].id : null
-    }
-    synthetics = {
-      for name, monitor in datadog_monitor.synthetics_test_failed : name => monitor.id
     }
   }
 }

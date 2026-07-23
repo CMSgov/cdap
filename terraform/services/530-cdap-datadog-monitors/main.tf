@@ -23,11 +23,10 @@ locals {
 module "common_datadog_monitors" {
   source = "../../modules/datadog_monitors"
 
-  app              = "cdap"
-  env              = var.env
-  monitor_config   = local.monitor_config
-  custom_monitors  = concat(local.codebuild_custom_monitors, local.synthetics_custom_monitors)
-  synthetics_tests = module.synthetics.synthetics_tests
+  app             = "cdap"
+  env             = var.env
+  monitor_config  = local.monitor_config
+  custom_monitors = concat(local.codebuild_custom_monitors, local.synthetics_custom_monitors)
 }
 
 ##########################
@@ -58,9 +57,9 @@ locals {
         thresholds = {
           critical = 1
         }
-        notify_no_data            = false
-        require_full_window       = false
-        no_data_timeframe_minutes = 60
+        # TODO does this make sense for CDAP?
+        on_missing_data     = "default"
+        require_full_window = false
       },
       {
         name    = "[${upper(module.platform.account_env_suffix)}] [${repo}] CodeBuild — Builds Backing Up in Queue"
@@ -72,9 +71,9 @@ locals {
           critical = 120
           warning  = 72
         }
-        notify_no_data            = false
-        require_full_window       = false
-        no_data_timeframe_minutes = 60
+        # TODO does this make sense for CDAP?
+        on_missing_data     = "default"
+        require_full_window = false
       }
     ]
   ])
@@ -88,9 +87,9 @@ locals {
       thresholds = {
         critical = 0
       }
-      notify_no_data            = local.monitor_config.synthetics.notify_no_data
-      require_full_window       = false
-      no_data_timeframe_minutes = local.monitor_config.synthetics.no_data_timeframe_minutes
+      # TODO does this make sense for CDAP?
+      on_missing_data     = "default"
+      require_full_window = false
     }
   ] : []
 }
