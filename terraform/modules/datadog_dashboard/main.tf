@@ -696,7 +696,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "HTTP 5XX by Target Group"
+            title     = "Target HTTP 5XX by Target Group"
             live_span = var.widget_live_spans.alb
             request {
               q            = "sum:aws.applicationelb.httpcode_target_5xx{application:${var.app}, $env} by {targetgroup}.as_count()"
@@ -707,10 +707,32 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           timeseries_definition {
-            title     = "HTTP 4XX by Target Group"
+            title     = "Target HTTP 4XX by Target Group"
             live_span = var.widget_live_spans.alb
             request {
               q            = "sum:aws.applicationelb.httpcode_target_4xx{application:${var.app}, $env} by {targetgroup}.as_count()"
+              display_type = "bars"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Load Balancer HTTP 5XX by Load Balancer"
+            live_span = var.widget_live_spans.alb
+            request {
+              q            = "sum:aws.applicationelb.httpcode_elb_5xx{application:${var.app}, $env} by {loadbalancer}.as_count()"
+              display_type = "bars"
+            }
+          }
+        }
+
+        widget {
+          timeseries_definition {
+            title     = "Load Balancer HTTP 4XX by Load Balancer"
+            live_span = var.widget_live_spans.alb
+            request {
+              q            = "sum:aws.applicationelb.httpcode_elb_4xx{application:${var.app}, $env} by {loadbalancer}.as_count()"
               display_type = "bars"
             }
           }
