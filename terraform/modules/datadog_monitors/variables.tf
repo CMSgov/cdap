@@ -113,11 +113,10 @@ variable "custom_monitors" {
       critical_recovery = optional(number)
       warning_recovery  = optional(number)
     })
-    notify_no_data            = optional(bool, false)
-    no_data_timeframe_minutes = optional(number, 60)
-    require_full_window       = optional(bool, false)
-    tags                      = optional(list(string), [])
-    create                    = optional(bool, true)
+    on_missing_data     = optional(string, "default")
+    tags                = optional(list(string), [])
+    create              = optional(bool, true)
+    require_full_window = optional(bool, false)
   }))
   default = []
 }
