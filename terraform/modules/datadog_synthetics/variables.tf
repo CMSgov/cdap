@@ -36,6 +36,9 @@ variable "tests" {
       - dns:  host
 
     Assertion operators follow Datadog conventions (e.g. "lessThan", "is", "contains").
+
+    If use_private_location is set to false, the synthetic test will be run on
+    Datadog-managed infrastructure (on all US gov locations).
   EOT
   type = map(object({
     name    = string
@@ -64,6 +67,8 @@ variable "tests" {
 
     tick_every = optional(number, 60)
     tags       = optional(list(string), [])
+
+    use_private_location = optional(bool, true)
   }))
   default = {}
 }
