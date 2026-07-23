@@ -51,6 +51,7 @@ enabled:
   lambda: true
   s3: true
   rds: false
+  synthetics: true
 
 # -----------------------------------------------------------------------------
 # ECS Monitors
@@ -189,3 +190,12 @@ rds:
   notify_no_data: false
   no_data_timeframe_minutes: 10
   timeframe: "last_10m"
+
+# -----------------------------------------------------------------------------
+# Synthetic Monitors
+#
+# min_failure_duration: from Datadog provider docs--"Minimum amount of time in
+# failure required to trigger an alert (in seconds)."
+# -----------------------------------------------------------------------------
+synthetics:
+  min_failure_duration: 300

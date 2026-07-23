@@ -4,7 +4,9 @@ module "synthetics" {
   app = "cdap"
   env = var.env
 
-  shadow_mode = local.monitor_config.shadow_mode
+  notify               = module.common_datadog_monitors.notify
+  shadow_mode          = local.monitor_config.shadow_mode
+  min_failure_duration = local.monitor_config.synthetics.min_failure_duration
 
   tests = [
     {
