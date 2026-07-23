@@ -114,9 +114,9 @@ variable "custom_monitors" {
       warning_recovery  = optional(number)
     })
     on_missing_data     = optional(string, "default")
-    require_full_window = optional(bool, true)
     tags                = optional(list(string), [])
     create              = optional(bool, true)
+    require_full_window = optional(bool, false)
   }))
   default = []
 }
