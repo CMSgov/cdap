@@ -67,6 +67,55 @@ locals {
     healthCheck = var.health_check
   }
 
+  proxy_container = {
+    name                   = "proxy"
+    image                  = var.proxy_sidecar_image
+    essential              = true
+    readonlyRootFilesystem = true
+
+    portMappings = [
+      {
+        name          = "proxy"
+        containerPort = var.proxy_sidecar_listener_port
+        hostPort      = var.proxy_sidecar_listener_port
+        protocol      = "tcp"
+      }
+    ]
+
+    secrets = [
+      {
+        name      = "ACM_CERTIFICATE_ARN"
+        valueFrom = var.proxy_sidecar_acm_cert_arn_ssm_path
+      }
+    ]
+
+    environment = [
+      { name = "LISTEN_PORT", value = tostring(var.proxy_sidecar_listener_port) },
+      { name = "UPSTREAM_URL", value = "http://localhost:${var.proxy_sidecar_upstream_port}" },
+      { name = "AWS_REGION", value = var.platform.primary_region.name },
+      { name = "REQUIRE_CLIENT_CERT", value = "true" },
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.proxy[0].name
+        awslogs-region        = var.platform.primary_region.name
+        awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
+      }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "curl -f http://localhost:8081/health || exit 1"]
+      interval    = 30
+      retries     = 3
+      startPeriod = 15
+      timeout     = 5
+    }
+
+    dependsOn = []
+  }
+
   datadog_container = {
     name                   = "datadog-agent"
     image                  = "public.ecr.aws/datadog/agent:7.80.4"

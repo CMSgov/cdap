@@ -24,6 +24,49 @@ variable "ecr_repository_url" {
   default     = null
 }
 
+#
+# mTLS Sidecar
+#
+
+variable "enable_proxy_sidecar" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    When true, adds the mTLS reverse proxy container to the task definition.
+    Use this for entrypoint services that are the ALB target. The proxy
+    container handles TLS termination and forwards to the primary app container
+    on localhost.
+  EOT
+}
+
+variable "proxy_sidecar_image" {
+  type        = string
+  default     = null
+  description = "ECR image URI for the mTLS reverse proxy sidecar container. Required when enable_proxy_sidecar is true."
+}
+
+variable "proxy_sidecar_acm_cert_arn_ssm_path" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    SSM parameter path containing the ACM certificate ARN for the proxy sidecar.
+    Required when enable_proxy_sidecar is true.
+    Use the proxy_cert_arn_ssm_path output from the acm_certificate module.
+  EOT
+}
+
+variable "proxy_sidecar_listener_port" {
+  type        = number
+  default     = 8443
+  description = "Port the proxy sidecar listens on for inbound mTLS traffic from the ALB."
+}
+
+variable "proxy_sidecar_upstream_port" {
+  type        = number
+  default     = 8080
+  description = "Port the primary app container listens on. The proxy forwards to this port on localhost."
+}
+
 # -------------------------------------------------------
 # ECS Service Connect (optional)
 # -------------------------------------------------------
