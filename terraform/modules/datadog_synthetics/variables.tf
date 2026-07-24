@@ -17,11 +17,13 @@ variable "shadow_mode" {
 variable "notify" {
   description = "Notify string from the monitors module."
   type        = string
+  default     = ""
 }
 
 variable "min_failure_duration" {
   description = "Minimum failure time to trigger alert in seconds. Should be set to the corresponding value from the monitor config passed to the monitors module."
   type        = number
+  default     = null
 }
 
 variable "tests" {
@@ -65,8 +67,11 @@ variable "tests" {
       }))
     }))
 
-    tick_every = optional(number, 60)
-    tags       = optional(list(string), [])
+    tick_every           = optional(number, 60)
+    min_failure_duration = optional(number)
+    min_location_failed  = optional(number)
+    locations            = optional(list(string))
+    tags                 = optional(list(string), [])
 
     use_private_location = optional(bool, true)
   }))
