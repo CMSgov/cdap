@@ -26,7 +26,6 @@ resource "datadog_webhook" "slack_channels" {
     status     = "$ALERT_STATUS"
     priority   = "$PRIORITY"
     metric     = "$ALERT_METRIC"
-    threshold  = "$ALERT_THRESHOLD"
     message    = "$TEXT_ONLY_MSG"
     host       = "$HOSTNAME"
     tags       = "$TAGS"
@@ -62,7 +61,6 @@ resource "datadog_webhook" "victorops_endpoints" {
     monitoring_tool     = "Datadog"        # Identifies the source tool
     host_name           = "$HOSTNAME"      # Affected host
     metric_name         = "$ALERT_METRIC"  # The metric that triggered the alert
-    alert_threshold     = "$ALERT_THRESHOLD"
     tags                = "$TAGS"
     link                = "$LINK"
     priority            = "$PRIORITY"
