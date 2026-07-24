@@ -33,11 +33,14 @@ resource "datadog_synthetics_test" "this" {
     }
   }
 
-  locations = each.value.use_private_location ? [local.private_location_id] : local.non_private_location_ids
+  locations = distinct(concat(
+    each.value.use_private_location && local.private_location_id != null ? [local.private_location_id] : (!each.value.use_private_location ? local.non_private_location_ids : []),
+    each.value.locations != null ? each.value.locations : []
+  ))
 
   lifecycle {
     precondition {
-      condition     = !each.value.use_private_location || local.private_location_id != null
+      condition     = !each.value.use_private_location || local.private_location_id != null || (each.value.locations != null && length(each.value.locations) > 0)
       error_message = "No Datadog private location found with prefix '${local.location_prefix}'. Verify the private location agent is registered for this environment."
     }
   }
@@ -45,7 +48,8 @@ resource "datadog_synthetics_test" "this" {
   options_list {
     tick_every           = each.value.tick_every
     monitor_name         = "[${upper(var.env)}] [${var.app}] Synthetics — ${each.value.name}"
-    min_failure_duration = var.min_failure_duration
+    min_failure_duration = try(coalesce(each.value.min_failure_duration, var.min_failure_duration), null)
+    min_location_failed  = each.value.min_location_failed
   }
 
   tags = concat(local.base_tags, each.value.tags)
