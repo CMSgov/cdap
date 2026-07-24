@@ -10,9 +10,7 @@ defaults.yml < ${env}.yml.
 -->
 ## Providers
 
-| Name | Version |
-|------|---------|
-| <a name="provider_datadog"></a> [datadog](#provider\_datadog) | 4.10.0 |
+No providers.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -22,7 +20,7 @@ defaults.yml < ${env}.yml.
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_datadog"></a> [datadog](#requirement\_datadog) | ~>4.4 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -33,7 +31,7 @@ defaults.yml < ${env}.yml.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_env"></a> [env](#input\_env) | The application environment (test, prod) | `string` | n/a | yes |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -44,9 +42,10 @@ defaults.yml < ${env}.yml.
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_common_datadog_monitors"></a> [common\_datadog\_monitors](#module\_common\_datadog\_monitors) | ../../modules/datadog_monitors | n/a |
 | <a name="module_platform"></a> [platform](#module\_platform) | ../../modules/platform | n/a |
+| <a name="module_synthetics"></a> [synthetics](#module\_synthetics) | ../../modules/datadog_synthetics | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -55,10 +54,7 @@ defaults.yml < ${env}.yml.
 -->
 ## Resources
 
-| Name | Type |
-|------|------|
-| [datadog_monitor.codebuild_failed_builds](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
-| [datadog_monitor.codebuild_queue_backup](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
+No resources.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
