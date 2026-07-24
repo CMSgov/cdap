@@ -26,7 +26,7 @@ module "common_datadog_monitors" {
   app             = "cdap"
   env             = var.env
   monitor_config  = local.monitor_config
-  custom_monitors = concat(local.codebuild_custom_monitors, local.synthetics_custom_monitors)
+  custom_monitors = local.codebuild_custom_monitors
 }
 
 ##########################
@@ -77,19 +77,4 @@ locals {
       }
     ]
   ])
-
-  synthetics_custom_monitors = try(local.monitor_config.enabled.synthetics, false) ? [
-    for test in module.synthetics.synthetics_tests : {
-      name    = "[${upper(module.platform.account_env_suffix)}] [cdap] Synthetics — ${test.name} Failed"
-      type    = "metric alert"
-      message = "Synthetic test ${test.name} has failed in ${module.platform.account_env_suffix}."
-      query   = "sum(last_5m):sum:datadog.synthetics.test_runs{public_id:${test.public_id},result:failed}.as_count() > 0"
-      thresholds = {
-        critical = 0
-      }
-      # TODO does this make sense for CDAP?
-      on_missing_data     = "default"
-      require_full_window = false
-    }
-  ] : []
 }
