@@ -104,6 +104,7 @@ variable "custom_monitors" {
     on_missing_data     = optional(string, "default")
     tags                = optional(list(string), [])
     create              = optional(bool, true)
+    draft_status        = optional(string, "published")
     require_full_window = optional(bool, false)
   }))
   default = []
