@@ -66,7 +66,7 @@ variable "tests" {
     }))
 
     tick_every           = optional(number, 60)
-    min_failure_duration = optional(number)
+    min_failure_duration = optional(number, null)
     tags                 = optional(list(string), [])
 
     use_private_location = optional(bool, true)
