@@ -20,6 +20,16 @@ resource "aws_security_group" "this" {
   }
 }
 
+resource "aws_ssm_parameter" "db_security_group_id" {
+  name  = "/${var.platform.app}/${var.platform.env}/core/nonsensitive/db-security-group-id"
+  value = aws_security_group.this.id
+  type  = "String"
+
+  tags = {
+    Name = "/${var.platform.app}/${var.platform.env}/core/nonsensitive/db-security-group-id"
+  }
+}
+
 resource "aws_vpc_security_group_egress_rule" "this" {
   cidr_ipv4         = "0.0.0.0/0"
   description       = "Allow all egress"
