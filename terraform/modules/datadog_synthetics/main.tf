@@ -45,7 +45,7 @@ resource "datadog_synthetics_test" "this" {
   options_list {
     tick_every           = each.value.tick_every
     monitor_name         = "[${upper(var.env)}] [${var.app}] Synthetics — ${each.value.name}"
-    min_failure_duration = var.min_failure_duration
+    min_failure_duration = try(coalesce(each.value.min_failure_duration, var.min_failure_duration), null)
   }
 
   tags = concat(local.base_tags, each.value.tags)
