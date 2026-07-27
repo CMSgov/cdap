@@ -21,12 +21,12 @@ resource "aws_security_group" "this" {
 }
 
 resource "aws_ssm_parameter" "db_security_group_id" {
-  name  = "/${var.platform.app}/${var.platform.env}/core/nonsensitive/db-security-group-id"
+  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/db-security-group-id"
   value = aws_security_group.this.id
   type  = "String"
 
   tags = {
-    Name = "/${var.platform.app}/${var.platform.env}/core/nonsensitive/db-security-group-id"
+    Name = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/db-security-group-id"
   }
 }
 
@@ -175,4 +175,16 @@ resource "aws_rds_cluster_instance" "this" {
       performance_insights_retention_period,
     ]
   }
+}
+
+resource "aws_ssm_parameter" "writer_endpoint" {
+  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/writer-endpoint"
+  value = "${aws_rds_cluster.this.endpoint}:${aws_rds_cluster.this.port}"
+  type  = "String"
+}
+
+resource "aws_ssm_parameter" "reader_endpoint" {
+  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/reader-endpoint"
+  value = "${aws_rds_cluster.this.reader_endpoint}:${aws_rds_cluster.this.port}"
+  type  = "String"
 }
