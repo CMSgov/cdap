@@ -23,8 +23,6 @@ data "aws_ssm_parameter" "datadog_private_location_sg" {
 }
 
 data "aws_ssm_parameter" "proxy_image_tag" {
-  count = var.enable_proxy_sidecar ? 1 : 0
-  name  = "/cdap/${var.platform.env}/nonsensitive/mtls-sidecar/image-tag"
-
-  depends_on = [aws_ssm_parameter.proxy_image_tag]
+  count = var.enable_mtls_sidecar ? 1 : 0
+  name  = "/cdap/${var.platform.account_env_suffix}/nonsensitive/mtls-sidecar/image-tag"
 }

@@ -217,6 +217,22 @@ resource "aws_iam_role_policy" "task" {
 }
 
 data "aws_iam_policy_document" "task" {
+  dynamic "statement" {
+    for_each = var.enable_mtls_sidecar ? [1] : []
+    content {
+      sid    = "AllowProxyACMExport"
+      effect = "Allow"
+      actions = [
+        "acm:ExportCertificate",
+        "acm:DescribeCertificate",
+        "acm:GetCertificate"
+      ]
+      resources = [
+        var.mtls_cert_arn
+      ]
+    }
+  }
+
   statement {
     sid = "AllowKMSDecrypt"
     actions = [
