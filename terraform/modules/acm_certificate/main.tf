@@ -4,7 +4,7 @@ locals {
   ) : null
   zscaler_domain = var.enable_zscaler_endpoint ? "${var.platform.service}.${trimsuffix(data.aws_route53_zone.zscaler[0].name, ".")}" : null
 
-  private_primary_domain = coalesce(local.internal_domain, local.zscaler_domain)
+  private_primary_domain = try(coalesce(local.internal_domain, local.zscaler_domain), null)
 
   private_subject_alternative_names = compact([
     (var.enable_internal_endpoint && var.enable_zscaler_endpoint) ? local.zscaler_domain : null,
