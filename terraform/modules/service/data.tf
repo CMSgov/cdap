@@ -21,3 +21,8 @@ data "aws_ssm_parameter" "datadog_private_location_sg" {
   count = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
   name  = "/cdap/${var.platform.env}/datadog/nonsensitive/private_location_task_security_group_id"
 }
+
+data "aws_ssm_parameter" "proxy_image_tag" {
+  count = var.enable_mtls_sidecar ? 1 : 0
+  name  = "/cdap/${var.platform.account_env_suffix}/nonsensitive/mtls-sidecar/image-tag"
+}

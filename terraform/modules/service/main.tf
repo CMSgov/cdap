@@ -1,12 +1,45 @@
 locals {
-  service_name       = coalesce(var.service_name_override, var.platform.service)
-  service_name_full  = "${var.platform.app}-${var.platform.env}-${local.service_name}"
-  ecr_repository_url = var.ecr_repository_url != null ? var.ecr_repository_url : "${var.platform.account_id}.dkr.ecr.${var.platform.primary_region.name}.amazonaws.com/${var.platform.app}-${local.service_name}"
-  current_image      = var.image != null ? var.image : "${local.ecr_repository_url}:${aws_ssm_parameter.image_tag.value}"
+  service_name      = coalesce(var.service_name_override, var.platform.service)
+  service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
+
+  ###############
+  # Networking
+  ###############
+
+  # ALB integration is active when a listener ARN is provided
+  enable_alb_integration = var.alb_listener_arn != null
+  # Resolve the ALB target port by name — caller must provide alb_port_name if using ALB
+  proxy_upstream_port = var.enable_mtls_sidecar ? (
+    [for pm in coalesce(var.port_mappings, []) : pm.containerPort
+      if pm.name != "proxy" && pm.containerPort != null
+    ][0]
+  ) : null
+
+  proxy_port_mapping = var.enable_mtls_sidecar ? [{
+    name          = "proxy"
+    containerPort = var.proxy_listen_port
+    hostPort      = var.proxy_listen_port
+    protocol      = "tcp"
+  }] : []
+
+  # Merge proxy port into the existing port_mappings for the app container
+  effective_port_mappings = concat(
+    coalesce(var.port_mappings, []),
+    local.proxy_port_mapping
+  )
+
+  # When proxy is enabled, ALB targets the proxy port automatically
+  effective_alb_port_name     = var.enable_mtls_sidecar ? "proxy" : var.alb_port_name
+  alb_container_port          = local.enable_alb_integration ? local.port_map[local.effective_alb_port_name] : null
+  use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
+
+  ###############
+  # App container
+  ###############
 
   # Build a name → containerPort lookup from port_mappings
   port_map = {
-    for pm in coalesce(var.port_mappings, []) :
+    for pm in coalesce(local.effective_port_mappings, []) :
     pm.name => pm.containerPort
     if pm.name != null && pm.containerPort != null
   }
@@ -18,14 +51,9 @@ locals {
     ),
     null
   )
+  ecr_repository_url = var.ecr_repository_url != null ? var.ecr_repository_url : "${var.platform.account_id}.dkr.ecr.${var.platform.primary_region.name}.amazonaws.com/${var.platform.app}-${local.service_name}"
+  current_image      = var.image != null ? var.image : "${local.ecr_repository_url}:${aws_ssm_parameter.image_tag.value}"
 
-  # ALB integration is active when a listener ARN is provided
-  enable_alb_integration = var.alb_listener_arn != null
-
-  # Resolve the ALB target port by name — caller must provide alb_port_name if using ALB
-  alb_container_port = local.enable_alb_integration ? local.port_map[var.alb_port_name] : null
-
-  use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
   app_container = {
     name                   = local.service_name
     image                  = local.current_image
@@ -67,6 +95,68 @@ locals {
     healthCheck = var.health_check
   }
 
+  ###############
+  # mTLS Proxy
+  ###############
+  proxy_image = var.enable_mtls_sidecar ? "${var.platform.account_id}.dkr.ecr.${var.platform.primary_region.name}.amazonaws.com/cdap-mtls-sidecar:${data.aws_ssm_parameter.proxy_image_tag[0].value}" : null
+  proxy_container = {
+    name                   = "proxy"
+    image                  = local.proxy_image
+    essential              = true
+    readonlyRootFilesystem = true
+
+    mountPoints = [
+      {
+        sourceVolume  = "proxy-certs"
+        containerPath = "/etc/certs"
+        readOnly      = false
+      }
+    ]
+
+    portMappings = local.proxy_port_mapping
+
+    environment = [
+      { name  = "ACM_CERTIFICATE_ARN"
+        value = var.mtls_cert_arn
+      },
+      {
+        name  = "UPSTREAM_URL"
+        value = "http://localhost:${local.proxy_upstream_port}"
+      },
+      {
+        name  = "PROXY_LISTEN_PORT"
+        value = tostring(var.proxy_listen_port)
+      },
+      {
+        name  = "REQUIRE_CLIENT_CERT"
+        value = "true"
+      }
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.app.name
+        awslogs-region        = var.platform.primary_region.name
+        awslogs-stream-prefix = "proxy"
+      }
+    }
+
+    healthCheck = {
+      command     = ["CMD-SHELL", "curl -f http://localhost:8081/health || exit 1"]
+      interval    = 30
+      retries     = 3
+      startPeriod = 15
+      timeout     = 5
+    }
+
+    dependsOn = []
+  }
+
+
+  ###############
+  # Datadog container
+  ###############
   datadog_container = {
     name                   = "datadog-agent"
     image                  = "public.ecr.aws/datadog/agent:7.80.4"
@@ -134,7 +224,9 @@ locals {
   }
 }
 
+##################
 # Cloudwatch
+##################
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
   retention_in_days = var.log_retention_days
@@ -156,7 +248,7 @@ resource "aws_cloudwatch_log_group" "datadog" {
   }
 }
 
-# Service
+# Versioning
 resource "aws_ssm_parameter" "image_tag" {
   name   = "/${var.platform.app}/${var.platform.env}/nonsensitive/${local.service_name}/image-tag"
   type   = "SecureString"
@@ -170,6 +262,9 @@ resource "aws_ssm_parameter" "image_tag" {
   }
 }
 
+##################
+# ECS Service
+##################
 resource "aws_ecs_task_definition" "this" {
   family                   = local.service_name_full
   network_mode             = "awsvpc"
@@ -183,13 +278,21 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = nonsensitive(jsonencode(
     concat(
       [local.app_container],
-      var.enable_datadog_agent ? [local.datadog_container] : []
+      var.enable_datadog_agent ? [local.datadog_container] : [],
+      var.enable_mtls_sidecar ? [local.proxy_container] : [] # ← missing
     )
   ))
 
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = var.cpu_architecture
+  }
+
+  dynamic "volume" {
+    for_each = var.enable_mtls_sidecar ? ["proxy-certs"] : []
+    content {
+      name = volume.value
+    }
   }
 
   dynamic "volume" {
@@ -233,6 +336,7 @@ resource "aws_ecs_task_definition" "this" {
   }
 }
 
+
 resource "aws_security_group" "task" {
   count       = (length(var.security_groups) == 0) ? 1 : 0
   name        = "${local.service_name_full}-task-sg"
@@ -245,25 +349,6 @@ resource "aws_security_group" "task" {
   tags = {
     Name = "${local.service_name_full}-task-sg"
   }
-}
-
-# Network
-resource "aws_vpc_security_group_egress_rule" "https" {
-  count             = (length(var.security_groups) == 0) ? 1 : 0
-  security_group_id = aws_security_group.task[0].id
-  from_port         = 443
-  to_port           = 443
-  ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
-  description       = "Allow HTTPS outbound (ECR, CloudWatch, SSM)"
-}
-
-resource "aws_vpc_security_group_ingress_rule" "datadog_synthetics" {
-  count                        = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
-  security_group_id            = aws_security_group.task[0].id
-  referenced_security_group_id = data.aws_ssm_parameter.datadog_private_location_sg[0].value
-  ip_protocol                  = "-1"
-  description                  = "Allow all traffic from Datadog private location synthetic test runner"
 }
 
 resource "aws_ecs_service" "this" {
@@ -287,8 +372,10 @@ resource "aws_ecs_service" "this" {
     for_each = local.enable_alb_integration ? [1] : []
     content {
       target_group_arn = aws_lb_target_group.this[0].arn
-      container_name   = var.service_name_override != null ? var.service_name_override : local.service_name
-      container_port   = local.alb_container_port
+      container_name = var.enable_mtls_sidecar ? "proxy" : (
+        var.service_name_override != null ? var.service_name_override : local.service_name
+      )
+      container_port = local.alb_container_port
     }
   }
 
@@ -351,8 +438,26 @@ resource "aws_ecs_service" "this" {
 }
 
 # -------------------------------------------------------
-# ALB
+# ALB and Networking
 # -------------------------------------------------------
+
+resource "aws_vpc_security_group_egress_rule" "https" {
+  count             = (length(var.security_groups) == 0) ? 1 : 0
+  security_group_id = aws_security_group.task[0].id
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
+  description       = "Allow HTTPS outbound (ECR, CloudWatch, SSM)"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "datadog_synthetics" {
+  count                        = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
+  security_group_id            = aws_security_group.task[0].id
+  referenced_security_group_id = data.aws_ssm_parameter.datadog_private_location_sg[0].value
+  ip_protocol                  = "-1"
+  description                  = "Allow all traffic from Datadog private location synthetic test runner"
+}
 
 resource "aws_lb_target_group" "this" {
   count = local.enable_alb_integration ? 1 : 0
@@ -380,12 +485,16 @@ resource "aws_lb_target_group" "this" {
 
   lifecycle {
     precondition {
-      condition     = var.alb_port_name != null
-      error_message = "alb_port_name is required when alb_listener_arn is set. Set it to the name of the port mapping in port_mappings that should receive ALB traffic."
+      condition     = var.enable_mtls_sidecar || var.alb_port_name != null
+      error_message = "alb_port_name is required when alb_listener_arn is set and enable_mtls_sidecar is false. Set it to the name of the port mapping in port_mappings that should receive ALB traffic."
     }
 
     precondition {
-      condition     = var.alb_port_name == null || contains(keys(local.port_map), var.alb_port_name)
+      condition = (
+        var.enable_mtls_sidecar ||
+        var.alb_port_name == null ||
+        contains(keys(local.port_map), var.alb_port_name)
+      )
       error_message = "alb_port_name '${var.alb_port_name}' does not match any named port in port_mappings."
     }
   }

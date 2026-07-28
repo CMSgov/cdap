@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+
+  proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8443:8443"
+    environment:
+      UPSTREAM_URL: "http://upstream:8080"
+      LISTEN_PORT: "8443"
+      TLS_CERT_FILE: "/etc/certs/server.crt"
+      TLS_KEY_FILE: "/etc/certs/server.key"
+      TLS_CA_FILE: "/etc/certs/ca.pem"
+      REQUIRE_CLIENT_CERT: "true"
+    volumes:
+      - ./certs:/etc/certs:ro
+    depends_on:
+      - upstream
+
+  upstream:
+    image: hashicorp/http-echo
+    command: ["-text=hello from upstream", "-listen=:8080"]
+    ports:
+      - "8080:8080"
