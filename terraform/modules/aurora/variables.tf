@@ -41,8 +41,7 @@ variable "vpc_security_group_ids" {
   description = <<-EOT
     Deprecated. Additional security group IDs to attach directly to the Aurora cluster.
     Service-level DB access should be granted via ingress rules referencing
-    the published SSM parameter at:
-    /${var.platform.app}/${var.platform.env}/aurora/nonsensitive/db-security-group-id
+    the published SSM parameter.
   EOT
   type        = list(string)
 }
