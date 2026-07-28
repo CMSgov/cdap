@@ -38,7 +38,11 @@ variable "instance_count" {
 
 variable "vpc_security_group_ids" {
   default     = []
-  description = "Additional security group ids for attachment to the database security group."
+  description = <<-EOT
+    Deprecated. Additional security group IDs to attach directly to the Aurora cluster.
+    Service-level DB access should be granted via ingress rules referencing
+    the published SSM parameter.
+  EOT
   type        = list(string)
 }
 
