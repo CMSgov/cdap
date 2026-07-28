@@ -185,6 +185,7 @@ rds:
   freeable_memory_threshold_mb: 256   # alert when less than 256MB free
   db_connections_threshold: 200       # tune to your instance's max_connections
   replica_lag_seconds: 30
+  replica_lag_enabled: true
   deadlock_threshold: 1               # any deadlock is worth investigating
   deadlocks_enabled: true             # set false without Enhanced Monitoring / Performance Insights
   notify_no_data: false

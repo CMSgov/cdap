@@ -56,7 +56,7 @@ resource "datadog_monitor" "rds_db_connections_high" {
 }
 
 resource "datadog_monitor" "rds_replica_lag_high" {
-  count   = var.monitor_config.enabled.rds ? 1 : 0
+  count   = var.monitor_config.enabled.rds && var.monitor_config.rds.replica_lag_enabled ? 1 : 0
   name    = "[${upper(var.env)}] [${var.app}] Aurora RDS — Replica Lag High"
   type    = "metric alert"
   message = "Aurora replica {{dbinstanceidentifier.name}} lag is too high — read queries may return stale data. ${local.notify}"
