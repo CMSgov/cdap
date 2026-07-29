@@ -62,7 +62,10 @@ data "aws_iam_policy_document" "execution" {
       "ssm:GetParameters",
       "ssm:GetParameter"
     ]
-    resources = [data.aws_ssm_parameter.datadog_api_key.arn, aws_ssm_parameter.image_tag.arn]
+    resources = [
+      data.aws_ssm_parameter.datadog_api_key.arn,
+      data.aws_ssm_parameter.active_image_tag.arn
+    ]
   }
 
   statement {

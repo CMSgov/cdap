@@ -31,7 +31,7 @@ locals {
 
   # When proxy is enabled, ALB targets the proxy port automatically
   effective_alb_port_name     = local.enable_mtls_sidecar ? "proxy" : var.alb_port_name
-  alb_container_port          = local.enable_alb_integration ? local.port_map[local.effective_alb_port_name] : null
+  alb_container_port          = local.enable_alb_integration && local.effective_alb_port_name != null ? try(local.port_map[local.effective_alb_port_name], null) : null
   use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
 
   ###############
@@ -64,7 +64,7 @@ locals {
     "${var.platform.account_id}.dkr.ecr.${var.platform.primary_region.name}.amazonaws.com/${var.platform.app}-${local.image_tag_service_name}"
   )
 
-  current_image = var.image != null ? var.image : "${local.ecr_repository_url}:${aws_ssm_parameter.image_tag.value}"
+  current_image = var.image != null ? var.image : "${local.ecr_repository_url}:${data.aws_ssm_parameter.active_image_tag.value}"
 
   app_container = {
     name                   = local.service_name
@@ -77,7 +77,7 @@ locals {
       [
         {
           name      = "DD_VERSION"
-          valueFrom = aws_ssm_parameter.image_tag.arn
+          valueFrom = data.aws_ssm_parameter.active_image_tag.arn
         }
       ]
     )
@@ -114,7 +114,7 @@ locals {
   mtls_image          = local.enable_mtls_sidecar ? "${var.platform.account_id}.dkr.ecr.${var.platform.primary_region.name}.amazonaws.com/cdap-mtls-sidecar:${data.aws_ssm_parameter.mtls_image_tag[0].value}" : null
   proxy_container = {
     name                   = "proxy"
-    image                  = local.mtls_image
+    image                  = local.mtls_image != null ? local.mtls_image : ""
     essential              = true
     readonlyRootFilesystem = true
 
@@ -130,11 +130,11 @@ locals {
 
     environment = [
       { name  = "ACM_CERTIFICATE_ARN"
-        value = var.mtls_cert_arn
+        value = var.mtls_cert_arn != null ? var.mtls_cert_arn : ""
       },
       {
         name  = "UPSTREAM_URL"
-        value = "http://localhost:${local.proxy_upstream_port}"
+        value = local.proxy_upstream_port != null ? "http://localhost:${local.proxy_upstream_port}" : ""
       },
       {
         name  = "PROXY_LISTEN_PORT"
@@ -267,12 +267,18 @@ resource "aws_ssm_parameter" "image_tag" {
   type   = "SecureString"
   key_id = var.platform.kms_alias_primary.target_key_arn
   # Placeholder — will be overwritten by the build workflow on first push
-  value = var.image_tag_service_name_override != null ? "${var.image_tag_service_name_override}" : "initial"
+  value = "initial"
 
   lifecycle {
     # Never let Tofu overwrite a real tag written by the workflow
     ignore_changes = [value]
   }
+}
+
+data "aws_ssm_parameter" "active_image_tag" {
+  name = "/${var.platform.app}/${var.platform.env}/nonsensitive/${local.image_tag_service_name}/image-tag"
+
+  depends_on = [aws_ssm_parameter.image_tag]
 }
 
 ##################
@@ -413,7 +419,10 @@ resource "aws_ecs_service" "this" {
         port_name      = local.sc_port_name
 
         client_alias {
-          port     = coalesce(var.service_connect_client_port, local.port_map[local.sc_port_name])
+          port = coalesce(
+            var.service_connect_client_port,
+            local.sc_port_name != null ? try(local.port_map[local.sc_port_name], null) : null
+          )
           dns_name = local.service_name
         }
 
