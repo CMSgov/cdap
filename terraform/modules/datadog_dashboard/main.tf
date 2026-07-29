@@ -54,9 +54,10 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             show_last_triggered = true
             sort                = "triggered,asc"
             summary_type        = "monitors"
+
             # Note that $env must be unquoted here, because otherwise the * is
             # treated literally
-            query               = "tag:\"application:${var.app}\" tag:$env status:alert"
+            query = "tag:\"application:${var.app}\" tag:$env status:alert"
           }
         }
 
