@@ -55,6 +55,11 @@ on:
           - test
           - sandbox
           - prod
+      update_tag_only:
+        description: 'SSM tag update only — skip ECS service update (use for sidecar images)'
+        required: false
+        type: boolean
+        default: false
       image_tag:
         description: 'Image tag to deploy (full git SHA from build workflow)'
         required: true
