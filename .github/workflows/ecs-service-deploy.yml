@@ -84,6 +84,11 @@ jobs:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ inputs.app }}-${{ inputs.environment }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Normalize service name
+        id: normalize
+        run: |
+          echo "service_name=$(echo '${{ inputs.service_name }}' | sed 's/^[0-9]*-//')" >> "$GITHUB_OUTPUT"
+
       - name: Write image tag to SSM
         env:
           APP: ${{ inputs.app }}
