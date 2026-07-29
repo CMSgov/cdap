@@ -267,7 +267,7 @@ resource "aws_ssm_parameter" "image_tag" {
   type   = "SecureString"
   key_id = var.platform.kms_alias_primary.target_key_arn
   # Placeholder — will be overwritten by the build workflow on first push
-  value = "initial"
+  value = var.image_tag_service_name_override != null ? "${var.image_tag_service_name_override}" : "initial"
 
   lifecycle {
     # Never let Tofu overwrite a real tag written by the workflow
