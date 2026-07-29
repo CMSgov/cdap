@@ -1,3 +1,9 @@
+locals {
+  config        = yamldecode(file("${path.module}/config/${var.env}.yml"))
+  desired_count = try(local.config.ecs.desired_count, 0)
+  cluster_name  = try(local.config.ecs.cluster, "cdap-${var.env}") # 👈 add this
+}
+
 module "acm" {
   source = "../../modules/acm_certificate"
 
@@ -32,6 +38,7 @@ module "alb" {
 module "ecs_service" {
   source                          = "../../modules/service"
   image_tag_service_name_override = "tftesting-service"
+  desired_count                   = local.desired_count
 
   cpu    = 256
   memory = 512

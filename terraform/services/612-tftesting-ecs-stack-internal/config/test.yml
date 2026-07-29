@@ -1,3 +1,3 @@
 ecs:
-  lifecycle: ephemeral # TODO Build an ephemeral flag to bring down test tasks
+  desired_count: 1
   cluster: cdap-test-tftesting
