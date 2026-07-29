@@ -3,6 +3,5 @@ image:
   test_command: "pytest" # works with github workflow
 
 ecs:
-  enabled: true # TODO set up ephemeral tag to bring down tasks but preserve the application image tag
-  lifecycle: ephemeral
+  desired_count: 0
   cluster: cdap-test-tftesting

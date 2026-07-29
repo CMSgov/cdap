@@ -1,7 +1,7 @@
 locals {
-  config       = yamldecode(file("${path.module}/config/${var.env}.yml"))
-  ecs_enabled  = var.ecs_enabled != null ? var.ecs_enabled : try(local.config.ecs.enabled, true)
-  cluster_name = try(local.config.ecs.cluster, "cdap-${var.env}") # 👈 add this
+  config        = yamldecode(file("${path.module}/config/${var.env}.yml"))
+  desired_count = try(local.config.ecs.desired_count, 0)
+  cluster_name  = try(local.config.ecs.cluster, "cdap-${var.env}") # 👈 add this
 }
 
 data "aws_ecs_cluster" "cluster_test" {
@@ -9,8 +9,8 @@ data "aws_ecs_cluster" "cluster_test" {
 }
 
 module "tftesting_service" {
-  count                = local.ecs_enabled ? 1 : 0
   source               = "../../modules/service/"
+  desired_count        = local.desired_count
   enable_datadog_agent = true
   log_retention_days   = 30
 
@@ -27,7 +27,6 @@ module "tftesting_service" {
     timeout     = 5
   }
 
-  desired_count        = 1
   force_new_deployment = true
 
   enable_ecs_service_connect = false
