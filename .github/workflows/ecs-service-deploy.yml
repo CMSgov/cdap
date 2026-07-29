@@ -113,6 +113,22 @@ jobs:
         run: |
           echo "service_name=$(echo '${{ inputs.service_name }}' | sed 's/^[0-9]*-//')" >> "$GITHUB_OUTPUT"
 
+
+      - name: Resolve cluster name
+        id: resolve-cluster
+        run: |
+          CLUSTER="${{ inputs.cluster_name }}"
+          if [[ -z "$CLUSTER" ]]; then
+            # Match directory with or without numeric prefix e.g. 611-tftesting-service or tftesting-service
+            CONFIG=$(ls terraform/services/*${{ inputs.service_name }}/config/${{ inputs.environment }}.yml 2>/dev/null | head -1)
+            if [[ -f "$CONFIG" ]]; then
+              CLUSTER=$(yq '.ecs.cluster // ""' "$CONFIG")
+            fi
+          fi
+          # Fall back to default naming convention
+          CLUSTER="${CLUSTER:-${{ inputs.app }}-${{ inputs.environment }}}"
+          echo "cluster=$CLUSTER" >> "$GITHUB_OUTPUT"
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
@@ -140,13 +156,12 @@ jobs:
           SERVICE_NAME:     ${{ steps.normalize.outputs.service_name }}
           ENV:              ${{ inputs.environment }}
           IMAGE_TAG:        ${{ steps.resolve-tag.outputs.image_tag }}
-          CLUSTER_OVERRIDE: ${{ inputs.cluster_name }}
+          CLUSTER:          ${{ steps.resolve-cluster.outputs.cluster }}
           ACCOUNT_ID:       ${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
           AWS_REGION:       ${{ vars.AWS_REGION }}
         run: |
           echo "::add-mask::$ACCOUNT_ID"
 
-          CLUSTER="${CLUSTER_OVERRIDE:-${APP}-${ENV}}"
           ECS_SERVICE="${APP}-${ENV}-${SERVICE_NAME}"
           ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           FULL_IMAGE="${ECR_REGISTRY}/${APP}-${SERVICE_NAME}:${IMAGE_TAG}"
