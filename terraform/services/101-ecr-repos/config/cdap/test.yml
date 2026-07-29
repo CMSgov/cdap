@@ -1,2 +1,6 @@
 services:
-  - "tftesting-service"
+  - name: "tftesting-service"
+    tag_rules:
+      - tag_prefix: "." # matches all tagged images
+        keep_count: 3
+    untagged_expiry_days: 2
