@@ -4,12 +4,12 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
   # -------------------------------------------------------
   # TEMPLATE VARIABLES
-  # $env     — filter by environment (e.g. dev, test, prod)
+  # $environment     — filter by environment (e.g. dev, test, prod)
   # $servicename — drill down to a specific ECS service
   #                (globally unique, e.g. cdap-test-tftesting-a)
   # -------------------------------------------------------
   template_variable {
-    name     = "env"
+    name     = "environment"
     prefix   = "environment"
     defaults = ["*"]
   }
@@ -26,7 +26,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
   widget {
     note_definition {
-      content          = "## ${upper(var.app)}\nMonitoring dashboard for all services under **${var.app}**.\n\nUse **$env** to filter by environment and **$servicename** to drill down to a specific service.\n\n[Runbook](${var.runbook_url}) | Alerts managed via Tofu monitors module"
+      content          = "## ${upper(var.app)}\nMonitoring dashboard for all services under **${var.app}**.\n\nUse **$environment** to filter by environment and **$servicename** to drill down to a specific service.\n\n[Runbook](${var.runbook_url}) | Alerts managed via Tofu monitors module"
       background_color = "blue"
       font_size        = "14"
       text_align       = "left"
@@ -167,7 +167,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             autoscale = true
             precision = 0
             request {
-              q = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $env} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $env} by {servicename}, 0)"
+              q = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $environment} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $environment} by {servicename}, 0)"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -193,7 +193,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Running Tasks by Service"
             live_span = var.widget_live_spans.current
             request {
-              q = "sum:aws.ecs.service.running{application:${var.app}, $env, $servicename} by {servicename}"
+              q = "sum:aws.ecs.service.running{application:${var.app}, $environment, $servicename} by {servicename}"
               conditional_formats {
                 comparator = "<"
                 value      = 1
@@ -213,7 +213,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Missing Tasks by Service (Desired - Running)"
             live_span = var.widget_live_spans.current
             request {
-              q = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $env, $servicename} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $env, $servicename} by {servicename}, 0)"
+              q = "clamp_min(sum:aws.ecs.service.desired{application:${var.app}, $environment, $servicename} by {servicename} - sum:aws.ecs.service.running{application:${var.app}, $environment, $servicename} by {servicename}, 0)"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -233,7 +233,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Pending Tasks by Service"
             live_span = var.widget_live_spans.current
             request {
-              q = "sum:aws.ecs.service.pending{application:${var.app}, $env, $servicename} by {servicename}"
+              q = "sum:aws.ecs.service.pending{application:${var.app}, $environment, $servicename} by {servicename}"
               conditional_formats {
                 comparator = ">"
                 value      = 0
@@ -262,7 +262,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Container Restarts by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:container.restarts{application:${var.app}, $env} by {servicename}"
+              q            = "sum:container.restarts{application:${var.app}, $environment} by {servicename}"
               display_type = "bars"
               style {
                 palette = "warm"
@@ -275,7 +275,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
           event_stream_definition {
             title      = "ECS Task & Deployment Events"
             live_span  = var.widget_live_spans.ecs
-            query      = "source:amazon_ecs application:${var.app} $env $servicename"
+            query      = "source:amazon_ecs application:${var.app} $environment $servicename"
             event_size = "s"
           }
         }
@@ -292,7 +292,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "CPU Utilization by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.cpuutilization{application:${var.app}, $env, $servicename} by {servicename}"
+              q            = "avg:aws.ecs.cpuutilization{application:${var.app}, $environment, $servicename} by {servicename}"
               display_type = "line"
             }
             marker {
@@ -313,7 +313,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Memory Utilization by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:aws.ecs.memory_utilization{application:${var.app}, $env, $servicename} by {servicename}"
+              q            = "avg:aws.ecs.memory_utilization{application:${var.app}, $environment, $servicename} by {servicename}"
               display_type = "line"
             }
             marker {
@@ -339,18 +339,18 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Network Throughput (kB/s) by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "avg:container.net.rcvd{application:${var.app}, $env, $servicename} by {servicename}.as_rate()/1024"
+              q            = "avg:container.net.rcvd{application:${var.app}, $environment, $servicename} by {servicename}.as_rate()/1024"
               display_type = "line"
               metadata {
-                expression = "avg:container.net.rcvd{application:${var.app}, $env, $servicename} by {servicename}.as_rate()/1024"
+                expression = "avg:container.net.rcvd{application:${var.app}, $environment, $servicename} by {servicename}.as_rate()/1024"
                 alias_name = "kB/s In"
               }
             }
             request {
-              q            = "avg:container.net.sent{application:${var.app}, $env, $servicename} by {servicename}.as_rate()/1024"
+              q            = "avg:container.net.sent{application:${var.app}, $environment, $servicename} by {servicename}.as_rate()/1024"
               display_type = "line"
               metadata {
-                expression = "avg:container.net.sent{application:${var.app}, $env, $servicename} by {servicename}.as_rate()/1024"
+                expression = "avg:container.net.sent{application:${var.app}, $environment, $servicename} by {servicename}.as_rate()/1024"
                 alias_name = "kB/s Out"
               }
             }
@@ -367,18 +367,18 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Total Data Transferred (GB) by Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:container.net.rcvd{application:${var.app}, $env, $servicename} by {servicename}/1073741824"
+              q            = "sum:container.net.rcvd{application:${var.app}, $environment, $servicename} by {servicename}/1073741824"
               display_type = "bars"
               metadata {
-                expression = "sum:container.net.rcvd{application:${var.app}, $env, $servicename} by {servicename}/1073741824"
+                expression = "sum:container.net.rcvd{application:${var.app}, $environment, $servicename} by {servicename}/1073741824"
                 alias_name = "GB In"
               }
             }
             request {
-              q            = "sum:container.net.sent{application:${var.app}, $env, $servicename} by {servicename}/1073741824"
+              q            = "sum:container.net.sent{application:${var.app}, $environment, $servicename} by {servicename}/1073741824"
               display_type = "bars"
               metadata {
-                expression = "sum:container.net.sent{application:${var.app}, $env, $servicename} by {servicename}/1073741824"
+                expression = "sum:container.net.sent{application:${var.app}, $environment, $servicename} by {servicename}/1073741824"
                 alias_name = "GB Out"
               }
             }
@@ -396,7 +396,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
           event_stream_definition {
             title      = "Task Events — Selected Service"
             live_span  = var.widget_live_spans.ecs
-            query      = "source:amazon_ecs application:${var.app} $env $servicename"
+            query      = "source:amazon_ecs application:${var.app} $environment $servicename"
             event_size = "l"
           }
         }
@@ -406,7 +406,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Container Restarts — Selected Service"
             live_span = var.widget_live_spans.ecs
             request {
-              q            = "sum:container.restarts{application:${var.app}, $env, $servicename} by {containername}"
+              q            = "sum:container.restarts{application:${var.app}, $environment, $servicename} by {containername}"
               display_type = "bars"
               style {
                 palette = "warm"
@@ -439,7 +439,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Request Rate by Service"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.${var.apm_primary_operation}.hits{application:${var.app}, $env} by {service}.as_rate()"
+              q            = "sum:trace.${var.apm_primary_operation}.hits{application:${var.app}, $environment} by {service}.as_rate()"
               display_type = "line"
             }
           }
@@ -450,15 +450,15 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "p50 / p95 / p99 Latency"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "p50:trace.${var.apm_primary_operation}{application:${var.app}, $env} by {service}"
+              q            = "p50:trace.${var.apm_primary_operation}{application:${var.app}, $environment} by {service}"
               display_type = "line"
             }
             request {
-              q            = "p95:trace.${var.apm_primary_operation}{application:${var.app}, $env} by {service}"
+              q            = "p95:trace.${var.apm_primary_operation}{application:${var.app}, $environment} by {service}"
               display_type = "line"
             }
             request {
-              q            = "p99:trace.${var.apm_primary_operation}{application:${var.app}, $env} by {service}"
+              q            = "p99:trace.${var.apm_primary_operation}{application:${var.app}, $environment} by {service}"
               display_type = "line"
             }
           }
@@ -473,13 +473,13 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
               query {
                 metric_query {
                   name  = "query1"
-                  query = "sum:trace.${var.apm_primary_operation}.exec_time.by_service{application:${var.app}, $env} by {sublayer_service, sublayer_inferred}.rollup(sum).fill(zero)"
+                  query = "sum:trace.${var.apm_primary_operation}.exec_time.by_service{application:${var.app}, $environment} by {sublayer_service, sublayer_inferred}.rollup(sum).fill(zero)"
                 }
               }
               query {
                 metric_query {
                   name  = "query2"
-                  query = "sum:trace.${var.apm_primary_operation}.hits{application:${var.app}, $env}.rollup(sum).fill(zero).as_count()"
+                  query = "sum:trace.${var.apm_primary_operation}.hits{application:${var.app}, $environment}.rollup(sum).fill(zero).as_count()"
                 }
               }
               formula {
@@ -501,7 +501,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Error Rate by Service"
             live_span = var.widget_live_spans.apm
             request {
-              q            = "sum:trace.${var.apm_primary_operation}.errors{application:${var.app}, $env} by {service}.as_rate()"
+              q            = "sum:trace.${var.apm_primary_operation}.errors{application:${var.app}, $environment} by {service}.as_rate()"
               display_type = "bars"
             }
           }
@@ -514,7 +514,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             autoscale = true
             precision = 2
             request {
-              q = "avg:trace.${var.apm_primary_operation}.apdex{application:${var.app}, $env}"
+              q = "avg:trace.${var.apm_primary_operation}.apdex{application:${var.app}, $environment}"
             }
             timeseries_background {
               type = "area"
@@ -545,7 +545,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Bucket Size (Bytes) by Bucket"
             live_span = var.widget_live_spans.s3
             request {
-              q = "avg:aws.s3.bucket_size_bytes{application:${var.app}, $env} by {bucketname}"
+              q = "avg:aws.s3.bucket_size_bytes{application:${var.app}, $environment} by {bucketname}"
             }
             style {
               display {
@@ -568,7 +568,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
                   aggregator  = "avg"
                   data_source = "metrics"
                   name        = "query1"
-                  query       = "avg:aws.s3.number_of_objects{application:${var.app}, $env} by {bucketname}"
+                  query       = "avg:aws.s3.number_of_objects{application:${var.app}, $environment} by {bucketname}"
                 }
               }
             }
@@ -599,7 +599,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Invocations by Function"
             live_span = var.widget_live_spans.lambda
             request {
-              q            = "sum:aws.lambda.invocations{application:${var.app}, $env} by {functionname}.as_count()"
+              q            = "sum:aws.lambda.invocations{application:${var.app}, $environment} by {functionname}.as_count()"
               display_type = "bars"
             }
           }
@@ -610,7 +610,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Duration (avg) by Function"
             live_span = var.widget_live_spans.lambda
             request {
-              q            = "avg:aws.lambda.duration{application:${var.app}, $env} by {functionname}"
+              q            = "avg:aws.lambda.duration{application:${var.app}, $environment} by {functionname}"
               display_type = "line"
             }
           }
@@ -621,7 +621,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Errors by Function"
             live_span = var.widget_live_spans.lambda
             request {
-              q            = "sum:aws.lambda.errors{application:${var.app}, $env} by {functionname}.as_count()"
+              q            = "sum:aws.lambda.errors{application:${var.app}, $environment} by {functionname}.as_count()"
               display_type = "bars"
             }
           }
@@ -632,7 +632,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Error Rate by Function (%)"
             live_span = var.widget_live_spans.lambda
             request {
-              q            = "sum:aws.lambda.errors{application:${var.app}, $env} by {functionname}.as_count() / sum:aws.lambda.invocations{application:${var.app}, $env} by {functionname}.as_count() * 100"
+              q            = "sum:aws.lambda.errors{application:${var.app}, $environment} by {functionname}.as_count() / sum:aws.lambda.invocations{application:${var.app}, $environment} by {functionname}.as_count() * 100"
               display_type = "line"
             }
           }
@@ -643,7 +643,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Throttles by Function"
             live_span = var.widget_live_spans.lambda
             request {
-              q            = "sum:aws.lambda.throttles{application:${var.app}, $env} by {functionname}.as_count()"
+              q            = "sum:aws.lambda.throttles{application:${var.app}, $environment} by {functionname}.as_count()"
               display_type = "bars"
             }
           }
@@ -654,7 +654,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Concurrent Executions by Function"
             live_span = var.widget_live_spans.lambda
             request {
-              q            = "avg:aws.lambda.concurrent_executions{application:${var.app}, $env} by {functionname}"
+              q            = "avg:aws.lambda.concurrent_executions{application:${var.app}, $environment} by {functionname}"
               display_type = "line"
             }
           }
@@ -680,7 +680,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Request Count by Target Group"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "sum:aws.applicationelb.request_count{application:${var.app}, $env} by {targetgroup}.as_count()"
+              q            = "sum:aws.applicationelb.request_count{application:${var.app}, $environment} by {targetgroup}.as_count()"
               display_type = "bars"
             }
           }
@@ -691,7 +691,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Target Response Time p95 by Target Group"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "avg:aws.applicationelb.target_response_time.p95{application:${var.app}, $env} by {targetgroup}"
+              q            = "avg:aws.applicationelb.target_response_time.p95{application:${var.app}, $environment} by {targetgroup}"
               display_type = "line"
             }
           }
@@ -702,7 +702,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Target HTTP 5XX by Target Group"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "sum:aws.applicationelb.httpcode_target_5xx{application:${var.app}, $env} by {targetgroup}.as_count()"
+              q            = "sum:aws.applicationelb.httpcode_target_5xx{application:${var.app}, $environment} by {targetgroup}.as_count()"
               display_type = "bars"
             }
           }
@@ -713,7 +713,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Target HTTP 4XX by Target Group"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "sum:aws.applicationelb.httpcode_target_4xx{application:${var.app}, $env} by {targetgroup}.as_count()"
+              q            = "sum:aws.applicationelb.httpcode_target_4xx{application:${var.app}, $environment} by {targetgroup}.as_count()"
               display_type = "bars"
             }
           }
@@ -724,7 +724,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Load Balancer HTTP 5XX by Load Balancer"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "sum:aws.applicationelb.httpcode_elb_5xx{application:${var.app}, $env} by {loadbalancer}.as_count()"
+              q            = "sum:aws.applicationelb.httpcode_elb_5xx{application:${var.app}, $environment} by {loadbalancer}.as_count()"
               display_type = "bars"
             }
           }
@@ -735,7 +735,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Load Balancer HTTP 4XX by Load Balancer"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "sum:aws.applicationelb.httpcode_elb_4xx{application:${var.app}, $env} by {loadbalancer}.as_count()"
+              q            = "sum:aws.applicationelb.httpcode_elb_4xx{application:${var.app}, $environment} by {loadbalancer}.as_count()"
               display_type = "bars"
             }
           }
@@ -746,7 +746,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Active Connection Count by Load Balancer"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "sum:aws.applicationelb.active_connection_count{application:${var.app}, $env} by {loadbalancer}.as_count()"
+              q            = "sum:aws.applicationelb.active_connection_count{application:${var.app}, $environment} by {loadbalancer}.as_count()"
               display_type = "line"
             }
           }
@@ -757,11 +757,11 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Healthy vs Unhealthy Host Count by Target Group"
             live_span = var.widget_live_spans.alb
             request {
-              q            = "avg:aws.applicationelb.healthy_host_count{application:${var.app}, $env} by {targetgroup}"
+              q            = "avg:aws.applicationelb.healthy_host_count{application:${var.app}, $environment} by {targetgroup}"
               display_type = "line"
             }
             request {
-              q            = "avg:aws.applicationelb.un_healthy_host_count{application:${var.app}, $env} by {targetgroup}"
+              q            = "avg:aws.applicationelb.un_healthy_host_count{application:${var.app}, $environment} by {targetgroup}"
               display_type = "line"
             }
           }
@@ -787,7 +787,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Messages Visible by Queue"
             live_span = var.widget_live_spans.sqs
             request {
-              q            = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $env} by {queuename}"
+              q            = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $environment} by {queuename}"
               display_type = "line"
             }
           }
@@ -798,7 +798,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Dead Letter Queue Messages Visible"
             live_span = var.widget_live_spans.sqs
             request {
-              q            = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $env, queuename:*dlq*} by {queuename}"
+              q            = "avg:aws.sqs.approximate_number_of_messages_visible{application:${var.app}, $environment, queuename:*dlq*} by {queuename}"
               display_type = "bars"
             }
           }
@@ -809,7 +809,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Oldest Message Age (seconds) by Queue"
             live_span = var.widget_live_spans.sqs
             request {
-              q            = "max:aws.sqs.approximate_age_of_oldest_message{application:${var.app}, $env} by {queuename}"
+              q            = "max:aws.sqs.approximate_age_of_oldest_message{application:${var.app}, $environment} by {queuename}"
               display_type = "line"
             }
           }
@@ -820,11 +820,11 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Messages Sent / Deleted by Queue"
             live_span = var.widget_live_spans.sqs
             request {
-              q            = "sum:aws.sqs.number_of_messages_sent{application:${var.app}, $env} by {queuename}.as_count()"
+              q            = "sum:aws.sqs.number_of_messages_sent{application:${var.app}, $environment} by {queuename}.as_count()"
               display_type = "bars"
             }
             request {
-              q            = "sum:aws.sqs.number_of_messages_deleted{application:${var.app}, $env} by {queuename}.as_count()"
+              q            = "sum:aws.sqs.number_of_messages_deleted{application:${var.app}, $environment} by {queuename}.as_count()"
               display_type = "line"
             }
           }
@@ -850,15 +850,15 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Messages Published / Delivered / Failed by Topic"
             live_span = var.widget_live_spans.sns
             request {
-              q            = "sum:aws.sns.number_of_messages_published{application:${var.app}, $env} by {topicname}.as_count()"
+              q            = "sum:aws.sns.number_of_messages_published{application:${var.app}, $environment} by {topicname}.as_count()"
               display_type = "bars"
             }
             request {
-              q            = "sum:aws.sns.number_of_notifications_delivered{application:${var.app}, $env} by {topicname}.as_count()"
+              q            = "sum:aws.sns.number_of_notifications_delivered{application:${var.app}, $environment} by {topicname}.as_count()"
               display_type = "line"
             }
             request {
-              q            = "sum:aws.sns.number_of_notifications_failed{application:${var.app}, $env} by {topicname}.as_count()"
+              q            = "sum:aws.sns.number_of_notifications_failed{application:${var.app}, $environment} by {topicname}.as_count()"
               display_type = "bars"
             }
           }
@@ -869,7 +869,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Notification Failure Rate by Topic (%)"
             live_span = var.widget_live_spans.sns
             request {
-              q            = "sum:aws.sns.number_of_notifications_failed{application:${var.app}, $env} by {topicname}.as_count() / sum:aws.sns.number_of_messages_published{application:${var.app}, $env} by {topicname}.as_count() * 100"
+              q            = "sum:aws.sns.number_of_notifications_failed{application:${var.app}, $environment} by {topicname}.as_count() / sum:aws.sns.number_of_messages_published{application:${var.app}, $environment} by {topicname}.as_count() * 100"
               display_type = "line"
             }
           }
@@ -895,7 +895,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "DB Connections by Instance"
             live_span = var.widget_live_spans.aurora
             request {
-              q            = "avg:aws.rds.database_connections{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.database_connections{application:${var.app}, $environment} by {dbinstanceidentifier}"
               display_type = "line"
             }
           }
@@ -906,7 +906,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "CPU Utilization by Instance"
             live_span = var.widget_live_spans.aurora
             request {
-              q            = "avg:aws.rds.cpuutilization{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.cpuutilization{application:${var.app}, $environment} by {dbinstanceidentifier}"
               display_type = "line"
             }
           }
@@ -917,11 +917,11 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Read / Write Latency by Instance"
             live_span = var.widget_live_spans.aurora
             request {
-              q            = "avg:aws.rds.read_latency{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.read_latency{application:${var.app}, $environment} by {dbinstanceidentifier}"
               display_type = "line"
             }
             request {
-              q            = "avg:aws.rds.write_latency{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.write_latency{application:${var.app}, $environment} by {dbinstanceidentifier}"
               display_type = "line"
             }
           }
@@ -932,11 +932,11 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Read / Write IOPS by Instance"
             live_span = var.widget_live_spans.aurora
             request {
-              q            = "avg:aws.rds.read_iops{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.read_iops{application:${var.app}, $environment} by {dbinstanceidentifier}"
               display_type = "line"
             }
             request {
-              q            = "avg:aws.rds.write_iops{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.write_iops{application:${var.app}, $environment} by {dbinstanceidentifier}"
               display_type = "line"
             }
           }
@@ -947,7 +947,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Freeable Memory by Instance"
             live_span = var.widget_live_spans.aurora
             request {
-              q            = "avg:aws.rds.freeable_memory{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.freeable_memory{application:${var.app}, $environment} by {dbinstanceidentifier}"
               display_type = "line"
             }
           }
@@ -958,7 +958,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Aurora Replica Lag by Instance"
             live_span = var.widget_live_spans.aurora
             request {
-              q            = "avg:aws.rds.aurora_replica_lag{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.aurora_replica_lag{application:${var.app}, $environment} by {dbinstanceidentifier}"
               display_type = "line"
             }
           }
@@ -969,7 +969,7 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
             title     = "Estimated Shared Memory (Bytes) by Instance"
             live_span = var.widget_live_spans.aurora
             request {
-              q            = "avg:aws.rds.aurora_estimated_shared_memory_bytes{application:${var.app}, $env} by {dbinstanceidentifier}"
+              q            = "avg:aws.rds.aurora_estimated_shared_memory_bytes{application:${var.app}, $environment} by {dbinstanceidentifier}"
               display_type = "line"
             }
           }
