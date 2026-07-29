@@ -1,0 +1,3 @@
+ecs:
+  lifecycle: ephemeral # TODO Build an ephemeral flag to bring down test tasks
+  cluster: cdap-test-tftesting

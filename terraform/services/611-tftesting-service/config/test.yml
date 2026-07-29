@@ -1,10 +1,8 @@
-default_retained_images: 3
-untagged_images_retained: 10
-
 image:
-  enabled: true
-  test_command: "pytest"
+  enabled: true # works with github workflow
+  test_command: "pytest" # works with github workflow
 
 ecs:
-  enabled: false
+  enabled: true # TODO set up ephemeral tag to bring down tasks but preserve the application image tag
   lifecycle: ephemeral
+  cluster: cdap-test-tftesting
