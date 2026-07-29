@@ -127,13 +127,17 @@ jobs:
           echo "Current task definition found"
 
           TASK_DEF=$(aws ecs describe-task-definition \
-            --task-definition "$TASK_DEF_ARN" \
-            --query 'taskDefinition' \
-            | jq \
-              --arg image "$FULL_IMAGE" \
-              'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
-               | .containerDefinitions[0].image = $image')
-
+          --task-definition "$TASK_DEF_ARN" \
+          --query 'taskDefinition' \
+          | jq \
+          --arg image "$FULL_IMAGE" \
+          --arg name "$SERVICE_NAME" \
+          'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+             | .containerDefinitions = [
+                 .containerDefinitions[] |
+                 if .name == $name then .image = $image else . end
+               ]')
+  
           echo "Registering new task definition revision..."
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
             --cli-input-json "$TASK_DEF" \

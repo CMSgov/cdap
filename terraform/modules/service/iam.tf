@@ -218,7 +218,7 @@ resource "aws_iam_role_policy" "task" {
 
 data "aws_iam_policy_document" "task" {
   dynamic "statement" {
-    for_each = var.enable_mtls_sidecar ? [1] : []
+    for_each = local.enable_mtls_sidecar ? [1] : []
     content {
       sid    = "AllowProxyACMExport"
       effect = "Allow"
@@ -229,6 +229,22 @@ data "aws_iam_policy_document" "task" {
       ]
       resources = [
         var.mtls_cert_arn
+      ]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = var.enable_mtls_sidecar ? [1] : []
+    content {
+      sid    = "AllowCDAPSidecarECRPull"
+      effect = "Allow"
+      actions = [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ]
+      resources = [
+        "arn:aws:ecr:${var.platform.primary_region.name}:${var.platform.account_id}:repository/cdap-mtls-sidecar"
       ]
     }
   }

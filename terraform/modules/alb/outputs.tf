@@ -18,19 +18,22 @@ output "https_listener_arn" {
   value       = aws_lb_listener.https.arn
 }
 
-output "all_listener_arns" {
+output "security_group_id" {
+  value       = local.managed_sg ? aws_security_group.alb[0].id : null
   description = <<-EOT
-    Map of (string) to listener ARNs, including the default 443 listener.
-    Use this in ecs-service module calls:
-      alb_listener_arn = module.my_alb.all_listener_arns["9900"]
-  EOT
-  value = merge(
-    { "443" = aws_lb_listener.https.arn },
-    {
-      for port, listener in aws_lb_listener.extra_https :
-      port => listener.arn
+    ID of the module-managed ALB security group.
+    Null when security_group_ids are provided externally.
+    Use this in the caller terraservice to wire egress rules from the ALB
+    to ECS task security groups:
+
+    resource "aws_vpc_security_group_egress_rule" "alb_to_service" {
+      security_group_id            = module.alb.security_group_id
+      referenced_security_group_id = module.ecs_service.task_security_group_id
+      from_port                    = 8443
+      to_port                      = 8443
+      ip_protocol                  = "tcp"
     }
-  )
+  EOT
 }
 
 output "internal" {

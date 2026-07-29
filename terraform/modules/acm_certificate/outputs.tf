@@ -18,21 +18,22 @@ locals {
   ]) : null
 }
 
-output "private_certificate_arn" {
+output "private_cert_arn" {
   description = "ARN of the PCA-issued certificate covering the internal and/or zscaler domains. Use as the primary cert on the ALB HTTPS listener."
   value       = local.needs_private_cert ? aws_acm_certificate.private[0].arn : null
   sensitive   = true
 }
 
 output "internal_domain" {
-  value = var.enable_internal_endpoint ? local.internal_domain : null
+  value       = var.enable_internal_endpoint ? local.internal_domain : null
+  description = "FQDN of the internal endpoint. Use this as the Route 53 record name for DNS record to match exactly."
 }
 
 output "zscaler_domain" {
   value = var.enable_zscaler_endpoint ? local.zscaler_domain : null
 }
 
-output "public_certificate_arn" {
+output "public_cert_arn" {
   description = "ARN of the imported CMS-signed public certificate. Null if cert values have not yet been provided."
   value       = (var.public_domain_name != null && var.public_certificate != null && var.public_private_key != null) ? aws_acm_certificate.public[0].arn : null
   sensitive   = true

@@ -31,6 +31,7 @@ locals {
 
   aws_security_group_names = [
     "cmscloud-security-tools",
+    "datadog-synthetics",
     "internet",
     "remote-management",
     "zscaler-private",

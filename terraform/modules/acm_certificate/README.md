@@ -1,3 +1,44 @@
+Issues and manages ACM certificates for CMS platform services.
+Supports three certificate paths: PCA-backed private certificates
+(internal endpoints, Zscaler endpoints, mTLS sidecars) and
+CMS-signed public certificates (*.cms.gov).
+
+
+## Design Decisions
+
+- **Explicit instantiation required.** This module is never called
+  internally by `ecs_service`, `alb`, or other consumer modules.
+  All ACM certificates are top-level resources in the caller stack,
+  making them easy to audit via `tofu state list`.
+- **mTLS passphrase is ephemeral.** The mTLS sidecar generates a
+  one-time passphrase in memory at container startup, uses it to
+  decrypt the exported cert bundle to tmpfs, and discards it.
+  No passphrase is stored in SSM or state.
+- **One private cert, multiple consumers.** When both
+  `enable_internal_endpoint` and `enable_mtls_sidecar` are true,
+  both outputs resolve to the same underlying cert. The separate
+  output names exist for caller clarity only.
+
+## Zscaler Registration — Action Required
+
+Setting enable_zscaler_endpoint = true does not automatically register the domain. After applying, submit a DNS registration request to the CMS network team for:
+
+<service>.<env>.<app>.cmscloud.local
+
+## Public Certificate Process
+
+1. Apply with `public_domain_name` set but without `public_certificate`
+   or `public_private_key`.
+2. Retrieve the CSR from SSM:
+   `/<app>/<env>/<service>/tls/v1/csr`
+3. Submit the CSR to CMS for signing.
+4. Encrypt the returned cert, key, and chain via SOPS.
+5. Pass the SOPS-decrypted values into `public_certificate`,
+   `public_private_key`, and `public_certificate_chain`.
+6. Re-apply — the cert is imported into ACM automatically.
+
+
+
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

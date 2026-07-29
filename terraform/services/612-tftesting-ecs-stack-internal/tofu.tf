@@ -7,7 +7,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "mtls-sidecar/terraform.tfstate"
+    key = "tftesting-ecs-stack-internal/terraform.tfstate"
   }
 }
 
@@ -34,4 +34,14 @@ module "platform" {
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
   service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
+  ssm_root_map = {
+    datadog = "/cdap/${module.platform.env}/datadog/cicd/"
+  }
 }
+
+# provider "datadog" {
+#   api_key = sensitive(module.platform.ssm.datadog_cicd.api_key.value)
+#   app_key = sensitive(module.platform.ssm.datadog_cicd.application_key.value)
+#   api_url = "https://api.ddog-gov.com"
+# }
+

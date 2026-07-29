@@ -22,7 +22,11 @@ data "aws_ssm_parameter" "datadog_private_location_sg" {
   name  = "/cdap/${var.platform.env}/datadog/nonsensitive/private_location_task_security_group_id"
 }
 
-data "aws_ssm_parameter" "proxy_image_tag" {
+locals {
+  cdap_ssm_env = contains(["prod", "sandbox"], var.platform.env) ? "prod" : "test"
+}
+
+data "aws_ssm_parameter" "mtls_image_tag" {
   count = var.enable_mtls_sidecar ? 1 : 0
-  name  = "/cdap/${var.platform.account_env_suffix}/nonsensitive/mtls-sidecar/image-tag"
+  name  = "/cdap/${local.cdap_ssm_env}/nonsensitive/mtls-sidecar/image-tag"
 }

@@ -1,8 +1,13 @@
 locals {
-  alb_name = var.name_override != null ? var.name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}-alb"
+  alb_name   = var.name_override != null ? var.name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}-alb"
+  managed_sg = length(var.security_group_ids) == 0
 
-  # Use explicitly provided subnets, or fall back to the platform's private subnets
-  subnet_ids = var.subnet_ids != null ? var.subnet_ids : [for s in var.platform.private_subnets : s.id]
+  # Support explicitly provided subnets, or fall back to the platform's private subnets
+  subnet_ids = var.subnet_ids != null ? var.subnet_ids : (
+    var.internal
+    ? [for s in var.platform.private_subnets : s.id]
+    : [for s in var.platform.public_subnets : s.id]
+  )
 }
 
 # -------------------------------------------------------
@@ -13,9 +18,23 @@ resource "aws_lb" "this" {
   internal           = var.internal
   load_balancer_type = "application"
   subnets            = local.subnet_ids
-  security_groups    = var.security_group_ids
+  security_groups    = local.managed_sg ? [aws_security_group.alb[0].id] : var.security_group_ids
 
   tags = { Name = local.alb_name }
+
+  lifecycle {
+    prevent_destroy = true
+
+    # Prevent accidental name changes that would force recreation
+    precondition {
+      condition     = var.name_override == null
+      error_message = <<-EOT
+        name_override is set. Changing the ALB name forces recreation and will
+        break the CMS-managed DNS record pointing at this ALB.
+        If you must rename, coordinate with the CMS DNS team first.
+      EOT
+    }
+  }
 }
 
 # -------------------------------------------------------
@@ -60,21 +79,16 @@ resource "aws_lb_listener" "http_redirect" {
   }
 }
 
-resource "aws_lb_listener" "extra_https" {
-  for_each = tomap(var.extra_listeners)
+# -------------------------------------------------------
+# Security Group
+# -------------------------------------------------------
+resource "aws_security_group" "alb" {
+  count       = local.managed_sg ? 1 : 0
+  name        = "${local.alb_name}-sg"
+  description = "Security group for ${local.alb_name}"
+  vpc_id      = var.platform.vpc_id
 
-  load_balancer_arn = aws_lb.this.arn
-  port              = each.value.port
-  protocol          = "HTTPS"
-  ssl_policy        = coalesce(each.value.ssl_policy, var.ssl_policy)
-  certificate_arn   = coalesce(each.value.acm_certificate_arn, var.acm_certificate_arn)
-
-  default_action {
-    type = "fixed-response"
-    fixed_response {
-      content_type = "text/plain"
-      message_body = "Not Found"
-      status_code  = "404"
-    }
+  tags = {
+    Name = "${local.alb_name}-sg"
   }
 }
