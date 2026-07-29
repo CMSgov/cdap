@@ -12,6 +12,11 @@ on:
         description: 'Service name (matches SSM path and ECS service name)'
         required: true
         type: string
+      update_tag_only:
+        description: 'SSM tag update only — skip ECS service update (use for sidecar images)'
+        required: false
+        type: boolean
+        default: false
       environment:
         description: 'Environment to deploy to'
         required: true
@@ -95,6 +100,7 @@ jobs:
           echo "✅ SSM parameter updated"
 
       - name: Deploy ECS Service
+        if: ${{ !inputs.update_tag_only }}
         env:
           APP: ${{ inputs.app }}
           SERVICE_NAME: ${{ inputs.service_name }}
@@ -160,3 +166,12 @@ jobs:
             --services "$ECS_SERVICE"
 
           echo "✅ Successfully deployed $ECS_SERVICE in $ENV"
+
+      - name: Confirm
+        run: |
+          if [[ "${{ inputs.update_tag_only }}" == "true" ]]; then
+            echo "✅ Tag-update to SSM complete for ${{ inputs.service_name }}"
+            echo "Dependent ECS services will pick up the new image on next tofu apply."
+          else
+            echo "✅ Successfully deployed ${{ inputs.service_name }} in ${{ inputs.environment }}"
+          fi
