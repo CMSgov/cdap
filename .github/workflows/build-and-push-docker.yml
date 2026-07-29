@@ -205,12 +205,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: >-
-            arn:aws:iam::${{
-              matrix.account == 'prod'
-                && secrets.PROD_ACCOUNT
-                || secrets.NON_PROD_ACCOUNT
-            }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.account }}-github-actions
+          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
