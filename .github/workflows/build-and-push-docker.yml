@@ -43,9 +43,9 @@ jobs:
     permissions:
       contents: read
     outputs:
-      matrix:       ${{ steps.detect.outputs.matrix }}
-      push_matrix:  ${{ steps.detect.outputs.push_matrix }}
-      any_changed:  ${{ steps.detect.outputs.any_changed }}
+      matrix:      ${{ steps.detect.outputs.matrix }}
+      push_matrix: ${{ steps.detect.outputs.push_matrix }}
+      any_changed: ${{ steps.detect.outputs.any_changed }}
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
@@ -63,78 +63,85 @@ jobs:
           INPUT_ACCOUNT: ${{ inputs.account }}
           BASE_SHA:      ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA:      ${{ github.sha }}
-run: |
-  skip() {
-    echo "any_changed=false" >> "$GITHUB_OUTPUT"
-    echo "matrix=[]"        >> "$GITHUB_OUTPUT"
-    echo "push_matrix=[]"   >> "$GITHUB_OUTPUT"
-    exit 0
-  }
+        run: |
+          skip() {
+            echo "any_changed=false" >> "$GITHUB_OUTPUT"
+            echo "matrix=[]"        >> "$GITHUB_OUTPUT"
+            echo "push_matrix=[]"   >> "$GITHUB_OUTPUT"
+            exit 0
+          }
 
-  add_entry() {
-    local svc="$1" account="$2"
-    local svc_name role_env rep_env cfg test_cmd
-    svc_name=$(echo "$svc" | sed 's/^[0-9]*-//')
-    [[ "$account" == "prod" ]] && role_env="prod" && rep_env="prod" || role_env="test" && rep_env="test"
-    cfg="terraform/services/$svc/config/${rep_env}.yml"
-    [ ! -f "$cfg" ] && return
-    [ "$(yq '.image.enabled // true' "$cfg")" != "true" ] && {
-      echo "$svc ($account): image.enabled is false — skipping"; return
-    }
-    test_cmd=$(yq '.image.test_command // "echo \"no tests defined\""' "$cfg")
-    ENTRIES=$(echo "$ENTRIES" | jq -c --argjson e "$(jq -cn \
-      --arg svc      "$svc"               \
-      --arg svc_name "$svc_name"          \
-      --arg account  "$account"           \
-      --arg role_env "$role_env"          \
-      --arg test_cmd "$test_cmd"          \
-      --arg app      "${INPUT_APP:-cdap}" \
-      '{service: $svc, service_name: $svc_name, account: $account,
-        role_env: $role_env, test_command: $test_cmd, app: $app}'
-    )" '. + [$e]')
-  }
+          add_entry() {
+            local svc="$1" account="$2"
+            local svc_name role_env rep_env cfg test_cmd
+            svc_name=$(echo "$svc" | sed 's/^[0-9]*-//')
+            # Fixed: use if/else instead of chained && to set two variables
+            if [[ "$account" == "prod" ]]; then
+              role_env="prod"
+              rep_env="prod"
+            else
+              role_env="test"
+              rep_env="test"
+            fi
+            cfg="terraform/services/$svc/config/${rep_env}.yml"
+            [ ! -f "$cfg" ] && return
+            [ "$(yq '.image.enabled // true' "$cfg")" != "true" ] && {
+              echo "$svc ($account): image.enabled is false — skipping"; return
+            }
+            test_cmd=$(yq '.image.test_command // "echo \"no tests defined\""' "$cfg")
+            ENTRIES=$(echo "$ENTRIES" | jq -c --argjson e "$(jq -cn \
+              --arg svc      "$svc"               \
+              --arg svc_name "$svc_name"          \
+              --arg account  "$account"           \
+              --arg role_env "$role_env"          \
+              --arg test_cmd "$test_cmd"          \
+              --arg app      "${INPUT_APP:-cdap}" \
+              '{service: $svc, service_name: $svc_name, account: $account,
+                role_env: $role_env, test_command: $test_cmd, app: $app}'
+            )" '. + [$e]')
+          }
 
-  ENTRIES="[]"
+          ENTRIES="[]"
 
-  if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
-    [ ! -f "terraform/services/$INPUT_SERVICE/app/Dockerfile" ] && {
-      echo "No Dockerfile found — skipping"; skip
-    }
-    add_entry "$INPUT_SERVICE" "$INPUT_ACCOUNT"
+          if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
+            [ ! -f "terraform/services/$INPUT_SERVICE/app/Dockerfile" ] && {
+              echo "No Dockerfile found — skipping"; skip
+            }
+            add_entry "$INPUT_SERVICE" "$INPUT_ACCOUNT"
 
-  else
-    if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "0000000000000000000000000000000000000000" ]; then
-      BASE_SHA=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
-    fi
+          else
+            if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "0000000000000000000000000000000000000000" ]; then
+              BASE_SHA=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
+            fi
 
-    CHANGED_SERVICES=$(
-      git diff --name-only "$BASE_SHA" "$HEAD_SHA" \
-        | grep '^terraform/services/[^/]*/app/' \
-        | sed 's|terraform/services/\([^/]*\)/app/.*|\1|' \
-        | sort -u
-    )
-    echo "Changed services: $CHANGED_SERVICES"
+            CHANGED_SERVICES=$(
+              git diff --name-only "$BASE_SHA" "$HEAD_SHA" \
+                | grep '^terraform/services/[^/]*/app/' \
+                | sed 's|terraform/services/\([^/]*\)/app/.*|\1|' \
+                | sort -u
+            )
+            echo "Changed services: $CHANGED_SERVICES"
 
-    for SVC in $CHANGED_SERVICES; do
-      [ ! -f "terraform/services/$SVC/app/Dockerfile" ] && {
-        echo "$SVC: no Dockerfile — skipping"; continue
-      }
-      if [ "$EVENT_NAME" == "pull_request" ]; then
-        add_entry "$SVC" "non-prod"
-      else
-        add_entry "$SVC" "non-prod"
-        add_entry "$SVC" "prod"
-      fi
-    done
-  fi
+            for SVC in $CHANGED_SERVICES; do
+              [ ! -f "terraform/services/$SVC/app/Dockerfile" ] && {
+                echo "$SVC: no Dockerfile — skipping"; continue
+              }
+              if [ "$EVENT_NAME" == "pull_request" ]; then
+                add_entry "$SVC" "non-prod"
+              else
+                add_entry "$SVC" "non-prod"
+                add_entry "$SVC" "prod"
+              fi
+            done
+          fi
 
-  [ "$ENTRIES" == "[]" ] || [ -z "$ENTRIES" ] && skip
+          if [ "$ENTRIES" == "[]" ] || [ -z "$ENTRIES" ]; then skip; fi
 
-  echo "any_changed=true"        >> "$GITHUB_OUTPUT"
-  echo "matrix=$ENTRIES"         >> "$GITHUB_OUTPUT"
-  echo "push_matrix=$ENTRIES"    >> "$GITHUB_OUTPUT"
+          echo "any_changed=true"     >> "$GITHUB_OUTPUT"
+          echo "matrix=$ENTRIES"      >> "$GITHUB_OUTPUT"
+          echo "push_matrix=$ENTRIES" >> "$GITHUB_OUTPUT"
 
-code-checks:
+  code-checks:
     name: Code Checks — ${{ matrix.service }} (${{ matrix.account }})
     needs: [detect-changes]
     if: needs.detect-changes.outputs.any_changed == 'true'
@@ -156,7 +163,7 @@ code-checks:
       service_name:      ${{ matrix.service_name }}
       test_command:      ${{ matrix.test_command }}
 
-push-to-ecr:
+  push-to-ecr:
     name: Push to ECR — ${{ matrix.service }} (${{ matrix.account }})
     needs: [detect-changes, code-checks]
     if: |
@@ -177,7 +184,7 @@ push-to-ecr:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["prod"]'), inputs.account) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ inputs.app }}-${{ matrix.role_env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ matrix.account == 'prod' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.role_env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
