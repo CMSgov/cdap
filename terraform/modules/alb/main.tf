@@ -25,12 +25,12 @@ resource "aws_lb" "this" {
   lifecycle {
     prevent_destroy = true
 
-    # Prevent accidental name changes that would force recreation
     precondition {
-      condition     = var.name_override == null
+      condition     = var.internal || var.name_override == null
       error_message = <<-EOT
-        name_override is set. Changing the ALB name forces recreation and will
-        break the CMS-managed DNS record pointing at this ALB.
+        name_override is set on an internet-facing ALB.
+        Changing the ALB name forces recreation and may break
+        any CMS-managed DNS records pointing at this ALB.
         If you must rename, coordinate with the CMS DNS team first.
       EOT
     }
