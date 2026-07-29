@@ -1,10 +1,11 @@
 locals {
-  config      = yamldecode(file("${path.module}/config/${var.env}.yml"))
-  ecs_enabled = var.ecs_enabled != null ? var.ecs_enabled : try(local.config.ecs.enabled, true)
+  config       = yamldecode(file("${path.module}/config/${var.env}.yml"))
+  ecs_enabled  = var.ecs_enabled != null ? var.ecs_enabled : try(local.config.ecs.enabled, true)
+  cluster_name = try(local.config.ecs.cluster, "cdap-${var.env}") # 👈 add this
 }
 
 data "aws_ecs_cluster" "cluster_test" {
-  cluster_name = "cdap-${var.env}-tftesting"
+  cluster_name = local.cluster_name
 }
 
 module "tftesting_service" {
