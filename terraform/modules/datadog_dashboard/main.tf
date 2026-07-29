@@ -505,6 +505,30 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
         }
 
         widget {
+          timeseries_definition {
+            title     = "Error Percentage by Service"
+            live_span = var.widget_live_spans.apm
+            request {
+              query {
+                metric_query {
+                  name  = "query1"
+                  query = "sum:trace.${var.apm_primary_operation}.errors{application:${var.app}, $env} by {service}.as_count()"
+                }
+              }
+              query {
+                metric_query {
+                  name  = "query2"
+                  query = "sum:trace.${var.apm_primary_operation}.hits{application:${var.app}, $env}.as_count()"
+                }
+              }
+              formula {
+                formula_expression = "query1 / query2"
+              }
+            }
+          }
+        }
+
+        widget {
           query_value_definition {
             title     = "Apdex Score"
             live_span = var.widget_live_spans.current
