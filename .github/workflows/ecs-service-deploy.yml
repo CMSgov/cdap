@@ -121,29 +121,28 @@ jobs:
 
       - name: Write image tag to SSM
         env:
-          APP: ${{ inputs.app }}
-          SERVICE_NAME: ${{ inputs.service_name }}
-          ENV: ${{ inputs.environment }}
-          IMAGE_TAG: ${{ inputs.image_tag }}
+          APP:          ${{ inputs.app }}
+          SERVICE_NAME: ${{ steps.normalize.outputs.service_name }}
+          ENV:          ${{ inputs.environment }}
+          IMAGE_TAG:    ${{ steps.resolve-tag.outputs.image_tag }}
         run: |
-          echo "Writing image tag to SSM..."
           aws ssm put-parameter \
             --name "/${APP}/${ENV}/nonsensitive/${SERVICE_NAME}/image-tag" \
             --value "$IMAGE_TAG" \
             --type String \
             --overwrite
-          echo "✅ SSM parameter updated"
+          echo "✅ SSM updated: /${APP}/${ENV}/nonsensitive/${SERVICE_NAME}/image-tag = $IMAGE_TAG"
 
       - name: Deploy ECS Service
-        if: ${{ !inputs.update_tag_only }}
+        if: ${{ !inputs.ssm_only }}
         env:
-          APP: ${{ inputs.app }}
-          SERVICE_NAME: ${{ inputs.service_name }}
-          ENV: ${{ inputs.environment }}
-          IMAGE_TAG: ${{ inputs.image_tag }}
+          APP:              ${{ inputs.app }}
+          SERVICE_NAME:     ${{ steps.normalize.outputs.service_name }}
+          ENV:              ${{ inputs.environment }}
+          IMAGE_TAG:        ${{ steps.resolve-tag.outputs.image_tag }}
           CLUSTER_OVERRIDE: ${{ inputs.cluster_name }}
-          ACCOUNT_ID: ${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
+          ACCOUNT_ID:       ${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+          AWS_REGION:       ${{ vars.AWS_REGION }}
         run: |
           echo "::add-mask::$ACCOUNT_ID"
 
@@ -168,17 +167,17 @@ jobs:
           echo "Current task definition found"
 
           TASK_DEF=$(aws ecs describe-task-definition \
-          --task-definition "$TASK_DEF_ARN" \
-          --query 'taskDefinition' \
-          | jq \
-          --arg image "$FULL_IMAGE" \
-          --arg name "$SERVICE_NAME" \
-          'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
-             | .containerDefinitions = [
-                 .containerDefinitions[] |
-                 if .name == $name then .image = $image else . end
-               ]')
-  
+            --task-definition "$TASK_DEF_ARN" \
+            --query 'taskDefinition' \
+            | jq \
+              --arg image "$FULL_IMAGE" \
+              --arg name  "$SERVICE_NAME" \
+              'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+               | .containerDefinitions = [
+                   .containerDefinitions[] |
+                   if .name == $name then .image = $image else . end
+                 ]')
+
           echo "Registering new task definition revision..."
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
             --cli-input-json "$TASK_DEF" \

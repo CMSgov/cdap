@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~>6.0"
     }
+    datadog = {
+      source  = "DataDog/datadog"
+      version = "~>4.4"
+    }
   }
 
   backend "s3" {
@@ -39,9 +43,9 @@ module "platform" {
   }
 }
 
-# provider "datadog" {
-#   api_key = sensitive(module.platform.ssm.datadog_cicd.api_key.value)
-#   app_key = sensitive(module.platform.ssm.datadog_cicd.application_key.value)
-#   api_url = "https://api.ddog-gov.com"
-# }
+provider "datadog" {
+  api_key = sensitive(module.platform.ssm.datadog.api_key.value)
+  app_key = sensitive(module.platform.ssm.datadog.application_key.value)
+  api_url = "https://api.ddog-gov.com"
+}
 
