@@ -412,7 +412,7 @@ resource "aws_ecs_service" "this" {
     for_each = var.enable_ecs_service_connect ? [1] : []
     content {
       enabled   = true
-      namespace = var.service_connect_namespace.arn
+      namespace = var.service_connect_namespace_arn
 
       service {
         discovery_name = local.service_name

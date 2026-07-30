@@ -90,46 +90,13 @@ variable "enable_ecs_service_connect" {
   default     = false
 }
 
-variable "service_connect_namespace" {
-  type = object({
-    arn  = string
-    name = string
-  })
+variable "service_connect_namespace_arn" {
+  type        = string
   default     = null
   description = <<-EOT
-    Cloud Map HTTP namespace for ECS Service Connect.
-    Pass the aws_service_discovery_http_namespace resource directly:
-      service_connect_namespace = aws_service_discovery_http_namespace.this
-    The module uses .arn for the ECS service and .name for IAM condition scoping.
+    ARN of the Cloud Map HTTP namespace to use for ECS Service Connect.
+    When null, Service Connect will not be configured for this service.
   EOT
-
-  validation {
-    condition = var.service_connect_namespace == null || anytrue([
-      for domain in [
-        ".cmscloud.local",
-        ".cms.local",
-        ".hcgov.local",
-        ".marketplace.local",
-        ".internal.cms.gov",
-        ".internal.healthcare.gov",
-        ".internal.cuidadodesalud.gov",
-        ".internal.hhs.gov"
-      ] : endswith(var.service_connect_namespace.name, domain)
-    ])
-    error_message = <<-EOT
-      service_connect_namespace.name must end with a domain permitted by the pace-ca-g1 Private CA.
-      Permitted suffixes:
-        - .cmscloud.local
-        - .cms.local
-        - .hcgov.local
-        - .marketplace.local
-        - .internal.cms.gov
-        - .internal.healthcare.gov
-        - .internal.cuidadodesalud.gov
-        - .internal.hhs.gov
-      Example: "cdap-test.cmscloud.local"
-    EOT
-  }
 }
 
 variable "service_connect_port" {
@@ -161,15 +128,6 @@ variable "deployment_circuit_breaker" {
   })
   default     = {}
   description = "Deployment circuit breaker configuration. Stops a failing deployment. Set rollback = true to automatically revert to the previous task definition on failure."
-}
-
-variable "ignore_desired_count_changes" {
-  type        = bool
-  default     = false
-  description = <<-EOT
-    When true, Terraform will not revert desired_count to the configured value on apply.
-    Enable this when using Application Auto Scaling to manage task count at runtime.
-  EOT
 }
 
 variable "enable_execute_command" {

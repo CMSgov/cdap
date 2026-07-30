@@ -137,7 +137,7 @@ data "aws_iam_policy_document" "service_connect" {
   }
 
   dynamic "statement" {
-    for_each = var.service_connect_namespace != null ? [1] : []
+    for_each = var.enable_ecs_service_connect ? [1] : []
     content {
       sid = "AllowCertManagement"
       actions = [
@@ -150,7 +150,7 @@ data "aws_iam_policy_document" "service_connect" {
       condition {
         test     = "StringLike"
         variable = "acm:DomainName"
-        values   = ["*.${var.service_connect_namespace.name}"]
+        values   = ["*.${var.platform.app}-${var.platform.env}.sc.internal.cms.gov"]
       }
     }
   }
@@ -273,3 +273,27 @@ data "aws_iam_policy_document" "task" {
   # }
 }
 
+# -------------------------------------------------------
+# ECS Exec Enablement
+# For use only in early testing, do not use widely
+# -------------------------------------------------------
+resource "aws_iam_policy" "ecs_exec" {
+  count       = var.enable_execute_command ? 1 : 0
+  name        = "${var.platform.app}-${var.platform.env}-tftesting-ecs-exec"
+  description = "Allows ECS Exec (execute-command) for interactive debugging. Test environments only."
+  policy      = data.aws_iam_policy_document.ecs_exec.json
+}
+
+
+data "aws_iam_policy_document" "ecs_exec" {
+  statement {
+    sid = "AllowECSExec"
+    actions = [
+      "ssmmessages:CreateControlChannel",
+      "ssmmessages:CreateDataChannel",
+      "ssmmessages:OpenControlChannel",
+      "ssmmessages:OpenDataChannel"
+    ]
+    resources = ["*"]
+  }
+}
