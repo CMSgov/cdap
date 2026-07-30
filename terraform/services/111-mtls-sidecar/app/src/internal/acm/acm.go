@@ -3,6 +3,8 @@ package acm
 import (
     "context"
     "crypto/tls"
+    "crypto/rand"
+    "encoding/hex"
     "encoding/pem"
     "fmt"
     "os"
@@ -41,12 +43,24 @@ func New(ctx context.Context, certARN string, paths CertPaths) (*Client, error) 
     }, nil
 }
 
+// generate a passphrase that's random and sufficient
+func generatePassphrase() ([]byte, error) {
+    b := make([]byte, 16)
+    if _, err := rand.Read(b); err != nil {
+        return nil, fmt.Errorf("generating passphrase: %w", err)
+    }
+    // hex encode so it's always printable ASCII
+    return []byte(hex.EncodeToString(b)), nil
+}
+
 // export the cert from ACM and writes it to disk
 func (c *Client) FetchAndStore(ctx context.Context) error {
+    passphrase, err := generatePassphrase()
     // NEVER LOG, contains private key material
+
     out, err := c.acm.ExportCertificate(ctx, &acm.ExportCertificateInput{
         CertificateArn: &c.certARN,
-        Passphrase:     []byte(""),
+        Passphrase:     passphrase,
     })
     if err != nil {
         // never log the response — only log that it failed
