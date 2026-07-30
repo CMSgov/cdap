@@ -47,27 +47,30 @@ resource "datadog_dashboard" "application_metrics_dashboard" {
 
         widget {
           manage_status_definition {
-            title               = "Alerting Monitors — ${var.app}"
+            title               = "Alerting Monitors"
             color_preference    = "text"
-            display_format      = "counts"
+            display_format      = "list"
             hide_zero_counts    = true
             show_last_triggered = true
-            sort                = "status,asc"
+            sort                = "triggered,asc"
             summary_type        = "monitors"
-            query               = "tag:\"application:${var.app}\" status:alert"
+
+            # Note that $environment must be unquoted here, because otherwise the * is
+            # treated literally
+            query = "tag:\"application:${var.app}\" tag:$environment status:alert"
           }
         }
 
         widget {
           manage_status_definition {
-            title               = "All Monitors — ${var.app}"
+            title               = "All Monitors"
             color_preference    = "text"
             display_format      = "counts"
             hide_zero_counts    = true
             show_last_triggered = true
             sort                = "status,asc"
             summary_type        = "monitors"
-            query               = "tag:\"application:${var.app}\""
+            query               = "tag:\"application:${var.app}\" tag:$environment"
           }
         }
       }
