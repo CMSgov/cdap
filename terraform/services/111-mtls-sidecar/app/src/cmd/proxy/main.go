@@ -21,9 +21,9 @@ func main() {
     defer cancel()
 
     paths := acm.CertPaths{
-        CertFile: getEnvOrDefault("TLS_CERT_FILE", "/etc/certs/cert.pem"),
-        KeyFile:  getEnvOrDefault("TLS_KEY_FILE",  "/etc/certs/key.pem"),
-        CAFile:   getEnvOrDefault("TLS_CA_FILE",   "/etc/certs/ca.pem"),
+        CertFile: getEnvOrDefault("TLS_CERT_FILE", "/tmp/certs/cert.pem"),
+        KeyFile:  getEnvOrDefault("TLS_KEY_FILE",  "/tmp/certs/key.pem"),
+        CAFile:   getEnvOrDefault("TLS_CA_FILE",   "/tmp/certs/ca.pem"),
     }
 
     if getEnvOrDefault("USE_LOCAL_CERTS", "false") != "true" {
@@ -31,6 +31,9 @@ func main() {
         client, err := acm.New(ctx, certARN, paths)
         if err != nil {
             log.Fatalf("failed to create ACM client: %v", err)
+        }
+        if err := ensureCertDir(paths.CertFile); err != nil {
+            log.Fatalf("failed to create cert directory: %v", err)
         }
         if err := client.FetchAndStore(ctx); err != nil {
             log.Fatalf("failed to fetch certificate: %v", err)
@@ -88,6 +91,11 @@ func main() {
 }
 
 // helpers
+
+func ensureCertDir(path string) error {
+    dir := filepath.Dir(path)
+    return os.MkdirAll(dir, 0700)
+}
 
 func requireEnv(key string) string {
     v := os.Getenv(key)
