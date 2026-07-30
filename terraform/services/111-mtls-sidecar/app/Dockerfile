@@ -30,11 +30,10 @@ COPY src/ .
 
 RUN mkdir -p /app/coverage
 
-# Runtime — no --platform needed, TARGETPLATFORM is the default
+# Runtime, TARGETPLATFORM is the default
 FROM gcr.io/distroless/static:nonroot
 
 COPY --from=builder /proxy /proxy
-COPY --from=builder --chown=65532:65532 /home/nonroot/certs /home/nonroot/certs
 
 USER nonroot:nonroot
 
