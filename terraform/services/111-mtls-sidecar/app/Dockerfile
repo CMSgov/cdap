@@ -13,10 +13,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
     -o /proxy \
     ./cmd/proxy
 
-RUN mkdir -p /etc/certs \
-    && touch /etc/certs/.keep \
-    && chown -R 65532:65532 /etc/certs \
-    && chmod 700 /etc/certs
+RUN mkdir -p /home/nonroot/certs \
+    && touch /home/nonroot/certs/.keep \
+    && chown -R 65532:65532 /home/nonroot/certs \
+    && chmod 700 /home/nonroot/certs
 
 # Test
 FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS tester
@@ -34,7 +34,7 @@ RUN mkdir -p /app/coverage
 FROM gcr.io/distroless/static:nonroot
 
 COPY --from=builder /proxy /proxy
-COPY --from=builder --chown=65532:65532 /etc/certs /etc/certs
+COPY --from=builder --chown=65532:65532 /home/nonroot/certs /home/nonroot/certs
 
 USER nonroot:nonroot
 
