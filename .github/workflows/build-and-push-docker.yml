@@ -97,13 +97,66 @@ jobs:
             --arg role_env     "$role_env"          \
             --arg test_cmd     "$test_cmd"          \
             --arg app          "${INPUT_APP:-cdap}" \
-            --arg docker_target "$docker_target"   \   
+            --arg docker_target "$docker_target"    
             '{service: $svc, service_name: $svc_name, account: $account,
                 role_env: $role_env, test_command: $test_cmd, app: $app,
                 docker_target: $docker_target}'     
             )" '. + [$e]')
           }
 
+  # main
+          ENTRIES="[]"
+          
+          if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
+            [ ! -f "terraform/services/$INPUT_SERVICE/app/Dockerfile" ] && {
+              echo "No Dockerfile found — skipping"; skip
+            }
+            add_entry "$INPUT_SERVICE" "$INPUT_ACCOUNT"
+          
+          else
+            if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "0000000000000000000000000000000000000000" ]; then
+              BASE_SHA=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
+            fi
+        
+            CHANGED_SERVICES=$(
+              git diff --name-only "$BASE_SHA" "$HEAD_SHA" \
+              | grep '^terraform/services/[^/]*/app/' \
+              | sed 's|terraform/services/\([^/]*\)/app/.*|\1|' \
+              | sort -u
+            )
+            echo "Changed services: $CHANGED_SERVICES"
+        
+            for SVC in $CHANGED_SERVICES; do
+              [ ! -f "terraform/services/$SVC/app/Dockerfile" ] && {
+              echo "$SVC: no Dockerfile — skipping"; continue
+              }
+              if [ "$EVENT_NAME" == "pull_request" ]; then
+                add_entry "$SVC" "non-prod"
+              else
+                add_entry "$SVC" "non-prod"
+                add_entry "$SVC" "prod"
+              fi
+            done
+          fi
+          
+       # outputs
+          
+          if [ "$ENTRIES" == "[]" ] || [ -z "$ENTRIES" ]; then skip; fi
+          
+          PUSH_MATRIX=$(echo "$ENTRIES" | jq -c '
+            group_by(.account) | map(.[0]) |
+              map({
+              service,
+              service_name,
+              app,
+              account,
+              role_env
+            })
+          ')
+        
+          echo "any_changed=true"     >> "$GITHUB_OUTPUT"
+          echo "matrix=$ENTRIES"      >> "$GITHUB_OUTPUT"
+          echo "push_matrix=$PUSH_MATRIX" >> "$GITHUB_OUTPUT"
   code-checks:
     name: Code Checks — ${{ matrix.service }} (${{ matrix.account }})
     needs: [detect-changes]
@@ -126,7 +179,6 @@ jobs:
       service_name:      ${{ matrix.service_name }}
       test_command:      ${{ matrix.test_command }}
       docker_target:     ${{ matrix.docker_target }}
-
   push-to-ecr:
     name: Push to ECR — ${{ matrix.service }} (${{ matrix.account }})
     needs: [detect-changes, code-checks]
