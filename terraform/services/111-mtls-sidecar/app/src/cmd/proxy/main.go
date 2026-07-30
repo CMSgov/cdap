@@ -9,6 +9,7 @@ import (
     "net/url"
     "os"
     "os/signal"
+    "path/filepath"
     "syscall"
 
     "mtls-sidecar/internal/acm"
