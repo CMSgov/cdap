@@ -13,7 +13,6 @@ import (
 )
 
 // gather file paths where fetched certs are written
-// TODO VERIFY SECURITY CHOICE
 type CertPaths struct {
     CertFile string
     KeyFile  string
@@ -43,7 +42,6 @@ func New(ctx context.Context, certARN string, paths CertPaths) (*Client, error) 
 }
 
 // export the cert from ACM and writes it to disk
-// TODO VERIFY security decision
 func (c *Client) FetchAndStore(ctx context.Context) error {
     // NEVER LOG, contains private key material
     out, err := c.acm.ExportCertificate(ctx, &acm.ExportCertificateInput{
@@ -72,7 +70,6 @@ func (c *Client) FetchAndStore(ctx context.Context) error {
 
     return nil
 }
-// TODO Verify security
 func writeFile(path string, data []byte) error {
     // Create with restricted permissions first, then write
     f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
