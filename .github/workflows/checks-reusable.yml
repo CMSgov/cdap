@@ -123,13 +123,7 @@ jobs:
             echo "ERROR: coverage.xml not found in /tmp/coverage/"
             exit 1
           fi
-          # Strip container absolute path prefix (Python: /app/src/main.py → src/main.py)
-          sed -i 's|/app/||g' /tmp/coverage/coverage.xml
-          # Strip Go module name prefix (Go: reverse-proxy/internal/tls → internal/tls)
-          sed -i 's|reverse-proxy/||g' /tmp/coverage/coverage.xml
-          echo "Coverage XML after path normalization:"
-          head -20 /tmp/coverage/coverage.xml
-          
+
           cp /tmp/coverage/coverage.xml ${{ inputs.source_path }}/coverage.xml
 
       - name: Retrieve credentials
