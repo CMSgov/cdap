@@ -23,10 +23,11 @@ module "alb" {
   source        = "../../modules/alb"
   name_override = "cdap-${var.env}-ecs-pub-alb"
 
-  platform             = module.platform
-  internal             = false
-  acm_certificate_arn  = module.acm.public_cert_arn
-  enable_http_redirect = true
+  platform                          = module.platform
+  internal                          = false
+  acm_certificate_arn               = module.acm.public_cert_arn
+  enable_http_redirect              = true
+  enable_datadog_synthetics_ingress = true
 }
 
 

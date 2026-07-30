@@ -53,7 +53,42 @@ class HealthHandler(BaseHTTPRequestHandler):
             self.wfile.write(
                 f"pong from {DD_SERVICE} env={DD_ENV} version={DD_VERSION}".encode()
             )
+        elif self.path == "/integration-test":
+            # a live Service Connect call and return the result
+            result = {"status": "unknown", "response": None, "error": None}
 
+            if not DOWNSTREAM_URL:
+                self.send_response(503)
+                self.end_headers()
+                self.wfile.write(b'{"error": "DOWNSTREAM_URL not configured"}')
+                return
+
+            with tracer.trace("integration-test.call", service=DD_SERVICE, resource=DOWNSTREAM_URL) as span:
+                span.set_tag("downstream.url", DOWNSTREAM_URL)
+                try:
+                    req = urllib.request.Request(DOWNSTREAM_URL)
+                    headers = {}
+                    HTTPPropagator.inject(span.context, headers)
+                    for key, value in headers.items():
+                        req.add_header(key, value)
+
+                    with urllib.request.urlopen(req, timeout=5) as resp:
+                        body = resp.read().decode()
+                        span.set_tag("downstream.status", resp.status)
+                        result = {"status": "ok", "response": body}
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(json.dumps(result).encode())
+
+                except Exception as e:
+                    span.set_tag("error", True)
+                    span.set_tag("error.message", str(e))
+                    result = {"status": "error", "error": str(e)}
+                    self.send_response(502)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps(result).encode())
         else:
             self.send_response(404)
             self.end_headers()
