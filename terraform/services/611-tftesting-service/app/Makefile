@@ -38,7 +38,7 @@ test-coverage:
 	  /bin/sh -c "pytest src/tests/ \
 	    --cov=src \
 	    --cov-report=xml:/app/coverage/coverage.xml"
-	    
+
 # Open a shell in the app container
 shell:
 	docker compose run --rm app /bin/sh
@@ -50,8 +50,8 @@ clean:
 
 AWS_DEFAULT_REGION ?= us-east-1
 ENV                ?= test
-SERVICE_NAME       := tftesting-service   # ✅ safe — no shell call
-IMAGE_TAG          ?= $(shell git rev-parse HEAD)   # ✅ safe — no AWS call
+SERVICE_NAME       := tftesting-service
+IMAGE_TAG          ?= $(shell git rev-parse HEAD)
 
 # only evaluated by targets that use them
 AWS_ACCOUNT_ID = $(shell aws sts get-caller-identity --query Account --output text)
@@ -86,11 +86,11 @@ push: ecr-login
 	    echo "WARNING: Pushing from branch $$BRANCH (not main)"; \
 	    read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1; \
 	  fi
-	@docker build \
+	DOCKER_BUILDKIT=0 docker build \
 	  -t $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG) \
 	  -f Dockerfile \
 	  .
-	@docker push $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG)
+	docker push $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG)
 	@aws ssm put-parameter \
 	  --name "/cdap/$(ENV)/nonsensitive/$(SERVICE_NAME)/image-tag" \
 	  --value "$(IMAGE_TAG)" \
