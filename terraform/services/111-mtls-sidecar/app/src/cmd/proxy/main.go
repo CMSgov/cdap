@@ -2,7 +2,6 @@ package main
 
 import (
     "context"
-    "crypto/tls"
     "log"
     "net"
     "net/http"
@@ -12,9 +11,9 @@ import (
     "os/signal"
     "syscall"
 
-    "reverse-proxy/internal/acm"
-    "reverse-proxy/internal/middleware"
-    tlsconfig "reverse-proxy/internal/tls"
+    "mtls-sidecar/internal/acm"
+    "mtls-sidecar/internal/middleware"
+    tlsconfig "mtls-sidecar/internal/tls"
 )
 
 func main() {
@@ -27,38 +26,25 @@ func main() {
         CAFile:   getEnvOrDefault("TLS_CA_FILE",   "/etc/certs/ca.pem"),
     }
 
-    // In ECS: ACM_CERTIFICATE_ARN is injected via ECS Secrets from SSM.
-    // Locally: USE_LOCAL_CERTS=true skips the ACM fetch entirely and
-    // reads from the volume-mounted certs in docker-compose.
     if getEnvOrDefault("USE_LOCAL_CERTS", "false") != "true" {
         certARN := requireEnv("ACM_CERTIFICATE_ARN")
-
-        acmClient, err := acm.New(ctx, certARN, paths)
+        client, err := acm.New(ctx, certARN, paths)
         if err != nil {
             log.Fatalf("failed to create ACM client: %v", err)
         }
-
-        if err := acmClient.FetchAndStore(ctx); err != nil {
-            log.Fatalf("failed to fetch certificate from ACM: %v", err)
+        if err := client.FetchAndStore(ctx); err != nil {
+            log.Fatalf("failed to fetch certificate: %v", err)
         }
-
-        log.Println("certificate fetched from ACM and written to disk")
+        log.Println("certificate fetched from ACM")
     } else {
         log.Println("USE_LOCAL_CERTS=true — skipping ACM fetch")
     }
 
-    // Build TLS config — GetCertificate reads from disk on every
-    // handshake so cert rotation writes are picked up automatically
     tlsCfg, err := tlsconfig.NewServerTLSConfig(tlsconfig.Config{
+        CertFile:          paths.CertFile,
+        KeyFile:           paths.KeyFile,
         CAFile:            paths.CAFile,
         RequireClientCert: getEnvBoolOrDefault("REQUIRE_CLIENT_CERT", true),
-        GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-            cert, err := tls.LoadX509KeyPair(paths.CertFile, paths.KeyFile)
-            if err != nil {
-                return nil, err
-            }
-            return &cert, nil
-        },
     })
     if err != nil {
         log.Fatalf("failed to build TLS config: %v", err)
@@ -69,37 +55,39 @@ func main() {
         log.Fatalf("failed to parse upstream URL: %v", err)
     }
 
-    proxy := httputil.NewSingleHostReverseProxy(upstream)
-    handler := middleware.Logging(proxy)
-
     addr := ":" + getEnvOrDefault("LISTEN_PORT", "8443")
-
     srv := &http.Server{
         Addr:      addr,
-        Handler:   handler,
+        Handler:   middleware.Logging(httputil.NewSingleHostReverseProxy(upstream)),
         TLSConfig: tlsCfg,
     }
 
+    // create TCP listener separately from ServeTLS
     ln, err := net.Listen("tcp", addr)
     if err != nil {
-        log.Fatalf("failed to create listener: %v", err)
+        log.Fatalf("failed to listen on %s: %v", addr, err)
     }
 
-    log.Printf("proxy listening on %s (mTLS), forwarding to %s", addr, upstream)
+    log.Printf("proxy listening on %s → %s", addr, upstream)
 
+    // use goroutine to run the server in the background
+    // serve the existing tlsconfig
+    // ignore normal shutdown error
     go func() {
         if err := srv.ServeTLS(ln, "", ""); err != nil && err != http.ErrServerClosed {
             log.Fatalf("server error: %v", err)
         }
     }()
 
+    // create connection
     sigCh := make(chan os.Signal, 1)
+    // notify on container stop otherwise keep alive
     signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
     <-sigCh
-
     log.Println("shutting down...")
-    cancel()
 }
+
+// helpers
 
 func requireEnv(key string) string {
     v := os.Getenv(key)

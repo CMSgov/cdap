@@ -1,9 +1,9 @@
 # ---- Build Stage ----
-FROM golang:1.22-alpine AS builder
+FROM golang:1.26.5-alpine3.24 AS builder
 
 WORKDIR /build
 
-COPY src/go.mod ./
+COPY src/go.mod src/go.sum ./
 RUN go mod download
 
 COPY src/ .

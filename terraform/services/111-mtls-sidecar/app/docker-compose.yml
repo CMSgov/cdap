@@ -15,6 +15,7 @@ services:
       TLS_KEY_FILE: "/etc/certs/server.key"
       TLS_CA_FILE: "/etc/certs/ca.pem"
       REQUIRE_CLIENT_CERT: "true"
+      USE_LOCAL_CERTS: "true"
     volumes:
       - ./certs:/etc/certs:ro
     depends_on:
