@@ -1,6 +1,9 @@
 image:
   enabled: true # works with github workflow
-  test_command: "make test-coverage"
+  test_command: >-
+    pytest src/tests/
+    --cov=src
+    --cov-report=xml:/app/coverage/coverage.xml
 
 ecs:
   desired_count: 0
