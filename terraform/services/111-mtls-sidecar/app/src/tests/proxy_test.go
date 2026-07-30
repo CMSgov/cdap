@@ -7,7 +7,7 @@ import (
     "net/url"
     "testing"
 
-    "reverse-proxy/internal/middleware"
+    "mtls-sidecar/internal/middleware"
 )
 
 // spin up a real test HTTP server as the upstream and checks that the proxy forwards correctly

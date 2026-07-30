@@ -5,7 +5,7 @@ import (
     "net/http/httptest"
     "testing"
 
-    "reverse-proxy/internal/middleware"
+    "mtls-sidecar/internal/middleware"
 )
 
 // checks that the middleware does not swallow the request -- the upstream handler still runs

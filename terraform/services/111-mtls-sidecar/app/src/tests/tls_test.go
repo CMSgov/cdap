@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	tlsconfig "reverse-proxy/internal/tls"
+	tlsconfig "mtls-sidecar/internal/tls"
 )
 
 // check the config is built correctly when mTLS is enabled

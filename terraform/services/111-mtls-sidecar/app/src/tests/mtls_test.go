@@ -7,12 +7,13 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"testing"
 
-	"reverse-proxy/internal/middleware"
-	tlsconfig "reverse-proxy/internal/tls"
+	"mtls-sidecar/internal/middleware"
+	tlsconfig "mtls-sidecar/internal/tls"
 )
 
 // spin up a real mTLS server and check that a client presenting a valid
