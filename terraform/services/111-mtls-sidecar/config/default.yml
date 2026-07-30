@@ -2,8 +2,7 @@ image:
   enabled: true
   test_command: >-
     go test ./tests/... -v
-    -coverprofile=/app/coverage/coverage.out &&
-    sed -i 's|mtls-sidecar/||g' /app/coverage/coverage.out &&
-    go tool cover -xml=/app/coverage/coverage.out
-    -o /app/coverage/coverage.xml
+    -coverprofile=/app/coverage/coverage.out
+    -coverpkg=./... &&
+    sed -i 's|mtls-sidecar/||g' /app/coverage/coverage.out
   docker_target: tester
