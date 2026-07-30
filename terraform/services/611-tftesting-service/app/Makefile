@@ -1,4 +1,5 @@
-.PHONY: build up down logs test shell clean
+.PHONY: build up down logs logs-app logs-agent test test-coverage test-local \
+        shell clean requirements ecr-login push
 
 # Build the app image
 build:
@@ -24,9 +25,19 @@ logs-app:
 logs-agent:
 	docker compose logs -f datadog-agent
 
+# run tests locally
+test-local:
+	python -m pytest src/tests/ -v
+
 # Run tests inside the container
 test:
-	docker compose run --rm app python -m pytest tests/ -v
+	docker compose run --rm app pytest src/tests/ -v
+
+test-coverage:
+	docker compose run --rm app \
+	  /bin/sh -c "pytest src/tests/ \
+	    --cov=src \
+	    --cov-report=xml:/app/coverage/coverage.xml"
 
 # Open a shell in the app container
 shell:
@@ -36,14 +47,17 @@ shell:
 clean:
 	docker compose down --rmi local --volumes --remove-orphans
 
-AWS_DEFAULT_REGION     ?= us-east-1
-ENV            ?= test
-AWS_ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text)
-SERVICE_NAME   := tftesting-service
-ECR_REGISTRY   := $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_DEFAULT_REGION).amazonaws.com
-ECR_REPOSITORY := cdap-$(SERVICE_NAME)
-IMAGE_TAG      ?= $(shell git rev-parse HEAD)
-KMS_KEY_ARN := $(shell aws kms describe-key \
+
+AWS_DEFAULT_REGION ?= us-east-1
+ENV                ?= test
+SERVICE_NAME       := tftesting-service
+IMAGE_TAG          ?= $(shell git rev-parse HEAD)
+
+# only evaluated by targets that use them
+AWS_ACCOUNT_ID = $(shell aws sts get-caller-identity --query Account --output text)
+ECR_REGISTRY   = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_DEFAULT_REGION).amazonaws.com
+ECR_REPOSITORY = cdap-$(SERVICE_NAME)
+KMS_KEY_ARN    = $(shell aws kms describe-key \
   --key-id alias/cdap-$(ENV) \
   --query KeyMetadata.Arn \
   --output text)
@@ -67,15 +81,20 @@ ecr-login:
 
 push: ecr-login
 	@test -n "$(AWS_ACCOUNT_ID)" || (echo "ERROR: Not authenticated" && exit 1)
-	@docker build \
+	@BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
+	  if [ "$$BRANCH" != "main" ]; then \
+	    echo "WARNING: Pushing from branch $$BRANCH (not main)"; \
+	    read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1; \
+	  fi
+	DOCKER_BUILDKIT=0 docker build \
 	  -t $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG) \
 	  -f Dockerfile \
 	  .
-	@docker push $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG)
+	docker push $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG)
 	@aws ssm put-parameter \
 	  --name "/cdap/$(ENV)/nonsensitive/$(SERVICE_NAME)/image-tag" \
 	  --value "$(IMAGE_TAG)" \
 	  --type SecureString \
 	  --key-id "$(KMS_KEY_ARN)" \
 	  --overwrite
-	@echo "Pushed $(SERVICE_NAME):$(IMAGE_TAG)"
+	@echo "✅ Pushed $(SERVICE_NAME):$(IMAGE_TAG) to $(ENV)"

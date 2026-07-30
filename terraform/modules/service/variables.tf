@@ -14,6 +14,19 @@ variable "image" {
   default     = null
 }
 
+variable "image_tag_service_name_override" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    Override the service name used to construct the image tag SSM path.
+    Use when the ECR repo and image tag SSM parameter belong to a different
+    service than platform.service — for example, in test stacks that share
+    a common test image. The service referenced by image_tag must exist already.
+    Defaults to local.service_name.
+    Resolves to: /<app>/<env>/nonsensitive/<override>/image-tag
+  EOT
+}
+
 variable "ecr_repository_url" {
   description = <<-EOT
     ECR repository URL. If not provided, will be constructed from
@@ -22,6 +35,50 @@ variable "ecr_repository_url" {
   EOT
   type        = string
   default     = null
+}
+
+#
+# mTLS Sidecar
+#
+
+variable "enable_mtls_sidecar" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Retrieves the mTLS proxy sidecar from CDAP ECR.
+    This flag is required separately because the data source count must be
+    determinable at plan time, before the cert ARN is known.
+  EOT
+}
+
+variable "mtls_cert_arn" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    ARN of the PCA-backed private certificate used by the mTLS sidecar.
+    When provided, enables mtls sidecar.
+  EOT
+}
+
+variable "proxy_listen_port" {
+  type        = number
+  default     = 8443
+  description = <<-EOT
+    Port the mTLS proxy sidecar listens on.
+
+    Traffic flow when enable_mtls_sidecar = true:
+      ALB --> proxy container :proxy_listen_port (mTLS)
+          --> app container   :first port in port_mappings (plain HTTP, localhost)
+
+    The ALB target group is automatically pointed at this port.
+    The caller does not need to set alb_port_name.
+  EOT
+}
+
+variable "proxy_sidecar_upstream_port" {
+  type        = number
+  default     = 8080
+  description = "Port the primary app container listens on. The proxy forwards to this port on localhost."
 }
 
 # -------------------------------------------------------
@@ -214,6 +271,21 @@ variable "load_balancers" {
   default = null
 }
 
+
+#--------------------
+# ALB Connection
+#--------------------
+
+variable "enable_alb_integration" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Enable ALB integration. Must be set to true when alb_listener_arn is provided.
+    Required as a separate flag because count on data sources and resources
+    must be determinable at plan time, before the listener ARN is known.
+  EOT
+}
+
 variable "alb_listener_arn" {
   type        = string
   default     = null
@@ -223,6 +295,11 @@ variable "alb_listener_arn" {
     and wires the ECS service to the ALB.
     When null, no ALB integration is created.
   EOT
+
+  validation {
+    condition     = !var.enable_alb_integration || var.alb_listener_arn != null
+    error_message = "alb_listener_arn is required when enable_alb_integration = true."
+  }
 }
 
 variable "alb_port_name" {
@@ -270,7 +347,7 @@ variable "alb_priority" {
 
 variable "alb_path_patterns" {
   type        = list(string)
-  default     = null
+  default     = ["/*"]
   description = "Path pattern conditions for the ALB listener rule. Required when alb_listener_arn is set."
 }
 
@@ -305,14 +382,15 @@ variable "mount_points" {
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
-    app               = string
-    env               = string
-    kms_alias_primary = object({ target_key_arn = string })
-    primary_region    = object({ name = string })
-    private_subnets   = map(object({ id = string }))
-    service           = string
-    account_id        = string
-    vpc_id            = string
+    app                = string
+    env                = string
+    kms_alias_primary  = object({ target_key_arn = string })
+    primary_region     = object({ name = string })
+    private_subnets    = map(object({ id = string }))
+    service            = string
+    account_id         = string
+    vpc_id             = string
+    account_env_suffix = string
   })
 }
 
@@ -327,6 +405,17 @@ variable "port_mappings" {
     protocol           = optional(string)
   }))
   default = null
+
+  validation {
+    condition = (
+      !var.enable_mtls_sidecar ||
+      var.port_mappings != null && length([
+        for pm in coalesce(var.port_mappings, []) : pm
+        if pm.name != "proxy" && pm.containerPort != null
+      ]) > 0
+    )
+    error_message = "port_mappings must contain at least one non-proxy named port when enable_mtls_sidecar = true."
+  }
 }
 
 variable "health_check" {

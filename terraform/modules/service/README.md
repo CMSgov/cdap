@@ -1,7 +1,23 @@
 # CDAP ECS Cluster Module
+## Design Decisions
+
+- **ACM certificates are not created here.** Use the `acm_certificate`
+  module and pass ARNs explicitly. See architectural decision:
+  *Explicit `acm_certificate` Module Instantiation*.
+- **mTLS passphrase is ephemeral.** The proxy sidecar generates a
+  one-time in-memory passphrase at startup, exports the cert from ACM,
+  decrypts the private key to tmpfs, and discards the passphrase.
+  No passphrase is stored in SSM or Terraform state.
+- **ALB always targets the proxy when mTLS is enabled.** The proxy
+  container receives ALB traffic on `proxy_listen_port` and forwards
+  plain HTTP to the app container on localhost.
+- **Image tag is managed via SSM.** The build workflow writes the image
+  tag to SSM after a successful push. Terraform never overwrites it.
+
 
 ## Usage
-A demo example is available in services/tftesting/ecs-stack.
+A demo example is available in `services/611-tftesting-service`. 
+A demo with use of ALB and ACM is in `services/612-tftesting-ecs-stack-internal` and `services/612-tftesting-ecs-stack-public`
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
