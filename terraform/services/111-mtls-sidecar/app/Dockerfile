@@ -8,6 +8,9 @@ RUN go mod download
 
 COPY src/ .
 
+# create cert directory with ownership for distroless nonroot
+RUN mkdir -p /etc/certs && chown 65532:65532 /etc/certs && chmod 700 /etc/certs
+
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-w -s" \
     -o /proxy \
@@ -30,6 +33,7 @@ RUN mkdir -p /app/coverage
 FROM gcr.io/distroless/static:nonroot
 
 COPY --from=builder /proxy /proxy
+COPY --from=builder /etc/certs /etc/certs
 
 USER nonroot:nonroot
 
