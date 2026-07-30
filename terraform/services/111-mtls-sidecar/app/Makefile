@@ -61,7 +61,7 @@ test-coverage:
 	cd src && go test ./tests/... -v \
 		-coverprofile=/app/coverage/coverage.out && \
 	sed -i 's|mtls-sidecar/||g' /app/coverage/coverage.out && \
-	go tool cover -xml=/app/coverage/coverage.out -o /app/coverage/coverage.xml
+	go tool cove-r -xml=/app/coverage/coverage.out -o /app/coverage/coverage.xml
 
 clean:
 	docker compose -f $(COMPOSE_FILE) down --rmi all
