@@ -1,8 +1,6 @@
 image:
   enabled: true # works with github workflow
-  test_command: >-
-    coverage run -m pytest src/tests/ &&
-    coverage xml
+  test_command: "make test-coverage"
 
 ecs:
   desired_count: 0

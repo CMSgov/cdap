@@ -114,8 +114,21 @@ def test_health_handler_returns_200():
 
     handler.send_response.assert_called_once_with(200)
     handler.wfile.write.assert_called_once_with(b"OK")
+
+def test_health_handler_returns_200_for_ping():
+    """HealthHandler should return 200 for /ping with pong body."""
+    handler = HealthHandler.__new__(HealthHandler)
+    handler.path = "/ping"
+    handler.send_response = MagicMock()
+    handler.end_headers   = MagicMock()
+    handler.wfile         = MagicMock()
+
+    handler.do_GET()
+
+    handler.send_response.assert_called_once_with(200)
     written = handler.wfile.write.call_args[0][0]
     assert b"pong" in written
+
 
 def test_health_handler_returns_404():
     """HealthHandler should return 404 for unknown paths."""
@@ -158,8 +171,9 @@ def test_call_downstream_skips_when_no_url(mock_tracer):
 @patch("main.DOWNSTREAM_URL", "http://tftesting-b:8081/ping")
 @patch("datadog.statsd.gauge")
 @patch("main.tracer")
+@patch("main.HTTPPropagator")
 @patch("urllib.request.urlopen")
-def test_call_downstream_success(mock_urlopen, mock_tracer, mock_gauge):
+def test_call_downstream_success(mock_urlopen, mock_propagator, mock_tracer, mock_gauge):
     """call_downstream should emit success metric on 200 response."""
     mock_span = MagicMock()
     mock_tracer.trace.return_value.__enter__ = MagicMock(return_value=mock_span)
@@ -189,8 +203,9 @@ def test_call_downstream_success(mock_urlopen, mock_tracer, mock_gauge):
 @patch("main.DOWNSTREAM_URL", "http://tftesting-b:8081/ping")
 @patch("datadog.statsd.gauge")
 @patch("main.tracer")
+@patch("main.HTTPPropagator")
 @patch("urllib.request.urlopen")
-def test_call_downstream_failure(mock_urlopen, mock_tracer, mock_gauge):
+def test_call_downstream_failure(mock_urlopen, mock_propagator, mock_tracer, mock_gauge):
     """call_downstream should emit failure metric when request fails."""
     mock_span = MagicMock()
     mock_tracer.trace.return_value.__enter__ = MagicMock(return_value=mock_span)
@@ -217,8 +232,9 @@ def test_call_downstream_failure(mock_urlopen, mock_tracer, mock_gauge):
 @patch("main.DOWNSTREAM_URL", "http://tftesting-b:8081/ping")
 @patch("datadog.statsd.gauge")
 @patch("main.tracer")
+@patch("main.HTTPPropagator")
 @patch("urllib.request.urlopen")
-def test_call_downstream_sets_span_tags(mock_urlopen, mock_tracer, mock_gauge):
+def test_call_downstream_sets_span_tags(mock_urlopen, mock_propagator, mock_tracer, mock_gauge):
     """call_downstream should set downstream URL and env tags on span."""
     mock_span = MagicMock()
     mock_tracer.trace.return_value.__enter__ = MagicMock(return_value=mock_span)

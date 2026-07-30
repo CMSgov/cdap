@@ -11,6 +11,7 @@ os.environ.setdefault("DD_TRACE_AGENT_URL", "http://localhost:8126")
 
 import ddtrace.auto
 from ddtrace import tracer
+from ddtrace.propagation.http import HTTPPropagator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -86,8 +87,7 @@ def call_downstream():
         try:
             req = urllib.request.Request(DOWNSTREAM_URL)
 
-            # Inject DD trace headers so the trace is connected end-to-end
-            tracer.inject(span.context, format.HTTP_HEADERS, req.headers)
+            HTTPPropagator.inject(span.context, req.headers)
 
             with urllib.request.urlopen(req, timeout=5) as resp:
                 body = resp.read().decode()
