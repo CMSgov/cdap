@@ -1,6 +1,22 @@
-COMPOSE_FILE = docker-compose.yml
+.PHONY: build run down test test-unit clean certs ecr-login push
 
-.PHONY: build run down test test-unit clean certs
+COMPOSE_FILE := docker-compose.yml
+
+AWS_DEFAULT_REGION ?= us-east-1
+ENV                ?= test
+SERVICE_NAME       := mtls-sidecar
+IMAGE_TAG          ?= $(shell git rev-parse HEAD)
+CLUSTER_NAME       := cdap-test-mtls-sidecar
+
+# Only evaluated by targets that use them
+AWS_ACCOUNT_ID = $(shell aws sts get-caller-identity --query Account --output text)
+ECR_REGISTRY   = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_DEFAULT_REGION).amazonaws.com
+ECR_REPOSITORY = cdap-$(SERVICE_NAME)
+KMS_KEY_ARN    = $(shell aws kms describe-key \
+  --key-id alias/cdap-$(ENV) \
+  --query KeyMetadata.Arn \
+  --output text)
+
 
 certs:
 	mkdir -p certs
@@ -49,3 +65,35 @@ test-coverage:
 
 clean:
 	docker compose -f $(COMPOSE_FILE) down --rmi all
+
+# -------------------------------------------------------
+# AWS / ECR Targets (LOCAL USE ONLY)
+# GitHub Actions uses OIDC + secrets for ECR access.
+# -------------------------------------------------------
+
+## Authenticate Docker with ECR
+ecr-login:
+	aws ecr get-login-password --region $(AWS_DEFAULT_REGION) \
+	  | docker login --username AWS --password-stdin $(ECR_REGISTRY)
+
+## Build, push image to ECR, and update SSM image tag
+push: ecr-login
+	@test -n "$(AWS_ACCOUNT_ID)" || (echo "ERROR: Not authenticated" && exit 1)
+	@BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
+	  if [ "$$BRANCH" != "main" ]; then \
+	    echo "WARNING: Pushing from branch $$BRANCH (not main)"; \
+	    read -p "Continue? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1; \
+	  fi
+	DOCKER_BUILDKIT=1 docker build \
+	  -t $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG) \
+	  -f Dockerfile \
+	  .
+	docker push $(ECR_REGISTRY)/$(ECR_REPOSITORY):$(IMAGE_TAG)
+	@aws ssm put-parameter \
+	  --name "/cdap/$(ENV)/nonsensitive/$(SERVICE_NAME)/image-tag" \
+	  --value "$(IMAGE_TAG)" \
+	  --type SecureString \
+	  --key-id "$(KMS_KEY_ARN)" \
+	  --overwrite
+	@echo "✅ Pushed $(SERVICE_NAME):$(IMAGE_TAG) to $(ENV)"
+
