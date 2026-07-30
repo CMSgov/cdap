@@ -1,0 +1,4 @@
+image:
+  enabled: true
+  test_command: "make test-coverage"
+  docker_target: ""

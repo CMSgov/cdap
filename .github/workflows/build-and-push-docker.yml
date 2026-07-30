@@ -71,10 +71,13 @@ jobs:
             exit 0
           }
 
+
           add_entry() {
             local svc="$1" account="$2"
-            local svc_name role_env rep_env cfg test_cmd docker_target
+            local svc_name role_env rep_env cfg default_cfg merged test_cmd docker_target
+
             svc_name=$(echo "$svc" | sed 's/^[0-9]*-//')
+
             if [[ "$account" == "prod" ]]; then
               role_env="prod"
               rep_env="prod"
@@ -82,15 +85,32 @@ jobs:
               role_env="test"
               rep_env="test"
             fi
+
             cfg="terraform/services/$svc/config/${rep_env}.yml"
-            [ ! -f "$cfg" ] && return
-            [ "$(yq '.image.enabled // true' "$cfg")" != "true" ] && {
+            default_cfg="terraform/services/$svc/config/default.yml"
+
+            # require at least one of default.yml or env config to exist
+            [ ! -f "$cfg" ] && [ ! -f "$default_cfg" ] && return
+
+            # merge default.yml with env config — env values win on conflict
+            if [ -f "$default_cfg" ] && [ -f "$cfg" ]; then
+              merged=$(yq ". as \$env | load(\"$default_cfg\") * \$env" "$cfg")
+            elif [ -f "$cfg" ]; then
+              merged=$(cat "$cfg")
+            else
+              merged=$(cat "$default_cfg")
+            fi
+
+            # check image.enabled — default true if not set
+            [ "$(echo "$merged" | yq '.image.enabled // true')" != "true" ] && {
               echo "$svc ($account): image.enabled is false — skipping"; return
             }
-            test_cmd=$(yq '.image.test_command // "echo \"no tests defined\""' "$cfg")
-            docker_target=$(yq '.image.docker_target // ""' "$cfg")
 
-            ENTRIES=$(echo "$ENTRIES" | jq -c --argjson e "$(jq -cn \
+            test_cmd=$(echo "$merged" | yq '.image.test_command // "echo \"no tests defined\""')
+            docker_target=$(echo "$merged" | yq '.image.docker_target // ""')
+
+            # build entry — split into two steps for readability
+            entry=$(jq -cn \
               --arg svc          "$svc"               \
               --arg svc_name     "$svc_name"          \
               --arg account      "$account"           \
@@ -100,8 +120,9 @@ jobs:
               --arg docker_target "$docker_target"    \
               '{service: $svc, service_name: $svc_name, account: $account,
                 role_env: $role_env, test_command: $test_cmd, app: $app,
-                docker_target: $docker_target}'
-            )" '. + [$e]')
+                docker_target: $docker_target}')
+
+            ENTRIES=$(echo "$ENTRIES" | jq -c --argjson e "$entry" '. + [$e]')
           }
 
           # MAIN
