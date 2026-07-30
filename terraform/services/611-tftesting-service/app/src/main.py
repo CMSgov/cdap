@@ -106,7 +106,7 @@ def call_downstream():
         except Exception as e:
             span.set_tag("error", True)
             span.set_tag("error.message", str(e))
-            logger.error(f"Service Connect call failed: {e}")
+            logger.exception(f"Service Connect call failed: {e}")
             emit_metric(
                 "cdap.service_connect.call",
                 value=0.0,
