@@ -87,7 +87,7 @@ def call_downstream():
             req = urllib.request.Request(DOWNSTREAM_URL)
 
             # Inject DD trace headers so the trace is connected end-to-end
-            tracer.inject(span.context, Format.HTTP_HEADERS, req.headers)
+            tracer.inject(span.context, format.HTTP_HEADERS, req.headers)
 
             with urllib.request.urlopen(req, timeout=5) as resp:
                 body = resp.read().decode()

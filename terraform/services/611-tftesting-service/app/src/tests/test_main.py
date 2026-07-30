@@ -44,7 +44,7 @@ def test_emit_metric_defaults_empty_tags(mock_gauge):
 # run_trace_example tests
 # -------------------------------------------------------
 
-@patch("main.call_downstream")   # 👈 add this patch
+@patch("main.call_downstream")
 @patch("datadog.statsd.gauge")
 @patch("main.tracer")
 def test_run_trace_example_creates_span(mock_tracer, mock_gauge, mock_downstream):
@@ -105,7 +105,7 @@ def test_run_trace_example_emits_metric(mock_tracer, mock_gauge, mock_downstream
 def test_health_handler_returns_200():
     """HealthHandler should return 200 for /health."""
     handler = HealthHandler.__new__(HealthHandler)
-    handler.path = "/ping"
+    handler.path = "/health"
     handler.send_response = MagicMock()
     handler.end_headers   = MagicMock()
     handler.wfile         = MagicMock()
