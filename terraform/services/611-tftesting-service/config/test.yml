@@ -1,9 +1,8 @@
 image:
   enabled: true # works with github workflow
   test_command: >-
-    coverage run --source=src -m pytest src/tests/ &&
-    coverage xml -o /app/coverage/coverage.xml &&
-    sed -i 's|/app/||g' /app/coverage/coverage.xml
+    coverage run -m pytest src/tests/ &&
+    coverage xml
 
 ecs:
   desired_count: 0

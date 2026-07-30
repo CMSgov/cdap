@@ -1,0 +1,6 @@
+[run]
+source = src
+relative_files = True
+
+[xml]
+output = /app/coverage/coverage.xml
