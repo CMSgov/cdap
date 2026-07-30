@@ -26,8 +26,6 @@ COPY src/ .
 # coverage output dir
 RUN mkdir -p /app/coverage
 
-ENTRYPOINT ["sh", "-c"]
-
 #RUNTIME
 FROM gcr.io/distroless/static:nonroot
 
