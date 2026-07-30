@@ -156,7 +156,7 @@ locals {
     }
 
     healthCheck = {
-      command     = ["CMD-SHELL", "curl -f http://localhost:8081/health || exit 1"]
+      command     = ["CMD-SHELL", "curl -f http://localhost:${var.proxy_listen_port}/health || exit 1"]
       interval    = 30
       retries     = 3
       startPeriod = 15
