@@ -119,12 +119,17 @@ jobs:
           echo "Coverage dir after run:"
           ls -la /tmp/coverage/
 
-          if [ ! -f /tmp/coverage/coverage.xml ]; then
-            echo "ERROR: coverage.xml not found in /tmp/coverage/"
+          # find whichever coverage file was produced — xml (Python) or out (Go)
+          COVERAGE_FILE=$(find /tmp/coverage -maxdepth 1 -name "coverage.*" | head -1)
+          
+          if [ -z "$COVERAGE_FILE" ]; then
+            echo "ERROR: no coverage file found in /tmp/coverage/"
             exit 1
           fi
-
-          cp /tmp/coverage/coverage.xml ${{ inputs.source_path }}/coverage.xml
+          echo "Found coverage file: $COVERAGE_FILE"
+          mkdir -p ${{ inputs.source_path }}/src
+          
+          cp "$COVERAGE_FILE" "${{ inputs.source_path }}/src/$(basename $COVERAGE_FILE)"
 
       - name: Retrieve credentials
         uses: ./actions/aws-params-env-action
