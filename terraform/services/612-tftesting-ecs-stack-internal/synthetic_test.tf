@@ -5,7 +5,6 @@ module "datadog_synthetics" {
   env                  = module.platform.env
   notify               = "@webhook-slack-${module.platform.app}"
   min_failure_duration = 60
-
   tests = [
     {
       name    = "${module.platform.service}-alb-health"

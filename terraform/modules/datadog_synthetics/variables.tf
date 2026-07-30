@@ -24,6 +24,13 @@ variable "min_failure_duration" {
   type        = number
 }
 
+variable "accept_self_signed" {
+  description = "Use sparingly. Allow the test to pass even if using a self signed cert."
+  type        = bool
+  default = false
+}
+
+
 variable "tests" {
   description = <<-EOT
     List of synthetic tests to create. Each test is automatically routed through the

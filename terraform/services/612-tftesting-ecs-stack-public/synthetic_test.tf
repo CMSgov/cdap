@@ -1,11 +1,13 @@
 module "datadog_synthetics" {
-  source = "../../modules/datadog_synthetic"
+  source = "../../modules/datadog_synthetics"
 
   app                  = "cdap"
   env                  = var.platform.env
   notify               = "@webhook-cdap"
   min_failure_duration = 0
   shadow_mode          = false
+  accept_self_signed = true
+
 
   tests = [
     {
