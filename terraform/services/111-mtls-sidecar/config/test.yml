@@ -1,0 +1,10 @@
+image:
+  enabled: true
+  test_command: >-
+    go test ./tests/...
+    -v
+    -coverprofile=/app/coverage/coverage.out &&
+    go tool cover
+    -xml=/app/coverage/coverage.out
+    -o /app/coverage/coverage.xml
+  docker_target: tester
