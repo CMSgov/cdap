@@ -2,9 +2,7 @@ package acm
 
 import (
     "context"
-    "crypto/hex"
     "crypto/tls"
-    "crypto/rand"
     "encoding/pem"
     "fmt"
     "os"
@@ -43,7 +41,6 @@ func New(ctx context.Context, certARN string, paths CertPaths) (*Client, error) 
     }, nil
 }
 
-// generate a passphrase that's random and sufficient
 // export the cert from ACM and writes it to disk
 func (c *Client) FetchAndStore(ctx context.Context) error {
     // NEVER LOG, contains private key material
