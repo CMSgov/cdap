@@ -8,8 +8,7 @@ import (
     "reverse-proxy/internal/middleware"
 )
 
-// TestLoggingMiddlewarePassesThrough checks that the middleware
-// does not swallow the request -- the upstream handler still runs
+// checks that the middleware does not swallow the request -- the upstream handler still runs
 func TestLoggingMiddlewarePassesThrough(t *testing.T) {
     // Create a simple upstream handler that writes a 200
     upstream := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -35,8 +34,7 @@ func TestLoggingMiddlewarePassesThrough(t *testing.T) {
     }
 }
 
-// TestLoggingMiddlewareCapturesStatus checks that a non-200
-// status from upstream is correctly passed through
+// check that a non-200 status from upstream is correctly passed through
 func TestLoggingMiddlewareCapturesStatus(t *testing.T) {
     upstream := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusNotFound)
@@ -54,8 +52,7 @@ func TestLoggingMiddlewareCapturesStatus(t *testing.T) {
     }
 }
 
-// TestLoggingMiddlewareDefaultStatus checks that if the upstream
-// never calls WriteHeader, we default to 200
+// check that if the upstream never calls WriteHeader, we default to 200
 func TestLoggingMiddlewareDefaultStatus(t *testing.T) {
     upstream := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         // Deliberately never calls WriteHeader -- Go defaults to 200

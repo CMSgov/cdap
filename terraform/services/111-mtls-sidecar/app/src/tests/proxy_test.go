@@ -10,8 +10,7 @@ import (
     "reverse-proxy/internal/middleware"
 )
 
-// TestProxyForwardsToUpstream spins up a real test HTTP server
-// as the upstream and checks that the proxy forwards correctly
+// spin up a real test HTTP server as the upstream and checks that the proxy forwards correctly
 func TestProxyForwardsToUpstream(t *testing.T) {
     // Create a fake upstream server
     upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +19,7 @@ func TestProxyForwardsToUpstream(t *testing.T) {
     }))
     defer upstream.Close()
 
-    // Point the reverse proxy at our fake upstream
+    // point the reverse proxy at our fake upstream
     upstreamURL, err := url.Parse(upstream.URL)
     if err != nil {
         t.Fatalf("failed to parse upstream URL: %v", err)
@@ -29,7 +28,7 @@ func TestProxyForwardsToUpstream(t *testing.T) {
     proxy := httputil.NewSingleHostReverseProxy(upstreamURL)
     handler := middleware.Logging(proxy)
 
-    // Create a fake request to the proxy
+    // create a fake request to the proxy
     rec := httptest.NewRecorder()
     req := httptest.NewRequest(http.MethodGet, "/", nil)
 
@@ -44,8 +43,7 @@ func TestProxyForwardsToUpstream(t *testing.T) {
     }
 }
 
-// TestProxyForwardsDifferentPaths checks that paths are
-// forwarded to the upstream unchanged
+// check that paths are forwarded to the upstream unchanged
 func TestProxyForwardsDifferentPaths(t *testing.T) {
     upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         // Echo the path back so we can verify it arrived correctly
