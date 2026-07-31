@@ -2,9 +2,13 @@ package acm
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/asn1"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
@@ -13,6 +17,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/acm"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 // CertPaths gathers file paths where fetched certs are written
@@ -51,57 +56,184 @@ func generatePassphrase() ([]byte, error) {
 	return []byte(hex.EncodeToString(b)), nil
 }
 
-// decryptPrivateKey decrypts the private key returned by ACM ExportCertificate.
-// Logs the PEM block type to help identify the correct decryption path.
+// ASN.1 structures for PKCS#8 encrypted private key (RFC 5958)
+type encryptedPrivateKeyInfo struct {
+	EncryptionAlgorithm encryptionAlgorithmIdentifier
+	EncryptedData       []byte
+}
+
+type encryptionAlgorithmIdentifier struct {
+	Algorithm  asn1.ObjectIdentifier
+	Parameters asn1.RawValue
+}
+
+// PBES2 parameters (RFC 8018)
+type pbes2Params struct {
+	KeyDerivationFunc algorithmIdentifierWithParams
+	EncryptionScheme  algorithmIdentifierWithParams
+}
+
+type algorithmIdentifierWithParams struct {
+	Algorithm  asn1.ObjectIdentifier
+	Parameters asn1.RawValue
+}
+
+// PBKDF2 parameters
+type pbkdf2Params struct {
+	Salt           []byte
+	IterationCount int
+	PRF            algorithmIdentifierWithParams `asn1:"optional"`
+}
+
+// AES-CBC parameters (just an IV)
+type aesCBCParams struct {
+	IV []byte
+}
+
+// OIDs we need
+var (
+	oidPBES2        = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 5, 13}
+	oidPBKDF2       = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 5, 12}
+	oidAES256CBC    = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 1, 42}
+	oidAES128CBC    = asn1.ObjectIdentifier{2, 16, 840, 1, 101, 3, 4, 1, 2}
+	oidHMACSHA256   = asn1.ObjectIdentifier{1, 2, 840, 113549, 2, 9}
+)
+
+// decryptPrivateKey decrypts an ENCRYPTED PRIVATE KEY PEM block
+// as returned by ACM ExportCertificate using pure standard library
 func decryptPrivateKey(encryptedPEM []byte, passphrase []byte) ([]byte, error) {
 	block, _ := pem.Decode(encryptedPEM)
 	if block == nil {
 		return nil, fmt.Errorf("failed to decode PEM block from private key")
 	}
 
-	// DEBUG — log block type and headers so we know exactly what ACM returned
-	// Remove this log once decryption is confirmed working
-	log.Printf("DEBUG private key PEM block type: %q headers: %v", block.Type, block.Headers)
+	log.Printf("private key PEM block type: %q", block.Type)
 
 	switch block.Type {
-	case "ENCRYPTED PRIVATE KEY":
-		// PKCS#8 encrypted — ACM ExportCertificate typically returns this format
-		// We need an external package to handle this — log and return error for now
-		// so we can confirm the block type before adding the right dependency
-		return nil, fmt.Errorf(
-			"PKCS#8 encrypted key detected (block type: %q) — needs pkcs8 decryption",
-			block.Type,
-		)
+	case "PRIVATE KEY":
+		// Already plaintext PKCS#8 — no decryption needed
+		return encryptedPEM, nil
 
 	case "RSA PRIVATE KEY":
-		// PKCS#1 — may be encrypted with DEK-Info headers or plaintext
 		if len(block.Headers) > 0 {
-			// Old-style PEM encryption with DEK-Info — use x509.DecryptPEMBlock
+			// PKCS#1 encrypted with DEK-Info
 			decryptedDER, err := x509.DecryptPEMBlock(block, passphrase)
 			if err != nil {
-				return nil, fmt.Errorf("failed to decrypt PKCS#1 private key: %w", err)
+				return nil, fmt.Errorf("failed to decrypt PKCS#1 key: %w", err)
 			}
-			plaintext := pem.EncodeToMemory(&pem.Block{
+			return pem.EncodeToMemory(&pem.Block{
 				Type:  "RSA PRIVATE KEY",
 				Bytes: decryptedDER,
-			})
-			if plaintext == nil {
-				return nil, fmt.Errorf("failed to encode decrypted RSA private key to PEM")
-			}
-			return plaintext, nil
+			}), nil
 		}
-		// Already plaintext — return as-is
-		log.Printf("DEBUG private key is plaintext PKCS#1 RSA — no decryption needed")
 		return encryptedPEM, nil
 
-	case "PRIVATE KEY":
-		// PKCS#8 plaintext — no decryption needed
-		log.Printf("DEBUG private key is plaintext PKCS#8 — no decryption needed")
-		return encryptedPEM, nil
+	case "ENCRYPTED PRIVATE KEY":
+		// PKCS#8 encrypted — decrypt manually via ASN.1
+		der, err := decryptPKCS8(block.Bytes, passphrase)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrypt PKCS#8 key: %w", err)
+		}
+
+		plaintext := pem.EncodeToMemory(&pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: der,
+		})
+		if plaintext == nil {
+			return nil, fmt.Errorf("failed to encode plaintext key to PEM")
+		}
+		return plaintext, nil
 
 	default:
 		return nil, fmt.Errorf("unrecognised PEM block type: %q", block.Type)
 	}
+}
+
+// decryptPKCS8 decrypts a PKCS#8 EncryptedPrivateKeyInfo DER blob
+// using PBES2 + PBKDF2 + AES-CBC as used by ACM ExportCertificate
+func decryptPKCS8(der []byte, passphrase []byte) ([]byte, error) {
+	var epki encryptedPrivateKeyInfo
+	if _, err := asn1.Unmarshal(der, &epki); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal EncryptedPrivateKeyInfo: %w", err)
+	}
+
+	if !epki.EncryptionAlgorithm.Algorithm.Equal(oidPBES2) {
+		return nil, fmt.Errorf("unsupported encryption algorithm: %v", epki.EncryptionAlgorithm.Algorithm)
+	}
+
+	// Parse PBES2 parameters
+	var pbes2 pbes2Params
+	if _, err := asn1.Unmarshal(epki.EncryptionAlgorithm.Parameters.FullBytes, &pbes2); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal PBES2 params: %w", err)
+	}
+
+	if !pbes2.KeyDerivationFunc.Algorithm.Equal(oidPBKDF2) {
+		return nil, fmt.Errorf("unsupported KDF: %v", pbes2.KeyDerivationFunc.Algorithm)
+	}
+
+	// Parse PBKDF2 parameters
+	var kdfParams pbkdf2Params
+	if _, err := asn1.Unmarshal(pbes2.KeyDerivationFunc.Parameters.FullBytes, &kdfParams); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal PBKDF2 params: %w", err)
+	}
+
+	// Determine key size from encryption scheme
+	var keyLen int
+	switch {
+	case pbes2.EncryptionScheme.Algorithm.Equal(oidAES256CBC):
+		keyLen = 32
+	case pbes2.EncryptionScheme.Algorithm.Equal(oidAES128CBC):
+		keyLen = 16
+	default:
+		return nil, fmt.Errorf("unsupported encryption scheme: %v", pbes2.EncryptionScheme.Algorithm)
+	}
+
+	// Derive key using PBKDF2-SHA256
+	key := pbkdf2.Key(passphrase, kdfParams.Salt, kdfParams.IterationCount, keyLen, sha256.New)
+
+	// Parse AES-CBC IV
+	var iv []byte
+	if _, err := asn1.Unmarshal(pbes2.EncryptionScheme.Parameters.FullBytes, &iv); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal AES IV: %w", err)
+	}
+
+	// Decrypt using AES-CBC
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
+	}
+
+	if len(epki.EncryptedData)%aes.BlockSize != 0 {
+		return nil, fmt.Errorf("encrypted data is not a multiple of AES block size")
+	}
+
+	decrypted := make([]byte, len(epki.EncryptedData))
+	cipher.NewCBCDecrypter(block, iv).CryptBlocks(decrypted, epki.EncryptedData)
+
+	// Remove PKCS#7 padding
+	decrypted, err = removePKCS7Padding(decrypted)
+	if err != nil {
+		return nil, fmt.Errorf("failed to remove padding: %w", err)
+	}
+
+	return decrypted, nil
+}
+
+// removePKCS7Padding removes PKCS#7 padding from decrypted data
+func removePKCS7Padding(data []byte) ([]byte, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("empty data")
+	}
+	padLen := int(data[len(data)-1])
+	if padLen == 0 || padLen > aes.BlockSize {
+		return nil, fmt.Errorf("invalid padding length: %d", padLen)
+	}
+	for _, b := range data[len(data)-padLen:] {
+		if int(b) != padLen {
+			return nil, fmt.Errorf("invalid padding bytes")
+		}
+	}
+	return data[:len(data)-padLen], nil
 }
 
 // FetchAndStore exports the cert from ACM and writes it to disk
