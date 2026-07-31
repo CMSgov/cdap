@@ -60,6 +60,12 @@ variable "mtls_cert_arn" {
   EOT
 }
 
+variable "mtls_domain" {
+  description = "FQDN the mTLS cert is issued for. Used by the startup self-test for hostname verification."
+  type        = string
+  default     = null
+}
+
 variable "proxy_listen_port" {
   type        = number
   default     = 8443
