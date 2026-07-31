@@ -1,5 +1,5 @@
 # Build
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
 
 WORKDIR /build
 
@@ -14,7 +14,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
     ./cmd/proxy
 
 # Test
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS tester
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS tester
 
 WORKDIR /app
 

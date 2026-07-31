@@ -11,13 +11,16 @@ services:
     environment:
       UPSTREAM_URL: "http://upstream:8080"
       LISTEN_PORT: "8443"
-      TLS_CERT_FILE: "/etc/certs/server.crt"
-      TLS_KEY_FILE: "/etc/certs/server.key"
-      TLS_CA_FILE: "/etc/certs/ca.pem"
+      TLS_CERT_FILE: "/certs/server.crt"
+      TLS_KEY_FILE: "/certs/server.key"
+      TLS_CA_FILE: "/certs/ca.pem"
       REQUIRE_CLIENT_CERT: "true"
       USE_LOCAL_CERTS: "true"
+      SELFTEST_SERVER_NAME: "localhost"   # local cert has localhost SAN
+      SELFTEST_CERT_FILE: "/certs/client.crt"
+      SELFTEST_KEY_FILE: "/certs/client.key"
     volumes:
-      - ./certs:/etc/certs:ro
+      - ./certs:/certs:ro
     depends_on:
       - upstream
 
