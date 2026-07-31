@@ -6,9 +6,27 @@ locals {
   # Networking
   ###############
 
-  # ALB integration is active when a listener ARN is provided
   enable_alb_integration = var.enable_alb_integration && var.alb_listener_arn != null
-  # Resolve the ALB target port by name — caller must provide alb_port_name if using ALB
+
+  # When mTLS is enabled the target group must use HTTPS — proxy is a TLS server
+  effective_tg_protocol = coalesce(
+    local.enable_mtls_sidecar ? "HTTPS" : null,
+    var.alb_target_group_protocol,
+    "HTTP"
+  )
+
+  # ALB health check hits the plain HTTP health port — not the mTLS port
+  effective_health_check_protocol = local.enable_mtls_sidecar ? "HTTP" : coalesce(
+    var.alb_health_check.protocol,
+    "HTTP"
+  )
+
+  # ALB health check targets the dedicated plain HTTP health port
+  effective_health_check_port = local.enable_mtls_sidecar ? tostring(var.proxy_healthcheck_port) : coalesce(
+    var.alb_health_check.port,
+    "traffic-port"
+  )
+
   proxy_upstream_port = var.enable_mtls_sidecar ? try(
     [for pm in coalesce(var.port_mappings, []) : pm.containerPort
       if pm.name != "proxy" && pm.containerPort != null
@@ -16,20 +34,27 @@ locals {
     null
   ) : null
 
-  proxy_port_mapping = local.enable_mtls_sidecar ? [{
-    name          = "proxy"
-    containerPort = var.proxy_listen_port
-    hostPort      = var.proxy_listen_port
-    protocol      = "tcp"
-  }] : []
+  # Port mappings for the proxy sidecar — mTLS port + dedicated health port
+  proxy_port_mapping = local.enable_mtls_sidecar ? [
+    {
+      name          = "proxy"
+      containerPort = var.proxy_listen_port # mTLS - strict, no exceptions
+      hostPort      = var.proxy_listen_port
+      protocol      = "tcp"
+    },
+    {
+      name          = "health"
+      containerPort = var.proxy_healthcheck_port # plain HTTP — health checks only
+      hostPort      = var.proxy_healthcheck_port
+      protocol      = "tcp"
+    }
+  ] : []
 
-  # Merge proxy port into the existing port_mappings for the app container
   effective_port_mappings = concat(
     coalesce(var.port_mappings, []),
     local.proxy_port_mapping
   )
 
-  # When proxy is enabled, ALB targets the proxy port automatically
   effective_alb_port_name     = local.enable_mtls_sidecar ? "proxy" : var.alb_port_name
   alb_container_port          = local.enable_alb_integration && local.effective_alb_port_name != null ? try(local.port_map[local.effective_alb_port_name], null) : null
   use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
@@ -118,13 +143,15 @@ locals {
     essential              = true
     readonlyRootFilesystem = true
 
-    mountPoints = [
-      {
-        sourceVolume  = "proxy-certs"
-        containerPath = "/etc/certs"
-        readOnly      = false
-      }
-    ]
+    linuxParameters = {
+      tmpfs = [
+        {
+          containerPath = "/run/certs"
+          size          = 2 # 2MB
+          mountOptions  = ["noexec", "nosuid", "nodev"]
+        }
+      ]
+    }
 
     portMappings = local.proxy_port_mapping
 
@@ -143,7 +170,11 @@ locals {
       {
         name  = "REQUIRE_CLIENT_CERT"
         value = "true"
-      }
+      },
+      { name = "TLS_CERT_FILE", value = "/run/certs/cert.pem" },
+      { name = "TLS_KEY_FILE", value = "/run/certs/key.pem" },
+      { name = "TLS_CA_FILE", value = "/run/certs/ca.pem" },
+      { name = "SELFTEST_SERVER_NAME", value = var.mtls_domain }
     ]
 
     logConfiguration = {
@@ -156,7 +187,7 @@ locals {
     }
 
     healthCheck = {
-      command     = ["CMD-SHELL", "curl -f http://localhost:${var.proxy_listen_port}/health || exit 1"]
+      command     = ["CMD-SHELL", "curl -fk https://localhost:${var.proxy_healthcheck_port}/health || exit 1"]
       interval    = 30
       retries     = 3
       startPeriod = 15
@@ -305,13 +336,6 @@ resource "aws_ecs_task_definition" "this" {
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = var.cpu_architecture
-  }
-
-  dynamic "volume" {
-    for_each = local.enable_mtls_sidecar ? ["proxy-certs"] : []
-    content {
-      name = volume.value
-    }
   }
 
   dynamic "volume" {
@@ -475,7 +499,7 @@ resource "aws_vpc_security_group_egress_rule" "https" {
 
 locals {
   # AWS target group name limit is 32 characters
-  target_group_name = substr("${local.service_name_full}-tg", 0, 32)
+  target_group_name = "${substr("${local.service_name_full}-tg", 0, 26)}-${substr(lower(local.effective_tg_protocol), 0, 6)}"
 }
 
 resource "aws_lb_target_group" "this" {
@@ -483,14 +507,14 @@ resource "aws_lb_target_group" "this" {
 
   name        = local.target_group_name
   port        = local.alb_container_port
-  protocol    = var.alb_target_group_protocol
+  protocol    = local.effective_tg_protocol
   vpc_id      = var.platform.vpc_id
   target_type = "ip"
 
   health_check {
     path                = var.alb_health_check.path
-    port                = var.alb_health_check.port
-    protocol            = var.alb_health_check.protocol
+    port                = local.effective_health_check_port
+    protocol            = local.effective_health_check_protocol
     matcher             = var.alb_health_check.matcher
     interval            = var.alb_health_check.interval
     timeout             = var.alb_health_check.timeout
@@ -498,14 +522,11 @@ resource "aws_lb_target_group" "this" {
     unhealthy_threshold = var.alb_health_check.unhealthy_threshold
   }
 
-  tags = {
-    Name = "${local.service_name_full}-tg"
-  }
-
   lifecycle {
+    create_before_destroy = true
     precondition {
       condition     = local.enable_mtls_sidecar || var.alb_port_name != null
-      error_message = "alb_port_name is required when alb_listener_arn is set and enable_mtls_sidecar is false. Set it to the name of the port mapping in port_mappings that should receive ALB traffic."
+      error_message = "alb_port_name is required when alb_listener_arn is set and enable_mtls_sidecar is false."
     }
 
     precondition {
@@ -514,13 +535,15 @@ resource "aws_lb_target_group" "this" {
         var.alb_port_name == null ||
         contains(keys(local.port_map), var.alb_port_name)
       )
-      error_message = "alb_port_name '${coalesce(var.alb_port_name, "(null)")}' does not match any named port in port_mappings. Available ports: ${join(", ", keys(local.port_map))}"
+      error_message = "alb_port_name '${coalesce(var.alb_port_name, "(null)")}' does not match any named port in port_mappings."
+    }
+
+    # Catch accidental HTTP misconfiguration when mTLS is enabled
+    precondition {
+      condition     = !local.enable_mtls_sidecar || local.effective_tg_protocol == "HTTPS"
+      error_message = "Target group protocol must be HTTPS when mtls_cert_arn is set."
     }
   }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.service_connect
-  ]
 }
 
 resource "aws_lb_listener_rule" "this" {

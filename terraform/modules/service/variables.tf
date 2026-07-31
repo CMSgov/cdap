@@ -75,6 +75,12 @@ variable "proxy_listen_port" {
   EOT
 }
 
+variable "proxy_healthcheck_port" {
+  description = "Port for the proxy health check server (plain HTTP, no mTLS)"
+  type        = number
+  default     = 8081
+}
+
 variable "proxy_sidecar_upstream_port" {
   type        = number
   default     = 8080
@@ -281,7 +287,7 @@ variable "alb_health_check" {
   type = object({
     path                = optional(string, "/health")
     port                = optional(string, "traffic-port")
-    protocol            = optional(string, "HTTP")
+    protocol            = optional(string, null)
     matcher             = optional(string, "200-299")
     interval            = optional(number, 30)
     timeout             = optional(number, 5)
