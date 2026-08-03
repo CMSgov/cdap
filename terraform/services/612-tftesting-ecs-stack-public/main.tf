@@ -14,6 +14,7 @@ module "acm" {
 
   # Public path — exercises the exact same code as CMS-provided certs
   public_domain_name       = "tftesting.${var.env}.cdap.cms.gov"
+  # replace these with a self signed cert
   public_certificate       = local.secrets.tls.certificate
   public_private_key       = local.secrets.tls.private_key
   public_certificate_chain = local.secrets.tls.certificate_chain # null for self-signed
@@ -74,6 +75,7 @@ module "service_b" {
   desired_count                   = local.desired_count
   service_name_override           = "tftesting-b"
   enable_ecs_service_connect      = true
+  service_connect_namespace_arn = data.aws_service_discovery_http_namespace.tftesting.arn
 
   # this stack tests a service connection that is not ALB entry
   enable_alb_integration = false

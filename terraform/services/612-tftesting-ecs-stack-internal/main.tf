@@ -48,7 +48,7 @@ module "ecs_service" {
 
   alb_listener_arn       = module.alb.https_listener_arn
   enable_alb_integration = true
-  mtls_domain = module.acm.mtls_domain
+  mtls_domain            = module.acm.mtls_domain
 
   mtls_cert_arn       = module.acm.private_cert_arn
   enable_mtls_sidecar = true

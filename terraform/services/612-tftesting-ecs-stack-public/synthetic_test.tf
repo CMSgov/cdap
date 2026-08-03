@@ -2,7 +2,7 @@ module "datadog_synthetics" {
   source = "../../modules/datadog_synthetics"
 
   app                  = "cdap"
-  env                  = var.platform.env
+  env                  = module.platform.env
   notify               = "@webhook-cdap"
   min_failure_duration = 0
   shadow_mode          = false
@@ -18,7 +18,7 @@ module "datadog_synthetics" {
 
       request_definition = {
         method = "GET"
-        url    = "https://${module.alb.dns_name}/integration-test"
+        url    = "https://${module.alb.alb_dns_name}/integration-test"
       }
 
       assertions = [

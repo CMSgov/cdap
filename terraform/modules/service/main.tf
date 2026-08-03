@@ -174,7 +174,8 @@ locals {
       { name = "TLS_CERT_FILE", value = "/run/certs/cert.pem" },
       { name = "TLS_KEY_FILE", value = "/run/certs/key.pem" },
       { name = "TLS_CA_FILE", value = "/run/certs/ca.pem" },
-      { name = "SELFTEST_SERVER_NAME", value = var.mtls_domain }
+      { name = "SELFTEST_SERVER_NAME", value = var.mtls_domain },
+      { name = "HEALTH_PORT", value = tostring(var.proxy_healthcheck_port) }
     ]
 
     logConfiguration = {
@@ -187,7 +188,7 @@ locals {
     }
 
     healthCheck = {
-      command     = ["CMD-SHELL", "curl -fk https://localhost:${var.proxy_healthcheck_port}/health || exit 1"]
+      command     = ["CMD-SHELL", "curl -f http://localhost:${var.proxy_healthcheck_port}/health || exit 1"]
       interval    = 30
       retries     = 3
       startPeriod = 15
