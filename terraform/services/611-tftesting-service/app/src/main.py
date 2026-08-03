@@ -5,13 +5,9 @@ import logging
 import threading
 import urllib.request
 import urllib.error
+import json
+
 from http.server import HTTPServer, BaseHTTPRequestHandler
-
-os.environ.setdefault("DD_TRACE_AGENT_URL", "http://localhost:8126")
-
-import ddtrace.auto
-from ddtrace import tracer
-from ddtrace.propagation.http import HTTPPropagator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,6 +19,35 @@ DD_VERSION    = os.environ.get("DD_VERSION", "unknown")
 # Service Connect config — set DOWNSTREAM_URL in Service A's container env
 DOWNSTREAM_URL = os.environ.get("DOWNSTREAM_URL", "")
 EMIT_INTERVAL  = int(os.environ.get("EMIT_INTERVAL_SECONDS", 30))
+
+def wait_for_datadog_agent(host="localhost", port=8126, timeout=60, interval=2):
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            with socket.create_connection((host, port), timeout=2):
+                logger.info(f"Datadog agent ready at {host}:{port}")
+                return True
+        except (ConnectionRefusedError, OSError):
+            logger.warning(f"Datadog agent not ready, retrying in {interval}s...")
+            time.sleep(interval)
+    logger.warning("Datadog agent did not become ready in time — traces may be dropped.")
+    return False
+
+wait_for_datadog_agent()
+
+from datadog import initialize, statsd
+
+initialize(
+    statsd_host=os.environ.get("DD_AGENT_HOST", "localhost"),
+    statsd_port=int(os.environ.get("DD_DOGSTATSD_PORT", 8125)),
+)
+
+os.environ.setdefault("DD_TRACE_AGENT_URL", "http://localhost:8126")
+
+import ddtrace.auto
+from ddtrace import tracer
+from ddtrace.propagation.http import HTTPPropagator
+
 
 
 def wait_for_datadog_agent(host="localhost", port=8126, timeout=60, interval=2):
@@ -105,7 +130,6 @@ def start_health_server(port: int = 8080):
 
 
 def emit_metric(metric_name: str, value: float, tags: list[str] = None):
-    from datadog import statsd
     tags = tags or []
     statsd.gauge(metric_name, value, tags=tags)
     logger.info(f"Emitted metric: {metric_name}={value} tags={tags}")
@@ -122,7 +146,10 @@ def call_downstream():
         try:
             req = urllib.request.Request(DOWNSTREAM_URL)
 
-            HTTPPropagator.inject(span.context, req.headers)
+            headers = {}
+            HTTPPropagator.inject(span.context, headers)
+            for key, value in headers.items():
+                req.add_header(key, value)
 
             with urllib.request.urlopen(req, timeout=5) as resp:
                 body = resp.read().decode()
@@ -179,7 +206,6 @@ if __name__ == "__main__":
     logger.info(f"Starting {DD_SERVICE} — env={DD_ENV} version={DD_VERSION} interval={EMIT_INTERVAL}s")
 
     start_health_server()
-    wait_for_datadog_agent()
 
     while True:
         try:

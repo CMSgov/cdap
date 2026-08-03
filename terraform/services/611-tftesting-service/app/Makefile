@@ -1,5 +1,5 @@
 .PHONY: build up down logs logs-app logs-agent test test-coverage test-local \
-        shell clean requirements ecr-login push
+        shell clean requirements ecr-login push scale scale-up scale-down
 
 # Build the app image
 build:
@@ -52,7 +52,7 @@ AWS_DEFAULT_REGION ?= us-east-1
 ENV                ?= test
 SERVICE_NAME       := tftesting-service
 IMAGE_TAG          ?= $(shell git rev-parse HEAD)
-
+CLUSTER_NAME := cdap-test-tftesting
 # only evaluated by targets that use them
 AWS_ACCOUNT_ID = $(shell aws sts get-caller-identity --query Account --output text)
 ECR_REGISTRY   = $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_DEFAULT_REGION).amazonaws.com
@@ -98,3 +98,25 @@ push: ecr-login
 	  --key-id "$(KMS_KEY_ARN)" \
 	  --overwrite
 	@echo "✅ Pushed $(SERVICE_NAME):$(IMAGE_TAG) to $(ENV)"
+
+DESIRED_COUNT ?= 1
+
+scale:
+	@test -n "$(AWS_ACCOUNT_ID)" || (echo "ERROR: Not authenticated" && exit 1)
+	@echo "Scaling cdap-$(ENV)-$(SERVICE_NAME) to $(DESIRED_COUNT) tasks..."
+	@aws ecs update-service \
+	  --cluster "$(CLUSTER_NAME)" \
+      --service "cdap-$(ENV)-$(SERVICE_NAME)" \
+	  --desired-count $(DESIRED_COUNT) \
+	  > /dev/null
+	@echo "Waiting for service to stabilize..."
+	@aws ecs wait services-stable \
+	  --cluster "$(CLUSTER_NAME)" \
+	  --services "cdap-$(ENV)-$(SERVICE_NAME)"
+	@echo "✅ cdap-$(ENV)-$(SERVICE_NAME) scaled to $(DESIRED_COUNT) tasks"
+
+scale-up: DESIRED_COUNT = 1
+scale-up: scale
+
+scale-down: DESIRED_COUNT = 0
+scale-down: scale
