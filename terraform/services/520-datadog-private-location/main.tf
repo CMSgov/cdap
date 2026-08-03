@@ -86,8 +86,6 @@ module "ecs_datadog_synthetics" {
     enable   = true
     rollback = true # Auto-rollback is safe here — no stateful issues
   }
-
-  ignore_desired_count_changes = false # Currently no autoscaling needed for the PL worker
 }
 
 resource "aws_ssm_parameter" "task_security_group_id" {
