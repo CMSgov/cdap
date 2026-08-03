@@ -1,6 +1,6 @@
 locals {
-  config        = yamldecode(file("${path.module}/config/${var.env}.yml"))
-  cluster_name  = try(local.config.ecs.cluster, "cdap-${var.env}")
+  config       = yamldecode(file("${path.module}/config/${var.env}.yml"))
+  cluster_name = try(local.config.ecs.cluster, "cdap-${var.env}")
 }
 
 data "aws_ecs_cluster" "tftesting" {
