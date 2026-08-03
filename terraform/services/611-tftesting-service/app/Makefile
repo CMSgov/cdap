@@ -33,10 +33,12 @@ test-local:
 test:
 	docker compose run --rm app pytest src/tests/ -v
 
-test-coverage:
-	docker compose run --rm app \
-	  /bin/sh -c "pytest src/tests/ \
+test-coverage-report:
+	docker compose run --rm \
+	  -e DD_TRACE_ENABLED=false \
+	  app /bin/sh -c "pytest src/tests/ \
 	    --cov=src \
+	    --cov-report=term-missing \
 	    --cov-report=xml:/app/coverage/coverage.xml"
 
 # Open a shell in the app container

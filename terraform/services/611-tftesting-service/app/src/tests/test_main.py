@@ -62,7 +62,7 @@ def test_run_trace_example_creates_span(mock_tracer, mock_gauge, mock_downstream
     )
 
 
-@patch("main.call_downstream")   # 👈 add this patch
+@patch("main.call_downstream")
 @patch("datadog.statsd.gauge")
 @patch("main.tracer")
 def test_run_trace_example_sets_tags(mock_tracer, mock_gauge, mock_downstream):
@@ -77,7 +77,7 @@ def test_run_trace_example_sets_tags(mock_tracer, mock_gauge, mock_downstream):
     mock_span.set_tag.assert_any_call("version", DD_VERSION)
 
 
-@patch("main.call_downstream")   # 👈 add this patch
+@patch("main.call_downstream")
 @patch("datadog.statsd.gauge")
 @patch("main.tracer")
 def test_run_trace_example_emits_metric(mock_tracer, mock_gauge, mock_downstream):
@@ -252,3 +252,140 @@ def test_call_downstream_sets_span_tags(mock_urlopen, mock_propagator, mock_trac
 
     mock_span.set_tag.assert_any_call("downstream.url", "http://tftesting-b:8081/ping")
     mock_span.set_tag.assert_any_call("env", DD_ENV)
+
+# -------------------------------------------------------
+# HealthHandler /integration-test tests
+# -------------------------------------------------------
+
+@patch("main.DOWNSTREAM_URL", "")
+def test_integration_test_no_downstream_url():
+    """Should return 503 when DOWNSTREAM_URL is not configured."""
+    handler = HealthHandler.__new__(HealthHandler)
+    handler.path = "/integration-test"
+    handler.send_response = MagicMock()
+    handler.send_header   = MagicMock()
+    handler.end_headers   = MagicMock()
+    handler.wfile         = MagicMock()
+
+    handler.do_GET()
+
+    handler.send_response.assert_called_once_with(503)
+    handler.wfile.write.assert_called_once_with(b'{"error": "DOWNSTREAM_URL not configured"}')
+
+
+@patch("main.DOWNSTREAM_URL", "http://tftesting-b:8081/ping")
+@patch("main.HTTPPropagator")
+@patch("main.tracer")
+@patch("urllib.request.urlopen")
+def test_integration_test_success(mock_urlopen, mock_tracer, mock_propagator):
+    """Should return 200 and JSON body on successful downstream call."""
+    mock_span = MagicMock()
+    mock_tracer.trace.return_value.__enter__ = MagicMock(return_value=mock_span)
+    mock_tracer.trace.return_value.__exit__ = MagicMock(return_value=False)
+
+    mock_response = MagicMock()
+    mock_response.status = 200
+    mock_response.read.return_value = b"pong from tftesting-b"
+    mock_response.__enter__ = MagicMock(return_value=mock_response)
+    mock_response.__exit__ = MagicMock(return_value=False)
+    mock_urlopen.return_value = mock_response
+
+    handler = HealthHandler.__new__(HealthHandler)
+    handler.path = "/integration-test"
+    handler.send_response = MagicMock()
+    handler.send_header   = MagicMock()
+    handler.end_headers   = MagicMock()
+    handler.wfile         = MagicMock()
+
+    handler.do_GET()
+
+    handler.send_response.assert_called_once_with(200)
+    written = handler.wfile.write.call_args[0][0]
+    assert b'"status": "ok"' in written
+    assert b"pong from tftesting-b" in written
+
+
+@patch("main.DOWNSTREAM_URL", "http://tftesting-b:8081/ping")
+@patch("main.HTTPPropagator")
+@patch("main.tracer")
+@patch("urllib.request.urlopen")
+def test_integration_test_failure(mock_urlopen, mock_tracer, mock_propagator):
+    """Should return 502 and error JSON when downstream call fails."""
+    mock_span = MagicMock()
+    mock_tracer.trace.return_value.__enter__ = MagicMock(return_value=mock_span)
+    mock_tracer.trace.return_value.__exit__ = MagicMock(return_value=False)
+
+    mock_urlopen.side_effect = Exception("connection refused")
+
+    handler = HealthHandler.__new__(HealthHandler)
+    handler.path = "/integration-test"
+    handler.send_response = MagicMock()
+    handler.send_header   = MagicMock()
+    handler.end_headers   = MagicMock()
+    handler.wfile         = MagicMock()
+
+    handler.do_GET()
+
+    handler.send_response.assert_called_once_with(502)
+    written = handler.wfile.write.call_args[0][0]
+    assert b'"status": "error"' in written
+    assert b"connection refused" in written
+    mock_span.set_tag.assert_any_call("error", True)
+    mock_span.set_tag.assert_any_call("error.message", "connection refused")
+
+
+# -------------------------------------------------------
+# wait_for_datadog_agent tests
+# -------------------------------------------------------
+
+@patch("socket.create_connection")
+def test_wait_for_datadog_agent_success(mock_conn):
+    """Should return True when agent is reachable."""
+    from main import wait_for_datadog_agent
+    mock_conn.return_value.__enter__ = MagicMock(return_value=MagicMock())
+    mock_conn.return_value.__exit__  = MagicMock(return_value=False)
+
+    result = wait_for_datadog_agent(host="localhost", port=8126, timeout=5, interval=0)
+    assert result is True
+
+
+@patch("socket.create_connection", side_effect=OSError("refused"))
+@patch("time.sleep", return_value=None)
+def test_wait_for_datadog_agent_timeout(mock_sleep, mock_conn):
+    """Should return False when agent never becomes reachable within timeout."""
+    from main import wait_for_datadog_agent
+
+    result = wait_for_datadog_agent(host="localhost", port=8126, timeout=1, interval=0)
+    assert result is False
+
+
+# -------------------------------------------------------
+# start_health_server tests
+# -------------------------------------------------------
+
+@patch("main.HTTPServer")
+@patch("threading.Thread")
+def test_start_health_server(mock_thread, mock_http_server):
+    """start_health_server should start an HTTPServer on the given port."""
+    from main import start_health_server
+
+    mock_server_instance = MagicMock()
+    mock_http_server.return_value = mock_server_instance
+    mock_thread_instance = MagicMock()
+    mock_thread.return_value = mock_thread_instance
+
+    start_health_server(port=8080)
+
+    mock_http_server.assert_called_once_with(("0.0.0.0", 8080), HealthHandler)
+    mock_thread_instance.start.assert_called_once()
+
+# -------------------------------------------------------
+# log_message suppression test
+# -------------------------------------------------------
+
+def test_log_message_suppressed():
+    """log_message should be a no-op (suppresses default HTTP logging)."""
+    handler = HealthHandler.__new__(HealthHandler)
+    # Should not raise and should return None
+    result = handler.log_message("%s", "test")
+    assert result is None

@@ -1,6 +1,5 @@
 locals {
   config        = yamldecode(file("${path.module}/config/${var.env}.yml"))
-  desired_count = try(local.config.ecs.desired_count, 0)
   cluster_name  = try(local.config.ecs.cluster, "cdap-${var.env}")
 }
 
@@ -11,7 +10,6 @@ data "aws_ecs_cluster" "tftesting" {
 module "tftesting_service" {
   enable_execute_command = false
   source                 = "../../modules/service/"
-  desired_count          = local.desired_count
   enable_datadog_agent   = true
   log_retention_days     = 30
 
