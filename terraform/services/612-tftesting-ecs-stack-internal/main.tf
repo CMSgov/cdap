@@ -47,8 +47,17 @@ module "ecs_service" {
   cluster_arn = data.aws_ecs_cluster.cluster_test.arn
 
   alb_listener_arn       = module.alb.https_listener_arn
+  alb_security_group_id  = module.alb.security_group_id
   enable_alb_integration = true
   mtls_domain            = module.acm.mtls_domain
+
+  health_check = {
+    command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+    interval    = 30
+    retries     = 3
+    startPeriod = 30
+    timeout     = 5
+  }
 
   mtls_cert_arn       = module.acm.private_cert_arn
   enable_mtls_sidecar = true

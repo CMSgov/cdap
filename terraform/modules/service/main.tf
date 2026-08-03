@@ -188,10 +188,10 @@ locals {
     }
 
     healthCheck = {
-      command     = ["CMD-SHELL", "curl -f http://localhost:${var.proxy_healthcheck_port}/health || exit 1"]
+      command     = ["/health"]
       interval    = 30
       retries     = 3
-      startPeriod = 15
+      startPeriod = 30
       timeout     = 5
     }
 
