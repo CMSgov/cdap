@@ -8,7 +8,7 @@ variable "platform" {
     env             = string
     primary_region  = object({ name = string })
     private_subnets = map(object({ id = string }))
-    public_subnets = map(object({ id = string }))
+    public_subnets  = map(object({ id = string }))
     service         = string
     vpc_id          = string
     security_groups = map(object({
