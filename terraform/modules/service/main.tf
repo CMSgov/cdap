@@ -169,7 +169,7 @@ locals {
       },
       {
         name  = "REQUIRE_CLIENT_CERT"
-        value = "true"
+        value = tostring(var.mtls_require_client_cert)
       },
       { name = "TLS_CERT_FILE", value = "/run/certs/cert.pem" },
       { name = "TLS_KEY_FILE", value = "/run/certs/key.pem" },

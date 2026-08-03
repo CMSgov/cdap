@@ -65,3 +65,19 @@ resource "aws_vpc_security_group_egress_rule" "alb_to_task_health" {
   ip_protocol                  = "tcp"
   description                  = "Allow ALB health check to reach proxy health port ${var.proxy_healthcheck_port}"
 }
+
+# TODO Migrate datadog synthetics to use client certs
+resource "aws_vpc_security_group_ingress_rule" "datadog_to_health" {
+  count = (
+    local.enable_mtls_sidecar &&
+    length(var.security_groups) == 0 &&
+    var.enable_datadog_synthetics_ingress
+  ) ? 1 : 0
+
+  security_group_id            = aws_security_group.task[0].id
+  referenced_security_group_id = data.aws_ssm_parameter.datadog_private_location_sg[0].value
+  from_port                    = var.proxy_healthcheck_port
+  to_port                      = var.proxy_healthcheck_port
+  ip_protocol                  = "tcp"
+  description                  = "Allow Datadog synthetics to reach proxy health port"
+}

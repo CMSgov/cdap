@@ -41,6 +41,12 @@ variable "ecr_repository_url" {
 # mTLS Sidecar
 #
 
+variable "mtls_require_client_cert" {
+  description = "Not yet available. Whether to require client certificates on the mTLS proxy. Set to true only when client cert issuance is configured."
+  type        = bool
+  default     = false
+}
+
 variable "enable_mtls_sidecar" {
   type        = bool
   default     = false

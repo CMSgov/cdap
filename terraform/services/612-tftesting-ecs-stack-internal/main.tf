@@ -29,10 +29,11 @@ module "alb" {
   source        = "../../modules/alb"
   name_override = "cdap-${var.env}-ecs-int-alb"
 
-  platform             = module.platform
-  internal             = true                        # will use private subnet
-  acm_certificate_arn  = module.acm.private_cert_arn # PACE cert
-  enable_http_redirect = false                       # internal — no HTTP redirect
+  platform                          = module.platform
+  internal                          = true                        # will use private subnet
+  acm_certificate_arn               = module.acm.private_cert_arn # PACE cert
+  enable_http_redirect              = false                       # internal — no HTTP redirect
+  enable_datadog_synthetics_ingress = true
 }
 
 module "ecs_service" {

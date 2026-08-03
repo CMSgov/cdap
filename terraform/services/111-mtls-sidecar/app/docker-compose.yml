@@ -13,7 +13,7 @@ services:
       TLS_CERT_FILE: "/certs/server.crt"
       TLS_KEY_FILE: "/certs/server.key"
       TLS_CA_FILE: "/certs/ca.pem"
-      REQUIRE_CLIENT_CERT: "true"
+      REQUIRE_CLIENT_CERT: "false"
       USE_LOCAL_CERTS: "true"
       SELFTEST_SERVER_NAME: "localhost"   # local cert has localhost SAN
       SELFTEST_CERT_FILE: "/certs/client.crt"

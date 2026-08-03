@@ -13,7 +13,7 @@ module "datadog_synthetics" {
 
       request_definition = {
         method = "GET"
-        url    = "https://${module.acm.internal_domain}/health"
+        url    = "http://${module.acm.internal_domain}:8081/health"
       }
 
       assertions = [

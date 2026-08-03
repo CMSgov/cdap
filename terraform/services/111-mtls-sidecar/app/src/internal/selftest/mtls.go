@@ -51,20 +51,19 @@ func verifyMTLS(addr, caFile, clientCertFile, clientKeyFile, serverName string) 
         return fmt.Errorf("failed to parse CA cert")
     }
 
-    clientCert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
-    if err != nil {
-        return fmt.Errorf("loading client cert for self-test: %w", err)
-    }
-
     tlsCfg := &tls.Config{
-        RootCAs:      pool,
-        Certificates: []tls.Certificate{clientCert},
+        RootCAs: pool,
     }
 
-    // If a server name is provided, use it for hostname verification
-    // instead of the connection address (localhost).
-    // This allows the self-test to connect via loopback while still
-    // verifying the cert chain is valid for the real domain.
+    // Only add client cert if files are provided
+    if clientCertFile != "" && clientKeyFile != "" {
+        clientCert, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
+        if err != nil {
+            return fmt.Errorf("loading client cert for self-test: %w", err)
+        }
+        tlsCfg.Certificates = []tls.Certificate{clientCert}
+    }
+
     if serverName != "" {
         tlsCfg.ServerName = serverName
     }
@@ -78,13 +77,12 @@ func verifyMTLS(addr, caFile, clientCertFile, clientKeyFile, serverName string) 
 
     resp, err := client.Get(fmt.Sprintf("https://%s/health", addr))
     if err != nil {
-        // SECURITY: TLS handshake errors sanitized — avoid cert detail leaking
         return fmt.Errorf("mTLS connection failed (details redacted for security)")
     }
     defer resp.Body.Close()
 
     if resp.StatusCode != http.StatusOK {
-        return fmt.Errorf("unexpected status %d from mTLS health endpoint", resp.StatusCode)
+        return fmt.Errorf("unexpected status %d from health endpoint", resp.StatusCode)
     }
 
     return nil
