@@ -233,7 +233,8 @@ data "aws_iam_policy_document" "github_actions_policy" {
       "ecs:RegisterTaskDefinition",
       "ecs:TagResource",
       "ecs:UpdateService",
-      "servicediscovery:GetNamespace"
+      "servicediscovery:GetNamespace",
+      "servicediscovery:ListTagsForResource"
     ]
     resources = ["*"]
   }
