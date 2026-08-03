@@ -9,7 +9,7 @@ data "aws_ecs_cluster" "tftesting" {
 }
 
 module "tftesting_service" {
-  enable_execute_command = true
+  enable_execute_command = false
   source                 = "../../modules/service/"
   desired_count          = local.desired_count
   enable_datadog_agent   = true
