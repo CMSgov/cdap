@@ -77,8 +77,8 @@ resource "aws_vpc_security_group_ingress_rule" "datadog_to_app" {
   for_each = (
     var.enable_datadog_synthetics_ingress &&
     length(var.security_groups) == 0 &&
-    !local.enable_mtls_sidecar
-    ) ? {
+    !nonsensitive(local.enable_mtls_sidecar)
+  ) ? {
     for pm in coalesce(var.port_mappings, []) :
     pm.name => pm.containerPort
     if pm.containerPort != null
