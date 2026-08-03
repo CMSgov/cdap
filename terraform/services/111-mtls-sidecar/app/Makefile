@@ -56,6 +56,9 @@ down:
 test-unit:
 	cd src && go test ./tests/... -v
 
+test-health:
+	curl -f http://localhost:8081/health && echo "✅ health check passed" || echo "❌ health check failed"
+
 test-no-cert:
 	curl -k https://localhost:8443/ || true
 
@@ -70,6 +73,8 @@ test-coverage:
 		-coverprofile=/app/coverage/coverage.out && \
 	sed -i 's|mtls-sidecar/||g' /app/coverage/coverage.out && \
 	go tool cover -html=/app/coverage/coverage.out -o /app/coverage/coverage.xml
+
+test-local: test-health test-no-cert test-mtls
 
 clean:
 	docker compose -f $(COMPOSE_FILE) down --rmi all

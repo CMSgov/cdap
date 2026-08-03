@@ -13,6 +13,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
     -o /proxy \
     ./cmd/proxy
 
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
+    -ldflags="-w -s" \
+    -o /healthcheck \
+    ./cmd/healthcheck
+
 # Test
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS tester
 
@@ -29,6 +34,7 @@ RUN mkdir -p /app/coverage
 FROM gcr.io/distroless/static:nonroot
 
 COPY --from=builder /proxy /proxy
+COPY --from=builder /healthcheck /healthcheck
 
 USER nonroot:nonroot
 
