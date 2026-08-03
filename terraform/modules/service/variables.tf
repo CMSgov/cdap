@@ -93,6 +93,23 @@ variable "proxy_sidecar_upstream_port" {
   description = "Port the primary app container listens on. The proxy forwards to this port on localhost."
 }
 
+variable "alb_security_group_id" {
+  description = "Security group ID of the ALB. Required when enable_alb_integration and mtls_cert_arn are both set. Used to create security group rules allowing ALB traffic to reach the mTLS proxy."
+  type        = string
+  default     = null
+
+
+  validation {
+    condition = !(
+      var.mtls_cert_arn != null &&
+      var.enable_alb_integration &&
+      var.alb_listener_arn != null &&
+      var.alb_security_group_id == null
+    )
+    error_message = "alb_security_group_id is required when mtls_cert_arn and alb_listener_arn are both set."
+  }
+}
+
 # -------------------------------------------------------
 # ECS Service Connect (optional)
 # -------------------------------------------------------
