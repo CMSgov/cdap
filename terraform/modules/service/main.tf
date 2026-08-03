@@ -188,7 +188,7 @@ locals {
     }
 
     healthCheck = {
-      command     = ["/health"]
+      command     = ["/healthcheck"] #uses the go binary built
       interval    = 30
       retries     = 3
       startPeriod = 30
