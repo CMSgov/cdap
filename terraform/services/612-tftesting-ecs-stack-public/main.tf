@@ -15,9 +15,9 @@ module "acm" {
   # Public path — exercises the exact same code as CMS-provided certs
   public_domain_name       = "tftesting.${var.env}.cdap.cms.gov"
   # replace these with a self signed cert
-  public_certificate       = local.secrets.tls.certificate
-  public_private_key       = local.secrets.tls.private_key
-  public_certificate_chain = local.secrets.tls.certificate_chain # null for self-signed
+#   public_certificate       = local.secrets.tls.certificate
+#   public_private_key       = local.secrets.tls.private_key
+#   public_certificate_chain = local.secrets.tls.certificate_chain # null for self-signed
 }
 
 module "alb" {
@@ -30,8 +30,6 @@ module "alb" {
   enable_http_redirect              = true
   enable_datadog_synthetics_ingress = true
 }
-
-
 
 module "service_a" {
   source                          = "../../modules/service"

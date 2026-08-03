@@ -20,20 +20,12 @@ resource "aws_lb" "this" {
   subnets            = local.subnet_ids
   security_groups    = local.managed_sg ? [aws_security_group.alb[0].id] : var.security_group_ids
 
+  enable_deletion_protection = var.internal ? false : true
+
   tags = { Name = local.alb_name }
 
   lifecycle {
-    prevent_destroy = true
-
-    precondition {
-      condition     = var.internal || var.name_override == null
-      error_message = <<-EOT
-        name_override is set on an internet-facing ALB.
-        Changing the ALB name forces recreation and may break
-        any CMS-managed DNS records pointing at this ALB.
-        If you must rename, coordinate with the CMS DNS team first.
-      EOT
-    }
+    create_before_destroy = true
   }
 }
 
