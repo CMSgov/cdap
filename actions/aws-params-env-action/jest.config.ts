@@ -16,6 +16,9 @@ const config: Config = {
       }
     ]
   },
+  transformIgnorePatterns: ['/node_modules/'],
+  coverageProvider: 'v8',
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/main.ts'],
   verbose: true
 }
 

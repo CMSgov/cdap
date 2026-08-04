@@ -27,7 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.11.1",
-    "@aws-sdk/client-ssm": "^3.1018.0"
+    "@aws-sdk/client-ssm": "^3.1102.0"
   },
   "devDependencies": {
     "@actions/http-client": "^4.0.1",
@@ -50,9 +50,7 @@
     "typescript": "~5.8.0"
   },
   "overrides": {
-    "undici": "^8.3.0",
-    "brace-expansion": "^5.0.5",
-    "minimatch": "^10.2.2",
-    "glob": "^13.0.6"
+    "glob": "^13.0.6",
+    "undici": "^8.10.0"
   }
 }
