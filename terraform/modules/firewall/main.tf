@@ -266,7 +266,7 @@ resource "aws_cloudwatch_log_resource_policy" "waf" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "${module.waf_log_group.arn}:*"
+        Resource = "${module.waf_log_group.this.arn}:*"
         Condition = {
           StringEquals = {
             "aws:SourceAccount" = var.platform.account_id
@@ -278,7 +278,7 @@ resource "aws_cloudwatch_log_resource_policy" "waf" {
 }
 
 resource "aws_wafv2_web_acl_logging_configuration" "this" {
-  log_destination_configs = [module.waf_log_group.arn]
+  log_destination_configs = [module.waf_log_group.this.arn]
   resource_arn            = aws_wafv2_web_acl.this.arn
 
   dynamic "logging_filter" {
