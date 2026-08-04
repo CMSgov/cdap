@@ -4,6 +4,32 @@ locals {
   cluster_name  = try(local.config.ecs.cluster, "cdap-${var.env}") # 👈 add this
 }
 
+resource "tls_private_key" "self_signed" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "tls_self_signed_cert" "self_signed" {
+  private_key_pem = tls_private_key.self_signed.private_key_pem
+
+  subject {
+    country             = "US"
+    province            = "MD"
+    locality            = "Rockville"
+    organization        = "US Dept of Health and Human Services"
+    organizational_unit = "Centers for Medicare and Medicaid Services"
+    common_name         = "tftesting.${var.env}.cdap.cms.gov"
+  }
+
+  validity_period_hours = 8760 # 1 year
+
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+  ]
+}
+
 module "acm" {
   source = "../../modules/acm_certificate"
 
@@ -15,9 +41,10 @@ module "acm" {
   # Public path — exercises the exact same code as CMS-provided certs
   public_domain_name       = "tftesting.${var.env}.cdap.cms.gov"
   # replace these with a self signed cert
-#   public_certificate       = local.secrets.tls.certificate
-#   public_private_key       = local.secrets.tls.private_key
-#   public_certificate_chain = local.secrets.tls.certificate_chain # null for self-signed
+  public_certificate       = tls_self_signed_cert.self_signed.cert_pem
+  public_private_key       = tls_private_key.self_signed.private_key_pem
+  public_certificate_chain = null # No chain for self-signed
+  public_certificate_versions = []
 }
 
 module "alb" {

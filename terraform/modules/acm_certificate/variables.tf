@@ -72,8 +72,32 @@ variable "public_certificate_versions" {
   description = <<-EOT
     Set of active certificate versions. Add a new version number to generate a new
     key and CSR for renewal without deleting the previous version's parameters.
-    Example: [1] → initial; [1, 2] → renewal in progress; [2] → old version cleaned up.
+    Example: [1] is for the initial; [1, 2] during renewal in progress; [2] when old version cleaned up/removed.
   EOT
+}
+
+variable "public_certificate_version" {
+  type    = number
+  default = 1
+  description = <<-EOT
+    The version whose private key backs the currently deployed ACM cert.
+    Must match the version whose CSR was submitted to CMS and signed.
+
+    This is a single value (not a set) — it identifies which key in
+    tls_private_key.this is paired with the cert body in public_certificate.
+
+    Distinct from public_certificate_versions (the set of all generated
+    key/CSR pairs). Only update this when you update public_certificate
+    to a cert signed against a different version's CSR.
+  EOT
+
+  validation {
+    condition = (
+      var.public_domain_name == null ||
+      contains(var.public_certificate_versions, var.public_certificate_version)
+    )
+    error_message = "public_certificate_version must exist in public_certificate_versions."
+  }
 }
 
 variable "public_domain_name" {
@@ -84,12 +108,26 @@ variable "public_domain_name" {
       -------------------------------------------------------------------------
       PUBLIC CERTIFICATE PROCESS — ACTION REQUIRED BEFORE CERT IS ACTIVE
       -------------------------------------------------------------------------
-      1. Run this module once without public_certificate or public_private_key defined.
-      2. Follow output instructions to provide CMS with CSR in a zip file.
-      3. Once returned from CMS signed, encrypt the certificate, private key, and chain via SOPS.
-      4. Pass the sensitive values via SOPS into public_certificate, public_private_key,
-         and public_certificate_chain at module instantiation.
-      5. Re-apply — the module imports the cert into ACM automatically.
+      1. Set public_domain_name and apply — this generates a private key and
+                CSR in SSM at:
+                  /<app>/<env>/<service>/tls/v<version>/csr
+                  /<app>/<env>/<service>/tls/v<version>/private-key
+      2. Retrieve the CSR from SSM and submit it to CMS for signing:
+               aws ssm get-parameter \
+                 --name /<app>/<env>/<service>/tls/v1/csr \
+                 --query Parameter.Value \
+                 --output text
+      3. Once CMS returns the signed certificate, encrypt it via SOPS and
+             populate public_certificate (and optionally public_certificate_chain).
+
+      4. Re-apply — the module imports the signed cert into ACM automatically.
+
+          RENEWAL:
+            - Add a new version to public_certificate_versions to generate a new
+              key + CSR without affecting the live cert.
+            - Once CMS returns the signed renewal cert, update public_certificate
+              via SOPS and bump active_certificate_version to match.
+          -----------------------------------------------------------
 
     EOT
   validation {
@@ -105,13 +143,6 @@ variable "public_certificate" {
   default     = null
   sensitive   = true
   description = "PEM-encoded CMS-signed public certificate. Include via SOPS if provided by CMS. Set null to defer import while awaiting CMS signing."
-}
-
-variable "public_private_key" {
-  type        = string
-  default     = null
-  sensitive   = true
-  description = "PEM-encoded private key for the public certificate. Include via SOPS if provided by CMS. Set null to defer."
 }
 
 variable "public_certificate_chain" {
