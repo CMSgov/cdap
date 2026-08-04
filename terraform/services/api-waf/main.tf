@@ -60,9 +60,9 @@ resource "aws_wafv2_ip_set" "ipv6_api_customers" {
 module "aws_waf" {
   source = "../../modules/firewall"
 
-  app  = var.app
-  env  = var.env
-  name = "${var.app}-${var.env}-api"
+  app      = var.app
+  env      = var.env
+  name     = "${var.app}-${var.env}-api"
   platform = module.platform
 
   scope        = "REGIONAL"
