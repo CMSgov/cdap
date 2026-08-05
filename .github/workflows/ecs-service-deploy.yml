@@ -12,14 +12,20 @@ on:
         description: 'Service name (matches SSM path and ECS service name)'
         required: true
         type: string
+      update_tag_only:
+        description: 'SSM tag update only — skip ECS service update (use for sidecar images)'
+        required: false
+        type: boolean
+        default: false
       environment:
         description: 'Environment to deploy to'
         required: true
         type: string
       image_tag:
-        description: 'Image tag to deploy (full git SHA from build workflow)'
-        required: true
+        description: 'Image tag to deploy — required for sandbox/prod, defaults to latest main for dev/test'
+        required: false
         type: string
+        default: ''
       cluster_name:
         description: 'ECS cluster name override — defaults to {app}-{env} if not provided'
         required: false
@@ -50,10 +56,16 @@ on:
           - test
           - sandbox
           - prod
+      update_tag_only:
+        description: 'SSM tag update only — skip ECS service update (use for sidecar images)'
+        required: false
+        type: boolean
+        default: false
       image_tag:
-        description: 'Image tag to deploy (full git SHA from build workflow)'
-        required: true
+        description: 'Image tag to deploy — required for sandbox/prod, defaults to latest main for dev/test'
+        required: false
         type: string
+        default: ''
       cluster_name:
         description: 'ECS cluster name override — defaults to {app}-{env} if not provided'
         required: false
@@ -73,6 +85,50 @@ jobs:
       contents: read
 
     steps:
+      - name: Validate inputs
+        run: |
+          if [[ "${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) }}" == "true" && -z "${{ inputs.image_tag }}" ]]; then
+            echo "::error::image_tag is required for sandbox and prod deployments"
+            exit 1
+          fi
+
+      - name: Checkout
+        if: inputs.image_tag == ''
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
+        with:
+          fetch-depth: 1
+
+      - name: Resolve image tag
+        id: resolve-tag
+        run: |
+          if [[ -n "${{ inputs.image_tag }}" ]]; then
+            echo "image_tag=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            git fetch origin main --depth=1
+            echo "image_tag=$(git rev-parse origin/main)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Normalize service name
+        id: normalize
+        run: |
+          echo "service_name=$(echo '${{ inputs.service_name }}' | sed 's/^[0-9]*-//')" >> "$GITHUB_OUTPUT"
+
+
+      - name: Resolve cluster name
+        id: resolve-cluster
+        run: |
+          CLUSTER="${{ inputs.cluster_name }}"
+          if [[ -z "$CLUSTER" ]]; then
+            # Match directory with or without numeric prefix e.g. 611-tftesting-service or tftesting-service
+            CONFIG=$(ls terraform/services/*${{ inputs.service_name }}/config/${{ inputs.environment }}.yml 2>/dev/null | head -1)
+            if [[ -f "$CONFIG" ]]; then
+              CLUSTER=$(yq '.ecs.cluster // ""' "$CONFIG")
+            fi
+          fi
+          # Fall back to default naming convention
+          CLUSTER="${CLUSTER:-${{ inputs.app }}-${{ inputs.environment }}}"
+          echo "cluster=$CLUSTER" >> "$GITHUB_OUTPUT"
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
@@ -81,32 +137,31 @@ jobs:
 
       - name: Write image tag to SSM
         env:
-          APP: ${{ inputs.app }}
-          SERVICE_NAME: ${{ inputs.service_name }}
-          ENV: ${{ inputs.environment }}
-          IMAGE_TAG: ${{ inputs.image_tag }}
+          APP:          ${{ inputs.app }}
+          SERVICE_NAME: ${{ steps.normalize.outputs.service_name }}
+          ENV:          ${{ inputs.environment }}
+          IMAGE_TAG:    ${{ steps.resolve-tag.outputs.image_tag }}
         run: |
-          echo "Writing image tag to SSM..."
           aws ssm put-parameter \
             --name "/${APP}/${ENV}/nonsensitive/${SERVICE_NAME}/image-tag" \
             --value "$IMAGE_TAG" \
             --type String \
             --overwrite
-          echo "✅ SSM parameter updated"
+          echo "✅ SSM updated: /${APP}/${ENV}/nonsensitive/${SERVICE_NAME}/image-tag = $IMAGE_TAG"
 
       - name: Deploy ECS Service
+        if: ${{ !inputs.ssm_only }}
         env:
-          APP: ${{ inputs.app }}
-          SERVICE_NAME: ${{ inputs.service_name }}
-          ENV: ${{ inputs.environment }}
-          IMAGE_TAG: ${{ inputs.image_tag }}
-          CLUSTER_OVERRIDE: ${{ inputs.cluster_name }}
-          ACCOUNT_ID: ${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
+          APP:              ${{ inputs.app }}
+          SERVICE_NAME:     ${{ steps.normalize.outputs.service_name }}
+          ENV:              ${{ inputs.environment }}
+          IMAGE_TAG:        ${{ steps.resolve-tag.outputs.image_tag }}
+          CLUSTER:          ${{ steps.resolve-cluster.outputs.cluster }}
+          ACCOUNT_ID:       ${{ contains(fromJSON('["prod", "sandbox"]'), inputs.environment) && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+          AWS_REGION:       ${{ vars.AWS_REGION }}
         run: |
           echo "::add-mask::$ACCOUNT_ID"
 
-          CLUSTER="${CLUSTER_OVERRIDE:-${APP}-${ENV}}"
           ECS_SERVICE="${APP}-${ENV}-${SERVICE_NAME}"
           ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           FULL_IMAGE="${ECR_REGISTRY}/${APP}-${SERVICE_NAME}:${IMAGE_TAG}"
@@ -131,8 +186,12 @@ jobs:
             --query 'taskDefinition' \
             | jq \
               --arg image "$FULL_IMAGE" \
+              --arg name  "$SERVICE_NAME" \
               'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
-               | .containerDefinitions[0].image = $image')
+               | .containerDefinitions = [
+                   .containerDefinitions[] |
+                   if .name == $name then .image = $image else . end
+                 ]')
 
           echo "Registering new task definition revision..."
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
@@ -156,3 +215,12 @@ jobs:
             --services "$ECS_SERVICE"
 
           echo "✅ Successfully deployed $ECS_SERVICE in $ENV"
+
+      - name: Confirm
+        run: |
+          if [[ "${{ inputs.update_tag_only }}" == "true" ]]; then
+            echo "✅ Tag-update to SSM complete for ${{ inputs.service_name }}"
+            echo "Dependent ECS services will pick up the new image on next tofu apply."
+          else
+            echo "✅ Successfully deployed ${{ inputs.service_name }} in ${{ inputs.environment }}"
+          fi

@@ -48,6 +48,21 @@ variable "enable_zscaler_endpoint" {
 }
 
 # -------------------------------------------------------
+# mTLS sidecar
+# -------------------------------------------------------
+
+variable "enable_mtls_sidecar" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Issue a PCA-backed certificate for mTLS between the ALB and the sidecar container.
+    This certificate is NOT accessed by developers via Zscaler — it is used internally
+    between the ALB and ECS sidecar only.
+    Domain: <service>.<env>.<app>.internal.cms.gov (same as internal endpoint).
+  EOT
+}
+
+# -------------------------------------------------------
 # Public endpoint (*.cms.gov)
 # -------------------------------------------------------
 
