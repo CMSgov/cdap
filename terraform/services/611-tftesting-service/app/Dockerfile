@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir --only-binary :all: --require-hashes -r requireme
 
 COPY src/ src/
 COPY pytest.ini .
+COPY .coveragerc .
 
 ENV DD_TRACE_AGENT_URL=http://localhost:8126
 
