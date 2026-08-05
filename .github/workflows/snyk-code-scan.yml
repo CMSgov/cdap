@@ -1,0 +1,73 @@
+name: "Snyk Code Scan"
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to scan'
+        required: false
+        type: string
+  schedule:
+    - cron: '0 0 */2 * *'
+
+# Branch scanned by scheduled runs (and manual runs when no branch is given)
+env:
+  DEFAULT_SCAN_BRANCH: main
+  TOKEN_ENV: test
+  SNYK_CLI_VERSION: 1.1306.2
+
+jobs:
+  code-scan:
+    name: 'Snyk Code Scan (${{ matrix.app }})'
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
+    runs-on: codebuild-cdap-non-prod-${{github.run_id}}-${{github.run_attempt}}
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [ab2d, bcda, dpc, cdap]
+
+    steps:
+      # Checkout Code
+      - name: Checkout Code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
+        with:
+          ref: ${{ inputs.branch || env.DEFAULT_SCAN_BRANCH }}
+
+      - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/cdap-non-prod-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: ./actions/aws-params-env-action
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            SNYK_TOKEN=/cdap/${{ env.TOKEN_ENV }}/code-checks/sensitive/snyk-api-token/${{ matrix.app }}
+
+      - name: Verify env vars were set
+        run: |
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "❌ SNYK_TOKEN was not set"
+            exit 1
+          else
+            echo "✅ SNYK_TOKEN is set"
+          fi
+
+      # Install Snyk (authenticates via the SNYK_TOKEN env var automatically)
+      - name: Install Snyk
+        run: |
+          sudo npm install -g snyk@${SNYK_CLI_VERSION}
+      # Run Snyk Code (exit code 1 = vulns found, which is expected; anything else is a real failure)
+      - name: Run Snyk Code
+        run: |
+          snyk code test --report --sarif-file-output=snyk-code.sarif
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          # Path to SARIF file relative to the root of the repository
+          sarif_file: snyk-code.sarif
+          category: snyk-${{ matrix.app }}
