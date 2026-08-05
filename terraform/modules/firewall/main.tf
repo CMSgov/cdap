@@ -244,41 +244,10 @@ resource "aws_wafv2_web_acl_association" "this" {
 # Logging
 #############
 
-module "waf_log_group" {
-  source = "../cloudwatch_log_group"
-
-  # WAF log group names MUST be prefixed with "aws-waf-logs-"
-  name       = "aws-waf-logs-${var.name}"
-  kms_key_id = var.platform.kms_alias_primary.target_key_arn
-}
-
-resource "aws_cloudwatch_log_resource_policy" "waf" {
-  policy_name = "aws-waf-logs-${var.name}"
-  policy_document = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "delivery.logs.amazonaws.com"
-        }
-        Action = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "${module.waf_log_group.this.arn}:*"
-        Condition = {
-          StringEquals = {
-            "aws:SourceAccount" = var.platform.account_id
-          }
-        }
-      }
-    ]
-  })
-}
+# Using bucket as CMS supports WAF log writes to bucket to Splunk
 
 resource "aws_wafv2_web_acl_logging_configuration" "this" {
-  log_destination_configs = [module.waf_log_group.this.arn]
+  log_destination_configs = [var.platform.splunk_logging_bucket.arn]
   resource_arn            = aws_wafv2_web_acl.this.arn
 
   dynamic "logging_filter" {
@@ -315,4 +284,3 @@ resource "aws_wafv2_web_acl_logging_configuration" "this" {
     }
   }
 }
-
