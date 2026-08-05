@@ -7,8 +7,8 @@ on:
         description: 'Branch to scan'
         required: false
         type: string
-  schedule:
-    - cron: '0 0 */2 * *'
+  # schedule:
+  #   - cron: '0 0 */2 * *'
 
 # Branch scanned by scheduled runs (and manual runs when no branch is given)
 env:
