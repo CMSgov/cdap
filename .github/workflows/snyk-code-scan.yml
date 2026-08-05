@@ -1,6 +1,7 @@
 name: "Snyk Code Scan"
 
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       branch:
