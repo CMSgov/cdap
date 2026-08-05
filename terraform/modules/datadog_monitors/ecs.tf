@@ -14,7 +14,7 @@ resource "datadog_monitor" "ecs_cpu_high" {
   notify_no_data    = var.monitor_config.ecs.notify_no_data
   no_data_timeframe = var.monitor_config.ecs.no_data_timeframe_minutes
 
-  tags = local.base_tags
+  tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }
 
@@ -34,6 +34,6 @@ resource "datadog_monitor" "ecs_memory_high" {
   notify_no_data    = var.monitor_config.ecs.notify_no_data
   no_data_timeframe = var.monitor_config.ecs.no_data_timeframe_minutes
 
-  tags = local.base_tags
+  tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }

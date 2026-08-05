@@ -11,7 +11,7 @@ resource "datadog_monitor" "lambda_error_rate" {
     warning  = floor(var.monitor_config.lambda.error_rate_threshold * 0.75)
   }
 
-  tags = local.base_tags
+  tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }
 
@@ -30,7 +30,7 @@ resource "datadog_monitor" "lambda_throttles" {
   notify_no_data    = var.monitor_config.lambda.notify_no_data
   no_data_timeframe = var.monitor_config.lambda.no_data_timeframe_minutes
 
-  tags = local.base_tags
+  tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }
 
@@ -50,6 +50,6 @@ resource "datadog_monitor" "lambda_duration" {
   notify_no_data    = var.monitor_config.lambda.notify_no_data
   no_data_timeframe = var.monitor_config.lambda.no_data_timeframe_minutes
 
-  tags = local.base_tags
+  tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }
