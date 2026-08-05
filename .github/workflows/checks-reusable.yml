@@ -52,6 +52,11 @@ on:
         required: false
         type: string
         default: ''
+      docker_target:
+        description: 'Docker build stage to target for tests (e.g. tester) — leave empty to use the default final stage'
+        required: false
+        type: string
+        default: ''
 
 jobs:
   checks:
@@ -80,12 +85,27 @@ jobs:
             -f ${{ inputs.dockerfile }} \
             ${{ inputs.docker_context }}
 
-      # ← New: Run tests with coverage if test_command provided
+          # if a test stage is specified, build it separately
+          if [[ -n "${{ inputs.docker_target }}" ]]; then
+            docker build \
+              --target ${{ inputs.docker_target }} \
+              -t ${{ inputs.service_name }}:${{ inputs.docker_image_tag }}-test \
+              -f ${{ inputs.dockerfile }} \
+              ${{ inputs.docker_context }}
+          fi
+
       - name: Run Tests and Generate Coverage
         if: inputs.test_command != '' && inputs.dockerfile != ''
         run: |
           SHORT_SHA=$(echo "${{ inputs.docker_image_tag }}" | cut -c1-7)
           mkdir -p /tmp/coverage
+
+          # use the test stage image if specified, otherwise use the production image
+          if [[ -n "${{ inputs.docker_target }}" ]]; then
+            TEST_IMAGE="${{ inputs.service_name }}:${{ inputs.docker_image_tag }}-test"
+          else
+            TEST_IMAGE="${{ inputs.service_name }}:${{ inputs.docker_image_tag }}"
+          fi
 
           docker run --rm \
             -v /tmp/coverage:/app/coverage \
@@ -93,19 +113,23 @@ jobs:
             -e DD_ENV=${{ inputs.environment }} \
             -e DD_VERSION=$SHORT_SHA \
             -e DD_TRACE_ENABLED=false \
-            ${{ inputs.service_name }}:${{ inputs.docker_image_tag }} \
-            ${{ inputs.test_command }}
+            $TEST_IMAGE \
+            sh -c "${{ inputs.test_command }}"
 
-           # verification steps
           echo "Coverage dir after run:"
           ls -la /tmp/coverage/
-        
-          if [ ! -f /tmp/coverage/coverage.xml ]; then
-            echo "ERROR: coverage.xml not found in /tmp/coverage/"
+
+          # find whichever coverage file was produced — xml (Python) or out (Go)
+          COVERAGE_FILE=$(find /tmp/coverage -maxdepth 1 -name "coverage.*" | head -1)
+          
+          if [ -z "$COVERAGE_FILE" ]; then
+            echo "ERROR: no coverage file found in /tmp/coverage/"
             exit 1
           fi
+          echo "Found coverage file: $COVERAGE_FILE"
+          mkdir -p ${{ inputs.source_path }}/src
           
-          cp /tmp/coverage/coverage.xml ${{ inputs.source_path }}/coverage.xml
+          cp "$COVERAGE_FILE" "${{ inputs.source_path }}/src/$(basename $COVERAGE_FILE)"
 
       - name: Retrieve credentials
         uses: ./actions/aws-params-env-action
