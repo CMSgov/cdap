@@ -74,6 +74,7 @@ variable "monitor_config" {
       freeable_memory_threshold_mb = optional(number, 256)
       db_connections_threshold     = optional(number, 200)
       replica_lag_seconds          = optional(number, 30)
+      replica_lag_enabled          = optional(bool, true)
       deadlock_threshold           = optional(number, 1)
       deadlocks_enabled            = optional(bool, true)
       notify_no_data               = optional(bool, false)
