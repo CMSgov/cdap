@@ -11,10 +11,11 @@ resource "datadog_monitor" "rds_cpu_high" {
     warning  = floor(var.monitor_config.rds.cpu_threshold * 0.85)
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.rds.notify_no_data
+  notify_no_data    = var.monitor_config.rds.notify_no_data
   no_data_timeframe = var.monitor_config.rds.no_data_timeframe_minutes
 
   tags = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "rds_freeable_memory_low" {
@@ -30,10 +31,11 @@ resource "datadog_monitor" "rds_freeable_memory_low" {
     warning  = var.monitor_config.rds.freeable_memory_threshold_mb * 1000000 * 2
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.rds.notify_no_data
+  notify_no_data    = var.monitor_config.rds.notify_no_data
   no_data_timeframe = var.monitor_config.rds.no_data_timeframe_minutes
 
   tags = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "rds_db_connections_high" {
@@ -49,10 +51,11 @@ resource "datadog_monitor" "rds_db_connections_high" {
     warning  = floor(var.monitor_config.rds.db_connections_threshold * 0.80)
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.rds.notify_no_data
+  notify_no_data    = var.monitor_config.rds.notify_no_data
   no_data_timeframe = var.monitor_config.rds.no_data_timeframe_minutes
 
   tags = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "rds_replica_lag_high" {
@@ -69,6 +72,7 @@ resource "datadog_monitor" "rds_replica_lag_high" {
   }
 
   tags = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "rds_deadlocks" {
@@ -84,4 +88,5 @@ resource "datadog_monitor" "rds_deadlocks" {
   }
 
   tags = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
