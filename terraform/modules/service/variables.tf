@@ -14,6 +14,19 @@ variable "image" {
   default     = null
 }
 
+variable "image_tag_service_name_override" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    Override the service name used to construct the image tag SSM path.
+    Use when the ECR repo and image tag SSM parameter belong to a different
+    service than platform.service — for example, in test stacks that share
+    a common test image. The service referenced by image_tag must exist already.
+    Defaults to local.service_name.
+    Resolves to: /<app>/<env>/nonsensitive/<override>/image-tag
+  EOT
+}
+
 variable "ecr_repository_url" {
   description = <<-EOT
     ECR repository URL. If not provided, will be constructed from
@@ -22,6 +35,85 @@ variable "ecr_repository_url" {
   EOT
   type        = string
   default     = null
+}
+
+#
+# mTLS Sidecar
+#
+
+variable "mtls_require_client_cert" {
+  description = "Not yet available. Whether to require client certificates on the mTLS proxy. Set to true only when client cert issuance is configured."
+  type        = bool
+  default     = false
+}
+
+variable "enable_mtls_sidecar" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Retrieves the mTLS proxy sidecar from CDAP ECR.
+    This flag is required separately because the data source count must be
+    determinable at plan time, before the cert ARN is known.
+  EOT
+}
+
+variable "mtls_cert_arn" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    ARN of the PCA-backed private certificate used by the mTLS sidecar.
+    When provided, enables mtls sidecar.
+  EOT
+}
+
+variable "mtls_domain" {
+  description = "FQDN the mTLS cert is issued for. Used by the startup self-test for hostname verification."
+  type        = string
+  default     = null
+}
+
+variable "proxy_listen_port" {
+  type        = number
+  default     = 8443
+  description = <<-EOT
+    Port the mTLS proxy sidecar listens on.
+
+    Traffic flow when enable_mtls_sidecar = true:
+      ALB --> proxy container :proxy_listen_port (mTLS)
+          --> app container   :first port in port_mappings (plain HTTP, localhost)
+
+    The ALB target group is automatically pointed at this port.
+    The caller does not need to set alb_port_name.
+  EOT
+}
+
+variable "proxy_healthcheck_port" {
+  description = "Port for the proxy health check server (plain HTTP, no mTLS)"
+  type        = number
+  default     = 8081
+}
+
+variable "proxy_sidecar_upstream_port" {
+  type        = number
+  default     = 8080
+  description = "Port the primary app container listens on. The proxy forwards to this port on localhost."
+}
+
+variable "alb_security_group_id" {
+  description = "Security group ID of the ALB. Required when enable_alb_integration and mtls_cert_arn are both set. Used to create security group rules allowing ALB traffic to reach the mTLS proxy."
+  type        = string
+  default     = null
+
+
+  validation {
+    condition = !(
+      var.mtls_cert_arn != null &&
+      var.enable_alb_integration &&
+      var.alb_listener_arn != null &&
+      var.alb_security_group_id == null
+    )
+    error_message = "alb_security_group_id is required when mtls_cert_arn and alb_listener_arn are both set."
+  }
 }
 
 # -------------------------------------------------------
@@ -33,46 +125,13 @@ variable "enable_ecs_service_connect" {
   default     = false
 }
 
-variable "service_connect_namespace" {
-  type = object({
-    arn  = string
-    name = string
-  })
+variable "service_connect_namespace_arn" {
+  type        = string
   default     = null
   description = <<-EOT
-    Cloud Map HTTP namespace for ECS Service Connect.
-    Pass the aws_service_discovery_http_namespace resource directly:
-      service_connect_namespace = aws_service_discovery_http_namespace.this
-    The module uses .arn for the ECS service and .name for IAM condition scoping.
+    ARN of the Cloud Map HTTP namespace to use for ECS Service Connect.
+    When null, Service Connect will not be configured for this service.
   EOT
-
-  validation {
-    condition = var.service_connect_namespace == null || anytrue([
-      for domain in [
-        ".cmscloud.local",
-        ".cms.local",
-        ".hcgov.local",
-        ".marketplace.local",
-        ".internal.cms.gov",
-        ".internal.healthcare.gov",
-        ".internal.cuidadodesalud.gov",
-        ".internal.hhs.gov"
-      ] : endswith(var.service_connect_namespace.name, domain)
-    ])
-    error_message = <<-EOT
-      service_connect_namespace.name must end with a domain permitted by the pace-ca-g1 Private CA.
-      Permitted suffixes:
-        - .cmscloud.local
-        - .cms.local
-        - .hcgov.local
-        - .marketplace.local
-        - .internal.cms.gov
-        - .internal.healthcare.gov
-        - .internal.cuidadodesalud.gov
-        - .internal.hhs.gov
-      Example: "cdap-test.cmscloud.local"
-    EOT
-  }
 }
 
 variable "service_connect_port" {
@@ -104,15 +163,6 @@ variable "deployment_circuit_breaker" {
   })
   default     = {}
   description = "Deployment circuit breaker configuration. Stops a failing deployment. Set rollback = true to automatically revert to the previous task definition on failure."
-}
-
-variable "ignore_desired_count_changes" {
-  type        = bool
-  default     = false
-  description = <<-EOT
-    When true, Terraform will not revert desired_count to the configured value on apply.
-    Enable this when using Application Auto Scaling to manage task count at runtime.
-  EOT
 }
 
 variable "enable_execute_command" {
@@ -214,6 +264,21 @@ variable "load_balancers" {
   default = null
 }
 
+
+#--------------------
+# ALB Connection
+#--------------------
+
+variable "enable_alb_integration" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Enable ALB integration. Must be set to true when alb_listener_arn is provided.
+    Required as a separate flag because count on data sources and resources
+    must be determinable at plan time, before the listener ARN is known.
+  EOT
+}
+
 variable "alb_listener_arn" {
   type        = string
   default     = null
@@ -223,6 +288,11 @@ variable "alb_listener_arn" {
     and wires the ECS service to the ALB.
     When null, no ALB integration is created.
   EOT
+
+  validation {
+    condition     = !var.enable_alb_integration || var.alb_listener_arn != null
+    error_message = "alb_listener_arn is required when enable_alb_integration = true."
+  }
 }
 
 variable "alb_port_name" {
@@ -246,7 +316,7 @@ variable "alb_health_check" {
   type = object({
     path                = optional(string, "/health")
     port                = optional(string, "traffic-port")
-    protocol            = optional(string, "HTTP")
+    protocol            = optional(string, null)
     matcher             = optional(string, "200-299")
     interval            = optional(number, 30)
     timeout             = optional(number, 5)
@@ -270,7 +340,7 @@ variable "alb_priority" {
 
 variable "alb_path_patterns" {
   type        = list(string)
-  default     = null
+  default     = ["/*"]
   description = "Path pattern conditions for the ALB listener rule. Required when alb_listener_arn is set."
 }
 
@@ -305,14 +375,15 @@ variable "mount_points" {
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
-    app               = string
-    env               = string
-    kms_alias_primary = object({ target_key_arn = string })
-    primary_region    = object({ name = string })
-    private_subnets   = map(object({ id = string }))
-    service           = string
-    account_id        = string
-    vpc_id            = string
+    app                = string
+    env                = string
+    kms_alias_primary  = object({ target_key_arn = string })
+    primary_region     = object({ name = string })
+    private_subnets    = map(object({ id = string }))
+    service            = string
+    account_id         = string
+    vpc_id             = string
+    account_env_suffix = string
   })
 }
 
@@ -327,6 +398,17 @@ variable "port_mappings" {
     protocol           = optional(string)
   }))
   default = null
+
+  validation {
+    condition = (
+      !var.enable_mtls_sidecar ||
+      var.port_mappings != null && length([
+        for pm in coalesce(var.port_mappings, []) : pm
+        if pm.name != "proxy" && pm.containerPort != null
+      ]) > 0
+    )
+    error_message = "port_mappings must contain at least one non-proxy named port when enable_mtls_sidecar = true."
+  }
 }
 
 variable "health_check" {

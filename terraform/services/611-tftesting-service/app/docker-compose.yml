@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    working_dir: /app
+    volumes:
+      - ./coverage:/app/coverage
     ports:
       - "8080:8080"
     environment:

@@ -3,13 +3,11 @@ import time
 import socket
 import logging
 import threading
+import urllib.request
+import urllib.error
+import json
+
 from http.server import HTTPServer, BaseHTTPRequestHandler
-
-# Configure DD env vars before ddtrace.auto activates the tracer
-os.environ.setdefault("DD_TRACE_AGENT_URL", "http://localhost:8126")
-
-import ddtrace.auto
-from ddtrace import tracer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,21 +16,38 @@ DD_SERVICE = os.environ.get("DD_SERVICE", "tftesting")
 DD_ENV     = os.environ.get("DD_ENV", "test")
 DD_VERSION = os.environ.get("DD_VERSION", "unknown")
 
+DOWNSTREAM_URL = os.environ.get("DOWNSTREAM_URL", "")
+EMIT_INTERVAL  = int(os.environ.get("EMIT_INTERVAL_SECONDS", 30))
+
 
 def wait_for_datadog_agent(host="localhost", port=8126, timeout=60, interval=2):
-    """Wait until the Datadog agent trace intake is reachable."""
     start = time.time()
     while time.time() - start < timeout:
         try:
             with socket.create_connection((host, port), timeout=2):
                 logger.info(f"Datadog agent ready at {host}:{port}")
                 return True
-        except (ConnectionRefusedError, OSError):
-            logger.warning(f"Datadog agent not ready yet, retrying in {interval}s...")
+        except OSError:
+            logger.warning(f"Datadog agent not ready, retrying in {interval}s...")
             time.sleep(interval)
     logger.warning("Datadog agent did not become ready in time — traces may be dropped.")
     return False
 
+
+wait_for_datadog_agent()
+
+from datadog import initialize, statsd
+
+initialize(
+    statsd_host=os.environ.get("DD_AGENT_HOST", "localhost"),
+    statsd_port=int(os.environ.get("DD_DOGSTATSD_PORT", 8125)),
+)
+
+os.environ.setdefault("DD_TRACE_AGENT_URL", "http://localhost:8126")
+
+import ddtrace.auto
+from ddtrace import tracer
+from ddtrace.propagation.http import HTTPPropagator
 
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -40,6 +55,50 @@ class HealthHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"OK")
+
+        elif self.path == "/ping":
+            # Service B responds here — confirms Service Connect is working
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(
+                f"pong from {DD_SERVICE} env={DD_ENV} version={DD_VERSION}".encode()
+            )
+        elif self.path == "/integration-test":
+            # a live Service Connect call and return the result
+            result = {"status": "unknown", "response": None, "error": None}
+
+            if not DOWNSTREAM_URL:
+                self.send_response(503)
+                self.end_headers()
+                self.wfile.write(b'{"error": "DOWNSTREAM_URL not configured"}')
+                return
+
+            with tracer.trace("integration-test.call", service=DD_SERVICE, resource=DOWNSTREAM_URL) as span:
+                span.set_tag("downstream.url", DOWNSTREAM_URL)
+                try:
+                    req = urllib.request.Request(DOWNSTREAM_URL)
+                    headers = {}
+                    HTTPPropagator.inject(span.context, headers)
+                    for key, value in headers.items():
+                        req.add_header(key, value)
+
+                    with urllib.request.urlopen(req, timeout=5) as resp:
+                        body = resp.read().decode()
+                        span.set_tag("downstream.status", resp.status)
+                        result = {"status": "ok", "response": body}
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(json.dumps(result).encode())
+
+                except Exception as e:
+                    span.set_tag("error", True)
+                    span.set_tag("error.message", str(e))
+                    result = {"status": "error", "error": str(e)}
+                    self.send_response(502)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps(result).encode())
         else:
             self.send_response(404)
             self.end_headers()
@@ -56,10 +115,54 @@ def start_health_server(port: int = 8080):
 
 
 def emit_metric(metric_name: str, value: float, tags: list[str] = None):
-    from datadog import statsd
     tags = tags or []
     statsd.gauge(metric_name, value, tags=tags)
     logger.info(f"Emitted metric: {metric_name}={value} tags={tags}")
+
+
+def call_downstream():
+    """Call Service B over Service Connect and trace the request."""
+    if not DOWNSTREAM_URL:
+        return
+
+    with tracer.trace("service-connect.call", service=DD_SERVICE, resource=DOWNSTREAM_URL) as span:
+        span.set_tag("downstream.url", DOWNSTREAM_URL)
+        span.set_tag("env", DD_ENV)
+        try:
+            req = urllib.request.Request(DOWNSTREAM_URL)
+
+            headers = {}
+            HTTPPropagator.inject(span.context, headers)
+            for key, value in headers.items():
+                req.add_header(key, value)
+
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                body = resp.read().decode()
+                span.set_tag("downstream.status", resp.status)
+                span.set_tag("downstream.response", body)
+                logger.info(f"Service Connect call succeeded: {body}")
+                emit_metric(
+                    "cdap.service_connect.call",
+                    value=1.0,
+                    tags=[
+                        f"env:{DD_ENV}",
+                        f"service:{DD_SERVICE}",
+                        "status:success",
+                    ],
+                )
+        except Exception as e:
+            span.set_tag("error", True)
+            span.set_tag("error.message", str(e))
+            logger.exception(f"Service Connect call failed: {e}")
+            emit_metric(
+                "cdap.service_connect.call",
+                value=0.0,
+                tags=[
+                    f"env:{DD_ENV}",
+                    f"service:{DD_SERVICE}",
+                    "status:failure",
+                ],
+            )
 
 
 def run_trace_example():
@@ -77,21 +180,21 @@ def run_trace_example():
                 f"version:{DD_VERSION}",
             ],
         )
+
+        # If this is Service A, call Service B over Service Connect
+        call_downstream()
+
         logger.info("Trace complete.")
 
 
 if __name__ == "__main__":
-    interval = int(os.environ.get("EMIT_INTERVAL_SECONDS", 30))
-    logger.info(f"Starting {DD_SERVICE} — env={DD_ENV} version={DD_VERSION} interval={interval}s")
+    logger.info(f"Starting {DD_SERVICE} — env={DD_ENV} version={DD_VERSION} interval={EMIT_INTERVAL}s")
 
     start_health_server()
-
-    # Wait for the Datadog agent sidecar to be ready before emitting traces
-    wait_for_datadog_agent()
 
     while True:
         try:
             run_trace_example()
         except Exception as e:
             logger.exception(f"Error during trace/metric emission: {e}")
-        time.sleep(interval)
+        time.sleep(EMIT_INTERVAL)
