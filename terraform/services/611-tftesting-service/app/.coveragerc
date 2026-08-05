@@ -1,0 +1,12 @@
+[run]
+source = src
+relative_files = True
+
+[xml]
+output = /app/coverage/coverage.xml
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError
