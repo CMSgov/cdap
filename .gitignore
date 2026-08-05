@@ -10,5 +10,14 @@ terraform.tfvars
 .terraform*
 !.terraform-docs.yml
 
-__pycache__
-venv/
+# Python cache — use ** since these appear at any depth
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.pytest_cache/
+
+
+# Coverage artifacts
+coverage/
+.coverage
+*.xml

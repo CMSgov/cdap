@@ -9,16 +9,10 @@ import json
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-DD_SERVICE    = os.environ.get("DD_SERVICE", "tftesting")
-DD_ENV        = os.environ.get("DD_ENV", "test")
-DD_VERSION    = os.environ.get("DD_VERSION", "unknown")
-
-# Service Connect config — set DOWNSTREAM_URL in Service A's container env
 DOWNSTREAM_URL = os.environ.get("DOWNSTREAM_URL", "")
 EMIT_INTERVAL  = int(os.environ.get("EMIT_INTERVAL_SECONDS", 30))
+
 
 def wait_for_datadog_agent(host="localhost", port=8126, timeout=60, interval=2):
     start = time.time()
@@ -27,11 +21,12 @@ def wait_for_datadog_agent(host="localhost", port=8126, timeout=60, interval=2):
             with socket.create_connection((host, port), timeout=2):
                 logger.info(f"Datadog agent ready at {host}:{port}")
                 return True
-        except (ConnectionRefusedError, OSError):
+        except OSError:
             logger.warning(f"Datadog agent not ready, retrying in {interval}s...")
             time.sleep(interval)
     logger.warning("Datadog agent did not become ready in time — traces may be dropped.")
     return False
+
 
 wait_for_datadog_agent()
 
@@ -47,22 +42,6 @@ os.environ.setdefault("DD_TRACE_AGENT_URL", "http://localhost:8126")
 import ddtrace.auto
 from ddtrace import tracer
 from ddtrace.propagation.http import HTTPPropagator
-
-
-
-def wait_for_datadog_agent(host="localhost", port=8126, timeout=60, interval=2):
-    start = time.time()
-    while time.time() - start < timeout:
-        try:
-            with socket.create_connection((host, port), timeout=2):
-                logger.info(f"Datadog agent ready at {host}:{port}")
-                return True
-        except (ConnectionRefusedError, OSError):
-            logger.warning(f"Datadog agent not ready, retrying in {interval}s...")
-            time.sleep(interval)
-    logger.warning("Datadog agent did not become ready in time — traces may be dropped.")
-    return False
-
 
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):

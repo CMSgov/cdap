@@ -487,6 +487,10 @@ resource "aws_ecs_service" "this" {
 # -------------------------------------------------------
 # ALB and Networking
 # -------------------------------------------------------
+locals {
+  # AWS target group name limit is 32 characters
+  target_group_name = "${substr("${local.service_name_full}-tg", 0, 26)}-${substr(lower(local.effective_tg_protocol), 0, 6)}"
+}
 
 resource "aws_vpc_security_group_egress_rule" "https" {
   count             = (length(var.security_groups) == 0) ? 1 : 0

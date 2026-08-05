@@ -6,5 +6,4 @@ image:
     --cov-report=xml:/app/coverage/coverage.xml
 
 ecs:
-  desired_count: 0
   cluster: cdap-test-tftesting
