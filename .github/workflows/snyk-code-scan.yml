@@ -1,95 +1,72 @@
-name: "Snyk Code Scan"
+name: 'Snyk Code Scan (reusable)'
 
 on:
-  pull_request:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      branch:
-        description: 'Branch to scan'
+      app:
+        description: 'App name (ab2d, bcda, cdap, dpc)'
+        required: true
+        type: string
+      ref:
+        description: 'Git ref (branch, tag, or SHA) to scan — defaults to the calling ref'
         required: false
         type: string
-  # schedule:
-  #   - cron: '0 0 */2 * *'
+    secrets:
+      PROD_ACCOUNT:
+        description: 'AWS prod account ID'
+        required: true
 
-# Branch scanned by scheduled runs (and manual runs when no branch is given)
 env:
-  DEFAULT_SCAN_BRANCH: main
-  TOKEN_ENV: test
   SNYK_CLI_VERSION: 1.1306.2
 
 jobs:
   code-scan:
-    name: 'Snyk Code Scan (${{ matrix.app }})'
+    name: 'Snyk Code Scan (${{ inputs.app }})'
+    timeout-minutes: 15
     permissions:
       contents: read
       id-token: write
-      security-events: write
-    runs-on: codebuild-cdap-${{ contains(fromJSON('["prod", "sandbox"]'), matrix.env) && 'prod' || 'non-prod'}}-${{github.run_id}}-${{github.run_attempt}}
-    strategy:
-      fail-fast: false
-      matrix:
-        app: [ab2d, bcda, dpc]
-        env: [dev, test, sandbox, prod]
-        include:
-          - app: cdap
-            env: test
+    runs-on: codebuild-${{ inputs.app }}-prod-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
-      # Checkout Code
+      - name: Validate app input
+        env:
+          APP: ${{ inputs.app }}
+        run: |
+          case "$APP" in
+            ab2d|bcda|cdap|dpc) ;;
+            *) echo "::error::app must be one of ab2d, bcda, cdap, dpc"; exit 1 ;;
+          esac
+
       - name: Checkout Code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.3.0
         with:
-          ref: ${{ inputs.branch || env.DEFAULT_SCAN_BRANCH }}
+          ref: ${{ inputs.ref || github.ref }}
+          persist-credentials: false
 
       - uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ inputs.app }}-prod-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
-      - uses: ./actions/aws-params-env-action
+      - uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            SNYK_TOKEN=/cdap/${{ env.TOKEN_ENV }}/code-checks/sensitive/snyk-api-token/${{ matrix.app }}
-
-      - name: Verify env vars were set
-        run: |
-          if [ -z "$SNYK_TOKEN" ]; then
-            echo "❌ SNYK_TOKEN was not set"
-            exit 1
-          else
-            echo "✅ SNYK_TOKEN is set"
-          fi
+            SNYK_TOKEN=/cdap/prod/code-checks/sensitive/snyk-api-token/${{ inputs.app }}
 
       # Install Snyk (authenticates via the SNYK_TOKEN env var automatically)
       - name: Install Snyk
         run: |
           sudo npm install -g snyk@${SNYK_CLI_VERSION}
-          
+
       - name: Run Snyk Code
-        run: |
-          snyk code test --report --project-name="${{ matrix.app }}-snyk-code" --sarif-file-output=snyk-code.sarif || true
-          
-      - name: Upload SARIF via API
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_NAME: ${{ github.repository }}-code-check
         run: |
-          # Zip SARIF as required by GH API
-          SARIF_ZIP=$(gzip -c snyk-code.sarif | base64 -w 0)
-
-          # Build JSON
-          jq -n \
-            --arg commit "${{ github.sha }}" \
-            --arg ref "${{ github.ref }}" \
-            --arg sarif "$SARIF_ZIP" \
-            '{commit_sha: $commit, ref: $ref, sarif: $sarif}' > sarif.json
-
-          # Upload via GH API
-          curl -L \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/${{ github.repository }}/code-scanning/sarifs \
-            -d @sarif.json
+          EXIT_CODE=0
+          snyk code test --report --project-name="$PROJECT_NAME" || EXIT_CODE=$?
+          echo "Snyk exit code ${EXIT_CODE}"
+          # Exit code 1 means vulnerabilities were found. Don't fail the workflow.
+          if [ "$EXIT_CODE" -eq 1 ]; then exit 0; else exit "$EXIT_CODE"; fi
