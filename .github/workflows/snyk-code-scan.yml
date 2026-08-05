@@ -69,7 +69,7 @@ jobs:
           
       - name: Run Snyk Code
         run: |
-          snyk code test --report --sarif-file-output=snyk-code.sarif || true
+          snyk code test --report --project-name="${{ matrix.app }}-snyk-code" --sarif-file-output=snyk-code.sarif || true
           
       - name: Upload SARIF via API
         env:
