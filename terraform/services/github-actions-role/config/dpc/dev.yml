@@ -1,1 +1,3 @@
-additional_kms: []
+additional_kms:
+  - "dpc-dev-master-key"
+  - "dpc-ecr"

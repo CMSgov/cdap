@@ -1,1 +1,2 @@
-additional_kms: []
+additional_kms:
+  - "bcda-prod-app-config-kms"

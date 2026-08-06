@@ -1,1 +1,3 @@
-additional_kms: []
+additional_kms:
+  - "ab2d-ecr"
+  - "ab2d-test-tfstate-bucket"
