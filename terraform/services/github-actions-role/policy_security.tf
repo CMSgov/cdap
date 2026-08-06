@@ -82,25 +82,10 @@ data "aws_iam_policy_document" "github_actions_security" {
     actions = [
       "kms:CreateAlias",
       "kms:CreateKey",
-      "kms:ListAliases", # account-level, must be *
-      "kms:TagResource",
-    ]
-    resources = ["*"]
-  }
-
-  # KMS - General
-  statement {
-    sid = "KmsUsage"
-    actions = [
-      "kms:CreateAlias",
-      "kms:CreateKey",
-      "kms:EnableKeyRotation",
-      "kms:GetKeyPolicy",
-      "kms:GetKeyRotationStatus",
       "kms:ListAliases",
       "kms:TagResource",
     ]
-    resources = ["*"]
+    resources = ["*"] # account-level, must be *
   }
 
   # KMS - Specific Keys (app-aware)
@@ -131,21 +116,24 @@ data "aws_iam_policy_document" "github_actions_security" {
     )
   }
 
-  # Systems Manager
   # Write — own namespace only
+  # TODO: enforce once SSM path conventions are confirmed
   statement {
+    sid = "SsmWrite"
     actions = [
       "ssm:PutParameter",
       "ssm:DeleteParameter",
       "ssm:AddTagsToResource",
     ]
     resources = [
-      "*", # scope to something like arn:aws:ssm:*:*:parameter/${var.app}/${var.env}/*
+      "*", # arn:aws:ssm:*:*:parameter/${var.app}/${var.env}/*"
     ]
   }
 
-  # Read — own namespace or broad
+  # Read — own namespace
+  # TODO: enforce once SSM path conventions are confirmed
   statement {
+    sid = "SsmReadOwn"
     actions = [
       "ssm:GetParameter",
       "ssm:GetParameters",
@@ -153,23 +141,27 @@ data "aws_iam_policy_document" "github_actions_security" {
       "ssm:ListTagsForResource",
     ]
     resources = [
-      "*", # scope to something like arn:aws:ssm:*:*:parameter/${var.app}/${var.env}/*
+      "*", # arn:aws:ssm:*:*:parameter/${var.app}/${var.env}/*
     ]
   }
 
-  # Read — CDAP shared tokens only
+  # Read — CDAP shared tokens
+  # TODO: enforce once CDAP shared SSM path conventions are confirmed
+  # Expected paths: /cdap/${module.standards.cdap_env}/commmon/{app}/* and /cdap/${module.standards.cdap_env}/common/global/*
   statement {
+    sid = "SsmReadCdapShared"
     actions = [
       "ssm:GetParameter",
       "ssm:GetParameters",
     ]
     resources = [
-      "*", # scope to CDAP managed paths arn:aws:ssm:*:*:parameter/cdap/${module.standards.cdap_env} (sandbox and test variance) /common/${var.app}/*", "arn:aws:ssm:*:*:parameter/cdap/${module.standards.cdap_env}/common/global/*",
+      "*"
     ]
   }
 
-  # Cannot be resource-scoped — must stay *
+  # Cannot be resource-scoped — must stay glob
   statement {
+    sid = "SsmUnscoped"
     actions = [
       "ssm:DescribeParameters",
       "ssm:StartSession",
