@@ -77,6 +77,17 @@ data "aws_iam_policy_document" "github_actions_security" {
     resources = ["*"]
   }
 
+  statement {
+    sid = "KmsUsage"
+    actions = [
+      "kms:CreateAlias",
+      "kms:CreateKey",
+      "kms:ListAliases", # account-level, must be *
+      "kms:TagResource",
+    ]
+    resources = ["*"]
+  }
+
   # KMS - General
   statement {
     sid = "KmsUsage"
@@ -99,9 +110,14 @@ data "aws_iam_policy_document" "github_actions_security" {
       "kms:CreateGrant",
       "kms:Decrypt",
       "kms:DescribeKey",
+      "kms:EnableKeyRotation",
       "kms:Encrypt",
-      "kms:GenerateDataKey*",
-      "kms:List*",
+      "kms:GenerateDataKey",
+      "kms:GenerateDataKeyWithoutPlaintext",
+      "kms:GetKeyPolicy",
+      "kms:GetKeyRotationStatus",
+      "kms:ListGrants",
+      "kms:ListResourceTags",
       "kms:PutKeyPolicy",
       "kms:ReEncrypt*",
     ]
