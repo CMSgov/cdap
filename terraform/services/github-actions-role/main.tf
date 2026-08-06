@@ -88,6 +88,7 @@ resource "aws_iam_role" "github_actions" {
 locals {
   github_actions_policies = merge(
     {
+      messaging     = data.aws_iam_policy_document.github_actions_messaging.json
       compute       = data.aws_iam_policy_document.github_actions_compute.json
       networking    = data.aws_iam_policy_document.github_actions_networking.json
       storage       = data.aws_iam_policy_document.github_actions_storage.json

@@ -48,7 +48,8 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ec2:DeleteTags",
       "ec2:DeleteSecurityGroup",
       "ec2:Describe*",
-      "ec2:Get*",
+      "ec2:GetManagedPrefixListEntries",
+      "ec2:GetSecurityGroupsForVpc",
       "ec2:RevokeSecurityGroupEgress",
       "ec2:RevokeSecurityGroupIngress",
     ]

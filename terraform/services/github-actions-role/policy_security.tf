@@ -55,8 +55,19 @@ data "aws_iam_policy_document" "github_actions_security" {
       "iam:DeleteRole",
       "iam:DeleteRolePolicy",
       "iam:DetachRolePolicy",
-      "iam:Get*",
-      "iam:List*",
+      "iam:GetInstanceProfile",
+      "iam:GetOpenIDConnectProvider",
+      "iam:GetPolicy",
+      "iam:GetPolicyVersion",
+      "iam:GetRole",
+      "iam:GetRolePolicy",
+      "iam:ListAccountAliases",
+      "iam:ListAttachedRolePolicies",
+      "iam:ListInstanceProfilesForRole",
+      "iam:ListOpenIDConnectProviders",
+      "iam:ListPolicies",
+      "iam:ListPolicyVersions",
+      "iam:ListRolePolicies",
       "iam:PassRole",
       "iam:PutRolePolicy",
       "iam:TagRole",
@@ -105,18 +116,50 @@ data "aws_iam_policy_document" "github_actions_security" {
   }
 
   # Systems Manager
+  # Write — own namespace only
   statement {
     actions = [
-      "ssm:AddTagsToResource",
-      "ssm:DeleteParameter",
-      "ssm:DescribeParameters",
-      "ssm:GetParameter*",
-      "ssm:ListTagsForResource",
       "ssm:PutParameter",
+      "ssm:DeleteParameter",
+      "ssm:AddTagsToResource",
+    ]
+    resources = [
+      "*", # scope to something like arn:aws:ssm:*:*:parameter/${var.app}/${var.env}/*
+    ]
+  }
+
+  # Read — own namespace or broad
+  statement {
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+      "ssm:GetParametersByPath",
+      "ssm:ListTagsForResource",
+    ]
+    resources = [
+      "*", # scope to something like arn:aws:ssm:*:*:parameter/${var.app}/${var.env}/*
+    ]
+  }
+
+  # Read — CDAP shared tokens only
+  statement {
+    actions = [
+      "ssm:GetParameter",
+      "ssm:GetParameters",
+    ]
+    resources = [
+      "*", # scope to CDAP managed paths arn:aws:ssm:*:*:parameter/cdap/${module.standards.cdap_env} (sandbox and test variance) /common/${var.app}/*", "arn:aws:ssm:*:*:parameter/cdap/${module.standards.cdap_env}/common/global/*",
+    ]
+  }
+
+  # Cannot be resource-scoped — must stay *
+  statement {
+    actions = [
+      "ssm:DescribeParameters",
       "ssm:StartSession",
       "ssm:TerminateSession",
     ]
-    resources = ["*"] # FIXME This should be refined by paths for get vs create based on what paths teams own and per env
+    resources = ["*"]
   }
 
   # STS
