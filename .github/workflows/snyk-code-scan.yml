@@ -1,4 +1,4 @@
-name: 'Snyk Code Scan (reusable)'
+name: code-checks (reusable)
 
 on:
   workflow_call:
