@@ -39,21 +39,33 @@ resource "datadog_webhook" "slack_channels" {
   }
 }
 
+locals {
+  victorops_message_types = [
+    "CRITICAL",
+    "WARNING",
+    # "ACKNOWLEDGEMENT",
+    # "INFO"
+    "RECOVERY"
+  ]
+
+  victorops_webhooks = [for pair in setproduct(module.standards.ssm.datadog_victorops_webhooks, local.victorops_message_types) : { hook = pair[0], message_type = pair[1] }]
+}
+
 # Victorops
 ## Requires a Rest integration to be set up and will instantiate for every
 ## SSM parameter in the account at the defined path in standards
 resource "datadog_webhook" "victorops_endpoints" {
-  for_each = nonsensitive(module.standards.ssm.datadog_victorops_webhooks)
+  for_each = { for obj in local.victorops_webhooks : "${obj.hook.key}-${lower(obj.message_type)}" => obj }
 
   name = "victorops-${each.key}"
-  url  = sensitive(each.value.value)
+  url  = sensitive(each.value.hook.value)
 
   encode_as = "json"
   custom_headers = jsonencode({
     "Content-Type" = "application/json"
   })
   payload = jsonencode({
-    message_type        = "{{#is_alert}}CRITICAL{{/is_alert}}{{#is_warning}}WARNING{{/is_warning}}{{#is_recovery}}RECOVERY{{/is_recovery}}{{#is_no_data}}CRITICAL{{/is_no_data}}"
+    message_type        = each.value.message_type
     entity_id           = "$EVENT_TITLE"   # Unique identifier for the alert (used for deduplication)
     entity_display_name = "$EVENT_TITLE"   # Human-readable name shown in VictorOps
     state_message       = "$TEXT_ONLY_MSG" # Alert body/description
