@@ -19,7 +19,8 @@ variable "env" {
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
-    splunk_logging_bucket = object({ arn = string })
+    kms_alias_primary = object({ target_key_arn = string })
+    account_id        = string
   })
 }
 
