@@ -1,0 +1,14 @@
+name: code-checks (scheduled)
+on:
+  schedule:
+    - cron: '0 0 */2 * *'
+  workflow_dispatch:
+
+jobs:
+  scheduled-code-checks:
+    name: 'Scheduled Code Checks for CDAP'
+    uses: CMSGov/CDAP/.github/workflows/code-checks.yml@a20fe20db1d116bb26f0b26e76b7d9fc0cdf3a55
+    with:
+      app: cdap
+      ref: main
+    secrets: inherit
