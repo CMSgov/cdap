@@ -20,7 +20,7 @@ env:
   SNYK_CLI_VERSION: 1.1306.2
 
 jobs:
-  code-scan:
+  checks:
     name: 'Snyk Code Scan (${{ inputs.app }})'
     timeout-minutes: 15
     permissions:
@@ -63,7 +63,7 @@ jobs:
 
       - name: Run Snyk Code
         env:
-          PROJECT_NAME: ${{ github.repository }}-code-check
+          PROJECT_NAME: ${{ github.repository }}-code-checks
         run: |
           EXIT_CODE=0
           snyk code test --report --project-name="$PROJECT_NAME" || EXIT_CODE=$?
