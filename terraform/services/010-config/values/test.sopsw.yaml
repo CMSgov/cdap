@@ -8,6 +8,7 @@
 /cdap/${env}/external/bb/sensitive/aws_account_id: ENC[AES256_GCM,data:IEREwVsfMnbB+FMf,iv:b/OiUD7gOYxiQAq5HfX8nCPRrU49tJzeuCjrb8f4KIc=,tag:eLw8qF7NSh87K2btk/PzCw==,type:int]
 /cdap/${env}/external/bfd/sensitive/aws_account_id: ENC[AES256_GCM,data:1cCuCq324SFzCeIO,iv:iwXWwizSTBPxhQIANX/j3f/Y/iyCp6B0CcZOBm1DP9c=,tag:H0H2SGp00bIKZz7UYbmgMg==,type:int]
 /cdap/${env}/snyk/api_token: ENC[AES256_GCM,data:77PUOXcaJH/gTQBEDA5wHUSNXAOgseQUGLAezXYtQ4w6Tu+p,iv:GT95QoEquPKQaE1cLoKXP8v6JgzX/WCeAzWiwPNm5Qc=,tag:CI5RIZ9ASUnAe0eaFZFlfg==,type:str]
+/cdap/${env}/code-checks/sensitive/snyk-api-token/cdap: ENC[AES256_GCM,data:0zr/vodDO6YQNsX9SDUr3yaeRhyK4KWN+AT8x9zznUkyS2su,iv:PQ4uRG308n7bjnEpC0UhdhbShJfwsuwdnIydkA6e66s=,tag:OD3+WmaDkpbGqfME1Vtf+A==,type:str]
 /cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:8I9OcIGsIWVJmNXWR6sjoEujOn9ZaIIuJOJn5LXxiW7dEPly4JdY/A==,iv:iSZKJig6jl9qkX4Y9/i8szn0LkDNT/BaDiNHUnRfK84=,tag:RssiJy+deSRw0yPBLMYWOQ==,type:str]
 /cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
 /cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
@@ -25,13 +26,13 @@
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-test
-      aws_profile: ""
       created_at: "2026-01-12T15:49:48Z"
       enc: AQICAHhRVR5bK8ZYKFTKNNSHhEFksAVIRCiMf5uovRP3zJDkeAFoMr3X9NE1emnjv7dPLReMAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxGIkxhuSZecPXOjbAgEQgDtKIJDmCjArvUR79kdmiS6/KjzguJbVsfs0fBgiJZ/BLVmBVzUiQ9fO9HvcwPTOF8rHA1kz6USPhmBSxA==
-    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-test
       aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-test
       created_at: "2026-01-12T15:49:48Z"
       enc: AQICAHj/7o5ejG2naYXXtV0msJC+UCEv8bGhFxVAE5it/FT42wG/hszzTI7suLqOYmXNFyXTAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM4W6xb7Tm4JiCfD3xAgEQgDsJw3SujEQIDc6EnUG79oVPM+CtjLt1aiAea82u8pYvv34tuvPlBwuYgzHfySZ0DahyGNyeECblkVWomA==
-  mac_only_encrypted: true
+      aws_profile: ""
   unencrypted_regex: /nonsensitive/
+  mac_only_encrypted: true
   version: 3.13.1
