@@ -66,7 +66,7 @@ resource "datadog_webhook" "victorops_endpoints" {
   })
   payload = jsonencode({
     message_type        = each.value.message_type
-    entity_id           = "$EVENT_TITLE"   # Unique identifier for the alert (used for deduplication)
+    entity_id           = "$AGGREG_KEY"    # used by VictorOps to group events together for an incident
     entity_display_name = "$EVENT_TITLE"   # Human-readable name shown in VictorOps
     state_message       = "$TEXT_ONLY_MSG" # Alert body/description
     state_start_time    = "$DATE_POSIX"    # Unix timestamp of when the alert started
