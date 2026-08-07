@@ -1,4 +1,4 @@
-name: code-checks (scheduled)
+name: code-checks (snyk code scheduled)
 on:
   schedule:
     - cron: '0 0 */2 * *'
@@ -7,7 +7,7 @@ on:
 jobs:
   scheduled-code-checks:
     name: 'Scheduled Code Checks for CDAP'
-    uses: CMSGov/CDAP/.github/workflows/code-checks.yml@a20fe20db1d116bb26f0b26e76b7d9fc0cdf3a55
+    uses: CMSGov/CDAP/.github/workflows/code-checks-snyk.yml@main
     with:
       app: cdap
       ref: main
