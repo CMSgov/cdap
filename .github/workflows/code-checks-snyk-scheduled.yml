@@ -1,4 +1,5 @@
 name: code-checks (snyk code scheduled)
+
 on:
   schedule:
     - cron: '0 0 */2 * *'
