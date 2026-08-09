@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-
 locals {
   function_name = "cost-anomaly-alert"
   app           = "bcda"
@@ -8,7 +6,7 @@ locals {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1358_sops"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=8fd0c1c27b16358d1ea03186afee81f08d57862a"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app
@@ -18,7 +16,7 @@ module "platform" {
 }
 
 resource "aws_ce_anomaly_monitor" "account_alerts" {
-  name              = "AccountAlerts"
+  name              = "BCDA Cost Anomaly Alerts"
   monitor_type      = "DIMENSIONAL"
   monitor_dimension = "SERVICE"
 }
@@ -46,14 +44,14 @@ resource "aws_ce_anomaly_subscription" "realtime_subscription" {
       dimension {
         key           = "ANOMALY_TOTAL_IMPACT_ABSOLUTE"
         match_options = ["GREATER_THAN_OR_EQUAL"]
-        values        = ["20"]
+        values        = ["0.1"] # non-testing value is 20
       }
     }
     or {
       dimension {
         key           = "ANOMALY_TOTAL_IMPACT_PERCENTAGE"
         match_options = ["GREATER_THAN_OR_EQUAL"]
-        values        = ["5"]
+        values        = ["1"] # non-testing value is 5
       }
     }
   }
@@ -95,4 +93,78 @@ resource "aws_sns_topic_subscription" "this" {
   endpoint  = module.sns_to_slack_queue.arn
   protocol  = "sqs"
   topic_arn = aws_sns_topic.cost_anomaly_sns.arn
+}
+
+# IAM role for Lambda execution
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "lambda_permissions" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueAttributes",
+      "ssm:GetParameter",
+      "kms:GenerateDataKey",
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "logs:PutLogEvents",
+      "logs:CreateLogStream",
+      "logs:CreateLogGroup"
+    ]
+
+    resources = [module.sns_to_slack_queue.arn]
+  }
+}
+
+resource "aws_iam_role" "cost_anomaly_alert" {
+  name               = "cost_anomaly_lambda_execution_role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+}
+
+# Attach the SQS permissions policy
+resource "aws_iam_role_policy" "lambda_sqs_permissions" {
+  name   = "lambda-sqs-permissions"
+  role   = aws_iam_role.cost_anomaly_alert.id
+  policy = data.aws_iam_policy_document.lambda_permissions.json
+}
+
+# Package the Lambda function code
+data "archive_file" "cost_anomaly_alert" {
+  type        = "zip"
+  source_file = "lambda_src/lambda_function.py"
+  output_path = "lambda/cost_anomaly_function.zip"
+}
+
+# Lambda function
+resource "aws_lambda_function" "cost_anomaly_alert" {
+  filename         = data.archive_file.cost_anomaly_alert.output_path
+  function_name    = local.function_name
+  role             = aws_iam_role.cost_anomaly_alert.arn
+  handler          = "lambda_function.lambda_handler"
+  source_code_hash = data.archive_file.cost_anomaly_alert.output_base64sha256
+
+  runtime = "python3.13"
+
+  environment {
+    variables = {
+      ENVIRONMENT = var.env
+      IGNORE_OK   = "false"
+    }
+  }
+
+  tags = module.platform.default_tags
 }
