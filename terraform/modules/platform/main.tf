@@ -157,3 +157,8 @@ data "aws_kms_alias" "secondary" {
 
   name = "alias/${local.app}-${local.parent_env}"
 }
+
+
+data "aws_sns_topic" "cloudwatch_alarms" {
+  name = "${local.app}-${local.parent_env}-cloudwatch-alarms"
+}

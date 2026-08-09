@@ -149,6 +149,11 @@ output "splunk_logging_bucket" {
   value       = data.aws_s3_bucket.logs_to_splunk
 }
 
+output "sns_topic_slack_alarms" {
+  description = "SNS topic managed by CDAP for alarm action that publishes to Slack"
+  value       = data.aws_sns_topic.cloudwatch_alarms
+}
+    
 output "account_env_suffix" {
   description = "[\"prod\" or \"non-prod\"] The AWS account shorthand to distinguish environment hierarchy."
   sensitive   = false
