@@ -20,12 +20,11 @@ locals {
     local._additional_webhooks
   ))
 
-  notify = var.monitor_config.shadow_mode ? "" : local._composed_notify
+  notify = local._composed_notify
   base_tags = [
     "application:${var.app}",
     "environment:${var.env}",
     "managed-by:tofu",
-    var.monitor_config.shadow_mode ? "shadow-mode:true" : "shadow-mode:false",
   ]
 
   victorops_notify = join(" ", local._victorops_notify_strings)
