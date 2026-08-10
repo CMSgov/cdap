@@ -48,7 +48,7 @@ locals {
     "RECOVERY"
   ]
 
-  victorops_webhooks = [for pair in setproduct(module.standards.ssm.datadog_victorops_webhooks, local.victorops_message_types) : { hook = pair[0], message_type = pair[1] }]
+  victorops_webhooks = [for pair in setproduct([for k, v in nonsensitive(module.standards.ssm.datadog_victorops_webhooks) : { key = k, value = sensitive(v.value) }], local.victorops_message_types) : { hook = pair[0], message_type = pair[1] }]
 }
 
 # Victorops
