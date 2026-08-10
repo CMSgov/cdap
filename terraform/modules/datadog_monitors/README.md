@@ -7,11 +7,9 @@ without requiring teams to enumerate their resources explicitly.
 The `by {dimension}` clause (e.g., `by {servicename}`, `by {functionname}`) means a single
 monitor resource evaluates independently per resource, even though we set up just one tofu resource.
 
-## Shadow mode
-- Monitors are **active and evaluating** against real metrics 
-- They are **visible in the Datadog UI** under Monitors --> Manage Monitors (filter by `app:<your-app>` and `env:<your-env>`)
-- They will **not send any notifications**
-- All monitors are tagged `shadow-mode:true` for easy filtering in the Datadog UI
+## Draft Status
+
+By default, monitors are created as drafts in Datadog, and will not generate any notifications. Set `draft_status: "published"` in your config to publish the monitors and get alerts.
 
 ## Configuration
 
@@ -138,6 +136,7 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [datadog_monitor.custom](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.ecs_cpu_high](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.ecs_memory_high](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.lambda_duration](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
@@ -164,4 +163,5 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_monitor_ids"></a> [monitor\_ids](#output\_monitor\_ids) | All Datadog monitor IDs created by this module, grouped by service |
+| <a name="output_notify"></a> [notify](#output\_notify) | Notify string used in monitors from this module. |
 <!-- END_TF_DOCS -->

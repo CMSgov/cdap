@@ -14,4 +14,6 @@ locals {
     location_id
     if startswith(lower(location), local.location_prefix)
   ])
+
+  non_private_location_ids = [for location_id, _ in data.datadog_synthetics_locations.all.locations : location_id if startswith(location_id, "aws:us-gov")]
 }

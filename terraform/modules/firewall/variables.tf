@@ -16,6 +16,14 @@ variable "env" {
   }
 }
 
+variable "platform" {
+  description = "Object representing the CDAP plaform module."
+  type = object({
+    kms_alias_primary = object({ target_key_arn = string })
+    account_id        = string
+  })
+}
+
 variable "scope" {
   description = "Firewall scope"
   type        = string
@@ -55,4 +63,32 @@ variable "ip_sets" {
   description = "IP sets to allow"
   type        = list(string)
   default     = []
+}
+
+variable "logging_filter" {
+  type = object({
+    default_behavior = string
+    filters = list(object({
+      behavior    = string
+      requirement = string
+      conditions = list(object({
+        action_condition     = optional(string, "")
+        label_name_condition = optional(string, "")
+      }))
+    }))
+  })
+  description = "Filter to control which requests get logged. Defaults to BLOCK and COUNT only. Override during initial rollout to KEEP all traffic."
+  default = {
+    default_behavior = "DROP"
+    filters = [
+      {
+        behavior    = "KEEP"
+        requirement = "MEETS_ANY"
+        conditions = [
+          { action_condition = "BLOCK" },
+          { action_condition = "COUNT" }
+        ]
+      }
+    ]
+  }
 }

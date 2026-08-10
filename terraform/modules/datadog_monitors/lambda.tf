@@ -14,7 +14,8 @@ resource "datadog_monitor" "lambda_error_rate" {
   # TODO this maybe doesn't make sense to be global across all the monitors for a technology
   on_missing_data = var.monitor_config.lambda.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "lambda_throttles" {
@@ -32,7 +33,8 @@ resource "datadog_monitor" "lambda_throttles" {
 
   on_missing_data = var.monitor_config.lambda.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "lambda_duration" {
@@ -50,5 +52,6 @@ resource "datadog_monitor" "lambda_duration" {
 
   on_missing_data = var.monitor_config.lambda.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }

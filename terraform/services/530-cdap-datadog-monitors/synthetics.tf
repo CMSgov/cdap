@@ -4,8 +4,12 @@ module "synthetics" {
   app = "cdap"
   env = var.env
 
-  tests = {
-    private_location_connectivity = {
+  notify               = module.common_datadog_monitors.notify
+  shadow_mode          = local.monitor_config.shadow_mode
+  min_failure_duration = local.monitor_config.synthetics.min_failure_duration
+
+  tests = [
+    {
       name    = "private-location-connectivity"
       subtype = "tcp"
       request_definition = {
@@ -20,5 +24,5 @@ module "synthetics" {
         }
       ]
     }
-  }
+  ]
 }

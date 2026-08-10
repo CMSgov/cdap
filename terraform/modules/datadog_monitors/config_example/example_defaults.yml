@@ -10,17 +10,12 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Shadow Mode
+# draft_status
 #
-# When true, all monitors are active and visible in Datadog but send NO
-# notifications. Use this during initial rollout to review monitor behavior
-# before enabling alerting.
-#
-# Set to false in your environment config (e.g. prod.yml) when you are ready
-# to receive alerts. Monitors are tagged shadow-mode:true/false for filtering
-# in the Datadog UI.
+# Either "draft" or "published". Draft monitors do not generate any
+# notifications and are marked in the Datadog UI.
 # -----------------------------------------------------------------------------
-shadow_mode: true
+draft_status: "published"
 
 # -----------------------------------------------------------------------------
 # Notifications
@@ -51,6 +46,7 @@ enabled:
   lambda: true
   s3: true
   rds: false
+  synthetics: true
 
 # -----------------------------------------------------------------------------
 # ECS Monitors
@@ -172,7 +168,17 @@ rds:
   freeable_memory_threshold_mb: 256   # alert when less than 256MB free
   db_connections_threshold: 200       # tune to your instance's max_connections
   replica_lag_seconds: 30
+  replica_lag_enabled: true
   deadlock_threshold: 1               # any deadlock is worth investigating
   deadlocks_enabled: true             # set false without Enhanced Monitoring / Performance Insights
   on_missing_data: "default"
   timeframe: "last_10m"
+
+# -----------------------------------------------------------------------------
+# Synthetic Monitors
+#
+# min_failure_duration: from Datadog provider docs--"Minimum amount of time in
+# failure required to trigger an alert (in seconds)."
+# -----------------------------------------------------------------------------
+synthetics:
+  min_failure_duration: 300

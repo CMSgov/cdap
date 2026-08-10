@@ -12,7 +12,8 @@ resource "datadog_monitor" "sqs_dlq_messages_visible" {
 
   on_missing_data = var.monitor_config.sqs.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "sqs_message_age" {
@@ -30,6 +31,7 @@ resource "datadog_monitor" "sqs_message_age" {
 
   on_missing_data = var.monitor_config.sqs.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 

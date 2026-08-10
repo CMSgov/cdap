@@ -2,7 +2,6 @@ variable "platform" {
   description = "Object representing the platform module."
   type = object({
     app               = string
-    env               = string
     service           = string
     kms_alias_primary = object({ target_key_arn = string })
     primary_region    = object({ name = string })

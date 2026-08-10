@@ -10,7 +10,7 @@ variable "env" {
 
 variable "monitor_config" {
   type = object({
-    shadow_mode = optional(bool, true)
+    draft_status = optional("string", "draft")
 
     notifications = optional(object({
       victorops           = optional(bool, false)
@@ -69,6 +69,7 @@ variable "monitor_config" {
       freeable_memory_threshold_mb = optional(number, 256)
       db_connections_threshold     = optional(number, 200)
       replica_lag_seconds          = optional(number, 30)
+      replica_lag_enabled          = optional(bool, true)
       deadlock_threshold           = optional(number, 1)
       deadlocks_enabled            = optional(bool, true)
       on_missing_data              = optional(string, "default")
@@ -76,26 +77,14 @@ variable "monitor_config" {
     }), {})
 
     synthetics = optional(object({
-      threshold                 = optional(number, 1)
-      notify_no_data            = optional(bool, false)
-      no_data_timeframe_minutes = optional(number, 10)
-      timeframe                 = optional(string, "last_5m")
+      min_failure_duration = optional(number, 300)
     }), {})
   })
   default = {}
 }
 
-variable "synthetics_tests" {
-  description = "List of Datadog synthetic tests to alert on. Each entry maps a display name to the test's public_id."
-  type = list(object({
-    name      = string
-    public_id = string
-  }))
-  default = []
-}
-
 variable "custom_monitors" {
-  description = "Custom monitors to create. Module handles notify, shadow_mode, and base_tags automatically. Use create to conditionally create the monitor (i.e. on only certain environments)--use this option sparingly."
+  description = "Custom monitors to create. Module handles notify and base_tags automatically. draft_status, if set, overrides the value set in the monitor config. Use create to conditionally create the monitor (i.e. on only certain environments)--use this option sparingly."
   type = list(object({
     name    = string
     type    = optional(string, "metric alert")
@@ -108,9 +97,10 @@ variable "custom_monitors" {
       warning_recovery  = optional(number)
     })
     on_missing_data     = optional(string, "default")
-    require_full_window = optional(bool, true)
     tags                = optional(list(string), [])
     create              = optional(bool, true)
+    draft_status        = optional(string)
+    require_full_window = optional(bool, false)
   }))
   default = []
 }

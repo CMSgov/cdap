@@ -56,13 +56,16 @@ data "aws_iam_policy_document" "execution" {
   }
 
   statement {
-    sid    = "AllowDatadogSSMAccess"
+    sid    = "AllowDatadogandImageTagSSMAccess"
     effect = "Allow"
     actions = [
       "ssm:GetParameters",
       "ssm:GetParameter"
     ]
-    resources = [data.aws_ssm_parameter.datadog_api_key.arn]
+    resources = [
+      data.aws_ssm_parameter.datadog_api_key.arn,
+      data.aws_ssm_parameter.active_image_tag.arn
+    ]
   }
 
   statement {
@@ -134,7 +137,7 @@ data "aws_iam_policy_document" "service_connect" {
   }
 
   dynamic "statement" {
-    for_each = var.enable_ecs_service_connect && var.service_connect_namespace != null ? [1] : []
+    for_each = var.enable_ecs_service_connect ? [1] : []
     content {
       sid = "AllowCertManagement"
       actions = [
@@ -147,7 +150,7 @@ data "aws_iam_policy_document" "service_connect" {
       condition {
         test     = "StringLike"
         variable = "acm:DomainName"
-        values   = ["*.${var.service_connect_namespace.name}"]
+        values   = ["*.${var.platform.app}-${var.platform.env}.sc.internal.cms.gov"]
       }
     }
   }
@@ -217,6 +220,38 @@ resource "aws_iam_role_policy" "task" {
 }
 
 data "aws_iam_policy_document" "task" {
+  dynamic "statement" {
+    for_each = local.enable_mtls_sidecar ? [1] : []
+    content {
+      sid    = "AllowProxyACMExport"
+      effect = "Allow"
+      actions = [
+        "acm:ExportCertificate",
+        "acm:DescribeCertificate",
+        "acm:GetCertificate"
+      ]
+      resources = [
+        var.mtls_cert_arn
+      ]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = var.enable_mtls_sidecar ? [1] : []
+    content {
+      sid    = "AllowCDAPSidecarECRPull"
+      effect = "Allow"
+      actions = [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ]
+      resources = [
+        "arn:aws:ecr:${var.platform.primary_region.name}:${var.platform.account_id}:repository/cdap-mtls-sidecar"
+      ]
+    }
+  }
+
   statement {
     sid = "AllowKMSDecrypt"
     actions = [
@@ -236,4 +271,29 @@ data "aws_iam_policy_document" "task" {
   #     var.database_arn
   #   ]
   # }
+}
+
+# -------------------------------------------------------
+# ECS Exec Enablement
+# For use only in early testing, do not use widely
+# -------------------------------------------------------
+resource "aws_iam_policy" "ecs_exec" {
+  count       = var.enable_execute_command ? 1 : 0
+  name        = "${var.platform.app}-${var.platform.env}-tftesting-ecs-exec"
+  description = "Allows ECS Exec (execute-command) for interactive debugging. Test environments only."
+  policy      = data.aws_iam_policy_document.ecs_exec.json
+}
+
+
+data "aws_iam_policy_document" "ecs_exec" {
+  statement {
+    sid = "AllowECSExec"
+    actions = [
+      "ssmmessages:CreateControlChannel",
+      "ssmmessages:CreateDataChannel",
+      "ssmmessages:OpenControlChannel",
+      "ssmmessages:OpenDataChannel"
+    ]
+    resources = ["*"]
+  }
 }

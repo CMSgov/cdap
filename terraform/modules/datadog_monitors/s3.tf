@@ -13,7 +13,8 @@ resource "datadog_monitor" "s3_http_response_4xx" {
 
   on_missing_data = var.monitor_config.s3.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "s3_http_response_5xx" {
@@ -31,5 +32,6 @@ resource "datadog_monitor" "s3_http_response_5xx" {
 
   on_missing_data = var.monitor_config.s3.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }

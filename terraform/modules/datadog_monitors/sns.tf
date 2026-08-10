@@ -13,5 +13,6 @@ resource "datadog_monitor" "sns_failed_notifications" {
 
   on_missing_data = var.monitor_config.sns.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }

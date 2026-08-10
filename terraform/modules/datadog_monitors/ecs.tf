@@ -13,7 +13,8 @@ resource "datadog_monitor" "ecs_cpu_high" {
 
   on_missing_data = var.monitor_config.ecs.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "ecs_memory_high" {
@@ -31,5 +32,6 @@ resource "datadog_monitor" "ecs_memory_high" {
 
   on_missing_data = var.monitor_config.ecs.on_missing_data
 
-  tags = local.base_tags
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
