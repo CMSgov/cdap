@@ -90,7 +90,7 @@ module "datadog_monitors" {
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_datadog"></a> [datadog](#provider\_datadog) | ~>4.4 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -101,7 +101,7 @@ module "datadog_monitors" {
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_datadog"></a> [datadog](#requirement\_datadog) | ~>4.4 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -112,11 +112,11 @@ module "datadog_monitors" {
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_app"></a> [app](#input\_app) | The application name (ab2d, bbapi, bcda, cdap dpc) | `string` | n/a | yes |
+| ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_app"></a> [app](#input\_app) | The application name (ab2d, bb, bfd, bcda, cdap dpc) | `string` | n/a | yes |
 | <a name="input_env"></a> [env](#input\_env) | Deployment environment (dev, test, sandbox, stage, prod) | `string` | n/a | yes |
-| <a name="input_custom_monitors"></a> [custom\_monitors](#input\_custom\_monitors) | Custom monitors to create. Module handles notify, shadow\_mode, and base\_tags automatically. Use create to conditionally create the monitor (i.e. on only certain environments)--use this option sparingly. | <pre>list(object({<br/>    name    = string<br/>    type    = optional(string, "metric alert")<br/>    message = string<br/>    query   = string<br/>    thresholds = object({<br/>      critical          = number<br/>      warning           = optional(number)<br/>      critical_recovery = optional(number)<br/>      warning_recovery  = optional(number)<br/>    })<br/>    on_missing_data = optional(string, "default")<br/>    require_full_window       = optional(bool, true)<br/>    tags                      = optional(list(string), [])<br/>    create                    = optional(bool, true)<br/>  }))</pre> | `[]` | no |
-| <a name="input_monitor_config"></a> [monitor\_config](#input\_monitor\_config) | n/a | <pre>object({<br/>    shadow_mode = optional(bool, true)<br/><br/>    notifications = optional(object({<br/>      victorops           = optional(bool, false)<br/>      slack               = optional(bool, false)<br/>      emails              = optional(list(string), [])<br/>      additional_webhooks = optional(list(string), [])<br/>    }), {})<br/><br/>    enabled = optional(object({<br/>      ecs    = optional(bool, true)<br/>      sqs    = optional(bool, true)<br/>      sns    = optional(bool, true)<br/>      lambda = optional(bool, true)<br/>      s3     = optional(bool, true)<br/>      rds    = optional(bool, true)<br/>    }), {})<br/><br/>    ecs = optional(object({<br/>      cpu_threshold             = optional(number, 85)<br/>      memory_threshold          = optional(number, 85)<br/>      on_missing_data = optional(string, "default")<br/>      timeframe                 = optional(string, "last_10m")<br/>    }), {})<br/><br/>    sqs = optional(object({<br/>      dlq_message_threshold     = optional(number, 1)<br/>      max_message_age_seconds   = optional(number, 300)<br/>      on_missing_data = optional(string, "default")<br/>      timeframe                 = optional(string, "last_5m")<br/>    }), {})<br/><br/>    sns = optional(object({<br/>      failed_notification_threshold = optional(number, 5)<br/>      on_missing_data = optional(string, "default")<br/>      timeframe                     = optional(string, "last_5m")<br/>    }), {})<br/><br/>    lambda = optional(object({<br/>      error_rate_threshold      = optional(number, 5)<br/>      throttle_threshold        = optional(number, 10)<br/>      duration_p99_threshold_ms = optional(number, 8000)<br/>      on_missing_data = optional(string, "default")<br/>      timeframe                 = optional(string, "last_5m")<br/>    }), {})<br/><br/>    s3 = optional(object({<br/>      http_response_4xx_threshold = optional(number, 50)<br/>      http_response_5xx_threshold = optional(number, 10)<br/>      on_missing_data = optional(string, "default")<br/>      timeframe                   = optional(string, "last_5m")<br/>    }), {})<br/><br/>    rds = optional(object({<br/>      cpu_threshold                = optional(number, 85)<br/>      freeable_memory_threshold_mb = optional(number, 256)<br/>      db_connections_threshold     = optional(number, 200)<br/>      replica_lag_seconds          = optional(number, 30)<br/>      deadlock_threshold           = optional(number, 1)<br/>      deadlocks_enabled            = optional(bool, true)<br/>      on_missing_data = optional(string, "default")<br/>      timeframe                    = optional(string, "last_10m")<br/>    }), {})<br/>  })</pre> | `{}` | no |
+| <a name="input_custom_monitors"></a> [custom\_monitors](#input\_custom\_monitors) | Custom monitors to create. Module handles notify and base\_tags automatically. draft\_status, if set, overrides the value set in the monitor config. Use create to conditionally create the monitor (i.e. on only certain environments)--use this option sparingly. | <pre>list(object({<br/>    name    = string<br/>    type    = optional(string, "metric alert")<br/>    message = string<br/>    query   = string<br/>    thresholds = object({<br/>      critical          = number<br/>      warning           = optional(number)<br/>      critical_recovery = optional(number)<br/>      warning_recovery  = optional(number)<br/>    })<br/>    on_missing_data     = optional(string, "default")<br/>    tags                = optional(list(string), [])<br/>    create              = optional(bool, true)<br/>    draft_status        = optional(string)<br/>    require_full_window = optional(bool, false)<br/>  }))</pre> | `[]` | no |
+| <a name="input_monitor_config"></a> [monitor\_config](#input\_monitor\_config) | n/a | <pre>object({<br/>    draft_status = optional("string", "draft")<br/><br/>    notifications = optional(object({<br/>      victorops           = optional(bool, false)<br/>      slack               = optional(bool, false)<br/>      emails              = optional(list(string), [])<br/>      additional_webhooks = optional(list(string), [])<br/>    }), {})<br/><br/>    enabled = optional(object({<br/>      ecs        = optional(bool, true)<br/>      sqs        = optional(bool, true)<br/>      sns        = optional(bool, true)<br/>      lambda     = optional(bool, true)<br/>      s3         = optional(bool, true)<br/>      rds        = optional(bool, true)<br/>      synthetics = optional(bool, true)<br/>    }), {})<br/><br/>    ecs = optional(object({<br/>      cpu_threshold    = optional(number, 85)<br/>      memory_threshold = optional(number, 85)<br/>      on_missing_data  = optional(string, "default")<br/>      timeframe        = optional(string, "last_10m")<br/>    }), {})<br/><br/>    sqs = optional(object({<br/>      dlq_message_threshold   = optional(number, 1)<br/>      max_message_age_seconds = optional(number, 300)<br/>      on_missing_data         = optional(string, "default")<br/>      timeframe               = optional(string, "last_5m")<br/>    }), {})<br/><br/>    sns = optional(object({<br/>      failed_notification_threshold = optional(number, 5)<br/>      on_missing_data               = optional(string, "default")<br/>      timeframe                     = optional(string, "last_5m")<br/>    }), {})<br/><br/>    lambda = optional(object({<br/>      error_rate_threshold      = optional(number, 5)<br/>      throttle_threshold        = optional(number, 10)<br/>      duration_p99_threshold_ms = optional(number, 8000)<br/>      on_missing_data           = optional(string, "default")<br/>      timeframe                 = optional(string, "last_5m")<br/>    }), {})<br/><br/>    s3 = optional(object({<br/>      http_response_4xx_threshold = optional(number, 50)<br/>      http_response_5xx_threshold = optional(number, 10)<br/>      on_missing_data             = optional(string, "default")<br/>      timeframe                   = optional(string, "last_5m")<br/>    }), {})<br/><br/>    rds = optional(object({<br/>      cpu_threshold                = optional(number, 85)<br/>      freeable_memory_threshold_mb = optional(number, 256)<br/>      db_connections_threshold     = optional(number, 200)<br/>      replica_lag_seconds          = optional(number, 30)<br/>      replica_lag_enabled          = optional(bool, true)<br/>      deadlock_threshold           = optional(number, 1)<br/>      deadlocks_enabled            = optional(bool, true)<br/>      on_missing_data              = optional(string, "default")<br/>      timeframe                    = optional(string, "last_10m")<br/>    }), {})<br/><br/>    synthetics = optional(object({<br/>      min_failure_duration = optional(number, 300)<br/>    }), {})<br/>  })</pre> | `{}` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -135,7 +135,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [datadog_monitor.custom](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.ecs_cpu_high](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.ecs_memory_high](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
@@ -161,7 +161,8 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_monitor_ids"></a> [monitor\_ids](#output\_monitor\_ids) | All Datadog monitor IDs created by this module, grouped by service |
 | <a name="output_notify"></a> [notify](#output\_notify) | Notify string used in monitors from this module. |
+| <a name="output_victorops_notify"></a> [victorops\_notify](#output\_victorops\_notify) | The VictorOps notify string generated by this module, regardless of whether VictorOps is enabled in the config or not. |
 <!-- END_TF_DOCS -->
