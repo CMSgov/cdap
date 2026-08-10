@@ -10,7 +10,7 @@ variable "env" {
 
 variable "monitor_config" {
   type = object({
-    shadow_mode = optional(bool, true)
+    draft_status = optional("string", "draft")
 
     notifications = optional(object({
       victorops           = optional(bool, false)
@@ -90,7 +90,7 @@ variable "monitor_config" {
 }
 
 variable "custom_monitors" {
-  description = "Custom monitors to create. Module handles notify, shadow_mode, and base_tags automatically. Use create to conditionally create the monitor (i.e. on only certain environments)--use this option sparingly."
+  description = "Custom monitors to create. Module handles notify and base_tags automatically. draft_status, if set, overrides the value set in the monitor config. Use create to conditionally create the monitor (i.e. on only certain environments)--use this option sparingly."
   type = list(object({
     name    = string
     type    = optional(string, "metric alert")
@@ -105,6 +105,7 @@ variable "custom_monitors" {
     on_missing_data     = optional(string, "default")
     tags                = optional(list(string), [])
     create              = optional(bool, true)
+    draft_status        = optional(string)
     require_full_window = optional(bool, false)
   }))
   default = []

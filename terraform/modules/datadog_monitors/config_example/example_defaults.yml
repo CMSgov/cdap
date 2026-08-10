@@ -10,17 +10,12 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Shadow Mode
+# draft_status
 #
-# When true, all monitors are active and visible in Datadog but send NO
-# notifications. Use this during initial rollout to review monitor behavior
-# before enabling alerting.
-#
-# Set to false in your environment config (e.g. prod.yml) when you are ready
-# to receive alerts. Monitors are tagged shadow-mode:true/false for filtering
-# in the Datadog UI.
+# Either "draft" or "published". Draft monitors do not generate any
+# notifications and are marked in the Datadog UI.
 # -----------------------------------------------------------------------------
-shadow_mode: true
+draft_status: "published"
 
 # -----------------------------------------------------------------------------
 # Notifications
