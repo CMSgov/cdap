@@ -35,6 +35,7 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "elasticfilesystem:Describe*",
       "elasticfilesystem:List*",
     ]
+    resources = ["*"]
   }
 
   # RDS

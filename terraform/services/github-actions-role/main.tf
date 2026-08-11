@@ -96,7 +96,7 @@ locals {
       observability = data.aws_iam_policy_document.github_actions_observability.json
     },
     var.app == "cdap" ? {
-      cdap = data.aws_iam_policy_document.github_actions_cdap.json
+      cdap-mgmt = data.aws_iam_policy_document.github_actions_cdap.json
     } : {}
   )
 }
