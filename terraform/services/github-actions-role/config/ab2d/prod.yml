@@ -1,3 +1,2 @@
 additional_kms:
   - "ab2d-ecr"
-  - "ab2d-prod-tfstate-bucket"
