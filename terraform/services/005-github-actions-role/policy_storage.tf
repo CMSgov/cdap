@@ -7,6 +7,7 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "backup:DescribeBackupVault",
       "backup:GetBackupPlan",
       "backup:GetBackupSelection",
+      "backup:ListTags"
     ]
     resources = ["*"]
   }
