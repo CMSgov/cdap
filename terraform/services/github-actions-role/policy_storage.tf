@@ -11,6 +11,32 @@ data "aws_iam_policy_document" "github_actions_storage" {
     resources = ["*"]
   }
 
+  # EFS
+  statement {
+    actions = [
+      # File system lifecycle (aws_efs_file_system)
+      "elasticfilesystem:CreateFileSystem",
+      "elasticfilesystem:DeleteFileSystem",
+      "elasticfilesystem:UpdateFileSystem",
+      "elasticfilesystem:PutLifecycleConfiguration",
+      "elasticfilesystem:PutBackupPolicy",
+      "elasticfilesystem:PutFileSystemPolicy",
+      "elasticfilesystem:DeleteFileSystemPolicy",
+      "elasticfilesystem:TagResource",
+      "elasticfilesystem:UntagResource",
+
+      # Mount target lifecycle (aws_efs_mount_target)
+      "elasticfilesystem:CreateMountTarget",
+      "elasticfilesystem:DeleteMountTarget",
+      "elasticfilesystem:ModifyMountTargetSecurityGroups",
+
+      # Read / describe — used by data sources and Terraform refresh
+      # (data.aws_efs_file_system, data.aws_efs_access_points)
+      "elasticfilesystem:Describe*",
+      "elasticfilesystem:List*",
+    ]
+  }
+
   # RDS
   statement {
     actions = [
