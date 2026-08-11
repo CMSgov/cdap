@@ -10,7 +10,7 @@ variable "env" {
 
 variable "monitor_config" {
   type = object({
-    draft_status = optional("string", "draft")
+    draft_status = optional(string, "draft")
 
     notifications = optional(object({
       victorops           = optional(bool, false)
