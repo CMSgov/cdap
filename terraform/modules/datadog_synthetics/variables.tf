@@ -8,12 +8,6 @@ variable "app" {
   type        = string
 }
 
-variable "shadow_mode" {
-  description = "When true, marks tests with shadow-mode:true. Should match the shadow_mode setting used in the companion datadog_monitors module."
-  type        = bool
-  default     = false
-}
-
 variable "notify" {
   description = "Notify string from the monitors module."
   type        = string
