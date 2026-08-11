@@ -1,2 +1,5 @@
 additional_kms:
   - "bcda-test-app-config-kms"
+  - "bcda-test-aurora-exports-bucket"
+  - "bcda-test-attribution-import-bucket-key"
+  - "bcda-test-efs"

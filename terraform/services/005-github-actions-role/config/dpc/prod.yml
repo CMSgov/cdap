@@ -1,3 +1,9 @@
 additional_kms:
   - "dpc-prod-master-key"
   - "dpc-ecr"
+  - "dpc-prod-alarm-to-slack-env-vars"
+  - "dpc-prod-alarm-to-slack-function-bucket"
+  - "dpc-prod-alarm-to-slack-queue"
+  - "dpc-prod-api-cloudwatch-key"
+  - "dpc-prod-attribution-cloudwatch-key"
+

@@ -1,3 +1,9 @@
 additional_kms:
   - "dpc-dev-master-key"
   - "dpc-ecr"
+  - "dpc-dev-api-cloudwatch-key"
+  - "dpc-dev-attribution-cloudwatch-key"
+  - "dpc-dev-web-admin-cloudwatch-key"
+  - "dpc-dev-web-cloudwatch-key"
+  - "dpc-dev-web-portal-cloudwatch-key"
+

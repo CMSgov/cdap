@@ -11,6 +11,11 @@ data "aws_kms_alias" "environment_key" {
   name = "alias/${var.app}-${var.env}"
 }
 
+data "aws_kms_alias" "environment_key_secondary" {
+  provider = aws.secondary
+  name     = "alias/${var.app}-${var.env}"
+}
+
 data "aws_kms_alias" "account_env_old" {
   name = "alias/${local.account_env_old}"
 }
@@ -104,6 +109,7 @@ data "aws_iam_policy_document" "github_actions_security" {
     ]
     resources = concat(
       values(data.aws_kms_alias.additional_kms)[*].target_key_arn,
+      [data.aws_kms_alias.environment_key_secondary.target_key_arn],
       [data.aws_kms_alias.environment_key.target_key_arn],
       [data.aws_kms_alias.account_env_old.target_key_arn],
       [data.aws_kms_alias.account_env_old_secondary.target_key_arn],

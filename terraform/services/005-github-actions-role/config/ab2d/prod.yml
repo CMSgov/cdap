@@ -1,2 +1,8 @@
 additional_kms:
   - "ab2d-ecr"
+  - "ab2d-prod-opt-out-import-env-vars"
+  - "ab2d-prod-aurora-export-bucket"
+  - "ab2d-prod-opt-out-export-function-bucket"
+  - "ab2d-prod-opt-out-import-function-bucket"
+  - "ab2d-prod-opt-out-export-env-vars"
+  - "ab2d-prod-opt-out-import-queue"
