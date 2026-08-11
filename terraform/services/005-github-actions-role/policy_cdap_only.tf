@@ -47,6 +47,7 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     actions = [
       "kms:CreateKey",
       "kms:CreateAlias",
+      "kms:Describe*"
     ]
     resources = ["*"]
   }

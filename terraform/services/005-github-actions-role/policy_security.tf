@@ -88,12 +88,10 @@ data "aws_iam_policy_document" "github_actions_security" {
   # FIXME CDAP manages all KMS keys so this permission should be reduced
   # KMS - Specific Keys (app-aware)
   statement {
-    sid = "KmsSpecificKeyUsage"
+    sid = "KmsKeyUsage"
     actions = [
-      "kms:CreateGrant",
       "kms:Decrypt",
       "kms:DescribeKey",
-      "kms:EnableKeyRotation",
       "kms:Encrypt",
       "kms:GenerateDataKey",
       "kms:GenerateDataKeyWithoutPlaintext",
@@ -101,8 +99,8 @@ data "aws_iam_policy_document" "github_actions_security" {
       "kms:GetKeyRotationStatus",
       "kms:ListGrants",
       "kms:ListResourceTags",
-      "kms:PutKeyPolicy",
       "kms:ReEncrypt*",
+      "kms:CreateGrant", # needed for AWS services (RDS, ECS) to use keys on app's behalf
     ]
     resources = concat(
       values(data.aws_kms_alias.additional_kms)[*].target_key_arn,
@@ -111,6 +109,21 @@ data "aws_iam_policy_document" "github_actions_security" {
       [data.aws_kms_alias.account_env_old_secondary.target_key_arn],
       [data.aws_kms_alias.account_env.target_key_arn],
       [data.aws_kms_alias.account_env_secondary.target_key_arn],
+    )
+  }
+
+  statement {
+    sid = "KmsKeyManagementNearTerm"
+    actions = [
+      "kms:EnableKeyRotation",
+      "kms:PutKeyPolicy",
+      "kms:TagResource",
+    ]
+    # Scoped to own app keys only, NOT account_env or account_env_old
+    # Teams should not be managing shared/account-level keys
+    resources = concat(
+      values(data.aws_kms_alias.additional_kms)[*].target_key_arn,
+      [data.aws_kms_alias.environment_key.target_key_arn],
     )
   }
 

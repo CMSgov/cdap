@@ -23,7 +23,7 @@ module "standards" {
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = "cdap"
-  env         = "prod"
+  env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${path.module}/"
   service     = replace(path.module, "/[0-9]/", "")
 }
