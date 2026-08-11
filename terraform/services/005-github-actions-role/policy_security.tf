@@ -80,14 +80,12 @@ data "aws_iam_policy_document" "github_actions_security" {
   statement {
     sid = "KmsUsage"
     actions = [
-      "kms:CreateAlias",
-      "kms:CreateKey",
       "kms:ListAliases",
-      "kms:TagResource",
     ]
     resources = ["*"] # account-level, must be *
   }
 
+  # FIXME CDAP manages all KMS keys so this permission should be reduced
   # KMS - Specific Keys (app-aware)
   statement {
     sid = "KmsSpecificKeyUsage"
