@@ -24,7 +24,7 @@
 /cdap/${env}/code-checks/sensitive/snyk-api-token/bcda: ENC[AES256_GCM,data:92l0fAuceye+rYvY9Az7h1HaJd/iJYi2GznQc53kAxhWFuSc,iv:oKHZvuzLZRJsJ2xYeeQ8kqBirmCO3XG53Of4urmE0rA=,tag:ETxjp9+hYiUNmyMJNg33Hw==,type:str]
 /cdap/${env}/code-checks/sensitive/snyk-api-token/cdap: ENC[AES256_GCM,data:pKpS23Pz7SkdRFIlFcwTYKb95bwrfz/xKXZ9FiRd16lYGyFL,iv:bflqmPHeP+I5OueUQWKMve1d2wyWn2L7IgzL3ANwChk=,tag:FHfeIpZYCNsCMQ/Qy/qclw==,type:str]
 /cdap/${env}/code-checks/sensitive/snyk-api-token/dpc: ENC[AES256_GCM,data:G9V/dCnZRubrtCWwLUue03cUBp4ifuT1eh4AJsGho1W4ZOYw,iv:DHJL/6uLumyLZvMLtTA/hYmrUkAal04U+91Atici72U=,tag:v9qAWbzv2VsbTdRcT9PTpg==,type:str]
-/cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:OyXVBYpKSPGVFqgDZv7juKkWHTznfSJjlwFAqijkXFLSSoFl3GzSXg==,iv:rYavZmFM3yQSR63wzgK2puWSF3Ie8IYw4Ak6kk4umHo=,tag:4WXw/40dOSinprmh9SF8tA==,type:str]
+/cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:VbSbfTXrBcA0SP7L9sqqnl7IWBSdaq66oY32i/6F3VQBme98dBFlEQ==,iv:ZQeBG13e391WYfA3Wc9NoH906t9xj5r9PeBNLU9ZnSM=,tag:XhsVA6u7qjDxS/logzqUNg==,type:str]
 /cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
 /cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
 /cdap/${env}/common/nonsensitive/security-events/renotify-after-days: 30
