@@ -42,6 +42,7 @@ data "aws_iam_policy_document" "github_actions_messaging" {
   statement {
     actions = [
       "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl",
       "sqs:List*",
     ]
     resources = ["*"]
