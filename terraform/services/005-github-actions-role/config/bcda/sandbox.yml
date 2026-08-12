@@ -5,4 +5,5 @@ additional_kms:
   - "bcda-sandbox-rds"
   - "bcda-sandbox-access-log-kms"
   - "bfd-insights-bcda-sandbox-get_job_data-key"
+  - "cloudwatch_kms_key"
 
