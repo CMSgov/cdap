@@ -9,18 +9,19 @@ data "aws_iam_policy_document" "github_actions_compute" {
     resources = ["*"]
   }
 
-  # EC2 Autoscaling
+  # Application Auto Scaling (used by ECS service scaling)
   statement {
+    sid = "ApplicationAutoscaling"
     actions = [
-      "autoscaling:DeleteNotificationConfiguration",
-      "autoscaling:Describe*",
-      "autoscaling:PutNotificationConfiguration",
-      "autoscaling:StartInstanceRefresh",
-      "autoscaling:UpdateAutoScalingGroup",
+      "application-autoscaling:DeleteScalingPolicy",
+      "application-autoscaling:DeregisterScalableTarget",
+      "application-autoscaling:Describe*",
+      "application-autoscaling:PutScalingPolicy",
+      "application-autoscaling:RegisterScalableTarget",
+      "application-autoscaling:TagResource",
     ]
     resources = ["*"]
   }
-
   # CodeBuild
   statement {
     actions = [
