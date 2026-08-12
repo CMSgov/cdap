@@ -3,4 +3,3 @@ additional_kms:
   - "bcda-test-aurora-exports-bucket"
   - "bcda-test-attribution-import-bucket-key"
   - "bcda-test-efs"
-  - "cloudwatch_kms_key"
