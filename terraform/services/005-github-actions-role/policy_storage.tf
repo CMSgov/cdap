@@ -46,7 +46,6 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "rds:CreateDBParameterGroup",
       "rds:CreateDBSubnetGroup",
       "rds:Describe*",
-      "rds:List*",
       "rds:ModifyDBClusterParameterGroup",
       "rds:ModifyDBSubnetGroup",
       "rds:ModifyDBParameterGroup",

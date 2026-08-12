@@ -3,7 +3,6 @@ additional_kms:
   - "bfd-insights-bcda-prod-get_acos_with_expired_credentials-key"
   - "bfd-insights-bcda-prod-event_processor-key"
   - "bfd-insights-bcda-prod-get_num_benes_per_aco-key"
-  - "bcda-insights-data-sampler-prod-key"
   - "bcda-prod-efs"
   - "bcda-prod-rds"
   - "bcda-prod-attribution-import-bucket-key"
