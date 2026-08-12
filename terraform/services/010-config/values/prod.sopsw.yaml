@@ -31,7 +31,7 @@
 /cdap/${env}/common/nonsensitive/security-events/severity-list: CRITICAL,HIGH,MEDIUM
 /cdap/${env}/common/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
 /cdap/${env}/common/sensitive/artifactory/password: ENC[AES256_GCM,data:O87T1Y7qQNbEytR3pG1K7pHVX8F7OEz2CZ+0Uo/E2E1XNb6PSs9iAVnROC9Mio3uv9KRNHdWxt6wytfcil0JyA==,iv:lOneSA9kmP6ycjsXDb1PTBwTEmw0+svXk1ksQ5kP8oQ=,tag:tdAqOs6oTvgCg9DPsf/g1Q==,type:str]
-/cdap/${env}/common/sensitive/github/service-account-token: ENC[AES256_GCM,data:PaQg+wZ6YRtK5uHkmd91KJejV83n0H2+6Kk653WhnBqut9qKD2Oj7w==,iv:sgIS3gXurSkwkV9zbwKeWetGogGFlAYT1JI8ufRtz6k=,tag:jDWIpMirxwDZQq6Bt8vuaA==,type:str]
+/cdap/common/sensitive/github/service-account-token: ENC[AES256_GCM,data:zAOyDRw6eSYAhXVXNw08x6ZwfPw7hMcCC9/WMWasSmlSD5VgcTOj6g==,iv:/mgxOnn31adeIxLjv+ZP+ll7LAvDUeboXUGBwN1Ckbw=,tag:CBPFEeGtdldlSjEN3Sf7qA==,type:str]
 /cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:o7UVib5gThT48CJ8tyTPMUHzVFHqb/xP1tW9zI5ENGV1OlQrqTI0f18/Mfommm9KP7HfHGA3Z0XdtgoJ22DUBNPiRoNm5nwXWaSvrhZvlA==,iv:fWwjDLnbfsNek8kRdCVSQ37pNpH4gTaoWLnqtdmTyiE=,tag:dMFzHbiWtKa5d+0d31OaPQ==,type:str]
 /cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:D/D6ddsLK1nw80h0xvdcVHRf9pBQlsRo/hQSSArDYEEI+qnQ63uDTby1ZHM=,iv:cDd8whTgNoCxPChQiRvFKw85xLMToFFmv95vBOn9cmQ=,tag:fZd7Z3TNAEIjBMRQBAGsbg==,type:str]
 /cdap/${env}/datadog/sensitive/private_location_config_access_key: ENC[AES256_GCM,data:FcpECPNe/9fMEyBSmcqq7y4K/zhWS1IJC2sCSWcF9Tg=,iv:Hp7UDLu+RcwyE1F6ZxldKt3T4r0Ab6j1GN7oI+fWvx4=,tag:T2H7VJ4UeVABVTTfXUEc9w==,type:str]
