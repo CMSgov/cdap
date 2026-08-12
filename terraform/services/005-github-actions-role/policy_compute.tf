@@ -1,10 +1,40 @@
 data "aws_iam_policy_document" "github_actions_compute" {
   # Certificate Manager
   statement {
+    sid = "AcmRead"
     actions = [
       "acm:DescribeCertificate",
       "acm:GetCertificate",
       "acm:ListCertificates",
+      "acm:ListTagsForCertificate",
+    ]
+    resources = ["*"]
+  }
+
+  # ACM — write operations
+  statement {
+    sid = "AcmWrite"
+    actions = [
+      "acm:AddTagsToCertificate",
+      "acm:DeleteCertificate",
+      "acm:ImportCertificate", # public path for CMS-signed cert
+      "acm:RemoveTagsFromCertificate",
+      "acm:RenewCertificate",
+      "acm:RequestCertificate", # private path for PCA-issued cert
+      "acm:UpdateCertificateOptions",
+    ]
+    resources = ["*"]
+  }
+
+  # ACM Private CA
+  # Needed to describe the shared PCA used for private cert issuance
+  # Actual issuance is handled by ACM internally, no acm-pca:IssueCertificate needed
+  statement {
+    sid = "AcmPcaRead"
+    actions = [
+      "acm-pca:DescribeCertificateAuthority",
+      "acm-pca:GetCertificateAuthorityCertificate",
+      "acm-pca:ListCertificateAuthorities",
     ]
     resources = ["*"]
   }
