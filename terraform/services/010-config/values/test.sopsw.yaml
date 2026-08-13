@@ -9,14 +9,14 @@
 /cdap/${env}/external/bfd/sensitive/aws_account_id: ENC[AES256_GCM,data:1cCuCq324SFzCeIO,iv:iwXWwizSTBPxhQIANX/j3f/Y/iyCp6B0CcZOBm1DP9c=,tag:H0H2SGp00bIKZz7UYbmgMg==,type:int]
 /cdap/${env}/snyk/api_token: ENC[AES256_GCM,data:77PUOXcaJH/gTQBEDA5wHUSNXAOgseQUGLAezXYtQ4w6Tu+p,iv:GT95QoEquPKQaE1cLoKXP8v6JgzX/WCeAzWiwPNm5Qc=,tag:CI5RIZ9ASUnAe0eaFZFlfg==,type:str]
 /cdap/${env}/code-checks/sensitive/snyk-api-token/cdap: ENC[AES256_GCM,data:0zr/vodDO6YQNsX9SDUr3yaeRhyK4KWN+AT8x9zznUkyS2su,iv:PQ4uRG308n7bjnEpC0UhdhbShJfwsuwdnIydkA6e66s=,tag:OD3+WmaDkpbGqfME1Vtf+A==,type:str]
-/cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:8I9OcIGsIWVJmNXWR6sjoEujOn9ZaIIuJOJn5LXxiW7dEPly4JdY/A==,iv:iSZKJig6jl9qkX4Y9/i8szn0LkDNT/BaDiNHUnRfK84=,tag:RssiJy+deSRw0yPBLMYWOQ==,type:str]
+/cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:SxtbyAgktMi6MubfEnjfdIQdNelfE3/ajt3FtMNBkOKnZ1iOlDzzuQ==,iv:mYryrj4v2XwKNj2hs0gIigvu3+q5ASgbSLW16wjARN0=,tag:CCibnLyhwV9Dc266KMq8Xw==,type:str]
 /cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
 /cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
 /cdap/${env}/common/nonsensitive/security-events/renotify-after-days: 30
 /cdap/${env}/common/nonsensitive/security-events/severity-list: CRITICAL,HIGH,MEDIUM
 /cdap/${env}/common/nonsensitive/sonarqube/url: https://sonarqube.cloud.cms.gov
 /cdap/${env}/common/sensitive/artifactory/password: ENC[AES256_GCM,data:nscDKdf+wuKMJ+gFpUIDb0zZbdBvsk3qYFey0/wbMw345ARL3u8vq2/YqUTnWAm1fYqieKOzq/yJYvM43CIZCg==,iv:XgWvwq94ShSpJwU659XXX/6bLv77oCECiza9FDJau+o=,tag:2afCpXFqv905cIQ0sRQIFg==,type:str]
-/cdap/${env}/common/sensitive/github/service-account-token: ENC[AES256_GCM,data:NfW3owoSTgve3Ys1vHBJMCMVxHOkMsNMzHceLGo0kyR7w+ujhdbPyQ==,iv:Nnjs5Ie7oV2I9NPPEAi1qlnasXDmGsUTss//cFnm7tc=,tag:rxiw8Hxt/mhuA0iUZogGkA==,type:str]
+/cdap/common/sensitive/github/service-account-token: ENC[AES256_GCM,data:x9snh/h4BSLp2KUEyYi09hxgDYLkl13cSBK1zLJZ4CVOencO2ReGng==,iv:XP27EpZY4jV3zOOtUxXfuIgScOzByVy5co9PJhb8thI=,tag:ARhK49/X8GJUKMKbXk5oEw==,type:str]
 /cdap/${env}/common/sensitive/security-events/webhook-url: ENC[AES256_GCM,data:Vgp2HifAdY+8wNPltsPt9wZkVDd/YOvGLvzA5wU3Bn4XbEUwTDzJavSLNbTEZwYzGol6tryZBgk8hhP+HxyHNbB0xmJdo783ZZlou9rOQA==,iv:sMxWjUaXd4jfsE6U+cj9ft+8g7sBwVLI9g+1TiwS1eA=,tag:H6YaBowY//nIeppO7pTOQw==,type:str]
 /cdap/${env}/common/sensitive/sonarqube/token: ENC[AES256_GCM,data:JSmFc9ISIkD/9W4upHKHbOAAW33txr0qNHjKMsNDCuU/er08MhI/TilYIfeq,iv:LrbqBL6IFjbEllIbTdss8VeHBm1a3cADDT06eNwrHos=,tag:exgf707JCcDYgOnQIDqrHQ==,type:str]
 /cdap/${env}/datadog/sensitive/private_location_config_access_key: ENC[AES256_GCM,data:E7RGJlMIxW7G6eDg/vHkpIBvxncaODW4q89Icq5q81A=,iv:9vlX2MFknrEO3ConnVVX/YRFXXH8XBanrgg4mU4W5Bw=,tag:rnQdg41Fe911ptdsLoqdGQ==,type:str]
