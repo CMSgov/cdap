@@ -49,10 +49,27 @@ data "aws_iam_policy_document" "github_actions_messaging" {
   }
   # SNS
   statement {
+    sid = "SnsRead"
     actions = [
       "sns:GetSubscriptionAttributes",
       "sns:GetTopicAttributes",
       "sns:List*",
+    ]
+    resources = ["*"]
+  }
+
+  # SNS Write
+  statement {
+    sid = "SnsWrite"
+    actions = [
+      "sns:CreateTopic",
+      "sns:DeleteTopic",
+      "sns:SetTopicAttributes",
+      "sns:Subscribe",
+      "sns:Unsubscribe",
+      "sns:SetSubscriptionAttributes",
+      "sns:TagResource",
+      "sns:UntagResource",
     ]
     resources = ["*"]
   }
