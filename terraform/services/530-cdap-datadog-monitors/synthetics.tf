@@ -5,6 +5,7 @@ module "synthetics" {
   env = var.env
 
   notify               = module.common_datadog_monitors.notify
+  enabled              = local.monitor_config.enabled.synthetics
   min_failure_duration = local.monitor_config.synthetics.min_failure_duration
 
   tests = [
