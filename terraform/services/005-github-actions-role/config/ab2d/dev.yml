@@ -1,5 +1,6 @@
 additional_kms:
   - "ab2d-ecr"
+  - "ab2d-test"
   - "ab2d-dev-opt-out-import-queue"
   - "ab2d-dev-opt-out-export-env-vars"
   - "ab2d-dev-opt-out-import-env-vars"
