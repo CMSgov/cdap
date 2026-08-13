@@ -6,7 +6,6 @@ module "synthetics" {
 
   notify               = module.common_datadog_monitors.notify
   enabled              = local.monitor_config.enabled.synthetics
-  shadow_mode          = local.monitor_config.shadow_mode
   min_failure_duration = local.monitor_config.synthetics.min_failure_duration
 
   tests = [
