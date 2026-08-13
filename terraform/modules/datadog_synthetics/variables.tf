@@ -24,6 +24,11 @@ variable "min_failure_duration" {
   type        = number
 }
 
+variable "enabled" {
+  description = "Whether synthetics are enabled. If false, nothing will be created. Should be set to the corresponding value from the monitor config passed to the monitors module."
+  type        = bool
+}
+
 variable "tests" {
   description = <<-EOT
     List of synthetic tests to create. Each test is automatically routed through the
