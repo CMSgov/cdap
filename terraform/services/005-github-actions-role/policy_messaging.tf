@@ -6,6 +6,7 @@ data "aws_iam_policy_document" "github_actions_messaging" {
       "events:List*",
       "events:PutRule",
       "events:PutTargets",
+      "events:RemoveTargets",
       "events:TagResource",
       "events:UntagResource",
     ]
@@ -21,6 +22,7 @@ data "aws_iam_policy_document" "github_actions_messaging" {
       "lambda:Get*",
       "lambda:InvokeFunction",
       "lambda:List*",
+      "lambda:RemovePermission",
       "lambda:TagResource",
       "lambda:UpdateFunctionCode",
       "lambda:UpdateFunctionConfiguration",
