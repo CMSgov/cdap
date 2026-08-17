@@ -239,3 +239,79 @@ resource "aws_wafv2_web_acl_association" "this" {
   resource_arn = var.associated_resource_arn
   web_acl_arn  = aws_wafv2_web_acl.this.arn
 }
+
+##############
+# Logging
+#############
+
+module "waf_log_group" {
+  source = "../cloudwatch_log_group"
+
+  # WAF log group names MUST be prefixed with "aws-waf-logs-"
+  name       = "aws-waf-logs-${var.name}"
+  kms_key_id = var.platform.kms_alias_primary.target_key_arn
+}
+
+resource "aws_cloudwatch_log_resource_policy" "waf" {
+  policy_name = "aws-waf-logs-${var.name}"
+  policy_document = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "delivery.logs.amazonaws.com"
+        }
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "${module.waf_log_group.this.arn}:*"
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = var.platform.account_id
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_wafv2_web_acl_logging_configuration" "this" {
+  log_destination_configs = [module.waf_log_group.this.arn]
+  resource_arn            = aws_wafv2_web_acl.this.arn
+
+  dynamic "logging_filter" {
+    for_each = var.logging_filter != null ? [var.logging_filter] : []
+    content {
+      default_behavior = logging_filter.value.default_behavior
+
+      dynamic "filter" {
+        for_each = logging_filter.value.filters
+        content {
+          behavior    = filter.value.behavior
+          requirement = filter.value.requirement
+
+          dynamic "condition" {
+            for_each = filter.value.conditions
+            content {
+              dynamic "action_condition" {
+                for_each = condition.value.action_condition != "" ? [1] : []
+                content {
+                  action = condition.value.action_condition
+                }
+              }
+
+              dynamic "label_name_condition" {
+                for_each = condition.value.label_name_condition != "" ? [1] : []
+                content {
+                  label_name = condition.value.label_name_condition
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -5,6 +5,8 @@ resource "datadog_monitor" "custom" {
   type    = each.value.type
   message = "${each.value.message} ${local.notify}"
 
+  draft_status = coalesce(each.value.draft_status, var.monitor_config.draft_status)
+
   query = each.value.query
 
   monitor_thresholds {
