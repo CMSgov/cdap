@@ -1,7 +1,4 @@
 additional_kms:
   - "bcda-dev-app-config-kms"
   - "bcda-dev-opt-out-import-function-bucket"
-  - "bfd-insights-bcda-dev-event_processor-key"
-  - "bfd-insights-bcda-dev-get_job_data-key"
   - "bcda-dev-efs"
-  - "bcda-insights-data-sampler-dev-key"

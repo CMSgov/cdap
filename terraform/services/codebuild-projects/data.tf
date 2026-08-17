@@ -2,6 +2,10 @@ data "aws_ssm_parameter" "github_token" {
   name = "/cdap/${var.env}/codebuild-projects/sensitive/github-token"
 }
 
+data "aws_kms_key" "cdap" {
+  key_id = "alias/cdap-${var.env}"
+}
+
 data "aws_security_group" "security_tools" {
   vpc_id = module.standards.cdap_vpc.id
   name   = "cmscloud-security-tools"
@@ -67,6 +71,16 @@ data "aws_iam_policy_document" "codebuild" {
     ]
 
     resources = ["arn:aws:codebuild:us-east-1:${module.standards.account_id}:report-group/*"]
+  }
+
+  # KMS
+  statement {
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey"
+    ]
+
+    resources = [data.aws_kms_key.cdap.arn]
   }
 
   # EC2
