@@ -82,7 +82,7 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "s3:GetBucketAcl",
       "s3:GetBucketCORS",
       "s3:GetBucketLogging",
-      "s3:GetBucketNotification"
+      "s3:GetBucketNotification",
       "s3:GetBucketObjectLockConfiguration",
       "s3:GetBucketOwnershipControls",
       "s3:GetBucketPolicy",
