@@ -95,6 +95,8 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "s3:GetReplicationConfiguration",
       "s3:GetAccelerateConfiguration",
       "s3:ListBucket",
+      "s3:ListBucketVersions",
+      "s3:ListBucketMultipartUploads"
     ]
     resources = ["*"]
   }
