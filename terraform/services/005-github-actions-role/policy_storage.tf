@@ -105,7 +105,7 @@ data "aws_iam_policy_document" "github_actions_storage" {
   statement {
     actions = [
       "s3:DeleteObject",
-      "s3:DeleteObjeectVersion",
+      "s3:DeleteObjectVersion",
       "s3:GetObject",
       "s3:GetObjectTagging",
       "s3:GetObjectVersion",
