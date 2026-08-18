@@ -1,8 +1,6 @@
 additional_kms:
-  - "bcda-insights-data-sampler-sandbox-key"
   - "bcda-sandbox-app-config-kms"
   - "bcda-sandbox-efs"
-  - "bfd-insights-bcda-sandbox-event_processor-key"
   - "bcda-sandbox-rds"
   - "bcda-sandbox-access-log-kms"
   - "bfd-insights-bcda-sandbox-get_job_data-key"

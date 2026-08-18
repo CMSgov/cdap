@@ -59,6 +59,7 @@ data "aws_iam_policy_document" "github_actions_cdap" {
       "codebuild:CreateProject",
       "codebuild:CreateWebhook",
       "codebuild:DeleteProject",
+      "codebuild:DeleteSourceCredentials",
       "codebuild:DeleteWebhook",
       "codebuild:List*",
       "codebuild:UpdateProject",

@@ -62,6 +62,7 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "s3:CreateBucket",
       "s3:DeleteBucket",
       "s3:DeleteBucketPolicy",
+      "s3:GetBucketPublicAccessBlock",
       "s3:PutBucketLogging",
       "s3:PutBucketNotification",
       "s3:PutBucketOwnershipControls",
@@ -94,6 +95,8 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "s3:GetReplicationConfiguration",
       "s3:GetAccelerateConfiguration",
       "s3:ListBucket",
+      "s3:ListBucketVersions",
+      "s3:ListBucketMultipartUploads"
     ]
     resources = ["*"]
   }

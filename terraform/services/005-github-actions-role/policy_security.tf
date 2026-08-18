@@ -57,6 +57,7 @@ data "aws_iam_policy_document" "github_actions_security" {
       "iam:CreatePolicyVersion",
       "iam:CreateRole",
       "iam:DeletePolicy",
+      "iam:DeletePolicyVersion",
       "iam:DeleteRole",
       "iam:DeleteRolePolicy",
       "iam:DetachRolePolicy",
