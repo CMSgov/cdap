@@ -18,6 +18,13 @@ variable "min_failure_duration" {
   type        = number
 }
 
+variable "accept_self_signed" {
+  description = "Use sparingly. Allow the test to pass even if using a self signed cert."
+  type        = bool
+  default = false
+}
+
+
 variable "enabled" {
   description = "Whether synthetics are enabled. If false, nothing will be created. Should be set to the corresponding value from the monitor config passed to the monitors module."
   type        = bool
@@ -67,6 +74,7 @@ variable "tests" {
     tick_every           = optional(number, 60)
     min_failure_duration = optional(number, null)
     tags                 = optional(list(string), [])
+    accept_self_signed   = optional(bool, false)
 
     use_private_location = optional(bool, true)
   }))
