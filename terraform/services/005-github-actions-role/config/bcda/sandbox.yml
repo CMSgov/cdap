@@ -3,4 +3,3 @@ additional_kms:
   - "bcda-sandbox-efs"
   - "bcda-sandbox-rds"
   - "bcda-sandbox-access-log-kms"
-  - "bfd-insights-bcda-sandbox-get_job_data-key"
