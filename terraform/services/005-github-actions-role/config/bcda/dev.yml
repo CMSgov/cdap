@@ -1,0 +1,4 @@
+additional_kms:
+  - "bcda-dev-app-config-kms"
+  - "bcda-dev-opt-out-import-function-bucket"
+  - "bcda-dev-efs"
