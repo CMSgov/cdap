@@ -24,7 +24,7 @@ module "standards" {
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = "cdap"
-  env         = var.env
+  env         = "prod"
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/insights/export-buckets/bb2/"
-  service     = "bb2-export-bucket"
+  service     = "bb2-insights-export-bucket"
 }

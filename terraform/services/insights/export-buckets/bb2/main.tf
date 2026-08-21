@@ -1,16 +1,27 @@
 data "aws_ssm_parameter" "bb_account_id" {
-  name = "/cdap/${var.env}/external/bb/sensitive/aws_account_id"
+  name = "/cdap/prod/external/bb/sensitive/aws_account_id"
+}
+
+# Execution role granted KMS access by 410-external-kms
+data "aws_ssm_parameter" "bb_lambda_role_arn" {
+  name = "/cdap/prod/external/bb/sensitive/lambda_role_arn"
+}
+
+# QuickSight lives in DASG Insights account. Default service role name is fixed
+data "aws_ssm_parameter" "dasg_insights_account_id" {
+  name = "/cdap/prod/external/dasg_insights/sensitive/aws_account_id"
 }
 
 locals {
-  bb2_lambda_role_arn_pattern = "arn:aws:iam::${data.aws_ssm_parameter.bb_account_id.value}:role/service-role/bb2-lambda-create-tables-for-quicksight-role-*"
+  quicksight_role_arn = "arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:role/service-role/aws-quicksight-service-role-v0"
 }
 
-data "aws_kms_alias" "aurora_export" {
-  name = "alias/aurora_export"
+# Key shared with bb via 410-external-kms
+data "aws_kms_alias" "bb" {
+  name = "alias/bb-prod"
 }
 
-data "aws_iam_policy_document" "allow_bb2_lambda_uploads" {
+data "aws_iam_policy_document" "bb2_export_bucket_access" {
   statement {
     sid = "AllowBB2LambdaUploads"
 
@@ -31,9 +42,34 @@ data "aws_iam_policy_document" "allow_bb2_lambda_uploads" {
     ]
 
     condition {
-      test     = "ArnLike"
+      test     = "ArnEquals"
       variable = "aws:PrincipalArn"
-      values   = [local.bb2_lambda_role_arn_pattern]
+      values   = [data.aws_ssm_parameter.bb_lambda_role_arn.value]
+    }
+  }
+
+  statement {
+    sid = "AllowQuickSightReads"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:root"]
+    }
+
+    actions = [
+      "s3:GetObject",
+      "s3:ListBucket",
+    ]
+
+    resources = [
+      module.quicksight_export.arn,
+      "${module.quicksight_export.arn}/*",
+    ]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:PrincipalArn"
+      values   = [local.quicksight_role_arn]
     }
   }
 
@@ -58,7 +94,7 @@ data "aws_iam_policy_document" "allow_bb2_lambda_uploads" {
     condition {
       test     = "StringNotEquals"
       variable = "s3:x-amz-server-side-encryption-aws-kms-key-id"
-      values   = [data.aws_kms_alias.aurora_export.target_key_arn]
+      values   = [data.aws_kms_alias.bb.target_key_arn]
     }
   }
 
@@ -92,9 +128,9 @@ module "quicksight_export" {
   source = "../../../../modules/bucket"
 
   app         = "cdap"
-  env         = var.env
-  name        = "bb2-${var.env}-quicksight-export"
-  kms_key_arn = data.aws_kms_alias.aurora_export.target_key_arn
+  env         = "prod"
+  name        = "bb2-prod-quicksight-export"
+  kms_key_arn = data.aws_kms_alias.bb.target_key_arn
 
-  additional_bucket_policies = [data.aws_iam_policy_document.allow_bb2_lambda_uploads.json]
+  additional_bucket_policies = [data.aws_iam_policy_document.bb2_export_bucket_access.json]
 }
