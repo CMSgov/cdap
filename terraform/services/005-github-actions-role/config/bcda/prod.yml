@@ -1,15 +1,6 @@
 additional_kms:
   - "bcda-prod-app-config-kms"
-  - "bfd-insights-bcda-prod-get_acos_with_expired_credentials-key"
-  - "bfd-insights-bcda-prod-get_num_benes_per_aco-key"
   - "bcda-prod-efs"
   - "bcda-prod-rds"
   - "bcda-prod-attribution-import-bucket-key"
-  - "bfd-insights-bcda-prod-get_stale_pending_jobs-key"
-  - "bfd-insights-bcda-prod-get_active_acos-key"
-  - "bfd-insights-bcda-prod-get_suppression_metrics-key"
-  - "bfd-insights-bcda-prod-get_job_data-key"
-  - "bfd-insights-bcda-prod-get_stale_cclf_imports-key"
   - "bcda-prod-access-log-kms"
-  - "bfd-insights-bcda-prod-get_num_days_to_make_first_request-key"
-
