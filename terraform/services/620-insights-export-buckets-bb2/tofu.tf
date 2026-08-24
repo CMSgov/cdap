@@ -15,16 +15,16 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "insights/export-buckets/bb2/terraform.tfstate"
+    key = "620-insights-export-buckets-bb2/terraform.tfstate"
   }
 }
 
 module "standards" {
-  source    = "../../../../modules/standards"
+  source    = "../../modules/standards"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = "cdap"
   env         = "prod"
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/insights/export-buckets/bb2/"
+  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/620-insights-export-buckets-bb2/"
   service     = "bb2-insights-export-bucket"
 }

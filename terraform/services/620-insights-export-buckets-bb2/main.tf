@@ -125,7 +125,7 @@ data "aws_iam_policy_document" "bb2_export_bucket_access" {
 }
 
 module "quicksight_export" {
-  source = "../../../../modules/bucket"
+  source = "../../modules/bucket"
 
   app         = "cdap"
   env         = "prod"
