@@ -8,12 +8,6 @@ variable "app" {
   type        = string
 }
 
-variable "shadow_mode" {
-  description = "When true, marks tests with shadow-mode:true. Should match the shadow_mode setting used in the companion datadog_monitors module."
-  type        = bool
-  default     = false
-}
-
 variable "notify" {
   description = "Notify string from the monitors module."
   type        = string
@@ -22,6 +16,11 @@ variable "notify" {
 variable "min_failure_duration" {
   description = "Minimum failure time to trigger alert in seconds. Should be set to the corresponding value from the monitor config passed to the monitors module."
   type        = number
+}
+
+variable "enabled" {
+  description = "Whether synthetics are enabled. If false, nothing will be created. Should be set to the corresponding value from the monitor config passed to the monitors module."
+  type        = bool
 }
 
 variable "tests" {

@@ -1,0 +1,11 @@
+additional_kms:
+  - "dpc-sandbox-master-key"
+  - "dpc-ecr"
+  - "dpc-sandbox-alarm-to-slack-env-vars"
+  - "dpc-sandbox-alarm-to-slack-function-bucket"
+  - "dpc-sandbox-alarm-to-slack-queue"
+  - "dpc-sandbox-api-cloudwatch-key"
+  - "dpc-sandbox-attribution-cloudwatch-key"
+  - "dpc-sandbox-web-admin-cloudwatch-key"
+  - "dpc-sandbox-web-cloudwatch-key"
+

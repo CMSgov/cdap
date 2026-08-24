@@ -1,0 +1,6 @@
+additional_kms:
+  - "bcda-prod-app-config-kms"
+  - "bcda-prod-efs"
+  - "bcda-prod-rds"
+  - "bcda-prod-attribution-import-bucket-key"
+  - "bcda-prod-access-log-kms"
