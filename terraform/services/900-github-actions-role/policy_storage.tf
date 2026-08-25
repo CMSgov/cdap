@@ -104,6 +104,7 @@ data "aws_iam_policy_document" "github_actions_storage" {
     sid = "S3BucketRead"
     actions = [
       "s3:GetBucketAcl",
+      "s3:GetBucketLocation",
       "s3:GetBucketLogging",
       "s3:GetBucketNotification",
       "s3:GetBucketOwnershipControls",
@@ -174,14 +175,15 @@ data "aws_iam_policy_document" "github_actions_storage" {
     sid = "S3AccessLogsBucketRead"
     actions = [
       "s3:GetBucketAcl", #  CloudFront specifically requires this
+      "s3:GetBucketLocation",
       "s3:GetBucketPolicy",
       "s3:GetBucketTagging",
       "s3:GetEncryptionConfiguration",
+      "s3:ListBucket",
     ]
     resources = [
       "arn:aws:s3:::bucket-access-logs-*",
     ]
   }
-
 }
 

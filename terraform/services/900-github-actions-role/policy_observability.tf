@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "github_actions_observability" {
 
   # CloudWatch Write
   statement {
-    sid = "CloudwatchWrite"
+    sid = "CloudwatchAlarmsWrite"
     actions = [
       "cloudwatch:DeleteAlarms",
       "cloudwatch:DisableAlarmActions",
@@ -22,7 +22,9 @@ data "aws_iam_policy_document" "github_actions_observability" {
       "cloudwatch:TagResource",
       "cloudwatch:UntagResource",
     ]
-    resources = ["*"]
+    resources = [
+      "arn:aws:cloudwatch:*:*:alarm:${var.app}-${var.env}-*",
+    ]
   }
 
   # CloudWatch Logs
@@ -46,7 +48,6 @@ data "aws_iam_policy_document" "github_actions_observability" {
       "logs:List*",
       "logs:CreateLogStream",
       "logs:GetLogGroupFields",
-
     ]
     resources = ["*"]
   }
