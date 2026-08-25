@@ -7,13 +7,18 @@ data "aws_ssm_parameter" "bb_lambda_role_arn" {
   name = "/cdap/prod/external/bb/sensitive/lambda_role_arn"
 }
 
-# QuickSight lives in DASG Insights account. Default service role name is fixed
+# Dedicated bb2 read role in the DASG Insights account. Used by quicksight
+# provisioned by terraform/services/insights/bb2-quicksight-role
+data "aws_ssm_parameter" "bb2_quicksight_role_arn" {
+  name = "/cdap/prod/external/dasg_insights/sensitive/bb2_quicksight_role_arn"
+}
+
 data "aws_ssm_parameter" "dasg_insights_account_id" {
   name = "/cdap/prod/external/dasg_insights/sensitive/aws_account_id"
 }
 
 locals {
-  quicksight_role_arn = "arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:role/service-role/aws-quicksight-service-role-v0"
+  quicksight_role_arn = data.aws_ssm_parameter.bb2_quicksight_role_arn.value
 }
 
 # Key shared with bb via 410-external-kms

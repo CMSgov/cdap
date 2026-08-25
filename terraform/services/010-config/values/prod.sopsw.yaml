@@ -1,7 +1,8 @@
 /cdap/${env}/external/bb/sensitive/aws_account_id: ENC[AES256_GCM,data:zVSb+yiqyydsszMn,iv:tmuzm8FY0DjiaUsyMqPnsDU/i0MCo6Nh8XElmvfidsI=,tag:GHG+ngh526ZT2jNnFyY6xQ==,type:int]
+/cdap/${env}/external/bb/sensitive/lambda_role_arn: ENC[AES256_GCM,data:Naglvx5ZItymbRR+2ZJ2s5l6p5n73bejTktlrNaX//7UXS257frbXUO9VqvoIPn3RZ+1NZDab//DeY5ataA9iZE/UGwhjC0IwD53usxZZZcxeGtsJhM5tlnlR1mwLfGtxg==,iv:Khj1xDk5MmusfL/YudSYIOjU6vnw0ClQDZn3JCDDVOM=,tag:E+OuvGm1UyDXzGKGjs45Xg==,type:str]
 /cdap/${env}/external/bfd/sensitive/aws_account_id: ENC[AES256_GCM,data:Rdiz2fsHLRPYvqU2,iv:kAYpgfFk8Bsa5oJVjzaMujzIOUcnlwP97aB7NUqu+sQ=,tag:cfHRNT25KcxJ52Q8RHV3Ew==,type:int]
 /cdap/${env}/external/dasg_insights/sensitive/aws_account_id: ENC[AES256_GCM,data:cECw+auuUGND1ms=,iv:z/628UQAc9SY4D3Mf3yMvE2pzddNHiZ9J/kUmIA1XtE=,tag:rsUBigSWSBMzhHZ4yig33w==,type:int]
-/cdap/${env}/external/bb/sensitive/lambda_role_arn: ENC[AES256_GCM,data:Naglvx5ZItymbRR+2ZJ2s5l6p5n73bejTktlrNaX//7UXS257frbXUO9VqvoIPn3RZ+1NZDab//DeY5ataA9iZE/UGwhjC0IwD53usxZZZcxeGtsJhM5tlnlR1mwLfGtxg==,iv:Khj1xDk5MmusfL/YudSYIOjU6vnw0ClQDZn3JCDDVOM=,tag:E+OuvGm1UyDXzGKGjs45Xg==,type:str]
+/cdap/${env}/external/dasg_insights/sensitive/bb2_quicksight_role_arn: ENC[AES256_GCM,data:rIXMwxZ6jFiJPMnfZSG+7lFKrmyeG9SFr3wNi0XQsBAZHH2voSy2i4CX8ofTgHDvcPslgVq5v64=,iv:2LVz1F1Jnke6CTGv/Ctg0ZTva/vMmTaf1gB7AHwlauM=,tag:VKSRU5Hk5NeXns/4WIjfXQ==,type:str]
 /dasgapi/sensitive/datadog/init_api_key: ENC[AES256_GCM,data:M5NFBuIPo2FaB7hssb35UkKQSTpVd0SIYSYkbKqXVA4=,iv:fkrQx/gJYcUHkCByRZV4T1dBkp36Aagso23ayO/C63A=,tag:k5LGV/Y0IhR+mIriqzYfWQ==,type:str]
 /dasgapi/sensitive/datadog/init_application_key: ENC[AES256_GCM,data:ESjlQ9h0lorD6onKsSmVVGUzv+EPPI7qUoVay751LfK5/UOJhJ1TpA==,iv:Uj9VQnhdnqT2SPEjm9lVCB2unhlEINiU500u4keGfIk=,tag:DoKkFKJT/adXDQ2WJqdwqw==,type:str]
 /dasgapi/nonsensitive/datadog/site: ddog-gov.com

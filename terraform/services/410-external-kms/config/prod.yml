@@ -8,8 +8,7 @@ shares:
       envs:
         - prod
       write_role_arn_ssm_key: "lambda_role_arn"
-      read_account_id_ssm_path: "external/dasg_insights/sensitive/aws_account_id"
-      read_role_name: "service-role/aws-quicksight-service-role-v0"
+      read_role_arn_ssm_path: "external/dasg_insights/sensitive/bb2_quicksight_role_arn"
   bfd:
     envs:
       - prod

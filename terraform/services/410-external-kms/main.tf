@@ -17,13 +17,12 @@ locals {
             ? "/cdap/${var.env}/external/${app}/sensitive/${cfg.s3_access.write_role_arn_ssm_key}"
             : null
           )
-          # OPTIONAL: readonly S3 decrypt for a role in another account (e.g. quickSight service role)
-          read_account_id_ssm_path = (
-            contains(try(cfg.s3_access.envs, []), env) && try(cfg.s3_access.read_account_id_ssm_path, null) != null
-            ? "/cdap/${var.env}/${cfg.s3_access.read_account_id_ssm_path}"
+          # OPTIONAL: readonly S3 decrypt for a role in another account (e.g. dedicated quicksight role)
+          read_role_arn_ssm_path = (
+            contains(try(cfg.s3_access.envs, []), env) && try(cfg.s3_access.read_role_arn_ssm_path, null) != null
+            ? "/cdap/${var.env}/${cfg.s3_access.read_role_arn_ssm_path}"
             : null
           )
-          read_role_name = try(cfg.s3_access.read_role_name, null)
         }
       ]
     ]) : entry.key => entry
@@ -46,10 +45,10 @@ data "aws_ssm_parameter" "s3_write_role" {
   name = each.key
 }
 
-# Account IDs whose named role gets read-only S3 decrypt on specific keys
-data "aws_ssm_parameter" "s3_read_account" {
+# Role ARNs granted read-only S3 decrypt on specific keys
+data "aws_ssm_parameter" "s3_read_role" {
   for_each = toset([
-    for k, v in local.kms_shares : v.read_account_id_ssm_path if v.read_account_id_ssm_path != null
+    for k, v in local.kms_shares : v.read_role_arn_ssm_path if v.read_role_arn_ssm_path != null
   ])
   name = each.key
 }
@@ -121,12 +120,12 @@ resource "aws_kms_key" "shares" {
         }
       ],
       # OPTIONAL: external read-only role may decrypt S3 objects with this key
-      each.value.read_account_id_ssm_path == null || each.value.read_role_name == null ? [] : [
+      each.value.read_role_arn_ssm_path == null ? [] : [
         {
           Sid    = "AllowExternalS3ReadDecrypt"
           Effect = "Allow"
           Principal = {
-            AWS = "arn:aws:iam::${data.aws_ssm_parameter.s3_read_account[each.value.read_account_id_ssm_path].value}:role/${each.value.read_role_name}"
+            AWS = data.aws_ssm_parameter.s3_read_role[each.value.read_role_arn_ssm_path].value
           }
           Action = [
             "kms:Decrypt",
