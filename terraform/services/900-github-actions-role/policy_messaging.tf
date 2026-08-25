@@ -13,6 +13,33 @@ data "aws_iam_policy_document" "github_actions_messaging" {
     resources = ["*"]
   }
 
+  # EventBridge Scheduler
+  statement {
+    sid = "SchedulerRead"
+    actions = [
+      "scheduler:GetSchedule",
+      "scheduler:GetScheduleGroup",
+      "scheduler:ListScheduleGroups",
+      "scheduler:ListSchedules",
+      "scheduler:ListTagsForResource",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid = "SchedulerWrite"
+    actions = [
+      "scheduler:CreateSchedule",
+      "scheduler:CreateScheduleGroup",
+      "scheduler:DeleteSchedule",
+      "scheduler:DeleteScheduleGroup",
+      "scheduler:TagResource",
+      "scheduler:UntagResource",
+      "scheduler:UpdateSchedule",
+    ]
+    resources = ["*"]
+  }
+
   # Lambda
   statement {
     actions = [
