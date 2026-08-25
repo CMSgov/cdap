@@ -21,17 +21,60 @@ data "aws_iam_policy_document" "github_actions_networking" {
     actions   = ["elasticfilesystem:Describe*"]
     resources = ["*"]
   }
-
   # ELB
+  # NOTE: ALB naming is inconsistent across apps so scoping to app prefix only:
+  #   ab2d: ${app}-${env}-${service}
+  #   bcda: ${app}-${service}-${env}[-${index}]
+  #   dpc:  ${app}-${service}-${env}-${index}
+  # FIXME: tighten to ${app}-${env}-* once naming is standardized
   statement {
+    sid = "ElbRead"
     actions = [
       "elasticloadbalancing:Describe*",
-      "elasticloadbalancing:ModifyListener",
+    ]
+    resources = ["*"]
+  }
+  statement {
+    sid = "ElbWrite"
+    actions = [
+      # Load Balancer
+      "elasticloadbalancing:CreateLoadBalancer",
+      "elasticloadbalancing:DeleteLoadBalancer",
       "elasticloadbalancing:ModifyLoadBalancerAttributes",
-      "elasticloadbalancing:ModifyRule",
-      "elasticloadbalancing:ModifyTargetGroup",
       "elasticloadbalancing:SetSecurityGroups",
       "elasticloadbalancing:SetSubnets",
+      # Listeners
+      "elasticloadbalancing:AddListenerCertificates",
+      "elasticloadbalancing:CreateListener",
+      "elasticloadbalancing:DeleteListener",
+      "elasticloadbalancing:ModifyListener",
+      "elasticloadbalancing:RemoveListenerCertificates",
+      # Rules
+      "elasticloadbalancing:CreateRule",
+      "elasticloadbalancing:DeleteRule",
+      "elasticloadbalancing:ModifyRule",
+      "elasticloadbalancing:SetRulePriorities",
+      # Target Groups
+      "elasticloadbalancing:CreateTargetGroup",
+      "elasticloadbalancing:DeleteTargetGroup",
+      "elasticloadbalancing:DeregisterTargets",
+      "elasticloadbalancing:ModifyTargetGroup",
+      "elasticloadbalancing:ModifyTargetGroupAttributes",
+      "elasticloadbalancing:RegisterTargets",
+    ]
+    resources = [
+      "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/${var.app}-*",
+      "arn:aws:elasticloadbalancing:*:*:targetgroup/${var.app}-*",
+      "arn:aws:elasticloadbalancing:*:*:listener/app/${var.app}-*",
+      "arn:aws:elasticloadbalancing:*:*:listener-rule/app/${var.app}-*",
+    ]
+  }
+
+  statement {
+    sid = "ElbTagging"
+    actions = [
+      "elasticloadbalancing:AddTags",
+      "elasticloadbalancing:RemoveTags",
     ]
     resources = ["*"]
   }

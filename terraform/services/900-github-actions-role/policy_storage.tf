@@ -40,29 +40,98 @@ data "aws_iam_policy_document" "github_actions_storage" {
   }
 
   # RDS
+
+  # Read Describe* cannot be resource-scoped
   statement {
+    sid = "RdsRead"
     actions = [
-      "rds:AddSourceIdentifierToSubscription",
-      "rds:CreateDBParameterGroup",
-      "rds:CreateDBSubnetGroup",
       "rds:Describe*",
-      "rds:List*",
-      "rds:ModifyDBCluster",
-      "rds:ModifyDBClusterParameterGroup",
-      "rds:ModifyDBSubnetGroup",
-      "rds:ModifyDBParameterGroup",
+      "rds:ListTagsForResource",
     ]
     resources = ["*"]
   }
 
-  # S3 Buckets
-  # Mutating actions scoped to app/env buckets
   statement {
+    sid = "RdsWrite"
+    actions = [
+      # Cluster
+      "rds:CreateDBCluster",
+      "rds:DeleteDBCluster",
+      "rds:ModifyDBCluster",
+      # Instances
+      "rds:CreateDBInstance",
+      "rds:DeleteDBInstance",
+      "rds:ModifyDBInstance",
+      # Cluster Parameter Group
+      "rds:CreateDBClusterParameterGroup",
+      "rds:DeleteDBClusterParameterGroup",
+      "rds:ModifyDBClusterParameterGroup",
+      # Instance Parameter Group
+      "rds:CreateDBParameterGroup",
+      "rds:DeleteDBParameterGroup",
+      "rds:ModifyDBParameterGroup",
+      # Subnet Group
+      "rds:CreateDBSubnetGroup",
+      "rds:DeleteDBSubnetGroup",
+      "rds:ModifyDBSubnetGroup",
+      # IAM Role Association — needed for s3Import and similar features
+      "rds:AddRoleToDBCluster",
+      "rds:RemoveRoleFromDBCluster",
+      # Tagging
+      "rds:AddTagsToResource",
+      "rds:RemoveTagsFromResource",
+    ]
+    resources = [
+      "arn:aws:rds:*:*:cluster:${var.app}-${var.env}",
+      "arn:aws:rds:*:*:cluster:${var.app}-${var.env}-*",
+      "arn:aws:rds:*:*:db:${var.app}-${var.env}-*",
+      "arn:aws:rds:*:*:cluster-pg:${var.app}-${var.env}-*",
+      "arn:aws:rds:*:*:pg:${var.app}-${var.env}-*",
+      "arn:aws:rds:*:*:subgrp:${var.app}-${var.env}-*",
+    ]
+  }
+
+  # S3 Buckets
+  # List all buckets — must be * (account-level action)
+  statement {
+    sid       = "S3ListAllBuckets"
+    actions   = ["s3:ListAllMyBuckets"]
+    resources = ["*"]
+  }
+
+  # S3 Bucket Read
+  statement {
+    sid = "S3BucketRead"
+    actions = [
+      "s3:GetBucketAcl",
+      "s3:GetBucketLogging",
+      "s3:GetBucketNotification",
+      "s3:GetBucketOwnershipControls",
+      "s3:GetBucketPolicy",
+      "s3:GetBucketTagging",
+      "s3:GetBucketVersioning",
+      "s3:GetBucketWebsite",
+      "s3:GetEncryptionConfiguration",
+      "s3:GetLifecycleConfiguration",
+      "s3:ListBucket",
+      "s3:ListBucketVersions",
+      "s3:ListBucketMultipartUploads",
+    ]
+    resources = [
+      # Conventional pattern — covers most buckets
+      "arn:aws:s3:::${var.app}-${var.env}-*",
+      # Domain-style — ${var.app}
+      "arn:aws:s3:::*.${var.app}.cms.gov",
+      "arn:aws:s3:::${var.app}.cms.gov",
+    ]
+  }
+
+  # S3 Bucket Write — excludes communal/CMS-managed buckets
+  statement {
+    sid = "S3BucketWrite"
     actions = [
       "s3:CreateBucket",
-      "s3:DeleteBucket",
       "s3:DeleteBucketPolicy",
-      "s3:GetBucketPublicAccessBlock",
       "s3:PutBucketLogging",
       "s3:PutBucketNotification",
       "s3:PutBucketOwnershipControls",
@@ -72,40 +141,20 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "s3:PutEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
     ]
-    resources = ["*"] # FIXME ensure github actions can manage only buckets for their given app-env, requires bucket name verifications
-    # outliers can be stored in config/ paths like outlier KMS keys
-  }
-
-  # Leave broad for Terraform to inspect buckets it didn't create
-  statement {
-    actions = [
-      "s3:GetBucketAcl",
-      "s3:GetBucketCORS",
-      "s3:GetBucketLogging",
-      "s3:GetBucketNotification",
-      "s3:GetBucketObjectLockConfiguration",
-      "s3:GetBucketOwnershipControls",
-      "s3:GetBucketPolicy",
-      "s3:GetBucketRequestPayment",
-      "s3:GetBucketTagging",
-      "s3:GetBucketVersioning",
-      "s3:GetBucketWebsite",
-      "s3:GetEncryptionConfiguration",
-      "s3:GetLifecycleConfiguration",
-      "s3:GetReplicationConfiguration",
-      "s3:GetAccelerateConfiguration",
-      "s3:ListBucket",
-      "s3:ListBucketVersions",
-      "s3:ListBucketMultipartUploads"
+    resources = [
+      # Conventional pattern
+      "arn:aws:s3:::${var.app}-${var.env}-*",
+      # Domain-style
+      "arn:aws:s3:::*.${var.app}.cms.gov",
+      "arn:aws:s3:::${var.app}.cms.gov",
     ]
-    resources = ["*"]
   }
 
-  # S3 Objects
+  # S3 Object operations
   statement {
+    sid = "S3ObjectOperations"
     actions = [
       "s3:DeleteObject",
-      "s3:DeleteObjectVersion",
       "s3:GetObject",
       "s3:GetObjectTagging",
       "s3:GetObjectVersion",
@@ -113,7 +162,26 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "s3:PutObject",
       "s3:PutObjectTagging",
     ]
-    resources = ["*"]
+    resources = [
+      # Conventional pattern
+      "arn:aws:s3:::${var.app}-${var.env}-*/*",
+      # Domain-style
+      "arn:aws:s3:::*.${var.app}.cms.gov/*",
+      "arn:aws:s3:::${var.app}.cms.gov/*"
+    ]
   }
+  statement {
+    sid = "S3AccessLogsBucketRead"
+    actions = [
+      "s3:GetBucketAcl", #  CloudFront specifically requires this
+      "s3:GetBucketPolicy",
+      "s3:GetBucketTagging",
+      "s3:GetEncryptionConfiguration",
+    ]
+    resources = [
+      "arn:aws:s3:::bucket-access-logs-*",
+    ]
+  }
+
 }
 

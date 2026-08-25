@@ -118,7 +118,19 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     ]
     resources = ["*"]
   }
+  statement {
+    sid = "S3SharedBucketTagging"
+    actions = [
+      "s3:GetBucketTagging",
+      "s3:PutBucketTagging",
+    ]
+    resources = [
+      "arn:aws:s3:::bucket-access-logs-*"
+    ]
+    # FIXME: Add GetBucketObjectLockConfiguration when CDAP adds
+    #        log retention / object lock management via Tofu
 
+  }
   # Add other CDAP-only services here as needed...
 }
 
