@@ -77,6 +77,7 @@ data "aws_iam_policy_document" "github_actions_security" {
       "iam:PassRole",
       "iam:PutRolePolicy",
       "iam:TagRole",
+      "iam:TagPolicy",
       "iam:UpdateAssumeRolePolicy",
       "iam:UpdateOpenIDConnectProviderThumbprint",
     ]
