@@ -183,6 +183,7 @@ data "aws_iam_policy_document" "github_actions_storage" {
     ]
     resources = [
       "arn:aws:s3:::bucket-access-logs-*",
+      "arn:aws:s3:::cms-cloud-*",
     ]
   }
 }
