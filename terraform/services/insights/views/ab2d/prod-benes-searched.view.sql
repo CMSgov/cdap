@@ -1,11 +1,11 @@
-CREATE VIEW ab2d_prod_benes_searched AS
+CREATE OR REPLACE VIEW ab2d_prod_benes_searched AS
   SELECT
     contract_number,
     contract_name,
     job_uuid,
     benes_searched,
-    TO_CHAR(created_at, 'yyyy-MM-ddThh:mm:ss') created_at,
-    TO_CHAR(completed_at, 'yyyy-MM-ddThh:mm:ss') completed_at,
+    TO_CHAR(created_at, 'yyyy-MM-dd"T"HH24:MI:SS') created_at,
+    TO_CHAR(completed_at, 'yyyy-MM-dd"T"HH24:MI:SS') completed_at,
     eobs_written,
     time_to_complete,
     data_start_time,
@@ -19,12 +19,12 @@ CREATE VIEW ab2d_prod_benes_searched AS
     eobs_written AS "# EoBs Written",
     data_start_time AS "Data Start Date (Since Date)",
     fhir_version AS "FHIR Version",
-    to_char(time_to_complete, 'HH24:MI:SS') AS "Seconds Run",
-    TO_CHAR(created_at, 'yyyy-MM-ddThh:mm:ss') "Job Start Time",
-    TO_CHAR(completed_at, 'yyyy-MM-ddThh:mm:ss') "Job Complete Time",
-    to_char(time_to_complete, 'HH24:MI:SS') AS sec_run,
-    TO_CHAR(created_at, 'yyyy-MM-ddThh:mm:ss') job_start_time,
-    TO_CHAR(completed_at, 'yyyy-MM-ddThh:mm:ss') job_complete_time
+    TO_CHAR(time_to_complete, 'HH24:MI:SS') AS "Seconds Run",
+    TO_CHAR(created_at, 'yyyy-MM-dd"T"HH24:MI:SS') "Job Start Time",
+    TO_CHAR(completed_at, 'yyyy-MM-dd"T"HH24:MI:SS') "Job Complete Time",
+    TO_CHAR(time_to_complete, 'HH24:MI:SS') AS sec_run,
+    TO_CHAR(created_at, 'yyyy-MM-dd"T"HH24:MI:SS') job_start_time,
+    TO_CHAR(completed_at, 'yyyy-MM-dd"T"HH24:MI:SS') job_complete_time
   FROM (
     SELECT
       s.contract_number,
