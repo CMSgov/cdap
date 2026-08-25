@@ -98,6 +98,7 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ecr:DeleteLifecyclePolicy",
       "ecr:Describe*",
       "ecr:GetAuthorizationToken",
+      "ecr:GetDownloadUrlForLayer",
       "ecr:GetLifecyclePolicy",
       "ecr:InitiateLayerUpload",
       "ecr:List*",
