@@ -137,6 +137,7 @@ data "aws_iam_policy_document" "github_actions_storage" {
     sid = "S3BucketWrite"
     actions = [
       "s3:CreateBucket",
+      "s3:DeleteBucket",
       "s3:DeleteBucketPolicy",
       "s3:PutBucketLogging",
       "s3:PutBucketNotification",
