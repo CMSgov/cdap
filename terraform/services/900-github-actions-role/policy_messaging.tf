@@ -118,7 +118,7 @@ data "aws_iam_policy_document" "github_actions_messaging" {
       "sqs:GetQueueUrl",
     ]
     resources = [
-      "arn:aws:sqs:*:*:${local.cdap_env}-cloudwatch-alarms",
+      "arn:aws:sqs:*:*:${local.cdap_env}-alarm-to-slack",
     ]
   }
   # SNS
