@@ -129,8 +129,22 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     ]
     # FIXME: Add GetBucketObjectLockConfiguration when CDAP adds
     #        log retention / object lock management via Tofu
-
   }
+  # CDAP creates and manages all hosted zones including specialty ones
+  # e.g. snowflakecomputing.com via PrivateLink
+  # Other teams should not be creating hosted zones directly
+  statement {
+    sid = "Route53ZoneAdmin"
+    actions = [
+      "route53:CreateHostedZone",
+      "route53:DeleteHostedZone",
+      "route53:UpdateHostedZoneComment",
+      "route53:AssociateVPCWithHostedZone",
+      "route53:DisassociateVPCFromHostedZone",
+    ]
+    resources = ["*"]
+  }
+
   # Add other CDAP-only services here as needed...
 }
 
