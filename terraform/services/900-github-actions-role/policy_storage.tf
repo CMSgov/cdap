@@ -117,6 +117,7 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "s3:GetBucketWebsite",
       "s3:GetEncryptionConfiguration",
       "s3:GetLifecycleConfiguration",
+      "s3:GetBucketObjectLockConfiguration",
       "s3:GetReplicationConfiguration",
       "s3:ListBucket",
       "s3:ListBucketVersions",
