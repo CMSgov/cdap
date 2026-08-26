@@ -106,21 +106,10 @@ data "aws_iam_policy_document" "github_actions_messaging" {
     ]
     resources = [
       "arn:aws:sqs:*:*:${var.app}-${var.env}-*",
-    ]
-  }
-
-  # SQS Read — CDAP shared alarm queue lookup
-  # Needed for SNS subscription attachment
-  statement {
-    sid = "SqsReadCdapAlarmQueue"
-    actions = [
-      "sqs:GetQueueAttributes",
-      "sqs:GetQueueUrl",
-    ]
-    resources = [
       "arn:aws:sqs:*:*:${local.cdap_env}-alarm-to-slack",
     ]
   }
+
   # SNS
   statement {
     sid = "SnsRead"
