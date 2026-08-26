@@ -149,8 +149,6 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ecs:CreateCluster",
       "ecs:CreateService",
       "ecs:DeleteCluster",
-      "ecs:DeregisterTaskDefinition",
-      "ecs:RegisterTaskDefinition",
       "ecs:TagResource",
       "ecs:UpdateService",
     ]
@@ -160,7 +158,19 @@ data "aws_iam_policy_document" "github_actions_compute" {
       # Services
       "arn:aws:ecs:*:*:service/${var.app}-${var.env}*/${var.app}-${var.env}*",
       # Task definitions
+      "arn:aws:ecs:*:*:task-definition/${var.app}-${var.env}*",
       "arn:aws:ecs:*:*:task-definition/${var.app}-${var.env}*:*",
     ]
+  }
+
+  # ECS actions that require * — either called against * by the provider
+  # or resource doesn't exist at call time
+  statement {
+    sid = "EcsRequiresWildcard"
+    actions = [
+      "ecs:DeregisterTaskDefinition", # provider calls against *
+      "ecs:RegisterTaskDefinition",   # resource doesn't exist at call time
+    ]
+    resources = ["*"]
   }
 }
