@@ -154,3 +154,9 @@ output "account_env_suffix" {
   sensitive   = false
   value       = (var.env == "prod" || var.env == "sandbox" || var.env == "stage" || var.env == "staging") ? "prod" : "non-prod"
 }
+
+output "cdap_public_ips" {
+  description = "NAT Gateway IP that is used by CDAP to run core services, such as Datadog Private Location."
+  sensitive   = true
+  value       = [for gw in data.aws_nat_gateway.cdap : "${gw.public_ip}/32"]
+}
