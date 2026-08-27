@@ -3,7 +3,7 @@ locals {
   # Verify scope of use of bcda-prod and bcda-test before removing
   # Verify what these other KMS keys are used for and if access can be restricted to cdap scope
   account_env_old = contains(["dev", "test"], var.env) ? "bcda-test" : "bcda-prod"
-  account_env     = contains(["dev", "test"], var.env) ? "cdap-test" : "cdap-prod"
+  cdap_env        = contains(["dev", "test"], var.env) ? "cdap-test" : "cdap-prod"
 }
 
 # KMS keys needed for IAM policy
@@ -26,12 +26,12 @@ data "aws_kms_alias" "account_env_old_secondary" {
 }
 
 data "aws_kms_alias" "account_env" {
-  name = "alias/${local.account_env}"
+  name = "alias/${local.cdap_env}"
 }
 
 data "aws_kms_alias" "account_env_secondary" {
   provider = aws.secondary
-  name     = "alias/${local.account_env}"
+  name     = "alias/${local.cdap_env}"
 }
 
 # Additional KMS keys
