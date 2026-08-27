@@ -17,6 +17,13 @@ locals {
       strategies = local.default_strategies
       opt_in     = true
     }
+    "cdap-tftesting-service" = {
+      strategies = [
+        ["count_image", "", 3],
+        ["days_older_than", null, 2]
+      ]
+      opt_in = true
+    }
   }
 }
 
@@ -40,11 +47,17 @@ module "ecr_cleanup_function" {
   source_dir_excludes = [
     "test.py",
     "test_strategies.py",
+    "test_lambda_function.py",
     "dry_run.py",
     "dry_run_config.json",
     "requirements.txt",
+    "requirements-dev.txt",
+    "Makefile",
+    ".venv/**",
     "__pycache__/**",
+    ".pytest_cache/**",
     "*.pyc",
+    "coverage.xml",
   ]
 
   function_role_inline_policies = {
