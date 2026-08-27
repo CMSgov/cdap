@@ -77,7 +77,6 @@ data "aws_iam_policy_document" "github_actions_messaging" {
       "lambda:DeleteFunction",
       "lambda:InvokeFunction",
       "lambda:RemovePermission",
-      "lambda:TagResource",
       "lambda:UpdateFunctionCode",
       "lambda:UpdateFunctionConfiguration",
     ]
@@ -96,6 +95,9 @@ data "aws_iam_policy_document" "github_actions_messaging" {
       "lambda:DeleteEventSourceMapping",
       "lambda:GetEventSourceMapping",
       "lambda:ListEventSourceMappings",
+      "lambda:ListTags",
+      "lambda:TagResource",
+      "lambda:UntagResource",
       "lambda:UpdateEventSourceMapping",
     ]
     resources = ["*"]
