@@ -1,8 +1,7 @@
 services:
   - name: "tftesting-service"
-    tag_rules:
-      - tag_prefix: "." # matches all tagged images
-        keep_count: 3
+    lifecycle_enabled: false
+    tag_rules: []
     untagged_expiry_days: 2
   - name: "mtls-sidecar"
     tag_rules:
