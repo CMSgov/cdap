@@ -167,8 +167,6 @@ jobs:
         if: inputs.test_command != '' && inputs.dockerfile == '' && inputs.language != ''
         working-directory: ${{ inputs.source_path }}
         env:
-          DD_SERVICE: ${{ inputs.service_name }}
-          DD_ENV: ${{ inputs.environment }}
           DD_TRACE_ENABLED: 'false'
         run: |
           mkdir -p coverage
