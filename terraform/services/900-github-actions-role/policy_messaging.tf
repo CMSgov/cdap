@@ -64,6 +64,7 @@ data "aws_iam_policy_document" "github_actions_messaging" {
     ]
     resources = [
       "arn:aws:lambda:*:*:function:${var.app}-${var.env}-*",
+      "arn:aws:lambda:*:*:event-source-mapping:*",
     ]
   }
 
@@ -73,6 +74,8 @@ data "aws_iam_policy_document" "github_actions_messaging" {
     actions = [
       "lambda:AddPermission",
       "lambda:CreateEventSourceMapping",
+      "lambda:DeleteEventSourceMapping",
+      "lambda:UpdateEventSourceMapping",
       "lambda:CreateFunction",
       "lambda:DeleteFunction",
       "lambda:InvokeFunction",
@@ -83,6 +86,7 @@ data "aws_iam_policy_document" "github_actions_messaging" {
     ]
     resources = [
       "arn:aws:lambda:*:*:function:${var.app}-${var.env}-*",
+      "arn:aws:lambda:*:*:event-source-mapping:*",
     ]
   }
   statement {
