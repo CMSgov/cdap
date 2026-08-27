@@ -8,8 +8,13 @@ on:
         description: 'Path to Python or JavaScript source directory (optional)'
         required: true
         type: string
-      node_version:
-        description: 'Node.js version (if source is JavaScript and requires npm install)'
+      language:
+        description: 'Language for native (non-Docker) test execution: python, go, node. Leave empty to use the Docker test path.'
+        required: false
+        type: string
+        default: ''
+      language_version:
+        description: 'Runtime version for the selected language (e.g. 3.13, 1.22, 20)'
         required: false
         type: string
         default: ''
@@ -140,15 +145,46 @@ jobs:
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
 
-      - name: Setup node for Sonarqube analysis of compiled typescript
+      - name: Set up Python (native tests)
+        if: inputs.language == 'python'
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: ${{ inputs.language_version }}
+
+      - name: Set up Go (native tests)
+        if: inputs.language == 'go'
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version: ${{ inputs.language_version }}
+
+      - name: Set up Node (native tests)
+        if: inputs.language == 'node'
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: ${{ inputs.node_version }}
+          node-version: ${{ inputs.language_version }}
 
-      - name: Install Node dependencies
-        if: inputs.node_version != ''
+      - name: Run Tests and Generate Coverage (native)
+        if: inputs.test_command != '' && inputs.dockerfile == '' && inputs.language != ''
         working-directory: ${{ inputs.source_path }}
-        run: npm ci
+        env:
+          DD_SERVICE: ${{ inputs.service_name }}
+          DD_ENV: ${{ inputs.environment }}
+          DD_TRACE_ENABLED: 'false'
+        run: |
+          mkdir -p coverage
+          sh -c "${{ inputs.test_command }}"
+
+          echo "Coverage dir after run:"
+          ls -la coverage/
+
+          COVERAGE_FILE=$(find coverage -maxdepth 1 -name "coverage.*" | head -1)
+          if [ -z "$COVERAGE_FILE" ]; then
+            echo "ERROR: no coverage file found in ./coverage/"
+            exit 1
+          fi
+          echo "Found coverage file: $COVERAGE_FILE"
+          mkdir -p src
+          cp "$COVERAGE_FILE" "src/$(basename "$COVERAGE_FILE")"
 
       - name: Run SonarQube Scan
         if: inputs.source_path != '' && inputs.sonar_project_key != ''
