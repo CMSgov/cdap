@@ -64,6 +64,7 @@ data "aws_iam_policy_document" "github_actions_messaging" {
     ]
     resources = [
       "arn:aws:lambda:*:*:function:${var.app}-${var.env}-*",
+      "arn:aws:lambda:*:*:function:${var.app}-${var.env}-*:*", # versioned ARNs
     ]
   }
 
@@ -76,12 +77,13 @@ data "aws_iam_policy_document" "github_actions_messaging" {
       "lambda:DeleteFunction",
       "lambda:InvokeFunction",
       "lambda:RemovePermission",
-      "lambda:TagResource",
       "lambda:UpdateFunctionCode",
       "lambda:UpdateFunctionConfiguration",
     ]
     resources = [
       "arn:aws:lambda:*:*:function:${var.app}-${var.env}-*",
+      "arn:aws:lambda:*:*:function:${var.app}-${var.env}-*:*", # versioned ARNs
+
     ]
   }
 
@@ -93,6 +95,9 @@ data "aws_iam_policy_document" "github_actions_messaging" {
       "lambda:DeleteEventSourceMapping",
       "lambda:GetEventSourceMapping",
       "lambda:ListEventSourceMappings",
+      "lambda:ListTags",
+      "lambda:TagResource",
+      "lambda:UntagResource",
       "lambda:UpdateEventSourceMapping",
     ]
     resources = ["*"]

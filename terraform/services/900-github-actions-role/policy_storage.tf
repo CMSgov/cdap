@@ -129,6 +129,9 @@ data "aws_iam_policy_document" "github_actions_storage" {
       # Domain-style — ${var.app}
       "arn:aws:s3:::*.${var.app}.cms.gov",
       "arn:aws:s3:::${var.app}.cms.gov",
+      # Common / shared buckets
+      "arn:aws:s3:::bucket-access-logs-*",
+      "arn:aws:s3:::cms-cloud-*",
     ]
   }
 
@@ -177,20 +180,4 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "arn:aws:s3:::${var.app}.cms.gov/*"
     ]
   }
-  statement {
-    sid = "S3AccessLogsBucketRead"
-    actions = [
-      "s3:GetBucketAcl", #  CloudFront specifically requires this
-      "s3:GetBucketLocation",
-      "s3:GetBucketPolicy",
-      "s3:GetBucketTagging",
-      "s3:GetEncryptionConfiguration",
-      "s3:ListBucket",
-    ]
-    resources = [
-      "arn:aws:s3:::bucket-access-logs-*",
-      "arn:aws:s3:::cms-cloud-*",
-    ]
-  }
 }
-

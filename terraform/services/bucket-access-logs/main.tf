@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "bucket_access_logs" {
   bucket_prefix = "bucket-access-logs-"
-  force_destroy = true
+  force_destroy = false
 }
 
 resource "aws_s3_bucket_versioning" "bucket_access_logs" {
