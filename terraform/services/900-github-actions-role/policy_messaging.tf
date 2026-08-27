@@ -72,7 +72,6 @@ data "aws_iam_policy_document" "github_actions_messaging" {
     sid = "LambdaWrite"
     actions = [
       "lambda:AddPermission",
-      "lambda:CreateEventSourceMapping",
       "lambda:CreateFunction",
       "lambda:DeleteFunction",
       "lambda:InvokeFunction",
@@ -85,6 +84,21 @@ data "aws_iam_policy_document" "github_actions_messaging" {
       "arn:aws:lambda:*:*:function:${var.app}-${var.env}-*",
     ]
   }
+
+  # Lambda Event Source Mappings — use UUID-based ARNs, cannot be name-scoped
+  statement {
+    sid = "LambdaEventSourceMapping"
+    actions = [
+      "lambda:CreateEventSourceMapping",
+      "lambda:DeleteEventSourceMapping",
+      "lambda:GetEventSourceMapping",
+      "lambda:ListEventSourceMappings",
+      "lambda:UpdateEventSourceMapping",
+    ]
+    resources = ["*"]
+  }
+
+
   statement {
     actions = [
       "sqs:CreateQueue",
