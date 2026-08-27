@@ -60,10 +60,12 @@ variable "enable_mtls_sidecar" {
 variable "mtls_cert_arn" {
   type        = string
   default     = null
-  description = <<-EOT
-    ARN of the PCA-backed private certificate used by the mTLS sidecar.
-    When provided, enables mtls sidecar.
-  EOT
+  description = "ARN of the PCA-backed private certificate used by the mTLS sidecar. Required when enable_mtls_sidecar = true."
+
+  validation {
+    condition     = !var.enable_mtls_sidecar || var.mtls_cert_arn != null
+    error_message = "mtls_cert_arn is required when enable_mtls_sidecar = true."
+  }
 }
 
 variable "mtls_domain" {

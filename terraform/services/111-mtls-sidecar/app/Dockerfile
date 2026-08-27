@@ -1,5 +1,5 @@
 # Build
-FROM golang:1.24-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
 
 WORKDIR /build
 
@@ -8,13 +8,18 @@ RUN go mod download
 
 COPY src/ .
 
-RUN CGO_ENABLED=0 GOOS=linux go build \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
     -ldflags="-w -s" \
     -o /proxy \
     ./cmd/proxy
 
-#Test
-FROM golang:1.24-alpine AS tester
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
+    -ldflags="-w -s" \
+    -o /healthcheck \
+    ./cmd/healthcheck
+
+# Test
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS tester
 
 WORKDIR /app
 
@@ -23,13 +28,13 @@ RUN go mod download
 
 COPY src/ .
 
-# coverage output dir
 RUN mkdir -p /app/coverage
 
-#RUNTIME
+# Runtime
 FROM gcr.io/distroless/static:nonroot
 
 COPY --from=builder /proxy /proxy
+COPY --from=builder /healthcheck /healthcheck
 
 USER nonroot:nonroot
 

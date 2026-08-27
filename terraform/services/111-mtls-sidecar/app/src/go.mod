@@ -1,10 +1,11 @@
 module mtls-sidecar
 
-go 1.24
+go 1.25.0
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.33
 	github.com/aws/aws-sdk-go-v2/service/acm v1.43.2
+	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 )
 
 require (
@@ -21,4 +22,5 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.2 // indirect
 	github.com/aws/smithy-go v1.27.5 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
 )

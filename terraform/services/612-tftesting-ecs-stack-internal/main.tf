@@ -33,12 +33,14 @@ module "alb" {
   internal             = true                        # will use private subnet
   acm_certificate_arn  = module.acm.private_cert_arn # PACE cert
   enable_http_redirect = false                       # internal — no HTTP redirect
+enable_datadog_synthetics_ingress = true
 }
 
 module "ecs_service" {
   source                          = "../../modules/service"
   image_tag_service_name_override = "tftesting-service"
   desired_count                   = local.desired_count
+  mtls_domain = module.acm.mtls_domain
 
   cpu    = 256
   memory = 512
@@ -59,5 +61,14 @@ module "ecs_service" {
       protocol      = "tcp"
     }
   ]
+
+health_check = {
+  command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+  interval    = 30
+  retries     = 3
+  startPeriod = 30
+  timeout     = 5
+}
+
 }
 

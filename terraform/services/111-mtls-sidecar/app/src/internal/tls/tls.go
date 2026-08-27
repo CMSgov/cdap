@@ -41,7 +41,8 @@ func NewServerTLSConfig(cfg Config) (*tls.Config, error) {
             // Load fresh from disk on every handshake, allows to continue through cert rotation
             cert, err := tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
             if err != nil {
-                return nil, fmt.Errorf("loading cert/key pair: %w", err)
+                // SECURITY: sanitized error — do not surface key material or file paths
+                return nil, fmt.Errorf("failed to load server certificate")
             }
             return &cert, nil  // define cert inside closure
         },

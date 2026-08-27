@@ -27,12 +27,15 @@ locals {
     "traffic-port"
   )
 
-  proxy_upstream_port = var.enable_mtls_sidecar ? try(
-    [for pm in coalesce(var.port_mappings, []) : pm.containerPort
-      if pm.name != "proxy" && pm.containerPort != null
-    ][0],
-    null
-  ) : null
+    proxy_upstream_port = local.enable_mtls_sidecar ? coalesce(
+      try(
+        [for pm in coalesce(var.port_mappings, []) : pm.containerPort
+          if pm.name != "proxy" && pm.containerPort != null
+        ][0],
+        null
+      ),
+      var.proxy_sidecar_upstream_port
+    ) : null
 
   # Port mappings for the proxy sidecar — mTLS port + dedicated health port
   proxy_port_mapping = local.enable_mtls_sidecar ? [
@@ -135,7 +138,7 @@ locals {
   ###############
   # mTLS Proxy
   ###############
-  enable_mtls_sidecar = var.mtls_cert_arn != null ? true : false
+  enable_mtls_sidecar = var.enable_mtls_sidecar
   mtls_image          = local.enable_mtls_sidecar ? "${var.platform.account_id}.dkr.ecr.${var.platform.primary_region.name}.amazonaws.com/cdap-mtls-sidecar:${data.aws_ssm_parameter.mtls_image_tag[0].value}" : null
   proxy_container = {
     name                   = "proxy"
