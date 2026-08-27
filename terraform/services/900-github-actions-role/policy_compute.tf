@@ -108,7 +108,10 @@ data "aws_iam_policy_document" "github_actions_compute" {
     ]
     resources = [
       "arn:aws:ecr:*:*:repository/${var.app}*",
-      "arn:aws:ecr:*:*:repository/cdap-mtls-sidecar",
+      "arn:aws:ecr:*:*:repository/cdap-*",
+      "arn:aws:ecr:*:*:repository/ab2d-*",
+      "arn:aws:ecr:*:*:repository/bcda-*",
+      "arn:aws:ecr:*:*:repository/dpc-*",
     ]
   }
 
