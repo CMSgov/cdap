@@ -69,6 +69,21 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     resources = ["*"]
   }
 
+  # ECR Read — CDAP needs to describe all apps' repositories
+  # for cross-app infrastructure management
+  statement {
+    sid = "EcrReadAllApps"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
+      "ecr:Describe*",
+      "ecr:GetLifecyclePolicy",
+      "ecr:List*",
+    ]
+    resources = ["*"]
+  }
+
+
   statement {
     sid = "KmsCreate"
     actions = [
