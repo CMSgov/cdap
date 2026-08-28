@@ -1,0 +1,1 @@
+test_command: "npm ci && npm test -- --coverage --coverageDirectory=coverage"

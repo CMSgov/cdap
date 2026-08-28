@@ -1,0 +1,182 @@
+name: Code Checks — Lambdas, Scripts, and Actions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/services/**/lambda_src/**'
+      - 'scripts/**'
+      - 'actions/**'
+  pull_request:
+    paths:
+      - 'terraform/services/**/lambda_src/**'
+      - 'scripts/**'
+      - 'actions/**'
+      - '.github/workflows/code-checks.yml'
+      - '.github/workflows/checks-reusable.yml'
+  workflow_dispatch:
+    inputs:
+      path:
+        description: 'Directory to check (e.g. scripts/set_log_retention, actions/aws-params-env-action, terraform/services/201-ecr-cleanup/lambda_src)'
+        required: true
+        type: string
+
+jobs:
+  detect-changes:
+    name: Detect Changed Code
+    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      any_changed: ${{ steps.detect.outputs.any_changed }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.3.0
+        with:
+          fetch-depth: 0
+
+      - uses: cmsgov/cdap/actions/setup-yq@f4c14d47cc20e7f6de9112d7155af1213c9bca5a
+
+      - name: Detect changed code and build matrix
+        id: detect
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PATH: ${{ inputs.path }}
+          BASE_SHA:   ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA:   ${{ github.sha }}
+        run: |
+          skip() {
+            echo "any_changed=false" >> "$GITHUB_OUTPUT"
+            echo "matrix=[]"        >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          add_entry() {
+            local src_dir="$1" kind="$2"
+            local name cfg merged test_cmd language language_version sonar_args default_version default_test_cmd
+
+            name=$(basename "$src_dir" | sed 's/^[0-9]*-//')
+            [ "$kind" == "lambda" ] && name=$(echo "$src_dir" | sed -E 's|terraform/services/([^/]+)/lambda_src|\1|' | sed 's/^[0-9]*-//')
+
+            if [ -f "$src_dir/go.mod" ]; then
+              language="go"; default_version="1.22"
+              default_test_cmd='go mod download && go test ./... -coverprofile=coverage/coverage.out'
+              sonar_args="-Dsonar.go.coverage.reportPaths=src/coverage.out"
+            elif [ -f "$src_dir/package.json" ]; then
+              language="node"; default_version="20"
+              default_test_cmd='npm ci && npm test -- --coverage --coverageDirectory=coverage'
+              sonar_args="-Dsonar.javascript.lcov.reportPaths=src/coverage.lcov"
+            elif [ -f "$src_dir/requirements.txt" ]; then
+              language="python"; default_version="3.13"
+              default_test_cmd='pip install -r requirements.txt -r requirements-dev.txt && pytest --cov=. --cov-report=xml:coverage/coverage.xml'
+              sonar_args=""
+            else
+              echo "$src_dir: no recognized language marker — skipping"
+              return
+            fi
+
+            if [ "$kind" == "lambda" ]; then
+              # lambda_src lives inside a terraservice that may already have its own
+              # config/default.yml for Tofu settings 
+              terraservice_dir=$(dirname "$src_dir")
+              cfg="$terraservice_dir/config/default.yml"
+              merged=$([ -f "$cfg" ] && yq '.lambda // {}' "$cfg" || echo "{}")
+            else
+              # scripts/ and actions/ aren't terraservices and currently have no 
+              # config/ convention, so a flat, directory-local file is the simplest option
+              # — only needed once a directory actually wants to override a default.
+              cfg="$src_dir/checks.yml"
+              merged=$([ -f "$cfg" ] && cat "$cfg" || echo "{}")
+            fi
+
+            [ "$(echo "$merged" | yq '.enabled // true')" != "true" ] && {
+              echo "$src_dir: checks disabled via checks.yml — skipping"; return
+            }
+
+            test_cmd=$(echo "$merged" | yq ".test_command // \"$default_test_cmd\"")
+            language_version=$(echo "$merged" | yq ".language_version // \"$default_version\"")
+            sonar_args=$(echo "$merged" | yq ".sonar_extra_args // \"$sonar_args\"")
+
+            entry=$(jq -cn \
+              --arg src_dir          "$src_dir" \
+              --arg name             "$name" \
+              --arg kind             "$kind" \
+              --arg test_cmd         "$test_cmd" \
+              --arg language         "$language" \
+              --arg language_version "$language_version" \
+              --arg sonar_args       "$sonar_args" \
+              '{src_dir: $src_dir, name: $name, kind: $kind, test_command: $test_cmd,
+                language: $language, language_version: $language_version,
+                sonar_extra_args: $sonar_args}')
+
+            ENTRIES=$(echo "$ENTRIES" | jq -c --argjson e "$entry" '. + [$e]')
+          }
+
+          ENTRIES="[]"
+
+          if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
+            case "$INPUT_PATH" in
+              terraform/services/*/lambda_src) add_entry "$INPUT_PATH" "lambda" ;;
+              scripts/*)  add_entry "$INPUT_PATH" "script" ;;
+              actions/*)  add_entry "$INPUT_PATH" "action" ;;
+              *) echo "Unrecognized path: $INPUT_PATH"; skip ;;
+            esac
+          else
+            if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "0000000000000000000000000000000000000000" ]; then
+              BASE_SHA=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
+            fi
+            CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+
+            for d in $(echo "$CHANGED" | grep '^terraform/services/[^/]*/lambda_src/' | sed -E 's|(terraform/services/[^/]+/lambda_src)/.*|\1|' | sort -u); do
+              add_entry "$d" "lambda"
+            done
+            for d in $(echo "$CHANGED" | grep '^scripts/[^/]*/' | sed -E 's|(scripts/[^/]+)/.*|\1|' | sort -u); do
+              add_entry "$d" "script"
+            done
+            for d in $(echo "$CHANGED" | grep '^actions/[^/]*/' | sed -E 's|(actions/[^/]+)/.*|\1|' | sort -u); do
+              add_entry "$d" "action"
+            done
+          fi
+
+          if [ "$ENTRIES" == "[]" ] || [ -z "$ENTRIES" ]; then skip; fi
+
+          echo "any_changed=true" >> "$GITHUB_OUTPUT"
+          echo "matrix=$ENTRIES"  >> "$GITHUB_OUTPUT"
+
+  code-checks:
+    name: Code Checks — ${{ matrix.name }} (${{ matrix.kind }})
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.any_changed == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    uses: ./.github/workflows/checks-reusable.yml
+    secrets: inherit
+    with:
+      source_path:       ${{ matrix.src_dir }}
+      sonar_project_key: cdap-${{ matrix.name }}
+      sonar_extra_args:  ${{ matrix.sonar_extra_args }}
+      service_name:      ${{ matrix.name }}
+      test_command:      ${{ matrix.test_command }}
+      language:          ${{ matrix.language }}
+      language_version:  ${{ matrix.language_version }}
+
+  all-checks-passed:
+    name: All Code Checks Passed
+    needs: [detect-changes, code-checks]
+    if: always()
+    runs-on: codebuild-cdap-non-prod-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Verify no matrix leg failed
+        run: |
+          if [ "${{ needs.detect-changes.outputs.any_changed }}" == "true" ] && \
+             [ "${{ needs.code-checks.result }}" != "success" ]; then
+            echo "One or more code checks failed."
+            exit 1
+          fi
+          echo "All applicable code checks passed (or none were needed for this change)."
