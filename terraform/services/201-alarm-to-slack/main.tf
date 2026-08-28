@@ -34,15 +34,17 @@ module "sns_to_slack_function" {
   # Point to the local source directory — module handles zip + upload
   source_dir = "${path.module}/lambda_src"
 
-  # Optionally exclude tests and cache
   source_dir_excludes = [
-    "__pycache__",
-    "test_*.py",
-    "*.pyc",
+    "test_lambda_function.py",
+    "requirements-dev.txt",
     "Makefile",
-    "test-lambda-function.py"
+    ".venv/**",
+    "__pycache__/**",
+    ".pytest_cache/**",
+    "*.pyc",
+    "coverage/**",
+    "sonar-project.properties",
   ]
-
   environment_variables = {
     IGNORE_OK = true
     APPS      = join(",", var.apps_served)
