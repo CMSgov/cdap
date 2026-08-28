@@ -11,6 +11,9 @@ resource "datadog_monitor" "lambda_error_rate" {
     warning  = floor(var.monitor_config.lambda.error_rate_threshold * 0.75)
   }
 
+  # TODO this maybe doesn't make sense to be global across all the monitors for a technology
+  on_missing_data = var.monitor_config.lambda.on_missing_data
+
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }
@@ -27,8 +30,8 @@ resource "datadog_monitor" "lambda_throttles" {
     critical = var.monitor_config.lambda.throttle_threshold
     warning  = floor(var.monitor_config.lambda.throttle_threshold * 0.75)
   }
-  notify_no_data    = var.monitor_config.lambda.notify_no_data
-  no_data_timeframe = var.monitor_config.lambda.no_data_timeframe_minutes
+
+  on_missing_data = var.monitor_config.lambda.on_missing_data
 
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
@@ -47,8 +50,7 @@ resource "datadog_monitor" "lambda_duration" {
     warning  = floor(var.monitor_config.lambda.duration_p99_threshold_ms * 0.75)
   }
 
-  notify_no_data    = var.monitor_config.lambda.notify_no_data
-  no_data_timeframe = var.monitor_config.lambda.no_data_timeframe_minutes
+  on_missing_data = var.monitor_config.lambda.on_missing_data
 
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
