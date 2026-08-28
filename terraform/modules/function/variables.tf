@@ -1,6 +1,7 @@
 variable "name" {
-  description = "Name of the lambda function"
+  description = "Deprecated. Only use for override. Name of the lambda function"
   type        = string
+  default     = null
 }
 
 variable "description" {
