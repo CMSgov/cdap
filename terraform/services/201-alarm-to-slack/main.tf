@@ -40,6 +40,8 @@ module "sns_to_slack_function" {
     "__pycache__",
     "test_*.py",
     "*.pyc",
+    "Makefile",
+    "test-lambda-function.py"
   ]
 
   environment_variables = {
