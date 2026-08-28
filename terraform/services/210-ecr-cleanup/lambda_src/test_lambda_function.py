@@ -126,6 +126,7 @@ def test_get_images_to_delete_from_repo_none_prefix():
         1,
     ),
 ])
+
 def test_get_images_to_delete_from_repo_strategy_order(strategy_list, expected_count):
     """
     Tests that images protected by an early strategy are not deleted by a later strategy,
