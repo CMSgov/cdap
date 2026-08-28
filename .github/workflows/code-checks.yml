@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       path:
-        description: 'Directory to check (e.g. scripts/set_log_retention, actions/aws-params-env-action, terraform/services/201-ecr-cleanup/lambda_src)'
+        description: 'Directory to check (e.g. scripts/set-log-retention, actions/aws-params-env-action, terraform/services/201-ecr-cleanup/lambda_src)'
         required: true
         type: string
 
