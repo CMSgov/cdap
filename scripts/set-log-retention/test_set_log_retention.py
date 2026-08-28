@@ -1,4 +1,4 @@
-# scripts/set-log-retention/test_set-log-retention.py
+# scripts/set-log-retention/test_set_log_retention.py
 """Starter tests for set-log-retention — expand as plan-building logic grows."""
 
 import json

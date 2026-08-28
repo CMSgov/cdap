@@ -19,11 +19,11 @@ test-cov: install
 	$(VENV)/bin/pytest --cov=. --cov-report=xml:coverage/coverage.xml
 
 lint: install
-	$(VENV)/bin/pylint set-log-retention.py
+	$(VENV)/bin/pylint set_log_retention.py
 
 plan: install
 	@echo "Requires an active AWS session in this shell (e.g. via Kion)."
-	MODE=plan TARGET_ENV=$${TARGET_ENV:-test} $(VENV)/bin/python set-log-retention.py
+	MODE=plan TARGET_ENV=$${TARGET_ENV:-test} $(VENV)/bin/python set_log_retention.py
 
 clean:
 	rm -rf $(VENV) coverage .pytest_cache __pycache__ retention-plan-*.json retention-report-*.csv
