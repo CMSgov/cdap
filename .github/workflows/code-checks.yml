@@ -69,7 +69,7 @@ jobs:
               sonar_args="-Dsonar.javascript.lcov.reportPaths=src/coverage.lcov"
             elif [ -f "$src_dir/requirements.txt" ]; then
               language="python"; default_version="3.13"
-              default_test_cmd='pip install -r requirements.txt -r requirements-dev.txt && pytest --cov=. --cov-report=xml:coverage/coverage.xml'
+              default_test_cmd='pip install -r requirements.txt; [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt; pip install pytest pytest-cov; pytest --cov=. --cov-report=xml:coverage/coverage.xml'
               sonar_args=""
             else
               echo "$src_dir: no recognized language marker — skipping"
