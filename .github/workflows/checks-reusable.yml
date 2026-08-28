@@ -9,7 +9,7 @@ on:
         required: true
         type: string
       language:
-        description: 'Language for native (non-Docker) test execution: python, go, node. Leave empty to use the Docker test path.'
+        description: 'Language for Non-container test execution: python, go, node. Leave empty to use the Docker test path.'
         required: false
         type: string
         default: ''
@@ -125,7 +125,7 @@ jobs:
           ls -la /tmp/coverage/
 
           # find whichever coverage file was produced — xml (Python) or out (Go)
-          COVERAGE_FILE=$(find coverage -maxdepth 1 \( -name "coverage.*" -o -name "lcov.info" \) | head -1)
+          COVERAGE_FILE=$(find /tmp/coverage -maxdepth 1 \( -name "coverage.*" -o -name "lcov.info" \) | head -1)
           
           if [ -z "$COVERAGE_FILE" ]; then
             echo "ERROR: no coverage file found in /tmp/coverage/"
@@ -145,19 +145,19 @@ jobs:
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
 
-      - name: Set up Go (native tests)
+      - name: Set up Go (non-container tests)
         if: inputs.language == 'go'
         uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version: ${{ inputs.language_version }}
 
-      - name: Set up Node (native tests)
+      - name: Set up Node (non-container tests)
         if: inputs.language == 'node'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ inputs.language_version }}
 
-      - name: Run Tests and Generate Coverage (native)
+      - name: Run Tests and Generate Coverage (non-container)
         if: inputs.test_command != '' && inputs.dockerfile == '' && inputs.language != ''
         working-directory: ${{ inputs.source_path }}
         env:
@@ -169,7 +169,7 @@ jobs:
           echo "Coverage dir after run:"
           ls -la coverage/
 
-          COVERAGE_FILE=$(find coverage -maxdepth 1 -name "coverage.*" | head -1)
+          COVERAGE_FILE=$(find coverage -maxdepth 1 \( -name "coverage.*" -o -name "lcov.info" \) | head -1)
           if [ -z "$COVERAGE_FILE" ]; then
             echo "ERROR: no coverage file found in ./coverage/"
             exit 1
