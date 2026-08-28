@@ -1,6 +1,6 @@
 provider "aws" {
   default_tags {
-    tags = module.standards.default_tags
+    tags = module.platform.default_tags
   }
 }
 
