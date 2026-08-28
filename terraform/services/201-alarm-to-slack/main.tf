@@ -16,7 +16,6 @@ module "sns_to_slack_function" {
   source   = "../../modules/function"
   platform = module.platform
 
-  name        = "alarm-to-slack"
   description = "Listens for CloudWatch Alerts and forwards to Slack"
 
   architecture = "arm64"
@@ -63,14 +62,3 @@ module "sns_to_slack_queue" {
     data.aws_iam_policy_document.sqs_queue_policy.json
   ]
 }
-
-module "platform" {
-  providers = { aws = aws, aws.secondary = aws.secondary }
-
-  source      = "../../modules/platform"
-  app         = var.app
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
-  service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
-}
-

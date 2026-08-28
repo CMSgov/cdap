@@ -28,7 +28,7 @@ locals {
 }
 
 module "ecr_cleanup_function" {
-  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=5dc478b0b4acaeffee6b7fde39252d851de72e55"
+  source = "github.com/CMSgov/cdap/terraform/modules/function?ref=3464ddc9b34a40818fa865e10bd1fe3e20ae99dd"
 
   platform     = module.platform
   architecture = "arm64"

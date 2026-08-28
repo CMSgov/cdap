@@ -7,7 +7,7 @@ terraform {
 provider "aws" {
   region = "us-east-1"
   default_tags {
-    tags = module.standards.default_tags
+    tags = module.platform.default_tags
   }
 }
 
@@ -15,12 +15,12 @@ provider "aws" {
   alias  = "secondary"
   region = "us-west-2"
   default_tags {
-    tags = module.standards.default_tags
+    tags = module.platform.default_tags
   }
 }
 
-module "standards" {
-  source    = "../../modules/standards"
+module "platform" {
+  source    = "../../modules/platform"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = var.app
