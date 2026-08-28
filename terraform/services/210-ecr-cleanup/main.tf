@@ -33,9 +33,6 @@ module "ecr_cleanup_function" {
   platform     = module.platform
   architecture = "arm64"
 
-  # NOTE: the module now builds the full name as "${platform.app}-${platform.env}-${name}",
-  # so pass just the base name — don't pre-prefix it like the old module required.
-  name        = "ecr-cleanup"
   description = "Deletes old ECR images while protecting images referenced by active ECS task definitions"
 
   handler = "lambda_function.lambda_handler"
