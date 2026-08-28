@@ -4,7 +4,7 @@
 import json
 from unittest.mock import MagicMock
 
-import set_log_retention as slr,
+import set_log_retention as slr
 
 def test_build_plan_flags_log_groups_missing_retention():
     """A log group with no retention set should appear in the generated plan."""
