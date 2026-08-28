@@ -1,6 +1,5 @@
 services:
   - name: "tftesting-service"
-    lifecycle_enabled: false
     tag_rules: []
     untagged_expiry_days: 2
   - name: "mtls-sidecar"
