@@ -8,7 +8,7 @@ Repositories are discovered automatically at runtime based on a naming prefix �
 
 On each invocation, the Lambda:
 
-1. Builds a set of "protected references" — every image tag and digest currently referenced by a running ECS task, across all clusters in the account.
+1. Builds a set of "protected references", getting every image tag and digest currently referenced by a running ECS task, across all clusters in the account.
 2. Discovers ECR repositories whose name matches this app's prefix (e.g. `dpc-*`).
 3. For each discovered repo, applies its configured cleanup strategies in order — either an explicit override or a shared default — to decide which images are eligible for deletion.
 4. Skips any image that's in the protected-reference set, no matter what a strategy says.
@@ -16,20 +16,16 @@ On each invocation, the Lambda:
 
 Strategies run in the order they're configured, and once a strategy marks an image `PROTECT` or `DELETE`, no later strategy can change that status. This means ordering strategies matters — put your most conservative protections first if you want them to win.
 
-## What this guarantees
+## What this ensures
 
-The sweeper is built around one hard rule: **an image is only deletable if it is both stale (or excess) and provably inactive.** Neither condition alone is enough.
+The sweeper is built around one hard rule: **an image is only deletable if it is both stale (or excess) and provably inactive.**
 
-**Active images are always safe.** If an image is referenced by any currently running ECS task, in any cluster, it will never be deleted — regardless of its age, its tag, or what any strategy says about it. This protection is checked before any deletion strategy runs, and it can't be overridden by strategy configuration. If ECS discovery itself fails (the account's running tasks can't be determined), the sweeper fails closed: no images are deleted at all for that run, rather than proceeding with a possibly-incomplete protected set.
-**Explicitly protected tags and digests are always safe.** Beyond ECS-derived protection, any image whose tag or digest is directly passed in as a protected reference is excluded from deletion, independent of strategy logic.
-**Deletion requires both staleness and non-redundancy.** The two built-in strategies — `days_older_than` (age-based) and `count_image` (keep only the N most recent matching a tag prefix) — only mark an image `DELETE` if it fails their specific check. An image within the retention window, or within the "keep N" count, is explicitly marked `PROTECT`, and that protection sticks even if a later strategy would otherwise flag it. In other words, an image needs an unprotected path all the way through every configured strategy before it's eligible for removal.
-**Nothing is deleted unless a repo has explicitly opted in.** By default, every discovered repository runs in log-only mode: eligible images are identified and logged, but `batch_delete_image` is never called. A repo only has images actually removed once its config explicitly sets `opt_in: true`. This means turning on real deletion for a new repo is a deliberate, visible configuration change — never an accidental side effect of the repo simply matching the naming prefix.
-**Partial failures are visible, not silent.** If AWS reports that some images in a delete batch failed (e.g. because ECS temporarily still references them), those failures are logged individually rather than swallowed. The same applies to ECS `describe_tasks` failures during protected-reference discovery — a partial failure is surfaced in the logs, not hidden behind an apparently successful run.
-**A broken deploy fails loudly, not quietly.** The function module invokes the Lambda with a liveness-check payload immediately after every deploy. That check does a lightweight ECR call and nothing else — it never touches image state — and if that call fails, the function raises, which fails the Tofu apply. A misconfigured IAM policy or broken deploy is caught immediately, not discovered days later when the nightly run silently does nothing.
+**Active images are protected.** If an image is referenced by any currently running ECS task, in any cluster, it will not be deleted
+**Explicitly protected tags and digests.** Any image whose tag or digest is directly passed in as a protected reference is excluded from deletion
+**Deletion requires both staleness and non-redundancy.** The two built-in strategies — `days_older_than` (age-based) and `count_image`  mark an image `DELETE` if it fails their specific check. An image within the retention window, or within the "keep N" count, is explicitly marked `PROTECT`, and that protection sticks even if a later strategy would otherwise flag it. In other words, an image needs an unprotected path all the way through every configured strategy before it's eligible for removal.
+**Currently opt-in only.** By default, every discovered repository runs in log-only mode: eligible images are identified and logged, but `batch_delete_image` is never called. A repo only has images actually removed once its config explicitly sets `opt_in: true`. This means turning on real deletion for a new repo is a deliberate, visible configuration change — never an accidental side effect of the repo simply matching the naming prefix.
 
 ## Configuring repositories
-
-There's no per-repo list to maintain in Tofu. Any ECR repository whose name starts with this app's prefix is discovered automatically and evaluated on every run.
 
 Two environment variables, both set from Tofu locals, control behavior:
 - `DEFAULT_STRATEGIES` — the strategy list applied to any discovered repo that doesn't have an explicit override. Repos falling back to this default always run with `opt_in: false` (log-only) until someone deliberately configures otherwise.
@@ -108,28 +104,3 @@ make install
 ```
 Output lists every image that would be deleted per repo, using its tags if it has any, or its digest if it's untagged. Nothing is actually deleted by a dry run.
 
-# Manual deploy
-Pass in a backend file when running tofu init. Example:
-
-
-``` bash
-export AWS_REGION=us-east-1
-tofu init -backend-config=../../backends/cdap-test.s3.tfbackend
-tofu apply -var app=cdap -var env=test
-```
-
-# Manually invoking
-
-```bash
-aws lambda invoke --function-name cdap-test-ecr-cleanup --region us-east-1 response.json
-```
-
-To run a liveness check, not a full pass of the function: 
-``` bash
-aws lambda invoke \
-  --function-name cdap-test-ecr-cleanup \
-  --region us-east-1 \
-  --payload '{"RequestType": "LivenessCheck"}' \
-  --cli-binary-format raw-in-base64-out \
-  response.json
-```
