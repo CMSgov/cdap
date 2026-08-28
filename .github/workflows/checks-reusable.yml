@@ -125,7 +125,7 @@ jobs:
           ls -la /tmp/coverage/
 
           # find whichever coverage file was produced — xml (Python) or out (Go)
-          COVERAGE_FILE=$(find /tmp/coverage -maxdepth 1 -name "coverage.*" | head -1)
+          COVERAGE_FILE=$(find coverage -maxdepth 1 \( -name "coverage.*" -o -name "lcov.info" \) | head -1)
           
           if [ -z "$COVERAGE_FILE" ]; then
             echo "ERROR: no coverage file found in /tmp/coverage/"

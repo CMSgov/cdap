@@ -66,7 +66,7 @@ jobs:
             elif [ -f "$src_dir/package.json" ]; then
               language="node"; default_version="24"
               default_test_cmd='npm ci && npm test -- --coverage --coverageDirectory=coverage'
-              sonar_args="-Dsonar.javascript.lcov.reportPaths=src/coverage.lcov"
+              sonar_args="-Dsonar.javascript.lcov.reportPaths=src/lcov.info"
             elif [ -f "$src_dir/requirements.txt" ]; then
               language="python"; default_version="3.13"
               default_test_cmd='pip install -r requirements.txt; [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt; pip install pytest pytest-cov; pytest --cov=. --cov-report=xml:coverage/coverage.xml'
