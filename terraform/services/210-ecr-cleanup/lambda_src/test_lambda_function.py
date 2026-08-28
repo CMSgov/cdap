@@ -320,24 +320,24 @@ def _setup_handler_mocks(  # pylint: disable=too-many-arguments,too-many-positio
     mock_ecr.get_paginator.side_effect = ecr_paginator_side_effect
 
 def test_lambda_handler_deletes_old_unprotected_images(mock_boto3_clients):
-    """ Old image is deleted; recent images are kept."""
+    """Old image is deleted; recent images are kept."""
     mock_ecs, mock_ecr = mock_boto3_clients
     old_image = make_image('sha256:old', ['unprotected-tag'], EXPIRED_DATETIME).data
     new_image = make_image('sha256:old', ['unprotected-tag'], datetime.now(timezone.utc)).data
-    repo_configs = {'some-repo': {'strategies': (('days_older_than', '', 14,),), 'opt_in': True}}
-    _setup_handler_mocks(
-        mock_ecs, mock_ecr,
-        ecr_images=[old_image, new_image],
-        repo_configs=repo_configs
-    )
-    environment_mocks = {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}
-    with patch.dict(os.environ, environment_mocks):
+    repo_overrides = {'some-repo': {'strategies': (('days_older_than', '', 14,),), 'opt_in': True}}
+    _setup_handler_mocks(mock_ecs, mock_ecr, ecr_images=[old_image, new_image])
+    environment_mocks = {
+        'APP': 'cdap', 'ENV': 'test',
+        'REPO_OVERRIDES': json.dumps(repo_overrides),
+        'DEFAULT_STRATEGIES': '[]',
+    }
+    with patch.dict(os.environ, environment_mocks), \
+         patch('lambda_function.discover_repos', return_value=['some-repo']):
         lambda_function.lambda_handler({}, None)
     mock_ecr.batch_delete_image.assert_called_once_with(
         repositoryName='some-repo',
         imageIds=[{'imageDigest': 'sha256:old'}]
     )
-
 
 def test_lambda_handler_logs_completion_message(mock_boto3_clients, capfd):
     """
@@ -346,17 +346,21 @@ def test_lambda_handler_logs_completion_message(mock_boto3_clients, capfd):
     """
     mock_ecs, mock_ecr = mock_boto3_clients
     old_image = make_image('sha256:old', ['old-tag'], EXPIRED_DATETIME).data
-    repo_configs = {'some-repo': {'strategies': (('days_older_than', '', 14,),), 'opt_in': True}}
+    repo_overrides = {'some-repo': {'strategies': (('days_older_than', '', 14,),), 'opt_in': True}}
     _setup_handler_mocks(
         mock_ecs, mock_ecr,
         cluster_arns=[CLUSTER_ARN],
         task_arns=[f'{CLUSTER_ARN}/task1'],
         task_images=[f'{ECR_REGISTRY}/some-repo:protected-tag'],
         ecr_images=[old_image],
-        repo_configs=repo_configs,
     )
-    environment_mocks = {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}
-    with patch.dict(os.environ, environment_mocks):
+    environment_mocks = {
+        'APP': 'cdap', 'ENV': 'test',
+        'REPO_OVERRIDES': json.dumps(repo_overrides),
+        'DEFAULT_STRATEGIES': '[]',
+    }
+    with patch.dict(os.environ, environment_mocks), \
+         patch('lambda_function.discover_repos', return_value=['some-repo']):
         lambda_function.lambda_handler({}, None)
     final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
 
@@ -386,22 +390,25 @@ def test_get_protected_image_refs_logs_describe_tasks_failures(capfd):
     assert "error" in final_log_message.get("msg")
 
 
-
 def test_lambda_handler_protects_images_in_running_tasks(mock_boto3_clients):
     """Image referenced by a running ECS task is never deleted even if old."""
     mock_ecs, mock_ecr = mock_boto3_clients
     old_image = make_image('sha256:old', ['protected-tag'], EXPIRED_DATETIME).data
-    repo_configs = {'some-repo': {'strategies': (('days_older_than', '', 14,),), 'opt_in': True}}
+    repo_overrides = {'some-repo': {'strategies': (('days_older_than', '', 14,),), 'opt_in': True}}
     _setup_handler_mocks(
         mock_ecs, mock_ecr,
         cluster_arns=[CLUSTER_ARN],
         task_arns=[f'{CLUSTER_ARN}/task1'],
         task_images=[f'{ECR_REGISTRY}/some-repo:protected-tag'],
         ecr_images=[old_image],
-        repo_configs=repo_configs,
     )
-    environment_mocks = {'APP': 'cdap', 'ENV': 'test', 'REPO_CONFIG': json.dumps(repo_configs)}
-    with patch.dict(os.environ, environment_mocks):
+    environment_mocks = {
+        'APP': 'cdap', 'ENV': 'test',
+        'REPO_OVERRIDES': json.dumps(repo_overrides),
+        'DEFAULT_STRATEGIES': '[]',
+    }
+    with patch.dict(os.environ, environment_mocks), \
+         patch('lambda_function.discover_repos', return_value=['some-repo']):
         lambda_function.lambda_handler({}, None)
     mock_ecr.batch_delete_image.assert_not_called()
 
@@ -419,3 +426,75 @@ def test_image_set_status(existing, new, expected):
         image.set_status(existing)
     image.set_status(new)
     assert image.status == expected
+
+def _make_ecr_repo_paginator(repo_names):
+    """Creates a mock paginator for describe_repositories."""
+    pager = MagicMock()
+    pager.paginate.return_value = iter([
+        {'repositories': [{'repositoryName': name} for name in repo_names]}
+    ])
+    return pager
+
+
+class TestDiscoverRepos:
+    """Tests for discover_repos()."""
+
+    def test_returns_repos_matching_prefix(self):
+        mock_ecr = MagicMock()
+        mock_ecr.get_paginator.return_value = _make_ecr_repo_paginator(
+            ['dpc-web', 'dpc-api', 'bcda-worker', 'dpc-web-test']
+        )
+        result = lambda_function.discover_repos(mock_ecr, 'dpc')
+        assert set(result) == {'dpc-web', 'dpc-api', 'dpc-web-test'}
+
+    def test_returns_empty_list_when_no_matches(self):
+        mock_ecr = MagicMock()
+        mock_ecr.get_paginator.return_value = _make_ecr_repo_paginator(['bcda-worker'])
+        assert lambda_function.discover_repos(mock_ecr, 'dpc') == []
+
+
+class TestBuildRepoConfig:
+    """Tests for build_repo_config()."""
+
+    def test_uses_override_when_present(self):
+        overrides = {'dpc-web': {'strategies': [['count_image', '', 1]], 'opt_in': True}}
+        config = lambda_function.build_repo_config(
+            ['dpc-web'], overrides, default_strategies=[['days_older_than', '', 14]]
+        )
+        assert config['dpc-web'] == overrides['dpc-web']
+
+    def test_uses_default_when_no_override(self):
+        default_strategies = [['days_older_than', '', 14]]
+        config = lambda_function.build_repo_config(['dpc-api'], {}, default_strategies)
+        assert config['dpc-api'] == {'strategies': default_strategies, 'opt_in': False}
+
+    def test_handles_mixed_repos(self):
+        overrides = {'dpc-web': {'strategies': [['count_image', '', 1]], 'opt_in': True}}
+        default_strategies = [['days_older_than', '', 14]]
+        config = lambda_function.build_repo_config(
+            ['dpc-web', 'dpc-api'], overrides, default_strategies
+        )
+        assert config['dpc-web']['opt_in'] is True
+        assert config['dpc-api']['opt_in'] is False
+def test_lambda_handler_liveness_check_passes(mock_boto3_clients, capfd):
+    """RequestType=LivenessCheck should probe ECR and skip the cleanup pass entirely."""
+    mock_ecs, mock_ecr = mock_boto3_clients  # pylint: disable=unused-variable
+    mock_ecr.describe_repositories.return_value = {'repositories': []}
+
+    lambda_function.lambda_handler({'RequestType': 'LivenessCheck'}, None)
+
+    mock_ecr.describe_repositories.assert_called_once()
+    mock_ecr.batch_delete_image.assert_not_called()
+    final_log_message = json.loads(capfd.readouterr().out.strip().splitlines()[-1])
+    assert 'Liveness check passed' in final_log_message['msg']
+
+
+def test_lambda_handler_liveness_check_raises_on_failure(mock_boto3_clients):
+    """A failed liveness check must raise so the deploy-time invocation fails loudly."""
+    _, mock_ecr = mock_boto3_clients
+    mock_ecr.describe_repositories.side_effect = ClientError({}, 'describe_repositories')
+
+    with pytest.raises(ClientError):
+        lambda_function.lambda_handler({'RequestType': 'LivenessCheck'}, None)
+
+

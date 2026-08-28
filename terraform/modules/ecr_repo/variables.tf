@@ -65,6 +65,12 @@ variable "tag_rules" {
   default = []
 }
 
+variable "lifecycle_enabled" {
+  description = "Whether to create a native ECR lifecycle policy for this repo. Set to false when a separate mechanism (e.g. the ecr-cleanup Lambda) is the sole enforcer, to avoid two independent systems acting on the same repo."
+  type        = bool
+  default     = true
+}
+
 variable "untagged_expiry_days" {
   description = <<-EOT
     Number of days after which untagged images are expired.

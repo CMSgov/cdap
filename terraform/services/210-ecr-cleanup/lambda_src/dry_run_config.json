@@ -1,4 +1,11 @@
 {
+  "cdap-tftesting-service": {
+    "opt_in": false,
+    "strategies": [
+      ["count_image", "", 3],
+      ["days_older_than", null, 2]
+    ]
+  },
     "dpc-api": {
         "opt_in": true,
         "strategies": [

@@ -19,6 +19,7 @@ locals {
 
           tag_rules            = try(svc.tag_rules, [])
           untagged_expiry_days = try(svc.untagged_expiry_days, null)
+          lifecycle_enabled    = try(svc.lifecycle_enabled, true)
         }
       ]
     ]) : pair.key => pair
@@ -46,7 +47,7 @@ module "ecr_repo" {
   platform = module.platform[each.value.app]
   service  = each.value.service
 
-  #   tag_rules = each.value.tag_rules
-
+  tag_rules            = each.value.tag_rules
   untagged_expiry_days = each.value.untagged_expiry_days
+  lifecycle_enabled    = each.value.lifecycle_enabled
 }
