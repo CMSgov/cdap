@@ -3,8 +3,8 @@ name: alarm-to-slack test trigger cloudwatch alarm
 on:
   pull_request:
     paths:
-      - 'terraform/services/alarm-to-slack/lambda_src/*.py'
-      - 'terraform/services/alarm-to-slack/lambda_src/requirements.txt'
+      - '../../terraform/services/201-alarm-to-slack/lambda_src/*.py'
+      - '../../terraform/services/201-alarm-to-slack/lambda_src/requirements.txt'
       - '.github/workflows/alarm-to-slack-checks.yml'
       - '.github/workflows/checks-reusable.yml'
   workflow_dispatch:
