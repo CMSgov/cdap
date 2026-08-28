@@ -64,7 +64,7 @@ jobs:
               default_test_cmd='go mod download && go test ./... -coverprofile=coverage/coverage.out'
               sonar_args="-Dsonar.go.coverage.reportPaths=src/coverage.out"
             elif [ -f "$src_dir/package.json" ]; then
-              language="node"; default_version="20"
+              language="node"; default_version="24"
               default_test_cmd='npm ci && npm test -- --coverage --coverageDirectory=coverage'
               sonar_args="-Dsonar.javascript.lcov.reportPaths=src/coverage.lcov"
             elif [ -f "$src_dir/requirements.txt" ]; then

@@ -145,12 +145,6 @@ jobs:
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
 
-      - name: Set up Python (native tests)
-        if: inputs.language == 'python'
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
-        with:
-          python-version: ${{ inputs.language_version }}
-
       - name: Set up Go (native tests)
         if: inputs.language == 'go'
         uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
