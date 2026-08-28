@@ -3,7 +3,7 @@ locals {
   app             = var.platform.app
   env             = var.platform.env
 
-  full_name_string = "${local.app}-${local.env}-${var.name}"
+  full_name_string = "${local.app}-${local.env}-${var.platform.service}"
 
   # Datadog layer configuration adapted from https://github.com/DataDog/terraform-aws-lambda-datadog/blob/1b28d51a1a5323b37611908cbd1a9de70adace2e/main.tf#L95
   runtime_base = regex("[a-z]+", var.runtime)
@@ -62,7 +62,7 @@ module "zip_bucket" {
   app                        = local.app
   env                        = local.env
   name                       = "${local.full_name_string}-function"
-  ssm_parameter              = "/${local.app}/${local.env}/${var.name}-bucket"
+  ssm_parameter              = "/${local.app}/${local.env}/${var.platform.service}-bucket"
 }
 
 # Managed zip upload — used when source_dir is provided
