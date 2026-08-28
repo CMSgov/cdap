@@ -159,10 +159,10 @@ def test_write_plan_file_writes_expected_json(tmp_path, monkeypatch):
 def test_apply_plan_missing_file_exits(tmp_path):
     """apply_plan exits with code 1 if the plan file doesn't exist."""
     mock_client = MagicMock()
+    missing_path = str(tmp_path / 'does-not-exist.json')
     with pytest.raises(SystemExit) as exc_info:
-        slr.apply_plan(mock_client, str(tmp_path / 'does-not-exist.json'))
+        slr.apply_plan(mock_client, missing_path)
     assert exc_info.value.code == 1
-
 
 def test_apply_plan_success(tmp_path, monkeypatch):
     """A successful apply calls put_retention_policy for every planned log group."""
@@ -204,6 +204,18 @@ def test_apply_plan_partial_failure_exits_1(tmp_path, monkeypatch):
     mock_client = MagicMock()
     mock_client.put_retention_policy.side_effect = [None, Exception('AccessDenied')]
 
+    plan_path_str = str(plan_path)
+    with pytest.raises(SystemExit) as exc_info:
+        slr.apply_plan(mock_client, plan_path_str)
+    assert exc_info.value.code == 1
+
+    report_rows = report_path.read_text()
+    assert 'dpc-prod-bad' in report_rows
+    assert 'failed' in report_rows
+
+    mock_client = MagicMock()
+    mock_client.put_retention_policy.side_effect = [None, Exception('AccessDenied')]
+
     with pytest.raises(SystemExit) as exc_info:
         slr.apply_plan(mock_client, str(plan_path))
     assert exc_info.value.code == 1
@@ -211,8 +223,6 @@ def test_apply_plan_partial_failure_exits_1(tmp_path, monkeypatch):
     report_rows = report_path.read_text()
     assert 'dpc-prod-bad' in report_rows
     assert 'failed' in report_rows
-
-
 
 def test_write_report_writes_csv(tmp_path, monkeypatch):
     """write_report produces a CSV with the expected header and rows."""
