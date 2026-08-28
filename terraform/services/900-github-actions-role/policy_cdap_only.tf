@@ -155,6 +155,17 @@ data "aws_iam_policy_document" "github_actions_cdap" {
       "s3:ListBucket",
       "s3:ListBucketVersions",
       "s3:ListBucketMultipartUploads",
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
+      "s3:DeleteBucketPolicy",
+      "s3:PutBucketLogging",
+      "s3:PutBucketNotification",
+      "s3:PutBucketOwnershipControls",
+      "s3:PutBucketPolicy",
+      "s3:PutBucketTagging",
+      "s3:PutBucketVersioning",
+      "s3:PutEncryptionConfiguration",
+      "s3:PutLifecycleConfiguration",
     ]
     resources = [
       "arn:aws:s3:::bucket-access-logs-*"
