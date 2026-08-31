@@ -1,6 +1,5 @@
 name: code-checks (reusable)
-description: Workflow that can be called to evaluate any script or folder containing python logic. Used in tandem with built-in Snyk integration.
-
+description: 'Workflow that can be called to evaluate any script or folder containing Python, Go, or Node logic. Used in tandem with built-in Snyk integration.'
 on:
   workflow_call:
     inputs:
@@ -8,8 +7,13 @@ on:
         description: 'Path to Python or JavaScript source directory (optional)'
         required: true
         type: string
-      node_version:
-        description: 'Node.js version (if source is JavaScript and requires npm install)'
+      language:
+        description: 'Language for Non-container test execution: python, go, node. Leave empty to use the Docker test path.'
+        required: false
+        type: string
+        default: ''
+      language_version:
+        description: 'Runtime version for the selected language (e.g. 3.13, 1.22, 20)'
         required: false
         type: string
         default: ''
@@ -94,42 +98,33 @@ jobs:
               ${{ inputs.docker_context }}
           fi
 
-      - name: Run Tests and Generate Coverage
+      - name: Run Tests and Generate Coverage (container)
         if: inputs.test_command != '' && inputs.dockerfile != ''
         run: |
-          SHORT_SHA=$(echo "${{ inputs.docker_image_tag }}" | cut -c1-7)
-          mkdir -p /tmp/coverage
-
-          # use the test stage image if specified, otherwise use the production image
+          mkdir -p ${{ inputs.source_path }}/coverage
+          
           if [[ -n "${{ inputs.docker_target }}" ]]; then
             TEST_IMAGE="${{ inputs.service_name }}:${{ inputs.docker_image_tag }}-test"
           else
             TEST_IMAGE="${{ inputs.service_name }}:${{ inputs.docker_image_tag }}"
           fi
-
+          
           docker run --rm \
-            -v /tmp/coverage:/app/coverage \
-            -e DD_SERVICE=${{ inputs.service_name }} \
-            -e DD_ENV=${{ inputs.environment }} \
-            -e DD_VERSION=$SHORT_SHA \
+            -v ${{ github.workspace }}/${{ inputs.source_path }}/coverage:/app/coverage \
             -e DD_TRACE_ENABLED=false \
             $TEST_IMAGE \
             sh -c "${{ inputs.test_command }}"
-
+          
           echo "Coverage dir after run:"
-          ls -la /tmp/coverage/
-
-          # find whichever coverage file was produced — xml (Python) or out (Go)
-          COVERAGE_FILE=$(find /tmp/coverage -maxdepth 1 -name "coverage.*" | head -1)
+          ls -la ${{ inputs.source_path }}/coverage/
+          
+          COVERAGE_FILE=$(find ${{ inputs.source_path }}/coverage -maxdepth 1 \( -name "coverage.*" -o -name "lcov.info" \) | head -1)
           
           if [ -z "$COVERAGE_FILE" ]; then
-            echo "ERROR: no coverage file found in /tmp/coverage/"
+            echo "ERROR: no coverage file found in ${{ inputs.source_path }}/coverage/"
             exit 1
           fi
           echo "Found coverage file: $COVERAGE_FILE"
-          mkdir -p ${{ inputs.source_path }}/src
-          
-          cp "$COVERAGE_FILE" "${{ inputs.source_path }}/src/$(basename $COVERAGE_FILE)"
 
       - name: Retrieve credentials
         uses: ./actions/aws-params-env-action
@@ -140,15 +135,36 @@ jobs:
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
 
-      - name: Setup node for Sonarqube analysis of compiled typescript
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+      - name: Set up Go (non-container tests)
+        if: inputs.language == 'go'
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
-          node-version: ${{ inputs.node_version }}
+          go-version: ${{ inputs.language_version }}
 
-      - name: Install Node dependencies
-        if: inputs.node_version != ''
+      - name: Set up Node (non-container tests)
+        if: inputs.language == 'node'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ inputs.language_version }}
+
+      - name: Run Tests and Generate Coverage (non-container)
+        if: inputs.test_command != '' && inputs.dockerfile == '' && inputs.language != ''
         working-directory: ${{ inputs.source_path }}
-        run: npm ci
+        env:
+          DD_TRACE_ENABLED: 'false'
+        run: |
+          mkdir -p coverage
+          sh -c "${{ inputs.test_command }}"
+
+          echo "Coverage dir after run:"
+          ls -la coverage/
+
+          COVERAGE_FILE=$(find coverage -maxdepth 1 \( -name "coverage.*" -o -name "lcov.info" \) | head -1)
+          if [ -z "$COVERAGE_FILE" ]; then
+            echo "ERROR: no coverage file found in ./coverage/"
+            exit 1
+          fi
+          echo "Found coverage file: $COVERAGE_FILE"
 
       - name: Run SonarQube Scan
         if: inputs.source_path != '' && inputs.sonar_project_key != ''
@@ -161,6 +177,10 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.ci.autoconfig.disabled=true
             -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**,**/node_modules/**,**/dist/**,**/lib/**,**/requirements.in
+            -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.go.coverage.reportPaths=coverage/coverage.out
+            ${{ inputs.sonar_extra_args }}
 
       - name: SonarQube Quality Gate Check
         if: inputs.source_path != '' && inputs.sonar_project_key != ''
