@@ -11,6 +11,18 @@ locals {
           app                = app
           env                = env
           principal_ssm_path = "/cdap/${var.env}/external/${app}/sensitive/${cfg.principal_ssm_key}"
+          # OPTIONAL: role allowed to use the key for s3 encrypt/decrypt (e.g. bb lambda)
+          write_role_arn_ssm_path = (
+            contains(try(cfg.s3_access.envs, []), env) && try(cfg.s3_access.write_role_arn_ssm_key, null) != null
+            ? "/cdap/${var.env}/external/${app}/sensitive/${cfg.s3_access.write_role_arn_ssm_key}"
+            : null
+          )
+          # OPTIONAL: readonly S3 decrypt for a role in another account (e.g. dedicated quicksight role)
+          read_role_arn_ssm_path = (
+            contains(try(cfg.s3_access.envs, []), env) && try(cfg.s3_access.read_role_arn_ssm_path, null) != null
+            ? "/cdap/${var.env}/${cfg.s3_access.read_role_arn_ssm_path}"
+            : null
+          )
         }
       ]
     ]) : entry.key => entry
@@ -21,6 +33,22 @@ locals {
 data "aws_ssm_parameter" "principal" {
   for_each = toset([
     for k, v in local.kms_shares : v.principal_ssm_path
+  ])
+  name = each.key
+}
+
+# Role ARNs granted S3 encrypt/decrypt on specific keys
+data "aws_ssm_parameter" "s3_write_role" {
+  for_each = toset([
+    for k, v in local.kms_shares : v.write_role_arn_ssm_path if v.write_role_arn_ssm_path != null
+  ])
+  name = each.key
+}
+
+# Role ARNs granted read-only S3 decrypt on specific keys
+data "aws_ssm_parameter" "s3_read_role" {
+  for_each = toset([
+    for k, v in local.kms_shares : v.read_role_arn_ssm_path if v.read_role_arn_ssm_path != null
   ])
   name = each.key
 }
@@ -38,36 +66,80 @@ resource "aws_kms_key" "shares" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      # CDAP account: full control delegated to IAM
-      {
-        Sid    = "EnableRootAccess"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${module.standards.account_id}:root"
-        }
-        Action   = "kms:*"
-        Resource = "*"
-      },
-      # External account limited to: decrypt via SSM only, even if they set permissive IAM
-      {
-        Sid    = "AllowExternalDecryptViaSecretsManager"
-        Effect = "Allow"
-        Principal = {
-          AWS = data.aws_ssm_parameter.principal[each.value.principal_ssm_path].value
-        }
-        Action = [
-          "kms:Decrypt",
-          "kms:DescribeKey"
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "kms:ViaService" = "secretsmanager.${module.standards.primary_region.name}.amazonaws.com"
+    Statement = concat(
+      [
+        # CDAP account: full control delegated to IAM
+        {
+          Sid    = "EnableRootAccess"
+          Effect = "Allow"
+          Principal = {
+            AWS = "arn:aws:iam::${module.standards.account_id}:root"
+          }
+          Action   = "kms:*"
+          Resource = "*"
+        },
+        # External account limited to: decrypt via SSM only, even if they set permissive IAM
+        {
+          Sid    = "AllowExternalDecryptViaSecretsManager"
+          Effect = "Allow"
+          Principal = {
+            AWS = data.aws_ssm_parameter.principal[each.value.principal_ssm_path].value
+          }
+          Action = [
+            "kms:Decrypt",
+            "kms:DescribeKey"
+          ]
+          Resource = "*"
+          Condition = {
+            StringEquals = {
+              "kms:ViaService" = "secretsmanager.${module.standards.primary_region.name}.amazonaws.com"
+            }
           }
         }
-      }
-    ]
+      ],
+      # OPTIONAL: external role (e.g. lambda) may encrypt/decrypt S3 objects with this key
+      each.value.write_role_arn_ssm_path == null ? [] : [
+        {
+          Sid    = "AllowExternalS3EncryptDecrypt"
+          Effect = "Allow"
+          Principal = {
+            AWS = data.aws_ssm_parameter.s3_write_role[each.value.write_role_arn_ssm_path].value
+          }
+          Action = [
+            "kms:Encrypt",
+            "kms:Decrypt",
+            "kms:GenerateDataKey*",
+            "kms:DescribeKey"
+          ]
+          Resource = "*"
+          Condition = {
+            StringEquals = {
+              "kms:ViaService" = "s3.${module.standards.primary_region.name}.amazonaws.com"
+            }
+          }
+        }
+      ],
+      # OPTIONAL: external read-only role may decrypt S3 objects with this key
+      each.value.read_role_arn_ssm_path == null ? [] : [
+        {
+          Sid    = "AllowExternalS3ReadDecrypt"
+          Effect = "Allow"
+          Principal = {
+            AWS = data.aws_ssm_parameter.s3_read_role[each.value.read_role_arn_ssm_path].value
+          }
+          Action = [
+            "kms:Decrypt",
+            "kms:DescribeKey"
+          ]
+          Resource = "*"
+          Condition = {
+            StringEquals = {
+              "kms:ViaService" = "s3.${module.standards.primary_region.name}.amazonaws.com"
+            }
+          }
+        }
+      ]
+    )
   })
 
   tags = {
