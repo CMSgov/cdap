@@ -104,6 +104,7 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ecr:BatchCheckLayerAvailability",
       "ecr:BatchGetImage",
       "ecr:Describe*",
+      "ecr:GetDownloadUrlForLayer",
       "ecr:GetLifecyclePolicy",
       "ecr:List*",
     ]
