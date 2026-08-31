@@ -168,7 +168,8 @@ data "aws_iam_policy_document" "github_actions_cdap" {
       "s3:PutLifecycleConfiguration",
     ]
     resources = [
-      "arn:aws:s3:::bucket-access-logs-*"
+      "arn:aws:s3:::bucket-access-logs-*",
+      "arn:aws:s3:::bb2-prod-quicksight-export-*"
     ]
     # FIXME: Add GetBucketObjectLockConfiguration when CDAP adds
     #        log retention / object lock management via Tofu
