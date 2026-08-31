@@ -16,12 +16,12 @@ Environment variables:
                    Env options: "prod", "test", "dev", "sandbox", these will include ephemeral environments
 """
 
-import boto3
 import csv
 import json
 import os
 import sys
 from datetime import datetime
+import boto3
 
 # ---------------------------------------------------------------------------
 # Configuration
