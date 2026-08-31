@@ -14,8 +14,9 @@ data "aws_iam_policy_document" "ecr_access_policy" {
     sid     = "ECRImageDelete"
     actions = ["ecr:BatchDeleteImage"]
     resources = [
-      "arn:aws:ecr:${module.platform.primary_region.name}:${module.platform.account_id}:repository/${var.app}-*"
-    ]
+      for repo in local.opted_in_repos :
+      "arn:aws:ecr:${module.platform.primary_region.name}:${module.platform.account_id}:repository/${repo}"
+    ] # images with opt-in only
   }
 }
 

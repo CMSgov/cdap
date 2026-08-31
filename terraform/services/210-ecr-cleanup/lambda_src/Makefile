@@ -44,17 +44,11 @@ check-aws:
 	}
 	@echo "AWS session OK: $$(aws sts get-caller-identity --query Arn --output text)"
 
+ENV ?= test
+
 dry-run: install check-aws
-	@if [ -z "$(strip $(APP))" ]; then \
-		echo "APP is empty — pass one explicitly (e.g. make dry-run APP=cdap) or unset it if exported in your shell."; \
-		exit 1; \
-	fi
-	@if [ -z "$(strip $(CONFIG))" ]; then \
-		echo "CONFIG is empty — pass one explicitly (e.g. make dry-run CONFIG=dry_run_config.json)."; \
-		exit 1; \
-	fi
-	@echo "Running dry run with APP=$(APP), CONFIG=$(CONFIG)"
-	$(VENV)/bin/python dry_run.py --app-prefix $(APP) --config-path $(CONFIG)
+	@echo "Discovering and previewing cleanup for ENV=$(ENV), using config/default.yml + config/$(ENV).yml"
+	$(VENV)/bin/python dry_run.py --env $(ENV)
 
 clean:
 	rm -rf $(VENV) coverage .coverage __pycache__ .pytest_cache
