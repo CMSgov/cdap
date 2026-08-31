@@ -102,28 +102,24 @@ jobs:
       - name: Run Tests and Generate Coverage
         if: inputs.test_command != '' && inputs.dockerfile != ''
         run: |
-          SHORT_SHA=$(echo "${{ inputs.docker_image_tag }}" | cut -c1-7)
           mkdir -p /tmp/coverage
-
+          
           # use the test stage image if specified, otherwise use the production image
           if [[ -n "${{ inputs.docker_target }}" ]]; then
             TEST_IMAGE="${{ inputs.service_name }}:${{ inputs.docker_image_tag }}-test"
           else
             TEST_IMAGE="${{ inputs.service_name }}:${{ inputs.docker_image_tag }}"
           fi
-
+          
           docker run --rm \
             -v /tmp/coverage:/app/coverage \
-            -e DD_SERVICE=${{ inputs.service_name }} \
-            -e DD_ENV=${{ inputs.environment }} \
-            -e DD_VERSION=$SHORT_SHA \
             -e DD_TRACE_ENABLED=false \
             $TEST_IMAGE \
             sh -c "${{ inputs.test_command }}"
-
+          
           echo "Coverage dir after run:"
           ls -la /tmp/coverage/
-
+          
           # find whichever coverage file was produced — xml (Python) or out (Go)
           COVERAGE_FILE=$(find /tmp/coverage -maxdepth 1 \( -name "coverage.*" -o -name "lcov.info" \) | head -1)
           
@@ -132,9 +128,6 @@ jobs:
             exit 1
           fi
           echo "Found coverage file: $COVERAGE_FILE"
-          mkdir -p ${{ inputs.source_path }}/src
-          
-          cp "$COVERAGE_FILE" "${{ inputs.source_path }}/src/$(basename $COVERAGE_FILE)"
 
       - name: Retrieve credentials
         uses: ./actions/aws-params-env-action
@@ -175,8 +168,6 @@ jobs:
             exit 1
           fi
           echo "Found coverage file: $COVERAGE_FILE"
-          mkdir -p src
-          cp "$COVERAGE_FILE" "src/$(basename "$COVERAGE_FILE")"
 
       - name: Run SonarQube Scan
         if: inputs.source_path != '' && inputs.sonar_project_key != ''
@@ -190,8 +181,8 @@ jobs:
             -Dsonar.ci.autoconfig.disabled=true
             -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**,**/node_modules/**,**/dist/**,**/lib/**,**/requirements.in
             -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
-            -Dsonar.javascript.lcov.reportPaths=lcov.info
-            -Dsonar.go.coverage.reportPaths=coverage.out
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.go.coverage.reportPaths=coverage/coverage.out
             ${{ inputs.sonar_extra_args }}
 
       - name: SonarQube Quality Gate Check
