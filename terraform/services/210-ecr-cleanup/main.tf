@@ -21,6 +21,11 @@ locals {
     try(local.default_cleanup.repo_overrides, {}),
     try(local.env_cleanup.repo_overrides, {})
   )
+
+  opted_in_repos = [
+    for name, cfg in local.repo_overrides : name
+    if try(cfg.opt_in, false) && !contains(local.exclusion_list, name)
+  ]
 }
 
 
