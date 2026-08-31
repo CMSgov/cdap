@@ -178,14 +178,16 @@ def log_images_for_deletion(repo, images):
         log({'msg': 'Would delete image (not opted in)', 'repo': repo,
              'digest': img.digest})
 
-def discover_repos(client, app_prefix):
-    """Returns names of all ECR repos belonging to this app family."""
+def discover_repos(client, exclusions=None):
+    """Returns names of all ECR repos in the account, minus any exclusions."""
+    exclusions = exclusions or set()
     names = []
     paginator = client.get_paginator('describe_repositories')
     for page in paginator.paginate():
         for repo in page['repositories']:
-            if repo['repositoryName'].startswith(f'{app_prefix}-'):
-                names.append(repo['repositoryName'])
+            name = repo['repositoryName']
+            if name not in exclusions:
+                names.append(name)
     return names
 
 
@@ -208,11 +210,11 @@ def lambda_handler(event, _):
         log({'msg': 'Liveness check passed'})
         return
 
-    app_prefix = os.environ['APP']
     overrides = json.loads(os.environ.get('REPO_OVERRIDES', '{}'))
     default_strategies = json.loads(os.environ['DEFAULT_STRATEGIES'])
+    exclusions = set(json.loads(os.environ.get('EXCLUSION_LIST', '[]')))
 
-    discovered = discover_repos(ecr_client, app_prefix)
+    discovered = discover_repos(ecr_client, exclusions)
     repo_config = build_repo_config(discovered, overrides, default_strategies)
 
     for repo_name, to_delete in get_images_to_delete(repo_config).items():
@@ -227,6 +229,4 @@ def lambda_handler(event, _):
 
     log({
         'msg': 'ECR cleanup lambda completed',
-        'app': app_prefix,
-        'env': os.environ['ENV'],
     })

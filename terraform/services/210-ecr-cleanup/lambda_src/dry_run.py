@@ -31,7 +31,6 @@ def run(app_prefix, overrides_path=None):
     image that would be eligible for deletion in EVERY discovered repo —
     regardless of that repo's opt_in setting. Does not run deletions.
     """
-    overrides = {}
     if overrides_path:
         try:
             with open(overrides_path, encoding='utf-8') as f:
@@ -40,23 +39,16 @@ def run(app_prefix, overrides_path=None):
             print(f'No overrides file at {overrides_path} — using defaults for all repos.\n')
 
     ecr_client = boto3.client('ecr')
-    discovered = discover_repos(ecr_client, app_prefix)
-    print(f'Discovered {len(discovered)} repo(s) matching prefix "{app_prefix}-": {discovered}\n')
+    discovered = discover_repos(ecr_client)
+    print(f'Discovered {len(discovered)} repo(s) account-wide: {discovered}\n')
 
     repo_config = build_repo_config(discovered, overrides, DEFAULT_STRATEGIES)
-
     for repo_name, deleteable in get_images_to_delete(repo_config).items():
         opted_in = repo_config[repo_name].get('opt_in', False)
         status = 'WOULD DELETE (opt_in=true)' if opted_in else 'log-only (opt_in=false)'
         print(f'{repo_name} — {status}')
-        print('============================================')
-        if deleteable:
-            for image in deleteable:
-                print(f'  {image.tags or image.digest}')
-        else:
-            print('  No images eligible for deletion')
-        print()
-
+        for image in deleteable:
+            print(f'  {image.tags or image.digest}')
 
 if __name__ == '__main__':
     parser = ArgumentParser(

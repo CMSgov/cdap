@@ -440,18 +440,16 @@ def _make_ecr_repo_paginator(repo_names):
 class TestDiscoverRepos:
     """Tests for discover_repos()."""
 
-    def test_returns_repos_matching_prefix(self):
-        mock_ecr = MagicMock()
-        mock_ecr.get_paginator.return_value = _make_ecr_repo_paginator(
-            ['dpc-web', 'dpc-api', 'bcda-worker', 'dpc-web-test']
-        )
-        result = lambda_function.discover_repos(mock_ecr, 'dpc')
-        assert set(result) == {'dpc-web', 'dpc-api', 'dpc-web-test'}
+        def test_returns_all_repos_when_no_exclusions(self):
+            mock_ecr = MagicMock()
+            mock_ecr.get_paginator.return_value = _make_ecr_repo_paginator(['dpc-web', 'cdap-tftesting-service'])
+            assert set(lambda_function.discover_repos(mock_ecr)) == {'dpc-web', 'cdap-tftesting-service'}
 
-    def test_returns_empty_list_when_no_matches(self):
-        mock_ecr = MagicMock()
-        mock_ecr.get_paginator.return_value = _make_ecr_repo_paginator(['bcda-worker'])
-        assert lambda_function.discover_repos(mock_ecr, 'dpc') == []
+        def test_excludes_repos_in_exclusion_list(self):
+            mock_ecr = MagicMock()
+            mock_ecr.get_paginator.return_value = _make_ecr_repo_paginator(['dpc-web', 'cdap-mtls-sidecar'])
+            result = lambda_function.discover_repos(mock_ecr, exclusions={'cdap-mtls-sidecar'})
+            assert result == ['dpc-web']
 
 
 class TestBuildRepoConfig:
