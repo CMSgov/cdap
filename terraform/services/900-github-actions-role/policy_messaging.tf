@@ -109,6 +109,7 @@ data "aws_iam_policy_document" "github_actions_messaging" {
       "sqs:CreateQueue",
       "sqs:SetQueueAttributes",
       "sqs:TagQueue",
+      "sqs:UnTagQueue",
     ]
     resources = [
       "arn:aws:sqs:*:*:${var.app}-${var.env}-*"

@@ -78,6 +78,8 @@ data "aws_iam_policy_document" "github_actions_security" {
       "iam:PutRolePolicy",
       "iam:TagRole",
       "iam:TagPolicy",
+      "iam:UntagPolicy",
+      "iam:UntagRole",
       "iam:UpdateAssumeRolePolicy",
       "iam:UpdateOpenIDConnectProviderThumbprint",
     ]
@@ -126,6 +128,7 @@ data "aws_iam_policy_document" "github_actions_security" {
       "kms:EnableKeyRotation",
       "kms:PutKeyPolicy",
       "kms:TagResource",
+      "kms:UnTagResource"
     ]
     # Scoped to own app keys only, NOT account_env or account_env_old
     # Teams should not be managing shared/account-level keys
