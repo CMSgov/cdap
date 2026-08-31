@@ -1,0 +1,6 @@
+cleanup:
+  repo_overrides:
+    dpc-web-portal:
+      opt_in: true
+      strategies:
+        - ["days_older_than", "", 21]
