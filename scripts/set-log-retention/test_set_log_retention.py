@@ -208,8 +208,9 @@ def test_apply_plan_partial_failure_exits_1(tmp_path, monkeypatch):
         ClientError(error_response, "PutRetentionPolicy"),
     ]
 
+    plan_path_str = str(plan_path)
     with pytest.raises(SystemExit) as exc_info:
-        slr.apply_plan(mock_client, str(plan_path))
+        slr.apply_plan(mock_client, plan_path_str)
     assert exc_info.value.code == 1
 
     report_rows = report_path.read_text()
