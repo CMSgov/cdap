@@ -46,7 +46,6 @@ module "ecr_repo" {
   platform = module.platform[each.value.app]
   service  = each.value.service
 
-  #   tag_rules = each.value.tag_rules
-
+  tag_rules            = each.value.tag_rules
   untagged_expiry_days = each.value.untagged_expiry_days
 }
