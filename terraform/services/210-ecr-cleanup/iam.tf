@@ -11,8 +11,8 @@ data "aws_iam_policy_document" "ecr_access_policy" {
   }
 
   statement {
-    sid     = "ECRImageDelete"
-    actions = ["ecr:BatchDeleteImage"]
+    sid       = "ECRImageDelete"
+    actions   = ["ecr:BatchDeleteImage"]
     resources = ["*"]
   }
 }
