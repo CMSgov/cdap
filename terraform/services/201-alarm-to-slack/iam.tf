@@ -33,7 +33,7 @@ data "aws_iam_policy_document" "sqs_queue_policy" {
       variable = "aws:SourceArn"
 
       values = [
-        "arn:aws:sns:us-east-1:${module.standards.account_id}:*"
+        "arn:aws:sns:${module.platform.primary_region.name}:${module.platform.account_id}:*"
       ]
     }
   }
