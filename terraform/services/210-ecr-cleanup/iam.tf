@@ -13,9 +13,7 @@ data "aws_iam_policy_document" "ecr_access_policy" {
   statement {
     sid     = "ECRImageDelete"
     actions = ["ecr:BatchDeleteImage"]
-    resources = [
-      "arn:aws:ecr:${module.platform.primary_region.name}:${module.platform.account_id}:repository/${var.app}-*"
-    ]
+    resources = ["*"]
   }
 }
 
