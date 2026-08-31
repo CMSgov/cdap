@@ -203,6 +203,13 @@ def build_repo_config(discovered_repos, overrides, default_strategies):
 
 
 def lambda_handler(event, _):
+    """
+    Main entry point for lambda function.
+    Handles two event types:
+    1) A liveness check invoked via Tofu's deploy-time invocation
+    2) Primary function: discovers every ECR repo in the account and deletes or logs
+       eligible images depending on each repo's opt_in setting.
+    """
     if event.get('RequestType') == 'LivenessCheck':
         # Raise on failure so the deploy fails loudly; the module's
         # aws_lambda_invocation surfaces this as a Tofu apply error.
