@@ -189,6 +189,10 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.ci.autoconfig.disabled=true
             -Dsonar.exclusions=**/__pycache__/**,**/*.pyc,**/.terraform/**,**/node_modules/**,**/dist/**,**/lib/**,**/requirements.in
+            -Dsonar.python.coverage.reportPaths=coverage/coverage.xml
+            -Dsonar.javascript.lcov.reportPaths=lcov.info
+            -Dsonar.go.coverage.reportPaths=coverage.out
+            ${{ inputs.sonar_extra_args }}
 
       - name: SonarQube Quality Gate Check
         if: inputs.source_path != '' && inputs.sonar_project_key != ''
