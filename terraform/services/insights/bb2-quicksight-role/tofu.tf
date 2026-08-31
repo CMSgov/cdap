@@ -1,13 +1,13 @@
 
-locals{
-    static_tags = {
-        application    = "cdap"
-        business       = "oeda"
-        environment    = "prod"
-        service        = basename(abspath(path.module))
-        terraform      = true
-        tf_root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
-    }
+locals {
+  static_tags = {
+    application    = "cdap"
+    business       = "oeda"
+    environment    = "prod"
+    service        = basename(abspath(path.module))
+    terraform      = true
+    tf_root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
+  }
 }
 
 provider "aws" {
