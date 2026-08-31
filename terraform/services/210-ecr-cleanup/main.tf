@@ -1,39 +1,41 @@
 locals {
-  # Strategies applied to any discovered repo that has no explicit override.
-  # Intentionally conservative (opt_in = false → log-only) until a team
-  # explicitly opts a repo in below.
-  default_strategies = [
-    ["count_image", "rls-r", 5],
-    ["days_older_than", "", 14],
-    ["days_older_than", null, 14]
-  ]
+  default_config  = yamldecode(file("${path.module}/config/default.yml"))
+  env_config_file = "${path.module}/config/${var.env}.yml"
+  env_config      = fileexists(local.env_config_file) ? yamldecode(file(local.env_config_file)) : {}
 
-  # Only repos needing custom strategies OR real deletion (opt_in = true)
-  # need an entry here. Everything else matching the app prefix still gets
-  # scanned with default_strategies but stays log-only.
-  # FIXME Assume all repos should get swept
-  repo_overrides = {
-    "dpc-web" = {
-      strategies = local.default_strategies
-      opt_in     = true
-    }
-    "cdap-tftesting-service" = {
-      strategies = [
-        ["count_image", "", 3],
-        ["days_older_than", null, 2]
-      ]
-      opt_in = true
-    }
-  }
+  default_cleanup = try(local.default_config.cleanup, {})
+  env_cleanup     = try(local.env_config.cleanup, {})
+
+  # env.yml replaces default's strategy list if present
+  default_strategies = try(local.env_cleanup.default_strategies, try(local.default_cleanup.default_strategies, []))
+
+  # exclusions accumulate across default and env, deduplicated
+  exclusion_list = distinct(concat(
+    try(local.default_cleanup.exclusion_list, []),
+    try(local.env_cleanup.exclusion_list, [])
+  ))
+
+  # repo_overrides merge by repo name — env.yml can add new repos or replace
+  # an existing repo's override, but can't patch a single field of one (merge() is shallow)
+  repo_overrides = merge(
+    try(local.default_cleanup.repo_overrides, {}),
+    try(local.env_cleanup.repo_overrides, {})
+  )
+
+  opted_in_repos = [
+    for name, cfg in local.repo_overrides : name
+    if try(cfg.opt_in, false) && !contains(local.exclusion_list, name)
+  ]
 }
+
 
 module "ecr_cleanup_function" {
   source = "github.com/CMSgov/cdap/terraform/modules/function?ref=3464ddc9b34a40818fa865e10bd1fe3e20ae99dd"
 
-  platform     = module.platform
-  architecture = "arm64"
-
-  description = "Deletes old ECR images while protecting images referenced by active ECS task definitions"
+  platform               = module.platform
+  architecture           = "arm64"
+  liveness_check_enabled = true
+  description            = "Deletes old ECR images while protecting images referenced by active ECS task definitions"
 
   handler = "lambda_function.lambda_handler"
   runtime = "python3.13"
@@ -62,9 +64,9 @@ module "ecr_cleanup_function" {
   }
 
   environment_variables = {
-    APP                = var.app
     ENV                = var.env
     DEFAULT_STRATEGIES = jsonencode(local.default_strategies)
     REPO_OVERRIDES     = jsonencode(local.repo_overrides)
+    EXCLUSION_LIST     = jsonencode(local.exclusion_list)
   }
 }
