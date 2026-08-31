@@ -61,6 +61,7 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "application-autoscaling:PutScalingPolicy",
       "application-autoscaling:RegisterScalableTarget",
       "application-autoscaling:TagResource",
+      "application-autoscaling:UnTagResource",
     ]
     resources = ["*"]
     # FIXME: application-autoscaling ARNs use auto-generated IDs
@@ -124,6 +125,7 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ecr:PutImage",
       "ecr:PutLifecyclePolicy",
       "ecr:TagResource",
+      "ecr:UnTagResource",
       "ecr:UploadLayerPart",
     ]
     resources = [
