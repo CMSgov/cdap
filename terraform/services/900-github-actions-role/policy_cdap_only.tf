@@ -69,6 +69,21 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     resources = ["*"]
   }
 
+  # ECR Read — CDAP needs to describe all apps' repositories
+  # for cross-app infrastructure management
+  statement {
+    sid = "EcrReadAllApps"
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:BatchGetImage",
+      "ecr:Describe*",
+      "ecr:GetLifecyclePolicy",
+      "ecr:List*",
+    ]
+    resources = ["*"]
+  }
+
+
   statement {
     sid = "KmsCreate"
     actions = [
@@ -115,6 +130,60 @@ data "aws_iam_policy_document" "github_actions_cdap" {
       "secretsmanager:PutSecretValue",
       "secretsmanager:TagResource",
       "secretsmanager:UntagResource",
+    ]
+    resources = ["*"]
+  }
+  statement {
+    sid = "S3SharedBucketTagging"
+    actions = [
+      "s3:GetAccelerateConfiguration",
+      "s3:GetBucketAcl",
+      "s3:GetBucketCORS",
+      "s3:GetBucketLocation",
+      "s3:GetBucketLogging",
+      "s3:GetBucketNotification",
+      "s3:GetBucketOwnershipControls",
+      "s3:GetBucketPolicy",
+      "s3:GetBucketRequestPayment",
+      "s3:GetBucketTagging",
+      "s3:GetBucketVersioning",
+      "s3:GetBucketWebsite",
+      "s3:GetEncryptionConfiguration",
+      "s3:GetLifecycleConfiguration",
+      "s3:GetBucketObjectLockConfiguration",
+      "s3:GetReplicationConfiguration",
+      "s3:ListBucket",
+      "s3:ListBucketVersions",
+      "s3:ListBucketMultipartUploads",
+      "s3:CreateBucket",
+      "s3:DeleteBucket",
+      "s3:DeleteBucketPolicy",
+      "s3:PutBucketLogging",
+      "s3:PutBucketNotification",
+      "s3:PutBucketOwnershipControls",
+      "s3:PutBucketPolicy",
+      "s3:PutBucketTagging",
+      "s3:PutBucketVersioning",
+      "s3:PutEncryptionConfiguration",
+      "s3:PutLifecycleConfiguration",
+    ]
+    resources = [
+      "arn:aws:s3:::bucket-access-logs-*"
+    ]
+    # FIXME: Add GetBucketObjectLockConfiguration when CDAP adds
+    #        log retention / object lock management via Tofu
+  }
+  # CDAP creates and manages all hosted zones including specialty ones
+  # e.g. snowflakecomputing.com via PrivateLink
+  # Other teams should not be creating hosted zones directly
+  statement {
+    sid = "Route53ZoneAdmin"
+    actions = [
+      "route53:CreateHostedZone",
+      "route53:DeleteHostedZone",
+      "route53:UpdateHostedZoneComment",
+      "route53:AssociateVPCWithHostedZone",
+      "route53:DisassociateVPCFromHostedZone",
     ]
     resources = ["*"]
   }

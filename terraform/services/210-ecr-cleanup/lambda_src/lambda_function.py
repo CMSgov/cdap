@@ -178,16 +178,42 @@ def log_images_for_deletion(repo, images):
         log({'msg': 'Would delete image (not opted in)', 'repo': repo,
              'digest': img.digest})
 
-def lambda_handler(_, __):
-    """
-    Main entry point for lambda function.
-    Reads configured repos from the REPO_CONFIG environment variable.
-    Reviews active ECS task definitions, then deletes eligible images that
-    are old enough and no longer running.
-    For repos associated with the app but not opted in, logs images that would
-    be deleted without taking action.
-    """
-    repo_config: dict[str, dict] = json.loads(os.environ['REPO_CONFIG'])
+def discover_repos(client, app_prefix):
+    """Returns names of all ECR repos belonging to this app family."""
+    names = []
+    paginator = client.get_paginator('describe_repositories')
+    for page in paginator.paginate():
+        for repo in page['repositories']:
+            if repo['repositoryName'].startswith(f'{app_prefix}-'):
+                names.append(repo['repositoryName'])
+    return names
+
+
+def build_repo_config(discovered_repos, overrides, default_strategies):
+    """Merges discovered repos with any Terraform-supplied overrides."""
+    config = {}
+    for repo in discovered_repos:
+        config[repo] = overrides.get(repo, {
+            'strategies': default_strategies,
+            'opt_in': False,
+        })
+    return config
+
+
+def lambda_handler(event, _):
+    if event.get('RequestType') == 'LivenessCheck':
+        # Raise on failure so the deploy fails loudly; the module's
+        # aws_lambda_invocation surfaces this as a Tofu apply error.
+        ecr_client.describe_repositories(maxResults=1)
+        log({'msg': 'Liveness check passed'})
+        return
+
+    app_prefix = os.environ['APP']
+    overrides = json.loads(os.environ.get('REPO_OVERRIDES', '{}'))
+    default_strategies = json.loads(os.environ['DEFAULT_STRATEGIES'])
+
+    discovered = discover_repos(ecr_client, app_prefix)
+    repo_config = build_repo_config(discovered, overrides, default_strategies)
 
     for repo_name, to_delete in get_images_to_delete(repo_config).items():
         if repo_config[repo_name]['opt_in']:
@@ -198,8 +224,9 @@ def lambda_handler(_, __):
         else:
             log_images_for_deletion(repo_name, to_delete)
         log({'msg': f'Cleanup complete for repo: {repo_name}', 'repo': repo_name})
+
     log({
         'msg': 'ECR cleanup lambda completed',
-        'app': os.environ['APP'],
+        'app': app_prefix,
         'env': os.environ['ENV'],
     })
