@@ -12,8 +12,9 @@ Environment variables:
   AWS_REGION     = AWS region          (default: us-east-1)
   RETENTION_DAYS = days                (default: 180)
   TARGET_ENV     = environment string  (default: prod)
-                   Only log groups whose names CONTAIN this string are processed.
-                   Env options: "prod", "test", "dev", "sandbox", these will include ephemeral environments
+                   Only log groups whose names CONTAIN this string are
+                   processed. Env options: "prod", "test", "dev",
+                   "sandbox", these will include ephemeral environments
 """
 
 import csv
@@ -22,6 +23,7 @@ import os
 import sys
 from datetime import datetime
 import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -156,7 +158,7 @@ def write_plan_file(commands: list[dict]) -> str:
         "target_env":     TARGET_ENV,
         "commands":       commands,
     }
-    with open(PLAN_FILE, "w") as fh:
+    with open(PLAN_FILE, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, indent=2)
     print(f"\nPlan written  → {PLAN_FILE}")
     return PLAN_FILE
@@ -165,7 +167,7 @@ def write_plan_file(commands: list[dict]) -> str:
 def write_plan_summary(results: dict, commands: list[dict]) -> None:
     """Print a human-readable summary to stdout."""
     print("\n" + "=" * 60)
-    print(f"  PLAN SUMMARY")
+    print("  PLAN SUMMARY")
     print("=" * 60)
     print(f"  Total processed : {results['processed']}")
     print(f"  To update       : {len(commands)}")
@@ -187,7 +189,7 @@ def apply_plan(client, plan_path: str) -> None:
         print(f"Err Plan file not found: {plan_path}")
         sys.exit(1)
 
-    with open(plan_path) as fh:
+    with open(plan_path, encoding="utf-8") as fh:
         plan = json.load(fh)
 
     commands  = plan.get("commands", [])
@@ -219,7 +221,7 @@ def apply_plan(client, plan_path: str) -> None:
                 "retention":  retention,
                 "error":      "",
             })
-        except Exception as e:
+        except (ClientError, BotoCoreError) as e:
             print(f"Err Failed  : {log_group} — {e}")
             failed.append(log_group)
             report_rows.append({
@@ -228,13 +230,21 @@ def apply_plan(client, plan_path: str) -> None:
                 "retention":  retention,
                 "error":      str(e),
             })
-
+        else:
+            print(f"   Updated : {log_group}")
+            updated.append(log_group)
+            report_rows.append({
+                "log_group":  log_group,
+                "status":     "updated",
+                "retention":  retention,
+                "error":      "",
+            })
     # Write CSV report
     write_report(report_rows)
 
     print()
     print("=" * 60)
-    print(f"  APPLY SUMMARY")
+    print("  APPLY SUMMARY")
     print("=" * 60)
     print(f"  Updated : {len(updated)}")
     print(f"  Failed  : {len(failed)}")
@@ -253,7 +263,7 @@ def write_report(rows: list[dict]) -> None:
     """Write a CSV apply report to REPORT_FILE."""
     if not rows:
         return
-    with open(REPORT_FILE, "w", newline="") as fh:
+    with open(REPORT_FILE, "w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=["log_group", "status", "retention", "error"])
         writer.writeheader()
         writer.writerows(rows)
@@ -265,6 +275,11 @@ def write_report(rows: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 
 def main():
+    """
+    Retrieves log groups within a given environment and region and indicates
+    which ones will be updated. In the apply mode, it will run those updates
+    based on what gets stored in the plan file.
+    """
     mode   = os.environ.get("MODE", "plan").lower()
     client = boto3.client("logs", region_name=AWS_REGION)
 

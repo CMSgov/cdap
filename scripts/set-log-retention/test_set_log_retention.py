@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 
 import set_log_retention as slr
-
+from botocore.exceptions import ClientError
 
 def test_evaluate_log_group_tf_maintained(monkeypatch):
     """A log group in the exclusion list is categorized tf_maintained, regardless of env or retention."""
@@ -202,19 +202,11 @@ def test_apply_plan_partial_failure_exits_1(tmp_path, monkeypatch):
     }))
 
     mock_client = MagicMock()
-    mock_client.put_retention_policy.side_effect = [None, Exception('AccessDenied')]
-
-    plan_path_str = str(plan_path)
-    with pytest.raises(SystemExit) as exc_info:
-        slr.apply_plan(mock_client, plan_path_str)
-    assert exc_info.value.code == 1
-
-    report_rows = report_path.read_text()
-    assert 'dpc-prod-bad' in report_rows
-    assert 'failed' in report_rows
-
-    mock_client = MagicMock()
-    mock_client.put_retention_policy.side_effect = [None, Exception('AccessDenied')]
+    error_response = {"Error": {"Code": "AccessDeniedException", "Message": "AccessDenied"}}
+    mock_client.put_retention_policy.side_effect = [
+        None,
+        ClientError(error_response, "PutRetentionPolicy"),
+    ]
 
     with pytest.raises(SystemExit) as exc_info:
         slr.apply_plan(mock_client, str(plan_path))
