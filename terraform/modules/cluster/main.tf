@@ -10,6 +10,12 @@ module "ecs_container_insights_logs" {
   kms_key_id         = var.platform.kms_alias_primary.target_key_arn
 }
 
+resource "aws_service_discovery_http_namespace" "this" {
+  count       = var.supports_service_connect ? 1 : 0
+  name        = "${local.cluster_name}.sc.internal.cms.gov"
+  description = "${local.cluster_name} Service Connect namespace."
+}
+
 resource "aws_ecs_cluster" "this" {
   name = local.cluster_name
 
