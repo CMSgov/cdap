@@ -53,7 +53,7 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_app"></a> [app](#input\_app) | The application name (bcda, cdap) | `string` | n/a | yes |
 | <a name="input_env"></a> [env](#input\_env) | The application environment (test, prod) | `string` | n/a | yes |
-| <a name="input_apps_served"></a> [apps\_served](#input\_apps\_served) | n/a | `list(string)` | <pre>[<br/>  "bcda",<br/>  "cdap",<br/>  "dpc"<br/>]</pre> | no |
+| <a name="input_apps_served"></a> [apps\_served](#input\_apps\_served) | n/a | `list(string)` | <pre>[<br/>  "ab2d",<br/>  "bcda",<br/>  "cdap",<br/>  "dpc"<br/>]</pre> | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
