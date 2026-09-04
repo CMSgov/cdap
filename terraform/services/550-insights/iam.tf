@@ -14,15 +14,18 @@ data "aws_iam_policy_document" "aurora_export_kms" {
   statement {
     sid = "EnableDASGInsightsAccountAccess"
     principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:root"]
+      type = "AWS"
+      identifiers = [
+        "arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:root"
+      ]
     }
     actions = [
       "kms:Encrypt",
       "kms:Decrypt",
       "kms:ReEncrypt*",
       "kms:GenerateDataKey*",
-    "kms:DescribeKey"]
+      "kms:DescribeKey"
+    ]
     resources = ["*"]
   }
 
@@ -44,8 +47,7 @@ data "aws_iam_policy_document" "aurora_export_kms" {
     }
   }
 
-  # Internal writers: same AWS account as the key. Scoped to each app's
-  # specific role ARN — bcda-sandbox intentionally omitted (unused).
+  # Internal writers: same AWS account as the key
   statement {
     sid = "AllowInternalAuroraExportWriters"
     principals {
@@ -60,8 +62,7 @@ data "aws_iam_policy_document" "aurora_export_kms" {
   }
 
   # External writers: genuinely different AWS accounts (e.g. bfd-legacy for
-  # BB). Scoped directly to the specific writer role ARN — no account-root
-  # trust, matching the same specificity as internal writers above.
+  # BB)
   dynamic "statement" {
     for_each = local.external_writers
     content {
@@ -116,7 +117,13 @@ data "aws_iam_policy_document" "export_bucket_access" {
         "arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:role/service-role/aws-quicksight-service-role-v0",
       ]
     }
-    actions   = ["s3:GetObject", "s3:GetObjectVersion", "s3:ListBucket"]
-    resources = ["arn:aws:s3:::${each.value.bucket_name}", "arn:aws:s3:::${each.value.bucket_name}/*"]
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:ListBucket"
+    ]
+    resources = [
+      "arn:aws:s3:::${each.value.bucket_name}", "arn:aws:s3:::${each.value.bucket_name}/*"
+    ]
   }
 }
