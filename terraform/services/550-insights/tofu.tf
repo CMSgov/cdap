@@ -15,7 +15,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    key = "insights-export-buckets-bb2/terraform.tfstate"
+    key = "insights/terraform.tfstate"
   }
 }
 
@@ -24,7 +24,8 @@ module "standards" {
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = "cdap"
-  env         = "prod"
+  env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
   service     = basename(abspath(path.module))
 }
+

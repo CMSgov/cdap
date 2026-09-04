@@ -8,15 +8,21 @@ variable "app" {
   description = "The application name (ab2d, bcda, dpc, cdap)"
   type        = string
   validation {
-    condition     = contains(["ab2d", "bcda", "dpc", "cdap"], var.app)
+    condition     = contains(["ab2d", "bcda", "bb", "bfd", "dpc", "cdap"], var.app)
     error_message = "Valid value for app is ab2d, bcda, dpc, or cdap."
   }
 }
 
 variable "kms_key_arn" {
   default     = null
-  description = "The ARN of the default S3 bucket encryption key"
+  description = "Use sparingly. The ARN of a custom S3 bucket encryption key used for this bucket."
   type        = string
+}
+
+variable "use_custom_kms_key" {
+  description = "Set true when kms_key_arn is provided, even if its value isn't known until apply."
+  type        = bool
+  default     = false
 }
 
 variable "env" {

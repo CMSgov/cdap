@@ -1,3 +1,6 @@
+locals {
+  effective_kms_key_arn = var.use_custom_kms_key ? var.kms_key_arn : data.aws_kms_alias.default_encryption_key[0].target_key_arn
+}
 resource "aws_s3_bucket" "this" {
   # Max length on bucket_prefix is 37, so cut it to 36 plus the dash
   bucket_prefix = "${substr(var.name, 0, 36)}-"
@@ -20,8 +23,8 @@ resource "aws_s3_bucket_versioning" "this" {
 }
 
 data "aws_kms_alias" "default_encryption_key" {
-  count = var.kms_key_arn == null ? 1 : 0
-  name  = "alias/${var.app}-${var.env}"
+  count = var.use_custom_kms_key ? 0 : 1
+    name  = "alias/${var.app}-${var.env}"
 }
 
 data "aws_iam_policy_document" "ssl_only" {
@@ -70,11 +73,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 
     apply_server_side_encryption_by_default {
       sse_algorithm = "aws:kms"
-      kms_master_key_id = (
-        var.kms_key_arn == null ?
-        data.aws_kms_alias.default_encryption_key[0].target_key_arn :
-        var.kms_key_arn
-      )
+      kms_master_key_id = local.effective_kms_key_arn
     }
   }
 }
