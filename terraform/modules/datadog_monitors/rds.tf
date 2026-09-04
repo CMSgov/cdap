@@ -14,6 +14,8 @@ resource "datadog_monitor" "rds_cpu_high" {
   notify_no_data    = var.monitor_config.rds.notify_no_data
   no_data_timeframe = var.monitor_config.rds.no_data_timeframe_minutes
 
+  evaluation_delay = local.aws_evaluation_delay
+
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }
@@ -33,6 +35,8 @@ resource "datadog_monitor" "rds_freeable_memory_low" {
 
   notify_no_data    = var.monitor_config.rds.notify_no_data
   no_data_timeframe = var.monitor_config.rds.no_data_timeframe_minutes
+
+  evaluation_delay = local.aws_evaluation_delay
 
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
@@ -54,6 +58,8 @@ resource "datadog_monitor" "rds_db_connections_high" {
   notify_no_data    = var.monitor_config.rds.notify_no_data
   no_data_timeframe = var.monitor_config.rds.no_data_timeframe_minutes
 
+  evaluation_delay = local.aws_evaluation_delay
+
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }
@@ -71,6 +77,8 @@ resource "datadog_monitor" "rds_replica_lag_high" {
     warning  = floor(var.monitor_config.rds.replica_lag_seconds * 1000 * 0.75)
   }
 
+  evaluation_delay = local.aws_evaluation_delay
+
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }
@@ -86,6 +94,8 @@ resource "datadog_monitor" "rds_deadlocks" {
   monitor_thresholds {
     critical = var.monitor_config.rds.deadlock_threshold
   }
+
+  evaluation_delay = local.aws_evaluation_delay
 
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
