@@ -3,3 +3,5 @@ additional_kms:
   - "bb-prod" # used to share Datadog API keys
   - "bfd-sandbox" # used to share Datadog API keys
   - "bfd-prod" # used to share Datadog API keys
+  - "aurora_export" # used to share insights data between accounts
+
