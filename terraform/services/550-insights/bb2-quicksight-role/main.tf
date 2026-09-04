@@ -1,17 +1,19 @@
-# Applied in the dasg insights account. Grants quicksight read access to the
-# bb2 export bucket in cdap-prod
+# Applied in the dasg insights account. Grants QuickSight read access to the
+# bb export bucket in cdap-prod. The bucket is created via the shared
+# "insights" terraservice and encrypted with the shared aurora_export KMS
+# key (also used by ab2d, dpc, and bcda's export buckets).
 
 data "aws_caller_identity" "current" {}
 
-# cdap-prod account where the bb-prod key lives
+# cdap-prod account where the aurora_export key and bb's bucket live
 data "aws_ssm_parameter" "cdap_prod_account_id" {
-  name = "/cdap/mgmt/insights/sensitive/production-account" #TODO: rename and add to SOPs
+  name = "/cdap/mgmt/insights/sensitive/production-account" #TODO: rename and add to SOPS
 }
 
 locals {
-  # placeholder until the export bucket is applied
-  export_bucket_name = "bb2-prod-quicksight-export"
-  export_bucket_arn  = "arn:aws:s3:::${local.export_bucket_name}"
+  # modules/bucket uses bucket_prefix, so the deployed bucket name carries an
+  # AWS-generated random suffix we can't know at plan time. Match by prefix.
+  export_bucket_arn_pattern = "arn:aws:s3:::bb-prod-aurora-export-*"
 }
 
 data "aws_iam_policy_document" "quicksight_trust" {
@@ -23,7 +25,7 @@ data "aws_iam_policy_document" "quicksight_trust" {
       identifiers = ["quicksight.amazonaws.com"]
     }
 
-    # only QS in this account may assume
+    # only QuickSight in this account may assume
     condition {
       test     = "StringEquals"
       variable = "aws:SourceAccount"
@@ -34,7 +36,7 @@ data "aws_iam_policy_document" "quicksight_trust" {
 
 resource "aws_iam_role" "bb2_quicksight" {
   name               = "bb2-quicksight-export-read"
-  description        = "Quicksight readonly access to bb2 insights export bucket in cdap-prod"
+  description        = "QuickSight readonly access to bb insights export bucket in cdap-prod"
   assume_role_policy = data.aws_iam_policy_document.quicksight_trust.json
 }
 
@@ -42,16 +44,16 @@ data "aws_iam_policy_document" "read_export_bucket" {
   statement {
     sid       = "ListExportBucket"
     actions   = ["s3:ListBucket"]
-    resources = [local.export_bucket_arn]
+    resources = [local.export_bucket_arn_pattern]
   }
 
   statement {
     sid       = "ReadExportObjects"
     actions   = ["s3:GetObject"]
-    resources = ["${local.export_bucket_arn}/*"]
+    resources = ["${local.export_bucket_arn_pattern}/*"]
   }
 
-  # objects are encrypted with shared bb-prod key
+  # objects are encrypted with the shared aurora_export key
   statement {
     sid = "DecryptExportObjects"
     actions = [
@@ -63,7 +65,7 @@ data "aws_iam_policy_document" "read_export_bucket" {
     condition {
       test     = "ForAnyValue:StringEquals"
       variable = "kms:ResourceAliases"
-      values   = ["alias/bb-prod"]
+      values   = ["alias/aurora_export"]
     }
   }
 }
