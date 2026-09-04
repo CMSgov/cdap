@@ -1,0 +1,13 @@
+# config/prod.yml
+insights_exports:
+  ab2d:
+    envs: [prod]
+  dpc:
+    envs: [prod]
+  bcda:
+    envs: [prod]
+  bb:
+    envs: [prod]
+    external_writer:
+      account_ssm_path: "external/bfd-legacy/sensitive/aws_account_id"
+      role_ssm_path: "external/bfd-legacy/sensitive/insights/lambda_role_arn"
