@@ -17,6 +17,7 @@ resource "datadog_monitor" "custom" {
   on_missing_data = each.value.on_missing_data
 
   require_full_window = each.value.require_full_window
+  evaluation_delay    = each.value.evaluation_delay
 
   tags = concat(local.base_tags, each.value.tags)
 }

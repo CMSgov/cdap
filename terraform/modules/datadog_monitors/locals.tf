@@ -28,4 +28,8 @@ locals {
   ]
 
   victorops_notify = join(" ", local._victorops_notify_strings)
+
+  # recommended by Datadog
+  # https://docs.datadoghq.com/monitors/configuration/?tab=evaluateddata#evaluation-delay
+  aws_evaluation_delay = 900
 }
