@@ -59,6 +59,7 @@ module "export_buckets" {
   name               = each.value.bucket_name
   kms_key_arn        = aws_kms_alias.aurora_export.target_key_arn
   use_custom_kms_key = true
+  force_destroy      = false
 
   additional_bucket_statements = concat(
     each.value.external_account_path == null ? [] : [{

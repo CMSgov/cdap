@@ -67,6 +67,7 @@ module "zip_bucket" {
   env                        = local.env
   name                       = "${local.full_name_string}-function"
   ssm_parameter              = "/${local.app}/${local.env}/${local.name}-bucket"
+  force_destroy              = true
 }
 
 # Managed zip upload — used when source_dir is provided
