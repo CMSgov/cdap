@@ -1,6 +1,7 @@
 /cdap/${env}/external/bb/sensitive/aws_account_id: ENC[AES256_GCM,data:zVSb+yiqyydsszMn,iv:tmuzm8FY0DjiaUsyMqPnsDU/i0MCo6Nh8XElmvfidsI=,tag:GHG+ngh526ZT2jNnFyY6xQ==,type:int]
-/cdap/${env}/external/bb/sensitive/lambda_role_arn: ENC[AES256_GCM,data:Naglvx5ZItymbRR+2ZJ2s5l6p5n73bejTktlrNaX//7UXS257frbXUO9VqvoIPn3RZ+1NZDab//DeY5ataA9iZE/UGwhjC0IwD53usxZZZcxeGtsJhM5tlnlR1mwLfGtxg==,iv:Khj1xDk5MmusfL/YudSYIOjU6vnw0ClQDZn3JCDDVOM=,tag:E+OuvGm1UyDXzGKGjs45Xg==,type:str]
+/cdap/${env}/external/bfd-legacy/sensitive/insights/lambda_role_arn: ENC[AES256_GCM,data:eTYVsreWR9ZX9hgBrqDhPQT8l2HRWdsHCEIPJWQcNHrmiQOzaGHsgfcwUDs3r/Vh6LOypm+TMDX9kQ3kXbZ9ZMNJEtB2smIDpVb82vJPWtj7mlSRrI5TpBNq49afqMYvUA==,iv:BUlfrH/7me2qFjikpmZWq1AZrkPddGCQz0YqlhYDwyo=,tag:UTo0wWzNiA+NoVVRslUbYQ==,type:str]
 /cdap/${env}/external/bfd/sensitive/aws_account_id: ENC[AES256_GCM,data:Rdiz2fsHLRPYvqU2,iv:kAYpgfFk8Bsa5oJVjzaMujzIOUcnlwP97aB7NUqu+sQ=,tag:cfHRNT25KcxJ52Q8RHV3Ew==,type:int]
+/cdap/${env}/external/bfd-legacy/sensitive/aws_account_id: ENC[AES256_GCM,data:/sxCF3sf5dFlTg7n,iv:d2MTjdD6O9KFGAv+vqeXErvyv/nIFULB0yFTv5iGIvM=,tag:aPNd/FZ8VBy8pFtI/uxufw==,type:int]
 /cdap/${env}/external/dasg_insights/sensitive/aws_account_id: ENC[AES256_GCM,data:8SbF5dFD0pxIN7ZB,iv:06ncSCNzTIq9Z9G2zYqtvbzpqKnUjc0B0Rk8yV/tuls=,tag:JRNYTUwGSJF+uTRU6ZPmzQ==,type:int]
 /cdap/${env}/external/dasg_insights/sensitive/bb2_quicksight_role_arn: ENC[AES256_GCM,data:pOfRuQh/n45dArKtr6fsuR3LO++VUud4jEwNZWgfVl8jd+bgq4eXr9sUmhbZ73oec3G7y/1TYVwG,iv:xegjPjte4qsYXkzkJYWabC3SaIAdojcYFjvfMxR6gaw=,tag:8zlvgUPkqTF2av1FoIB6mA==,type:str]
 /dasgapi/sensitive/datadog/init_api_key: ENC[AES256_GCM,data:M5NFBuIPo2FaB7hssb35UkKQSTpVd0SIYSYkbKqXVA4=,iv:fkrQx/gJYcUHkCByRZV4T1dBkp36Aagso23ayO/C63A=,tag:k5LGV/Y0IhR+mIriqzYfWQ==,type:str]
@@ -44,13 +45,13 @@
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-prod
-      aws_profile: ""
       created_at: "2026-01-12T15:41:07Z"
       enc: AQICAHhFK5WpttutkcboPynMViVnpNPMGZugCZIggQQtL9bdTQEVc7aw0Dj/CJQVlpM/eSyPAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM3F5iEguM2hXz9f/iAgEQgDtXiU6GxFA32Xslvj1R8w+TaGC1UvYtc3rdlg49JU/xJLt/LpnXoBRD3Yfqqj3xyx33KdbhAD623ooF9Q==
-    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-prod
       aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-prod
       created_at: "2026-01-12T15:41:07Z"
       enc: AQICAHiMFrJFiUnwYvJXakJHJWqEMy1v6tkF0T1GwxO2Rp9u8wEFdRMn/TTetpUqYnY2ejpkAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMq8fSnFvcU1+8hIlrAgEQgDvFXLUTojxRKoHnruqy+moh58mk//npBqXdIZAAE5U4kUIwhUniitWHJ8zOptpAmwik1UMcH6ScXKJKBA==
-  mac_only_encrypted: true
+      aws_profile: ""
   unencrypted_regex: /nonsensitive/
+  mac_only_encrypted: true
   version: 3.13.1
