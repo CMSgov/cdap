@@ -65,7 +65,11 @@ module "export_buckets" {
     each.value.external_account_path == null ? [] : [{
       sid        = "AllowExternalWriterUploads"
       principals = [data.aws_ssm_parameter.external_writer_role[each.value.external_role_path].value]
-      actions    = ["s3:PutObject", "s3:AbortMultipartUpload", "s3:ListBucket"]
+      actions = [
+        "s3:PutObject",
+        "s3:AbortMultipartUpload",
+        "s3:ListBucket"
+      ]
     }],
     [{
       sid = "AllowDASGQuickSightAccountAccess"
