@@ -38,7 +38,7 @@ data "aws_iam_policy_document" "aurora_export_kms" {
     actions = [
       "kms:CreateGrant",
       "kms:ListGrants",
-    "kms:RevokeGrant"
+      "kms:RevokeGrant"
     ]
     resources = ["*"]
     condition {
