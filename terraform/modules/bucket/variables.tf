@@ -60,10 +60,3 @@ variable "additional_bucket_statements" {
   }))
   default = []
 }
-
-# modules/bucket/variables.tf
-variable "force_destroy" {
-  description = "Whether to allow Terraform to destroy this bucket even if it contains objects. Defaults to true to match existing behavior; set to false for buckets holding data you don't want accidentally wiped (e.g. cross-account export buckets)."
-  type        = bool
-  default     = true
-}
