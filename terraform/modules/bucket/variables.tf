@@ -13,6 +13,18 @@ variable "app" {
   }
 }
 
+# modules/bucket/variables.tf
+variable "additional_bucket_statements" {
+  description = "Structured statements that will reference the bucket's ARN. Useful for iterative calls of the module."
+  type = list(object({
+    sid        = string
+    principals = list(string)
+    actions    = list(string)
+  }))
+  default = []
+}
+
+
 variable "kms_key_arn" {
   default     = null
   description = "Use sparingly. The ARN of a custom S3 bucket encryption key used for this bucket."

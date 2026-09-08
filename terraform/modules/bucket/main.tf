@@ -24,7 +24,7 @@ resource "aws_s3_bucket_versioning" "this" {
 
 data "aws_kms_alias" "default_encryption_key" {
   count = var.use_custom_kms_key ? 0 : 1
-    name  = "alias/${var.app}-${var.env}"
+  name  = "alias/${var.app}-${var.env}"
 }
 
 data "aws_iam_policy_document" "ssl_only" {
@@ -58,6 +58,18 @@ data "aws_iam_policy_document" "this" {
     [data.aws_iam_policy_document.ssl_only.json],
     var.additional_bucket_policies,
   )
+  dynamic "statement" {
+    for_each = var.additional_bucket_statements
+    content {
+      sid = statement.value.sid
+      principals {
+        type        = "AWS"
+        identifiers = statement.value.principals
+      }
+      actions   = statement.value.actions
+      resources = [aws_s3_bucket.this.arn, "${aws_s3_bucket.this.arn}/*"]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "this" {
@@ -72,7 +84,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
     bucket_key_enabled = true
 
     apply_server_side_encryption_by_default {
-      sse_algorithm = "aws:kms"
+      sse_algorithm     = "aws:kms"
       kms_master_key_id = local.effective_kms_key_arn
     }
   }

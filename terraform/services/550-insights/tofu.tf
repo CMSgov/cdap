@@ -26,6 +26,6 @@ module "standards" {
   app         = "cdap"
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
-  service     = basename(abspath(path.module))
+  service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
 }
 

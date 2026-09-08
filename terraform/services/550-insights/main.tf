@@ -60,5 +60,19 @@ module "export_buckets" {
   kms_key_arn        = aws_kms_alias.aurora_export.target_key_arn
   use_custom_kms_key = true
 
-  additional_bucket_policies = [data.aws_iam_policy_document.export_bucket_access[each.key].json]
-}
+  additional_bucket_statements = concat(
+    each.value.external_account_path == null ? [] : [{
+      sid        = "AllowExternalWriterUploads"
+      principals = [data.aws_ssm_parameter.external_writer_role[each.value.external_role_path].value]
+      actions    = ["s3:PutObject", "s3:AbortMultipartUpload", "s3:ListBucket"]
+    }],
+    [{
+      sid = "AllowDASGQuickSightAccountAccess"
+      principals = [
+        "arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:root",
+        "arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:role/service-role/aws-quicksight-service-role-v0",
+      ]
+      actions = ["s3:GetObject", "s3:GetObjectVersion", "s3:ListBucket"]
+    }]
+  )
+  }
