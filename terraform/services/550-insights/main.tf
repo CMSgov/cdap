@@ -70,7 +70,6 @@ module "export_buckets" {
     [{
       sid = "AllowDASGQuickSightAccountAccess"
       principals = [
-        "arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:root",
         "arn:aws:iam::${data.aws_ssm_parameter.dasg_insights_account_id.value}:role/service-role/aws-quicksight-service-role-v0",
       ]
       actions = ["s3:GetObject", "s3:GetObjectVersion", "s3:ListBucket"]
