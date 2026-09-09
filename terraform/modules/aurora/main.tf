@@ -83,26 +83,45 @@ data "aws_rds_engine_version" "this" {
 }
 
 resource "aws_rds_cluster" "this" {
-  cluster_identifier                  = coalesce(var.cluster_identifier, local.service_prefix)
-  engine                              = local.aurora_engine
-  engine_version                      = data.aws_rds_engine_version.this.version
-  master_username                     = var.username
-  master_password                     = var.password
-  snapshot_identifier                 = var.snapshot_identifier
-  db_subnet_group_name                = aws_db_subnet_group.this.name
-  storage_type                        = var.storage_type
-  storage_encrypted                   = true
-  kms_key_id                          = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
-  backup_retention_period             = var.backup_retention_period
-  preferred_backup_window             = var.backup_window
-  preferred_maintenance_window        = var.maintenance_window
-  apply_immediately                   = false
-  skip_final_snapshot                 = true
-  deletion_protection                 = var.deletion_protection
-  db_cluster_parameter_group_name     = aws_rds_cluster_parameter_group.this.name
-  iam_database_authentication_enabled = true
-  copy_tags_to_snapshot               = true
-  enabled_cloudwatch_logs_exports     = ["postgresql"]
+  cluster_identifier   = coalesce(var.cluster_identifier, local.service_prefix)
+  engine               = local.aurora_engine
+  engine_version       = data.aws_rds_engine_version.this.version
+  master_username      = var.username
+  snapshot_identifier  = var.snapshot_identifier
+  db_subnet_group_name = aws_db_subnet_group.this.name
+  storage_type         = var.storage_type
+  storage_encrypted    = true
+  kms_key_id           = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
+
+  # --- Master credential ---
+  # Teams that opt in to manage_master_user_password get an RDS-managed secret in Secrets
+  # Manager instead, with rotation available (but not enabled) via
+  # master_password_rotation_days below.
+  master_password               = var.manage_master_user_password ? null : var.password
+  manage_master_user_password   = var.manage_master_user_password
+  master_user_secret_kms_key_id = var.manage_master_user_password ? coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn) : null
+
+  backup_retention_period         = var.backup_retention_period
+  preferred_backup_window         = var.backup_window
+  preferred_maintenance_window    = var.maintenance_window
+  apply_immediately               = false
+  skip_final_snapshot             = true
+  deletion_protection             = var.deletion_protection
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.this.name
+
+  # --- IAM database authentication ---
+  # This only turns on the capability. A given Postgres
+  # role only becomes IAM-authenticable once a consuming terraservice grants
+  # it `rds_iam` in the database and attaches its own IAM policy scoped to
+  # that dbuser -- built from the cluster_resource_id this module publishes
+  # via SSM below. This module intentionally does not create IAM policies
+  # or grants itself, so that access is owned by, and torn down with, the
+  # terraservice that needed it.
+  iam_database_authentication_enabled = var.enable_iam_database_authentication
+
+  copy_tags_to_snapshot           = true
+  enabled_cloudwatch_logs_exports = ["postgresql"]
+
   vpc_security_group_ids = flatten([
     aws_security_group.this.id,
     var.platform.security_groups.cmscloud-security-tools.id,
@@ -110,11 +129,12 @@ resource "aws_rds_cluster" "this" {
     var.platform.security_groups.zscaler-private.id,
     var.vpc_security_group_ids
   ])
+
   tags = {
     AWS_Backup = var.aws_backup_tag
   }
 
-  # Along with the bleow commentary from @malessi on the support for monitoring-related settings,
+  # Along with the below commentary from @malessi on the support for monitoring-related settings,
   # this is largely for support of novel clusters (e.g. ephemeral clusters) and for clusters that take advantage
   # of Application Autoscaling. Note: Application Autoscaling is not yet supported in this module.
   provisioner "local-exec" {
@@ -137,7 +157,7 @@ resource "aws_rds_cluster" "this" {
 
   # Ignore all changes to these properties as the above local-exec manages them.
   # Per @malessi, BFD-4145, et al, support for these configuration settings is
-  # incomplete in teh Terraform Provider for AWS
+  # incomplete in the Terraform Provider for AWS
   lifecycle {
     ignore_changes = [
       monitoring_interval,
@@ -146,6 +166,18 @@ resource "aws_rds_cluster" "this" {
       performance_insights_kms_key_id,
       performance_insights_retention_period,
     ]
+  }
+}
+
+# Rotation is opt-in and off by default (master_password_rotation_days = 0).
+# Teams that want automatic rotation of the RDS-managed master secret can
+# turn it on without any other change to this module.
+resource "aws_secretsmanager_secret_rotation" "master_password" {
+  count     = var.manage_master_user_password && var.master_password_rotation_days > 0 ? 1 : 0
+  secret_id = aws_rds_cluster.this.master_user_secret[0].secret_arn
+
+  rotation_rules {
+    automatically_after_days = var.master_password_rotation_days
   }
 }
 
@@ -187,4 +219,32 @@ resource "aws_ssm_parameter" "reader_endpoint" {
   name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/reader-endpoint"
   value = "${aws_rds_cluster.this.reader_endpoint}:${aws_rds_cluster.this.port}"
   type  = "String"
+}
+
+# Published so consuming terraservices (e.g. 30-my-lambda/iam.tf) can build
+# their own rds-db:connect policy, scoped to their own dbuser, without this
+# module needing to know which roles or users exist. This is what makes
+# per-service IAM auth adoption possible without enforcing it on anyone.
+resource "aws_ssm_parameter" "db_cluster_resource_id" {
+  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/db-cluster-resource-id"
+  value = aws_rds_cluster.this.cluster_resource_id
+  type  = "String"
+
+  tags = {
+    Name = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/db-cluster-resource-id"
+  }
+}
+
+# The ARN itself isn't sensitive (it doesn't contain secret material), so
+# it's published the same way as the other identifiers above.
+resource "aws_ssm_parameter" "master_user_secret_arn" {
+  count = var.manage_master_user_password ? 1 : 0
+
+  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/master-user-secret-arn"
+  value = aws_rds_cluster.this.master_user_secret[0].secret_arn
+  type  = "String"
+
+  tags = {
+    Name = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/master-user-secret-arn"
+  }
 }

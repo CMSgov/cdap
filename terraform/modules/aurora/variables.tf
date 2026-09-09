@@ -1,13 +1,55 @@
 variable "username" {
-  # deprecated  = "This will no longer be supported once APIs adopt AWS Secrets Manager manged credentials." #TODO opentofu only
+  # deprecated  = "This will no longer be supported once APIs adopt AWS Secrets Manager manged credentials."
   description = "The database's primary/master credentials username"
   type        = string
 }
 
 variable "password" {
-  # deprecated  = "This will no longer be supported once APIs adopt AWS Secrets Manager manged credentials." #TODO opentofu only
-  description = "The database's primary/master credentials password"
+  # deprecated  = "This will no longer be supported once APIs adopt AWS Secrets Manager manged credentials."
+  description = <<-EOT
+    The database's primary/master credentials password. Required only when
+    manage_master_user_password = false. Ignored (and may be omitted) when
+    manage_master_user_password = true, since RDS generates and stores the
+    master password in Secrets Manager instead.
+  EOT
   type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "manage_master_user_password" {
+  description = <<-EOT
+    If true, RDS creates and manages the master user password in AWS
+    Secrets Manager instead of using var.password. Opt-in and off by
+    default -- existing username/password behavior is unchanged unless a
+    team explicitly turns this on.
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "master_password_rotation_days" {
+  description = <<-EOT
+    Rotation interval, in days, for the RDS-managed master user secret.
+    Only applies when manage_master_user_password = true. Defaults to 0,
+    which leaves automatic rotation disabled.
+  EOT
+  type        = number
+  default     = 0
+}
+
+variable "enable_iam_database_authentication" {
+  description = <<-EOT
+    If true, enables the IAM database authentication capability on the
+    cluster. This only makes IAM auth available -- it does not disable or
+    replace username/password authentication, and no Postgres role uses it
+    until a consuming terraservice grants that role `rds_iam` and attaches
+    its own IAM policy scoped to that dbuser, using the cluster_resource_id
+    this module publishes via SSM. Defaults to true because enabling the
+    capability has no effect on teams that don't use it.
+  EOT
+  type        = bool
+  default     = true
 }
 
 variable "platform" {
@@ -145,3 +187,4 @@ variable "security_group_override" {
   description = "Override for the security group name"
   type        = string
 }
+
