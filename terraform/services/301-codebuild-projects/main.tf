@@ -12,6 +12,12 @@ locals {
     "dpc-ops",
     "dpc-static-site",
   ]
+
+  # Only *-website and *-static-site repos get a build cache bucket
+  cache_repos = [
+    for r in local.repos : r
+    if endswith(r, "-website") || endswith(r, "-static-site")
+  ]
 }
 
 module "standards" {
@@ -96,6 +102,14 @@ resource "aws_codebuild_project" "per_repo" {
     type = "NO_ARTIFACTS"
   }
 
+  dynamic "cache" {
+    for_each = contains(local.cache_repos, each.key) ? [1] : []
+    content {
+      type     = "S3"
+      location = "${module.build_cache[each.key].id}/cache"
+    }
+  }
+
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
     image                       = local.arm64_image
@@ -152,4 +166,15 @@ resource "aws_codebuild_webhook" "per_repo" {
   }
 
   depends_on = [aws_codebuild_source_credential.github]
+}
+
+module "build_cache" {
+  source = "../../modules/bucket" # adjust to your module's actual path
+
+  for_each = toset(local.cache_repos)
+
+  name          = "${each.key}-buildcache"
+  app           = "cdap"
+  env           = var.env
+  force_destroy = true # cache contents are disposable
 }
