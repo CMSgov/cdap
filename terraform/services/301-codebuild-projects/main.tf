@@ -20,16 +20,6 @@ locals {
   ]
 }
 
-module "standards" {
-  source = "../../modules/standards"
-
-  app         = "cdap"
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/codebuild-projects"
-  service     = "codebuild-projects"
-  providers   = { aws = aws, aws.secondary = aws.secondary }
-}
-
 # IAM
 
 resource "aws_iam_role" "codebuild" {
@@ -100,14 +90,6 @@ resource "aws_codebuild_project" "per_repo" {
 
   artifacts {
     type = "NO_ARTIFACTS"
-  }
-
-  dynamic "cache" {
-    for_each = contains(local.cache_repos, each.key) ? [1] : []
-    content {
-      type     = "S3"
-      location = "${module.build_cache[each.key].id}/cache"
-    }
   }
 
   environment {
