@@ -148,7 +148,7 @@ data "aws_iam_policy_document" "github_actions_security" {
       "ssm:AddTagsToResource",
     ]
     resources = [
-      "*", # arn:aws:ssm:*:*:parameter/${var.app}/${var.env}/*"
+      "*", # arn:aws:ssm:*:*:parameter/${var.app}/${var.env}/*" arn:aws:ssm:*:*:parameter/${var.app}-static-site/*/buildcachebucket*
     ]
   }
 
