@@ -73,7 +73,7 @@ data "aws_iam_policy_document" "codebuild" {
     resources = flatten([
       for repo in local.cache_repos : [
         module.build_cache[repo].arn,
-        "${module.build_cache[repo].bucket_arn}/*",
+        "${module.build_cache[repo].arn}/*",
       ]
     ])
   }
