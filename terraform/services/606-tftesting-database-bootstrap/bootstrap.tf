@@ -11,8 +11,8 @@ locals {
 }
 
 # Breakglass-authenticated, for only this step: its
-# only job is creating tftesting_migrator and tftesting_human and
-# granting rds_iam to both, so nothing downstream ever needs this
+# only job is creating tftesting_migrator and
+# granting rds_iam, so nothing downstream ever needs this
 # credential again.
 #
 resource "null_resource" "bootstrap_roles" {
