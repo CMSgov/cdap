@@ -98,7 +98,7 @@ resource "aws_rds_cluster" "this" {
   # Manager instead, with rotation available (but not enabled) via
   # breakglass_password_rotation_days below.
   master_password               = var.manage_breakglass_password ? null : var.password
-  manage_master_user_password   = var.manage_breakglass_password
+  manage_master_user_password   = var.manage_breakglass_password ? true : null
   master_user_secret_kms_key_id = var.manage_breakglass_password ? coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn) : null
 
   backup_retention_period         = var.backup_retention_period
@@ -252,27 +252,34 @@ resource "aws_ssm_parameter" "breakglass_user_secret_arn" {
   }
 }
 
-resource "aws_cloudwatch_event_rule" "breakglass_secret_access" {
-  count       = var.manage_breakglass_password && var.enable_breakglass_access_alerting ? 1 : 0
-  name        = "${local.service_prefix}-breakglass-secret-access"
-  description = "Fires when the ${local.service_prefix} breakglass breakglass secret is read via Secrets Manager GetSecretValue."
+resource "aws_cloudwatch_log_metric_filter" "breakglass_secret_access" {
+  count          = var.manage_breakglass_password ? 1 : 0
+  name           = "${local.service_prefix}-breakglass-secret-access"
+  log_group_name = var.cloudtrail_log_group_name
 
-  event_pattern = jsonencode({
-    source      = ["aws.secretsmanager"]
-    detail-type = ["AWS API Call via CloudTrail"]
-    detail = {
-      eventSource = ["secretsmanager.amazonaws.com"]
-      eventName   = ["GetSecretValue"]
-      requestParameters = {
-        secretId = [aws_rds_cluster.this.master_user_secret[0].secret_arn]
-      }
-    }
-  })
+  pattern = "{ ($.eventSource = \"secretsmanager.amazonaws.com\") && ($.eventName = \"GetSecretValue\") && ($.requestParameters.secretId = \"${aws_rds_cluster.this.master_user_secret[0].secret_arn}\") }"
+
+  metric_transformation {
+    name      = "${local.service_prefix}-breakglass-secret-access"
+    namespace = "Breakglass/${local.service_prefix}"
+    value     = "1"
+    unit      = "Count"
+  }
 }
 
-resource "aws_cloudwatch_event_target" "breakglass_secret_access" {
-  count     = var.manage_breakglass_password && var.enable_breakglass_access_alerting ? 1 : 0
-  rule      = aws_cloudwatch_event_rule.breakglass_secret_access[0].name
-  target_id = "breakglass-alert-sns"
-  arn       = var.breakglass_alert_sns_topic_arn
+resource "aws_cloudwatch_metric_alarm" "breakglass_secret_access" {
+  count               = var.manage_breakglass_password ? 1 : 0
+  alarm_name          = "${local.service_prefix}-breakglass-secret-access"
+  alarm_description   = "Fires when the ${local.service_prefix} breakglass secret is read via Secrets Manager GetSecretValue."
+  namespace           = "Breakglass/${local.service_prefix}"
+  metric_name         = "${local.service_prefix}-breakglass-secret-access"
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [var.breakglass_alert_sns_topic_arn]
 }
+
