@@ -46,10 +46,11 @@ module "ecs_service" {
   platform    = module.platform
   cluster_arn = data.aws_ecs_cluster.cluster_test.arn
 
-  alb_security_group_id  = module.alb.security_group_id
-  alb_listener_arn       = module.alb.https_listener_arn
-  alb_port_name          = "http"
-  enable_alb_integration = true
+  alb_security_group_id             = module.alb.security_group_id
+  alb_listener_arn                  = module.alb.https_listener_arn
+  alb_port_name                     = "http"
+  enable_alb_integration            = true
+  enable_datadog_synthetics_ingress = true
 
   port_mappings = [
     {
@@ -61,14 +62,13 @@ module "ecs_service" {
   ]
 
   container_environment = [
-    { name = "DOWNSTREAM_URL", value = "http://tftesting-b:80/" }
+    { name = "DOWNSTREAM_URL", value = "http://tftesting-service-b:8080/ping" }
   ]
-
   health_check = {
     command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
     interval    = 30
     retries     = 3
-    startPeriod = 30
+    startPeriod = 60
     timeout     = 5
   }
 }
@@ -76,28 +76,32 @@ module "ecs_service" {
 module "service_b" {
   source = "../../modules/service"
 
-  service_name_override = "tftesting-b"
-  cluster_arn            = data.aws_ecs_cluster.cluster_test.arn
-  image                  = "public.ecr.aws/nginx/nginx:latest"
-  cpu                    = 256
-  memory                 = 512
-  log_retention_days     = 1
+  service_name_override           = "tftesting-service-b"
+  image_tag_service_name_override = "tftesting-service" # reuse the same image/tag as service A
+  cluster_arn                     = data.aws_ecs_cluster.cluster_test.arn
+  cpu                             = 256
+  memory                          = 512
+  log_retention_days              = 1
+  desired_count                   = local.desired_count
 
   port_mappings = [
-    { name = "http", containerPort = 80, protocol = "tcp", appProtocol = "http" }
+    { name = "http", containerPort = 8080, protocol = "tcp", appProtocol = "http" }
   ]
   service_connect_port_name = "http"
 
   health_check = {
-    command     = ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+    command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
     interval    = 30
     retries     = 3
-    startPeriod = 15
+    startPeriod = 60 # ddtrace import blocks up to 60s waiting on the Datadog agent
     timeout     = 5
   }
 
-  enable_ecs_service_connect    = true
-  service_connect_namespace_arn = data.aws_service_discovery_http_namespace.tftesting.arn
+  container_environment = [] # no DOWNSTREAM_URL — this is the responder
+
+  enable_ecs_service_connect        = true
+  service_connect_namespace_arn     = data.aws_service_discovery_http_namespace.tftesting.arn
+  enable_datadog_synthetics_ingress = true
 
   platform = module.platform
 }
