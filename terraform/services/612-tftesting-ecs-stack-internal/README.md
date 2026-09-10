@@ -1,16 +1,16 @@
 # ecs-stack-internal
 
-Integration test terraservice for an internal ALB and ECS Fargate service
-with mTLS sidecar. Validates the full private-cert path using a
-PACE certificate for both the ALB listener and the mTLS proxy.
+Integration test terraservice for an internal ALB and ECS Fargate service.
+Validates the private-cert path using a
+PACE certificate for both the ALB Listener.
 
 ## What This Tests
 
 | Component | Configuration                                                               |
 |---|-----------------------------------------------------------------------------|
-| `acm_certificate` | PACE backed private cert, `enable_internal_endpoint`, `enable_mtls_sidecar` |
+| `acm_certificate` | PACE backed private cert, `enable_internal_endpoint` |
 | `alb` | Internal ALB, private subnets, private cert on HTTPS listener               |
-| `ecs_service` | mTLS sidecar, proxy port, task role ACM export permission                   |
+| `ecs_service` | task role ACM export permission                   |
 
 ## Architecture
 
