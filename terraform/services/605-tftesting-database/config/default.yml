@@ -1,0 +1,4 @@
+tftesting:
+  # Do not commit this as anything other than "off" or "idle". Flip it locally to "running" when
+  # you need the cluster, then flip it back before committing/pushing.
+  state: "running"
