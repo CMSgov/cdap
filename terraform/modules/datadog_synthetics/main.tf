@@ -1,5 +1,5 @@
 resource "datadog_synthetics_test" "this" {
-  for_each = { for m in var.tests : m.name => m }
+  for_each = { for m in var.tests : m.name => m if var.enabled }
 
   name    = "${var.app}-${var.env}-${each.value.name}"
   type    = each.value.type

@@ -11,7 +11,10 @@ resource "datadog_monitor" "lambda_error_rate" {
     warning  = floor(var.monitor_config.lambda.error_rate_threshold * 0.75)
   }
 
-  tags = local.base_tags
+  evaluation_delay = local.aws_evaluation_delay
+
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "lambda_throttles" {
@@ -26,10 +29,13 @@ resource "datadog_monitor" "lambda_throttles" {
     critical = var.monitor_config.lambda.throttle_threshold
     warning  = floor(var.monitor_config.lambda.throttle_threshold * 0.75)
   }
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.lambda.notify_no_data
+  notify_no_data    = var.monitor_config.lambda.notify_no_data
   no_data_timeframe = var.monitor_config.lambda.no_data_timeframe_minutes
 
-  tags = local.base_tags
+  evaluation_delay = local.aws_evaluation_delay
+
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "lambda_duration" {
@@ -45,8 +51,11 @@ resource "datadog_monitor" "lambda_duration" {
     warning  = floor(var.monitor_config.lambda.duration_p99_threshold_ms * 0.75)
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.lambda.notify_no_data
+  notify_no_data    = var.monitor_config.lambda.notify_no_data
   no_data_timeframe = var.monitor_config.lambda.no_data_timeframe_minutes
 
-  tags = local.base_tags
+  evaluation_delay = local.aws_evaluation_delay
+
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }

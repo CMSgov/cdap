@@ -1,0 +1,5 @@
+additional_kms:
+  - "bcda-sandbox-app-config-kms"
+  - "bcda-sandbox-efs"
+  - "bcda-sandbox-rds"
+  - "bcda-sandbox-access-log-kms"

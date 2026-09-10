@@ -1,6 +1,7 @@
 variable "name" {
-  description = "Name of the lambda function"
+  description = "Deprecated. Only use for override. Name of the lambda function"
   type        = string
+  default     = null
 }
 
 variable "description" {
@@ -132,7 +133,7 @@ variable "schedule_expression" {
 }
 
 variable "log_retention_days" {
-  description = "Number of days to retain Lambda function logs in CloudWatch. If null, no retention policy is set and retention is managed externally (e.g., via cdap/scripts/set_log_retention/)."
+  description = "Number of days to retain Lambda function logs in CloudWatch. If null, no retention policy is set and retention is managed externally (e.g., via cdap/scripts/set-log-retention/)."
   type        = number
   default     = 180
 }

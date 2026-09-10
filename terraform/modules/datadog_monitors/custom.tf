@@ -5,6 +5,8 @@ resource "datadog_monitor" "custom" {
   type    = each.value.type
   message = "${each.value.message} ${local.notify}"
 
+  draft_status = coalesce(each.value.draft_status, var.monitor_config.draft_status)
+
   query = each.value.query
 
   monitor_thresholds {
@@ -15,6 +17,7 @@ resource "datadog_monitor" "custom" {
   on_missing_data = each.value.on_missing_data
 
   require_full_window = each.value.require_full_window
+  evaluation_delay    = each.value.evaluation_delay
 
   tags = concat(local.base_tags, each.value.tags)
 }

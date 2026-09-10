@@ -11,8 +11,11 @@ resource "datadog_monitor" "sns_failed_notifications" {
     warning  = floor(var.monitor_config.sns.failed_notification_threshold * 0.5)
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.sns.notify_no_data
+  notify_no_data    = var.monitor_config.sns.notify_no_data
   no_data_timeframe = var.monitor_config.sns.no_data_timeframe_minutes
 
-  tags = local.base_tags
+  evaluation_delay = local.aws_evaluation_delay
+
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }

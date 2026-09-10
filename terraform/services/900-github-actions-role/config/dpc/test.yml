@@ -1,0 +1,8 @@
+additional_kms:
+  - "dpc-test-master-key"
+  - "dpc-ecr"
+  - "dpc-test-web-portal-cloudwatch-key"
+  - "dpc-test-web-cloudwatch-key"
+  - "dpc-test-attribution-cloudwatch-key"
+  - "dpc-test-web-admin-cloudwatch-key"
+  - "dpc-test-api-cloudwatch-key"

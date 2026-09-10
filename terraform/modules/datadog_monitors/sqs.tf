@@ -10,10 +10,13 @@ resource "datadog_monitor" "sqs_dlq_messages_visible" {
     critical = var.monitor_config.sqs.dlq_message_threshold
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.sqs.notify_no_data
+  notify_no_data    = var.monitor_config.sqs.notify_no_data
   no_data_timeframe = var.monitor_config.sqs.no_data_timeframe_minutes
 
-  tags = local.base_tags
+  evaluation_delay = local.aws_evaluation_delay
+
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 
 resource "datadog_monitor" "sqs_message_age" {
@@ -29,9 +32,12 @@ resource "datadog_monitor" "sqs_message_age" {
     warning  = floor(var.monitor_config.sqs.max_message_age_seconds * 0.75)
   }
 
-  notify_no_data    = var.monitor_config.shadow_mode ? false : var.monitor_config.sqs.notify_no_data
+  notify_no_data    = var.monitor_config.sqs.notify_no_data
   no_data_timeframe = var.monitor_config.sqs.no_data_timeframe_minutes
 
-  tags = local.base_tags
+  evaluation_delay = local.aws_evaluation_delay
+
+  tags         = local.base_tags
+  draft_status = var.monitor_config.draft_status
 }
 

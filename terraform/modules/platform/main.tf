@@ -17,12 +17,6 @@ locals {
     tf_root_module = local.root_module
   }
 
-  access_logs_bucket = {
-    "dev"     = "bucket-access-logs-20250409172631068600000001"
-    "test"    = "bucket-access-logs-20250409172631068600000001"
-    "sandbox" = "bucket-access-logs-20250411172631068600000001"
-    "prod"    = "bucket-access-logs-20250411172631068600000001"
-  }
 
   aws_iam_role_names = [
     "ct-ado-bcda-application-admin",
@@ -52,10 +46,6 @@ data "aws_region" "secondary" {
 }
 
 data "aws_caller_identity" "this" {}
-
-data "aws_iam_policy" "permissions_boundary" {
-  name = "ct-ado-poweruser-permissions-boundary-policy"
-}
 
 data "aws_vpc" "this" {
   filter {
@@ -108,14 +98,6 @@ data "aws_nat_gateways" "this" {
 data "aws_nat_gateway" "this" {
   for_each = toset(data.aws_nat_gateways.this.ids)
   id       = each.key
-}
-
-data "aws_s3_bucket" "access_logs" {
-  bucket = local.access_logs_bucket[local.parent_env]
-}
-
-data "aws_s3_bucket" "logs_to_splunk" {
-  bucket = "cms-cloud-${data.aws_caller_identity.this.account_id}-${data.aws_region.primary.region}"
 }
 
 data "aws_security_groups" "this" {

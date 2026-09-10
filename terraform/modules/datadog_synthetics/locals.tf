@@ -5,7 +5,6 @@ locals {
     "application:${var.app}",
     "environment:${var.env}",
     "managed-by:tofu",
-    var.shadow_mode ? "shadow-mode:true" : "shadow-mode:false",
   ]
   location_prefix = contains(["sandbox", "prod"], var.env) ? "cdap-prod" : "cdap-non-prod"
 
