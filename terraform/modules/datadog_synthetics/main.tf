@@ -46,7 +46,14 @@ resource "datadog_synthetics_test" "this" {
     tick_every           = each.value.tick_every
     monitor_name         = "[${upper(var.env)}] [${var.app}] Synthetics — ${each.value.name}"
     min_failure_duration = try(coalesce(each.value.min_failure_duration, var.min_failure_duration), null)
+    accept_self_signed   = try(coalesce(each.value.accept_self_signed, var.accept_self_signed), false)
+
+    retry {
+      count    = 1
+      interval = 1000
+    }
   }
+
 
   tags = concat(local.base_tags, each.value.tags)
 }
