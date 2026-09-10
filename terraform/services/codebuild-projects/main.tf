@@ -153,3 +153,15 @@ resource "aws_codebuild_webhook" "per_repo" {
 
   depends_on = [aws_codebuild_source_credential.github]
 }
+
+resource "aws_ssm_parameter" "codebuild_security_group_id" {
+  for_each = aws_security_group.codebuild_project
+
+  name  = "/${each.key}/${module.standards.account_env_suffix}/codebuild/nonsensitive/security-group-id"
+  value = each.value.id
+  type  = "String"
+
+  tags = {
+    Name = "/${each.key}/${module.standards.account_env_suffix}/codebuild/nonsensitive/security-group-id"
+  }
+}
