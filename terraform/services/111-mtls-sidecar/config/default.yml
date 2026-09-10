@@ -1,0 +1,8 @@
+image:
+  enabled: true
+  test_command: >-
+    go test ./tests/... -v
+    -coverprofile=/app/coverage/coverage.out
+    -coverpkg=./... &&
+    sed -i 's|mtls-sidecar/||g' /app/coverage/coverage.out
+  docker_target: tester

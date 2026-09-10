@@ -29,6 +29,11 @@ output "internal_domain" {
   description = "FQDN of the internal endpoint. Use this as the Route 53 record name for DNS record to match exactly."
 }
 
+output "mtls_domain" {
+  description = "FQDN the private cert is issued for. Used as SELFTEST_SERVER_NAME in the mTLS sidecar."
+  value       = local.needs_private_cert ? local.private_primary_domain : null
+}
+
 output "zscaler_domain" {
   value = var.enable_zscaler_endpoint ? local.zscaler_domain : null
 }
