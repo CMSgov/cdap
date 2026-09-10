@@ -26,13 +26,13 @@
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-test
-      aws_profile: ""
       created_at: "2026-01-12T15:49:48Z"
       enc: AQICAHhRVR5bK8ZYKFTKNNSHhEFksAVIRCiMf5uovRP3zJDkeAFoMr3X9NE1emnjv7dPLReMAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxGIkxhuSZecPXOjbAgEQgDtKIJDmCjArvUR79kdmiS6/KjzguJbVsfs0fBgiJZ/BLVmBVzUiQ9fO9HvcwPTOF8rHA1kz6USPhmBSxA==
-    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-test
       aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-test
       created_at: "2026-01-12T15:49:48Z"
       enc: AQICAHj/7o5ejG2naYXXtV0msJC+UCEv8bGhFxVAE5it/FT42wG/hszzTI7suLqOYmXNFyXTAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM4W6xb7Tm4JiCfD3xAgEQgDsJw3SujEQIDc6EnUG79oVPM+CtjLt1aiAea82u8pYvv34tuvPlBwuYgzHfySZ0DahyGNyeECblkVWomA==
-  mac_only_encrypted: true
+      aws_profile: ""
   unencrypted_regex: /nonsensitive/
+  mac_only_encrypted: true
   version: 3.13.1
