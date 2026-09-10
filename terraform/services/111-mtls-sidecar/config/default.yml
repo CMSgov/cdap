@@ -4,5 +4,5 @@ image:
     go test ./tests/... -v
     -coverprofile=/app/coverage/coverage.out
     -coverpkg=./... &&
-    sed -i 's|mtls-sidecar/||g' /app/coverage/coverage.out
+    sed -i 's|mtls-sidecar/|src/|g' /app/coverage/coverage.out
   docker_target: tester
