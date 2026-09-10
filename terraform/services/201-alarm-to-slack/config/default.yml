@@ -1,0 +1,4 @@
+lambda:
+  enabled: true
+  test_command: "pip install -r requirements.txt -r requirements-dev.txt && pytest --cov=. --cov-report=xml:coverage/coverage.xml"
+  language_version: "3.13"

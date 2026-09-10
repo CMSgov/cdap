@@ -38,36 +38,38 @@ resource "aws_kms_key" "shares" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      # CDAP account: full control delegated to IAM
-      {
-        Sid    = "EnableRootAccess"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${module.standards.account_id}:root"
-        }
-        Action   = "kms:*"
-        Resource = "*"
-      },
-      # External account limited to: decrypt via SSM only, even if they set permissive IAM
-      {
-        Sid    = "AllowExternalDecryptViaSecretsManager"
-        Effect = "Allow"
-        Principal = {
-          AWS = data.aws_ssm_parameter.principal[each.value.principal_ssm_path].value
-        }
-        Action = [
-          "kms:Decrypt",
-          "kms:DescribeKey"
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "kms:ViaService" = "secretsmanager.${module.standards.primary_region.name}.amazonaws.com"
+    Statement = concat(
+      [
+        # CDAP account: full control delegated to IAM
+        {
+          Sid    = "EnableRootAccess"
+          Effect = "Allow"
+          Principal = {
+            AWS = "arn:aws:iam::${module.standards.account_id}:root"
+          }
+          Action   = "kms:*"
+          Resource = "*"
+        },
+        # External account limited to: decrypt via SSM only, even if they set permissive IAM
+        {
+          Sid    = "AllowExternalDecryptViaSecretsManager"
+          Effect = "Allow"
+          Principal = {
+            AWS = data.aws_ssm_parameter.principal[each.value.principal_ssm_path].value
+          }
+          Action = [
+            "kms:Decrypt",
+            "kms:DescribeKey"
+          ]
+          Resource = "*"
+          Condition = {
+            StringEquals = {
+              "kms:ViaService" = "secretsmanager.${module.standards.primary_region.name}.amazonaws.com"
+            }
           }
         }
-      }
-    ]
+      ]
+    )
   })
 
   tags = {

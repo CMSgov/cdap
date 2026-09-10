@@ -14,6 +14,8 @@ resource "datadog_monitor" "s3_http_response_4xx" {
   notify_no_data    = var.monitor_config.s3.notify_no_data
   no_data_timeframe = var.monitor_config.s3.no_data_timeframe_minutes
 
+  evaluation_delay = local.aws_evaluation_delay
+
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status
 }
@@ -33,6 +35,8 @@ resource "datadog_monitor" "s3_http_response_5xx" {
 
   notify_no_data    = var.monitor_config.s3.notify_no_data
   no_data_timeframe = var.monitor_config.s3.no_data_timeframe_minutes
+
+  evaluation_delay = local.aws_evaluation_delay
 
   tags         = local.base_tags
   draft_status = var.monitor_config.draft_status

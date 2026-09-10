@@ -1,0 +1,26 @@
+lambda:
+  enabled: true
+  test_command: "pip install -r requirements.txt -r requirements-dev.txt && pytest --cov=. --cov-report=xml:coverage/coverage.xml"
+  language_version: "3.13"
+
+cleanup:
+  default_strategies:
+    - ["count_image", "rls-r", 5]
+    - ["days_older_than", "", 14]
+    - ["days_older_than", null, 14]
+
+  exclusion_list:
+    - "cdap-mtls-sidecar"   # for testing, governed by its ECR lifecycle policy
+
+  repo_overrides:
+    cdap-tftesting-service:
+      opt_in: true
+      strategies:
+        - ["count_image", "", 3]
+        - ["days_older_than", null, 2]
+    dpc-web:
+      opt_in: true
+      strategies:
+        - ["count_image", "rls-r", 5]
+        - ["days_older_than", "", 14]
+        - ["days_older_than", null, 14]

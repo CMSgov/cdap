@@ -1,0 +1,2 @@
+test_command: "npm ci && npm test -- --coverage --coverageDirectory=coverage"
+language_version: "24"
