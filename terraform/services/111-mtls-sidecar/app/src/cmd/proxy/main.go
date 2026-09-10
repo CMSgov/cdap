@@ -28,18 +28,8 @@ func main() {
 		CAFile:   getEnvOrDefault("TLS_CA_FILE", "/run/certs/ca.pem"),
 	}
 
-	if getEnvOrDefault("USE_LOCAL_CERTS", "false") != "true" {
-		certARN := requireEnv("ACM_CERTIFICATE_ARN")
-		client, err := acm.New(ctx, certARN, paths)
-		if err != nil {
-			log.Fatalf("failed to create ACM client: %v", err)
-		}
-		if err := client.FetchAndStore(ctx); err != nil {
-			log.Fatalf("failed to fetch certificate: %v", err)
-		}
-		log.Println("certificate fetched from ACM")
-	} else {
-		log.Println("USE_LOCAL_CERTS=true — skipping ACM fetch")
+	if err := acquireCertificates(ctx, paths); err != nil {
+		log.Fatalf("failed to acquire certificates: %v", err)
 	}
 
 	tlsCfg, err := tlsconfig.NewServerTLSConfig(tlsconfig.Config{
@@ -57,98 +47,110 @@ func main() {
 		log.Fatalf("failed to parse upstream URL: %v", err)
 	}
 
-	// -------------------------------------------------------
-	// Health check server — plain HTTP, dedicated port
-	// Only serves /health — no TLS, no client cert required
-	// Used by ECS container health check and ALB health check
-	// -------------------------------------------------------
-	healthAddr := ":" + getEnvOrDefault("HEALTH_PORT", "8081")
-	healthMux := http.NewServeMux()
-	healthMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	healthSrv := startHealthServer(getEnvOrDefault("HEALTH_PORT", "8081"))
+	proxyAddr := ":" + getEnvOrDefault("PROXY_LISTEN_PORT", "8443")
+	proxySrv, err := startProxyServer(proxyAddr, upstream, tlsCfg)
+	if err != nil {
+		log.Fatalf("failed to start proxy server: %v", err)
+	}
+
+	runStartupSelfTest(proxyAddr, paths)
+
+	waitForShutdown(healthSrv, proxySrv)
+}
+
+// acquireCertificates fetches certs from ACM unless local certs are in use.
+func acquireCertificates(ctx context.Context, paths acm.CertPaths) error {
+	if getEnvOrDefault("USE_LOCAL_CERTS", "false") == "true" {
+		log.Println("USE_LOCAL_CERTS=true — skipping ACM fetch")
+		return nil
+	}
+
+	certARN := requireEnv("ACM_CERTIFICATE_ARN")
+	client, err := acm.New(ctx, certARN, paths)
+	if err != nil {
+		return fmt.Errorf("creating ACM client: %w", err)
+	}
+	if err := client.FetchAndStore(ctx); err != nil {
+		return fmt.Errorf("fetching certificate: %w", err)
+	}
+	log.Println("certificate fetched from ACM")
+	return nil
+}
+
+// startHealthServer starts the plain-HTTP health endpoint used by
+// ECS/ALB health checks. Never requires a client cert.
+func startHealthServer(port string) *http.Server {
+	addr := ":" + port
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
-	healthSrv := &http.Server{
-		Addr:    healthAddr,
-		Handler: healthMux,
-	}
+	srv := &http.Server{Addr: addr, Handler: mux}
+
 	go func() {
-		log.Printf("health check listening on %s", healthAddr)
-		if err := healthSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Printf("health check listening on %s", addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("health server error: %v", err)
 		}
 	}()
+	return srv
+}
 
-	// -------------------------------------------------------
-	// mTLS proxy server — strict mTLS, no exceptions
-	// All traffic on this port requires a valid client cert
-	// /health included here only for the startup self-test
-	// -------------------------------------------------------
-	proxyAddr := ":" + getEnvOrDefault("PROXY_LISTEN_PORT", "8443")
-	proxyMux := http.NewServeMux()
-
-	// /health on the mTLS port — used only by the startup self-test
-	// requires a valid client cert like all other routes on this port
-	proxyMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+// startProxyServer starts the strict-mTLS reverse proxy.
+func startProxyServer(addr string, upstream *url.URL, tlsCfg *tls.Config) (*http.Server, error) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+	mux.Handle("/", middleware.Logging(httputil.NewSingleHostReverseProxy(upstream)))
 
-	// All other traffic — proxied upstream
-	proxyMux.Handle("/", middleware.Logging(
-		httputil.NewSingleHostReverseProxy(upstream),
-	))
-
-	ln, err := net.Listen("tcp", proxyAddr)
+	ln, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatalf("failed to listen on %s: %v", proxyAddr, err)
+		return nil, fmt.Errorf("listening on %s: %w", addr, err)
 	}
 
-	proxySrv := &http.Server{
-		Addr:      proxyAddr,
-		Handler:   proxyMux,
-		TLSConfig: tlsCfg,
-	}
-
-	log.Printf("proxy listening on %s → %s (strict mTLS)", proxyAddr, upstream)
+	srv := &http.Server{Addr: addr, Handler: mux, TLSConfig: tlsCfg}
 
 	go func() {
-		if err := proxySrv.ServeTLS(ln, "", ""); err != nil && err != http.ErrServerClosed {
+		log.Printf("proxy listening on %s → %s (strict mTLS)", addr, upstream)
+		if err := srv.ServeTLS(ln, "", ""); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("proxy server error: %v", err)
 		}
 	}()
+	return srv, nil
+}
 
-	// -------------------------------------------------------
-	// mTLS startup self-test
-	// Verifies the full mTLS handshake works before accepting
-	// real traffic. If this fails the container exits with a
-	// non-zero code — ECS marks it unhealthy and the deployment
-	// circuit breaker triggers a rollback to the last good task.
-	// -------------------------------------------------------
+// runStartupSelfTest verifies the full mTLS handshake before accepting
+// real traffic. Exits the process on failure — see selftest package docs.
+func runStartupSelfTest(proxyAddr string, paths acm.CertPaths) {
 	log.Println("running mTLS startup self-test...")
-    if err := selftest.WaitAndVerifyMTLS(
-        "localhost"+proxyAddr,
-        paths.CAFile,
-        getEnvOrDefault("SELFTEST_CERT_FILE", paths.CertFile),
-        getEnvOrDefault("SELFTEST_KEY_FILE",  paths.KeyFile),
-        getEnvOrDefault("SELFTEST_SERVER_NAME", ""),
-        5,
-        500*time.Millisecond,
-    ); err != nil {
-        log.Fatalf("mTLS startup self-test failed — refusing to start: %v", err)
-    }
+	if err := selftest.WaitAndVerifyMTLS(
+		"localhost"+proxyAddr,
+		paths.CAFile,
+		getEnvOrDefault("SELFTEST_CERT_FILE", paths.CertFile),
+		getEnvOrDefault("SELFTEST_KEY_FILE", paths.KeyFile),
+		getEnvOrDefault("SELFTEST_SERVER_NAME", ""),
+		5,
+		500*time.Millisecond,
+	); err != nil {
+		log.Fatalf("mTLS startup self-test failed — refusing to start: %v", err)
+	}
 	log.Println("mTLS startup self-test passed ✅")
+}
 
-	// -------------------------------------------------------
-	// Wait for shutdown signal
-	// -------------------------------------------------------
+// waitForShutdown blocks until SIGTERM/SIGINT, then gracefully shuts
+// down both servers.
+func waitForShutdown(healthSrv, proxySrv *http.Server) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 	<-sigCh
 	log.Println("shutting down...")
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer shutdownCancel()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	if err := healthSrv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("health server shutdown error: %v", err)

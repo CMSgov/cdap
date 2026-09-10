@@ -76,7 +76,7 @@ func generatePassphrase() ([]byte, error) {
 // ACM returns PKCS#8 encrypted keys ("ENCRYPTED PRIVATE KEY" PEM block type).
 // Decryption happens entirely in memory — the passphrase never touches disk.
 // SECURITY: encryptedPEM and passphrase must never be logged.
-func decryptPrivateKey(encryptedPEM []byte, passphrase []byte) ([]byte, error) {
+func decryptPrivateKey(encryptedPEM, passphrase []byte) ([]byte, error) {
 	block, _ := pem.Decode(encryptedPEM)
 	if block == nil {
 		return nil, fmt.Errorf("failed to decode PEM block from private key")
