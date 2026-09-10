@@ -6,9 +6,9 @@ on:
     branches:
       - main
     paths:
-      - 'terraform/services/**'
+      - "terraform/services/**"
   schedule:
-    - cron: '12 14 * * 1-5'
+    - cron: "12 14 * * 1-5"
 
 concurrency:
   group: tofu-plan-or-apply
@@ -42,6 +42,10 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ contains(fromJSON('["dev", "test"]'), matrix.env) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ matrix.app }}-${{ matrix.env }}-github-actions
           aws-region: ${{ vars.AWS_REGION }}
+      - name: Install psql (cdap-test only)
+        if: matrix.app == 'cdap' && matrix.env == 'test'
+        run: |
+          sudo dnf install -y postgresql15 jq || sudo yum install -y postgresql15 jq
       - run: scripts/tofu-plan
         env:
           APPLY: "true"
