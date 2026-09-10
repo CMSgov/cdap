@@ -12,16 +12,12 @@ locals {
     "dpc-ops",
     "dpc-static-site",
   ]
-}
 
-module "standards" {
-  source = "../../modules/standards"
-
-  app         = "cdap"
-  env         = var.env
-  root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/codebuild-projects"
-  service     = "codebuild-projects"
-  providers   = { aws = aws, aws.secondary = aws.secondary }
+  # Only *-website and *-static-site repos get a build cache bucket
+  cache_repos = [
+    for r in local.repos : r
+    if endswith(r, "-website") || endswith(r, "-static-site")
+  ]
 }
 
 # IAM
@@ -152,4 +148,16 @@ resource "aws_codebuild_webhook" "per_repo" {
   }
 
   depends_on = [aws_codebuild_source_credential.github]
+}
+
+module "build_cache" {
+  source = "../../modules/bucket" # adjust to your module's actual path
+
+  for_each = toset(local.cache_repos)
+
+  name          = "${each.key}-buildcache"
+  ssm_parameter = "/${each.key}/${module.standards.account_env_suffix}/buildcachebucket"
+  app           = "cdap"
+  env           = var.env
+  force_destroy = true # cache contents are disposable
 }
