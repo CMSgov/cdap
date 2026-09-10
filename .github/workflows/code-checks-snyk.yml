@@ -63,7 +63,7 @@ jobs:
 
       - name: Run Snyk Code
         env:
-          PROJECT_NAME: ${{ github.repository }}-code-checks
+          PROJECT_NAME: 'Scheduled Static Code Analysis'
         run: |
           EXIT_CODE=0
           snyk code test --report --project-name="$PROJECT_NAME" || EXIT_CODE=$?
