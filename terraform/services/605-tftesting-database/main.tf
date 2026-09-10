@@ -16,12 +16,13 @@ data "aws_ssm_parameter" "cloudwatch_alarms_topic_arn" {
 
 module "database" {
   count  = local.tftesting_cluster_exists ? 1 : 0
-  source = "../../modules/aurora" 
+  source = "../../modules/aurora"
 
   platform = module.platform
   username = var.username
+
   manage_breakglass_password = true
-  breakglass_rotation_days   = 2
+  breakglass_rotation_days   = 0 # set this different to enable default rotation
 
   instance_class     = var.instance_class
   instance_count     = local.tftesting_instance_count
