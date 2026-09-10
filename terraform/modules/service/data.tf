@@ -19,7 +19,7 @@ data "aws_ssm_parameter" "datadog_api_key" {
 
 data "aws_ssm_parameter" "datadog_private_location_sg" {
   count = var.enable_datadog_synthetics_ingress ? 1 : 0
-  name  = "/cdap/${var.platform.env}/datadog/nonsensitive/private_location_task_security_group_id"
+  name  = "/cdap/${var.platform.cdap_env}/datadog/nonsensitive/private_location_task_security_group_id"
 }
 
 locals {

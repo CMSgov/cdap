@@ -31,18 +31,20 @@ resource "aws_vpc_security_group_ingress_rule" "https_zscaler" {
   ip_protocol                  = "tcp"
   description                  = "Allow HTTPS from Zscaler private App Connector"
 }
+data "aws_ssm_parameter" "datadog_private_location_sg" {
+  count = var.enable_datadog_synthetics_ingress ? 1 : 0
+  name  = "/${var.platform.app}/${var.platform.cdap_env}/datadog/nonsensitive/private_location_task_security_group_id"
+}
 
-# Datadog synthetics private location ingress
 resource "aws_vpc_security_group_ingress_rule" "https_datadog" {
   count                        = (local.managed_sg && var.enable_datadog_synthetics_ingress) ? 1 : 0
   security_group_id            = aws_security_group.alb[0].id
-  referenced_security_group_id = var.platform.security_groups["datadog-synthetics"].id
+  referenced_security_group_id = data.aws_ssm_parameter.datadog_private_location_sg[0].value
   from_port                    = 443
   to_port                      = 443
   ip_protocol                  = "tcp"
   description                  = "Allow HTTPS from Datadog synthetics private location runner"
 }
-
 
 # CMS security tools ingress — always on when module manages the SG
 resource "aws_vpc_security_group_ingress_rule" "https_security_tools" {
