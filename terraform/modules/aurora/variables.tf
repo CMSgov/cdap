@@ -1,37 +1,46 @@
 variable "username" {
-  # deprecated  = "This will no longer be supported once APIs adopt AWS Secrets Manager manged credentials."
-  description = "The database's primary/master credentials username"
+  description = <<-EOT
+    The database's primary/breakglass credentials username. If omitted,
+    defaults to a name derived from the platform app and environment
+    (see local.default_breakglass_username in locals.tf).
+  EOT
   type        = string
+  default     = null
+
+  validation {
+    condition     = var.username == null || can(regex("^[A-Za-z][A-Za-z0-9_]{0,62}$", var.username))
+    error_message = "username must start with a letter and contain only letters, digits, and underscores (max 63 characters), per RDS/Aurora master username restrictions."
+  }
 }
 
 variable "password" {
   # deprecated  = "This will no longer be supported once APIs adopt AWS Secrets Manager manged credentials."
   description = <<-EOT
-    The database's primary/master credentials password. Required only when
-    manage_master_user_password = false. Ignored (and may be omitted) when
-    manage_master_user_password = true, since RDS generates and stores the
-    master password in Secrets Manager instead.
+    The database's primary/breakglass credentials password. Required only
+    when manage_breakglass_password = false. Ignored (and may be omitted)
+    when manage_breakglass_password = true, since RDS generates and stores
+    the breakglass password in Secrets Manager instead.
   EOT
   type        = string
   default     = null
   sensitive   = true
 }
 
-variable "manage_master_user_password" {
+variable "manage_breakglass_password" {
   description = <<-EOT
-    If true, RDS creates and manages the master user password in AWS
+    If true, RDS creates and manages the breakglass password in AWS
     Secrets Manager instead of using var.password. Opt-in and off by
-    default -- existing username/password behavior is unchanged unless a
+    default. Existing username/password behavior is unchanged unless a
     team explicitly turns this on.
   EOT
   type        = bool
   default     = false
 }
 
-variable "master_password_rotation_days" {
+variable "breakglass_rotation_days" {
   description = <<-EOT
-    Rotation interval, in days, for the RDS-managed master user secret.
-    Only applies when manage_master_user_password = true. Defaults to 0,
+    Rotation interval, in days, for the RDS-managed breakglass secret.
+    Only applies when manage_breakglass_password = true. Defaults to 0,
     which leaves automatic rotation disabled.
   EOT
   type        = number
@@ -116,12 +125,6 @@ variable "snapshot_identifier" {
   type        = string
 }
 
-variable "monitoring_role_arn" {
-  default     = null
-  description = "ARN for the IAM role that permits RDS to send enhanced monitoring metrics to CloudWatch Logs."
-  type        = string
-}
-
 variable "cluster_parameters" {
   default     = []
   description = "A list of objects containing the values for apply_method, name, and value that corresponds to the cluster-level prameters."
@@ -188,3 +191,28 @@ variable "security_group_override" {
   type        = string
 }
 
+variable "enable_breakglass_access_alerting" {
+  description = <<-EOT
+    If true, creates an EventBridge rule that fires whenever the breakglass
+    secret is read via Secrets Manager GetSecretValue, and routes it to
+    breakglass_alert_sns_topic_arn.
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "breakglass_alert_sns_topic_arn" {
+  description = <<-EOT
+    SNS topic ARN to notify when the breakglass secret is read. Required
+    when enable_breakglass_access_alerting = true.
+  EOT
+  type        = string
+  default     = null
+}
+
+
+variable "monitoring_role_path" {
+  description = "IAM path for the monitoring role this module creates."
+  type        = string
+  default     = "/delegatedadmin/developer/"
+}

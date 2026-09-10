@@ -21,12 +21,12 @@ resource "aws_security_group" "this" {
 }
 
 resource "aws_ssm_parameter" "db_security_group_id" {
-  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/db-security-group-id"
+  name  = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/nonsensitive/db-security-group-id"
   value = aws_security_group.this.id
   type  = "String"
 
   tags = {
-    Name = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/db-security-group-id"
+    Name = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/nonsensitive/db-security-group-id"
   }
 }
 
@@ -93,13 +93,13 @@ resource "aws_rds_cluster" "this" {
   storage_encrypted    = true
   kms_key_id           = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
 
-  # --- Master credential ---
-  # Teams that opt in to manage_master_user_password get an RDS-managed secret in Secrets
+  # --- breakglass credential ---
+  # Teams that opt in to manage_breakglass_password get an RDS-managed secret in Secrets
   # Manager instead, with rotation available (but not enabled) via
-  # master_password_rotation_days below.
-  master_password               = var.manage_master_user_password ? null : var.password
-  manage_master_user_password   = var.manage_master_user_password
-  master_user_secret_kms_key_id = var.manage_master_user_password ? coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn) : null
+  # breakglass_password_rotation_days below.
+  master_password               = var.manage_breakglass_password ? null : var.password
+  manage_master_user_password   = var.manage_breakglass_password
+  master_user_secret_kms_key_id = var.manage_breakglass_password ? coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn) : null
 
   backup_retention_period         = var.backup_retention_period
   preferred_backup_window         = var.backup_window
@@ -109,8 +109,7 @@ resource "aws_rds_cluster" "this" {
   deletion_protection             = var.deletion_protection
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.this.name
 
-  # --- IAM database authentication ---
-  # This only turns on the capability. A given Postgres
+  # Turns on the capability IAM database auth capability. A given Postgres
   # role only becomes IAM-authenticable once a consuming terraservice grants
   # it `rds_iam` in the database and attaches its own IAM policy scoped to
   # that dbuser -- built from the cluster_resource_id this module publishes
@@ -130,6 +129,11 @@ resource "aws_rds_cluster" "this" {
     var.vpc_security_group_ids
   ])
 
+  depends_on = [
+    aws_iam_role_policy_attachment.db_monitoring,
+    aws_iam_role_policy_attachment.db_monitoring_kms
+  ]
+
   tags = {
     AWS_Backup = var.aws_backup_tag
   }
@@ -142,7 +146,7 @@ resource "aws_rds_cluster" "this" {
       DB_CLUSTER_ID                    = self.cluster_identifier
       KMS_KEY_ID                       = self.kms_key_id
       ENHANCED_MONITORING_INTERVAL     = var.monitoring_interval
-      ENHANCED_MONITORING_IAM_ROLE_ARN = var.monitoring_role_arn
+      ENHANCED_MONITORING_IAM_ROLE_ARN = aws_iam_role.db_monitoring.arn
     }
     command     = <<-EOF
     aws rds modify-db-cluster --db-cluster-identifier "$DB_CLUSTER_ID" \
@@ -169,15 +173,15 @@ resource "aws_rds_cluster" "this" {
   }
 }
 
-# Rotation is opt-in and off by default (master_password_rotation_days = 0).
-# Teams that want automatic rotation of the RDS-managed master secret can
+# Rotation is opt-in and off by default (breakglass_password_rotation_days = 0).
+# Teams that want automatic rotation of the RDS-managed breakglass secret can
 # turn it on without any other change to this module.
-resource "aws_secretsmanager_secret_rotation" "master_password" {
-  count     = var.manage_master_user_password && var.master_password_rotation_days > 0 ? 1 : 0
+resource "aws_secretsmanager_secret_rotation" "breakglass_password" {
+  count     = var.manage_breakglass_password && var.breakglass_rotation_days > 0 ? 1 : 0
   secret_id = aws_rds_cluster.this.master_user_secret[0].secret_arn
 
   rotation_rules {
-    automatically_after_days = var.master_password_rotation_days
+    automatically_after_days = var.breakglass_rotation_days
   }
 }
 
@@ -210,13 +214,13 @@ resource "aws_rds_cluster_instance" "this" {
 }
 
 resource "aws_ssm_parameter" "writer_endpoint" {
-  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/writer-endpoint"
+  name  = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/nonsensitive/writer-endpoint"
   value = "${aws_rds_cluster.this.endpoint}:${aws_rds_cluster.this.port}"
   type  = "String"
 }
 
 resource "aws_ssm_parameter" "reader_endpoint" {
-  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/reader-endpoint"
+  name  = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/nonsensitive/reader-endpoint"
   value = "${aws_rds_cluster.this.reader_endpoint}:${aws_rds_cluster.this.port}"
   type  = "String"
 }
@@ -226,25 +230,49 @@ resource "aws_ssm_parameter" "reader_endpoint" {
 # module needing to know which roles or users exist. This is what makes
 # per-service IAM auth adoption possible without enforcing it on anyone.
 resource "aws_ssm_parameter" "db_cluster_resource_id" {
-  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/db-cluster-resource-id"
+  name  = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/nonsensitive/db-cluster-resource-id"
   value = aws_rds_cluster.this.cluster_resource_id
   type  = "String"
 
   tags = {
-    Name = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/db-cluster-resource-id"
+    Name = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/nonsensitive/db-cluster-resource-id"
   }
 }
 
-# The ARN itself isn't sensitive (it doesn't contain secret material), so
-# it's published the same way as the other identifiers above.
-resource "aws_ssm_parameter" "master_user_secret_arn" {
-  count = var.manage_master_user_password ? 1 : 0
+# The ARN itself isn't sensitive, published through ssm
+resource "aws_ssm_parameter" "breakglass_user_secret_arn" {
+  count = var.manage_breakglass_password ? 1 : 0
 
-  name  = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/master-user-secret-arn"
+  name  = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/nonsensitive/breakglass-user-secret-arn"
   value = aws_rds_cluster.this.master_user_secret[0].secret_arn
   type  = "String"
 
   tags = {
-    Name = "/${var.platform.app}/${var.platform.env}/aurora/nonsensitive/master-user-secret-arn"
+    Name = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/nonsensitive/breakglass-user-secret-arn"
   }
+}
+
+resource "aws_cloudwatch_event_rule" "breakglass_secret_access" {
+  count       = var.manage_breakglass_password && var.enable_breakglass_access_alerting ? 1 : 0
+  name        = "${local.service_prefix}-breakglass-secret-access"
+  description = "Fires when the ${local.service_prefix} breakglass breakglass secret is read via Secrets Manager GetSecretValue."
+
+  event_pattern = jsonencode({
+    source      = ["aws.secretsmanager"]
+    detail-type = ["AWS API Call via CloudTrail"]
+    detail = {
+      eventSource = ["secretsmanager.amazonaws.com"]
+      eventName   = ["GetSecretValue"]
+      requestParameters = {
+        secretId = [aws_rds_cluster.this.master_user_secret[0].secret_arn]
+      }
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "breakglass_secret_access" {
+  count     = var.manage_breakglass_password && var.enable_breakglass_access_alerting ? 1 : 0
+  rule      = aws_cloudwatch_event_rule.breakglass_secret_access[0].name
+  target_id = "breakglass-alert-sns"
+  arn       = var.breakglass_alert_sns_topic_arn
 }
