@@ -43,7 +43,7 @@ resource "aws_acm_certificate" "private" {
 # PUBLIC PATH: Import CMS-signed cert (developer note: use SOPS encrypted values)
 # -------------------------------------------------------
 
-ephemeral "tls_private_key" "this" {
+resource "tls_private_key" "this" {
   for_each  = var.public_domain_name != null ? toset([for v in var.public_certificate_versions : tostring(v)]) : toset([])
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -72,7 +72,7 @@ resource "aws_ssm_parameter" "private_key" {
 
   name   = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/tls/v${each.key}/private-key"
   type   = "SecureString"
-  value  = ephemeral.tls_private_key.this[each.key].private_key_pem
+  value  = tls_private_key.this[each.key].private_key_pem
   key_id = var.platform.kms_alias_primary.target_key_arn
 
   tags = { Name = "${var.public_domain_name}-private-key" }
@@ -95,7 +95,7 @@ resource "aws_ssm_parameter" "csr" {
   name        = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/tls/v${each.key}/csr"
   description = "Certificate Signing Request for ${var.public_domain_name}. Submit this to CMS for signing."
   type        = "String"
-  value       = ephemeral.tls_cert_request.this[each.key].cert_request_pem
+  value       = tls_cert_request.this[each.key].cert_request_pem
 
   lifecycle {
     ignore_changes = [value]
@@ -105,15 +105,17 @@ resource "aws_ssm_parameter" "csr" {
 
 # Once cert information is provided via SOPS path, this will be set
 resource "aws_acm_certificate" "public" {
-  count = var.public_domain_name != null ? 1 : 0
+  count = (
+    var.public_domain_name != null &&
+    var.public_certificate != null &&
+    var.public_private_key != null
+  ) ? 1 : 0
 
   certificate_body  = var.public_certificate
-  private_key       = tls_private_key.this[tostring(var.public_certificate_version)].private_key_pem
+  private_key       = var.public_private_key
   certificate_chain = var.public_certificate_chain
 
-  tags = {
-    Name = var.public_domain_name
-  }
+  tags = { Name = var.public_domain_name }
 
   lifecycle {
     prevent_destroy       = true

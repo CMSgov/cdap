@@ -25,8 +25,3 @@ data "aws_ssm_parameter" "datadog_private_location_sg" {
 locals {
   cdap_ssm_env = contains(["prod", "sandbox"], var.platform.env) ? "prod" : "test"
 }
-
-data "aws_ssm_parameter" "mtls_image_tag" {
-  count = var.enable_mtls_sidecar ? 1 : 0
-  name  = "/cdap/${local.cdap_ssm_env}/nonsensitive/mtls-sidecar/image-tag"
-}
