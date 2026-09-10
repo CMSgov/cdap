@@ -36,6 +36,7 @@ data "aws_iam_policy_document" "github_actions_observability" {
       "logs:CreateLogStream",
       "logs:DeleteLogGroup",
       "logs:DeleteLogStream",
+      "logs:DeleteMetricFilter",
       "logs:DeleteSubscriptionFilter",
       "logs:DisassociateKmsKey",
       "logs:PutMetricFilter",
@@ -95,5 +96,17 @@ data "aws_iam_policy_document" "github_actions_observability" {
       "logs:List*",
     ]
     resources = ["*"]
+  }
+
+  statement {
+    sid = "LogsCheck"
+    actions = [
+      "logs:PutMetricFilter",
+      "logs:DeleteMetricFilter",
+      "logs:DescribeMetricFilters"
+    ]
+    resources = [
+      "arn:aws:logs:*:*:log-group:cms-cloud-cloudtrail-logs",
+    ]
   }
 }
