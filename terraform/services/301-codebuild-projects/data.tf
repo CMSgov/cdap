@@ -19,10 +19,6 @@ data "aws_iam_policy" "ssm_read_only" {
   arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }
 
-data "aws_kms_alias" "build_cache_key" {
-  name = "alias/cdap-${var.env}"
-}
-
 data "aws_iam_policy_document" "assume_role" {
   statement {
     principals {
@@ -58,36 +54,6 @@ data "aws_iam_policy_document" "codebuild" {
     ]
 
     resources = ["arn:aws:s3:::codepipeline-us-east-1-*"]
-  }
-
-  # Build cache buckets (only *-website / *-static-site repos have one)
-  statement {
-    sid = "BuildCacheS3Access"
-
-    actions = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:ListBucket",
-    ]
-
-    resources = flatten([
-      for repo in local.cache_repos : [
-        module.build_cache[repo].arn,
-        "${module.build_cache[repo].arn}/*",
-      ]
-    ])
-  }
-
-  statement {
-    sid = "BuildCacheKmsAccess"
-
-    actions = [
-      "kms:Decrypt",
-      "kms:Encrypt",
-      "kms:GenerateDataKey",
-    ]
-
-    resources = [data.aws_kms_alias.build_cache_key.target_key_arn]
   }
 
   # CodeBuild
