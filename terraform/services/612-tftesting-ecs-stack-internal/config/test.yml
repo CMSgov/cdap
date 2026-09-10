@@ -1,3 +1,0 @@
-ecs:
-  desired_count: 1
-  cluster: cdap-test-tftesting
