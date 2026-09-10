@@ -16,10 +16,8 @@ func TestLoggingMiddlewarePassesThrough(t *testing.T) {
         _, _ = w.Write([]byte("hello"))
     })
 
-    // Wrap it with our logging middleware
     handler := middleware.Logging(upstream)
 
-    // httptest.NewRecorder() is a fake ResponseWriter we can inspect
     rec := httptest.NewRecorder()
     req := httptest.NewRequest(http.MethodGet, "/", nil)
 
@@ -34,7 +32,6 @@ func TestLoggingMiddlewarePassesThrough(t *testing.T) {
     }
 }
 
-// check that a non-200 status from upstream is correctly passed through
 func TestLoggingMiddlewareCapturesStatus(t *testing.T) {
     upstream := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusNotFound)

@@ -2,42 +2,25 @@ package tests
 
 import (
 	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
-	"io"
-	"net"
 	"net/http"
-	"net/http/httptest"
-	"net/http/httputil"
-	"net/url"
 	"testing"
+	"time"
 
-	"mtls-sidecar/internal/middleware"
+	"mtls-sidecar/internal/selftest"
 	tlsconfig "mtls-sidecar/internal/tls"
 )
 
-// spin up a real mTLS server and check that a client presenting a valid
-// cert signed by the CA is accepted and gets a response from the upstream
-func TestMTLSHandshakeWithClientCert(t *testing.T) {
+// confirm WaitAndVerifyMTLS succeeds against a real mTLS server
+// when given a valid client cert
+func TestWaitAndVerifyMTLS_Success(t *testing.T) {
 	certs := generateTestCerts(t)
 
-	// write server cert/key/CA to temp files — proxy reads from disk on each handshake
 	certFile := writeTempFile(t, "cert*.pem", certs.ServerCert)
-	keyFile  := writeTempFile(t, "key*.pem", certs.ServerKey)
-	caFile   := writeTempFile(t, "ca*.pem", certs.CACert)
+	keyFile := writeTempFile(t, "key*.pem", certs.ServerKey)
+	caFile := writeTempFile(t, "ca*.pem", certs.CACert)
+	clientCertFile := writeTempFile(t, "client*.pem", certs.ClientCert)
+	clientKeyFile := writeTempFile(t, "clientkey*.pem", certs.ClientKey)
 
-	// create a fake upstream that the proxy will forward to
-	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("ok"))
-	}))
-	defer upstream.Close()
-
-	upstreamURL, _ := url.Parse(upstream.URL)
-	proxy := httputil.NewSingleHostReverseProxy(upstreamURL)
-	handler := middleware.Logging(proxy)
-
-	// build the mTLS server config, RequireClientCert enforces two-way TLS
 	serverTLSCfg, err := tlsconfig.NewServerTLSConfig(tlsconfig.Config{
 		CertFile:          certFile,
 		KeyFile:           keyFile,
@@ -48,61 +31,43 @@ func TestMTLSHandshakeWithClientCert(t *testing.T) {
 		t.Fatalf("building server TLS config: %v", err)
 	}
 
-	// start a real TLS listener on a random port
 	ln, err := tls.Listen("tcp", "127.0.0.1:0", serverTLSCfg)
 	if err != nil {
 		t.Fatalf("starting TLS listener: %v", err)
 	}
 	defer ln.Close()
 
-	// serve in background, the test client will connect below
-	go http.Serve(ln, handler)
+	go http.Serve(ln, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/health" {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("ok"))
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
 
-	// build the client TLS config, present a cert signed by the same CA
-	clientCert, err := tls.X509KeyPair(certs.ClientCert, certs.ClientKey)
+	err = selftest.WaitAndVerifyMTLS(
+		ln.Addr().String(),
+		caFile,
+		clientCertFile,
+		clientKeyFile,
+		"localhost",
+		5,
+		50*time.Millisecond,
+	)
 	if err != nil {
-		t.Fatalf("loading client cert: %v", err)
-	}
-
-	caPool := buildCAPool(t, certs.CACert)
-
-	clientTLSCfg := &tls.Config{
-		Certificates: []tls.Certificate{clientCert},
-		RootCAs:      caPool,
-		ServerName:   "localhost",
-	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			DialTLS: func(network, addr string) (net.Conn, error) {
-				return tls.Dial(network, ln.Addr().String(), clientTLSCfg)
-			},
-		},
-	}
-
-	resp, err := client.Get("https://" + ln.Addr().String() + "/health")
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200, got %d", resp.StatusCode)
-	}
-
-	body, _ := io.ReadAll(resp.Body)
-	if string(body) != "ok" {
-		t.Errorf("expected body 'ok', got %q", string(body))
+		t.Fatalf("expected self-test to pass, got error: %v", err)
 	}
 }
 
-// check that a client without a cert is rejected when RequireClientCert is true
-func TestMTLSHandshakeWithoutClientCert(t *testing.T) {
+// confirm WaitAndVerifyMTLS fails (after retries) when the server
+// requires a client cert but none is provided
+func TestWaitAndVerifyMTLS_NoClientCert(t *testing.T) {
 	certs := generateTestCerts(t)
 
 	certFile := writeTempFile(t, "cert*.pem", certs.ServerCert)
-	keyFile  := writeTempFile(t, "key*.pem", certs.ServerKey)
-	caFile   := writeTempFile(t, "ca*.pem", certs.CACert)
+	keyFile := writeTempFile(t, "key*.pem", certs.ServerKey)
+	caFile := writeTempFile(t, "ca*.pem", certs.CACert)
 
 	serverTLSCfg, err := tlsconfig.NewServerTLSConfig(tlsconfig.Config{
 		CertFile:          certFile,
@@ -124,42 +89,34 @@ func TestMTLSHandshakeWithoutClientCert(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	// client presents no cert — server should reject the handshake
-	clientTLSCfg := &tls.Config{
-		RootCAs:    buildCAPool(t, certs.CACert),
-		ServerName: "localhost",
-		// no Certificates field — no client cert presented
-	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			DialTLS: func(network, addr string) (net.Conn, error) {
-				return tls.Dial(network, ln.Addr().String(), clientTLSCfg)
-			},
-		},
-	}
-
-	_, err = client.Get("https://" + ln.Addr().String() + "/")
+	// empty cert/key file paths — no client cert presented
+	err = selftest.WaitAndVerifyMTLS(
+		ln.Addr().String(),
+		caFile,
+		"",
+		"",
+		"localhost",
+		2, // keep attempts low — expected to fail every time
+		10*time.Millisecond,
+	)
 	if err == nil {
-		t.Error("expected TLS error for client without cert, got nil")
+		t.Error("expected self-test to fail without a client cert, got nil")
 	}
 }
 
-// helpers
-
-// parse PEM-encoded CA cert and return an x509.CertPool
-// used by both server and client to establish trust
-func buildCAPool(t *testing.T, caPEM []byte) *x509.CertPool {
-	t.Helper()
-	block, _ := pem.Decode(caPEM)
-	if block == nil {
-		t.Fatal("failed to decode CA PEM")
+// confirm a fast, clear failure when the CA file itself is missing
+// should fail without ever attempting a connection
+func TestWaitAndVerifyMTLS_BadCAFile(t *testing.T) {
+	err := selftest.WaitAndVerifyMTLS(
+		"127.0.0.1:1",
+		"/nonexistent/ca.pem",
+		"",
+		"",
+		"",
+		2,
+		10*time.Millisecond,
+	)
+	if err == nil {
+		t.Error("expected error for missing CA file, got nil")
 	}
-	caCert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		t.Fatalf("parsing CA cert: %v", err)
-	}
-	pool := x509.NewCertPool()
-	pool.AddCert(caCert)
-	return pool
 }
