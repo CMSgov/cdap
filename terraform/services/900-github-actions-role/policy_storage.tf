@@ -129,6 +129,9 @@ data "aws_iam_policy_document" "github_actions_storage" {
       # Domain-style — ${var.app}
       "arn:aws:s3:::*.${var.app}.cms.gov*",
       "arn:aws:s3:::${var.app}.cms.gov*",
+      # Static Site Cache buckets
+      "arn:aws:s3:::${var.app}-static-site*",
+      "arn:aws:s3:::${var.app}-website*", #ab2d specific pattern
       # Common / shared buckets
       "arn:aws:s3:::bucket-access-logs-*",
       "arn:aws:s3:::cms-cloud-*",
@@ -157,6 +160,9 @@ data "aws_iam_policy_document" "github_actions_storage" {
       # Domain-style
       "arn:aws:s3:::*.${var.app}.cms.gov*",
       "arn:aws:s3:::${var.app}.cms.gov*",
+      # Static Site Cache buckets
+      "arn:aws:s3:::${var.app}-static-site*",
+      "arn:aws:s3:::${var.app}-website*", #ab2d specific pattern
     ]
   }
 
@@ -177,7 +183,11 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "arn:aws:s3:::${var.app}-${var.env}-*/*",
       # Domain-style
       "arn:aws:s3:::*.${var.app}.cms.gov*/*",
-      "arn:aws:s3:::${var.app}.cms.gov*/*"
+      "arn:aws:s3:::${var.app}.cms.gov*/*",
+      # Static Site Cache buckets
+      "arn:aws:s3:::${var.app}-static-site*/*",
+      "arn:aws:s3:::${var.app}-website*/*", #ab2d specific pattern
+
     ]
   }
 }
