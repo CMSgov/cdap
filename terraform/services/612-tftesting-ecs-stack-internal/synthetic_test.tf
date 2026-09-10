@@ -6,6 +6,7 @@ module "datadog_synthetics" {
   notify               = "@webhook-slack-${module.platform.app}"
   min_failure_duration = 60
   enabled              = true
+  accept_self_signed   = true
 
   tests = [
     {
