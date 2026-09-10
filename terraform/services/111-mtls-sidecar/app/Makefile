@@ -69,10 +69,9 @@ test-mtls:
 	  https://localhost:8443/
 
 test-coverage:
-	cd src && go test ./tests/... -v \
-		-coverprofile=/app/coverage/coverage.out && \
-	sed -i 's|mtls-sidecar/||g' /app/coverage/coverage.out && \
-	go tool cover -html=/app/coverage/coverage.out -o /app/coverage/coverage.xml
+	mkdir -p coverage
+	cd src && go test ./tests/... -v -coverprofile=../coverage/coverage.out
+	go tool cover -html=coverage/coverage.out -o coverage/coverage.html
 
 test-local: test-health test-no-cert test-mtls
 
