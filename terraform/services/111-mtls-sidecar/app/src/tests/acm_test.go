@@ -1,4 +1,4 @@
-package acm
+package tests
 
 import (
 	"crypto/rand"
