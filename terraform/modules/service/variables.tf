@@ -311,11 +311,13 @@ variable "mount_points" {
 variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
-    app                = string
-    env                = string
-    kms_alias_primary  = object({ target_key_arn = string })
-    primary_region     = object({ name = string })
-    private_subnets    = map(object({ id = string }))
+    app               = string
+    env               = string
+    kms_alias_primary = object({ target_key_arn = string })
+    primary_region    = object({ name = string })
+    private_subnets   = map(object({ id = string }))
+    cdap_env          = string
+
     service            = string
     account_id         = string
     vpc_id             = string

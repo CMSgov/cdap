@@ -96,7 +96,7 @@ output "logging_bucket" {
 
 output "security_groups" {
   description = "Map of current VPC's common [aws_security_group data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group#attribute-reference), keyed by `name`"
-  sensitive   = false
+  sensitive   = true
   value       = data.aws_security_group.this
 }
 
@@ -161,7 +161,7 @@ output "cdap_env" {
   be either non-prod or prod, or test or prod.
   EOT
   sensitive   = false
-  value       = (var.env == "prod" || var.env == "sandbox" || var.env == "stage" || var.env == "staging") ? "prod" : "non-prod"
+  value       = (var.env == "prod" || var.env == "sandbox" || var.env == "stage" || var.env == "staging") ? "prod" : "test"
 }
 
 output "cdap_public_ips" {
