@@ -60,6 +60,10 @@ module "ecs_service" {
     }
   ]
 
+  container_environment = [
+    { name = "DOWNSTREAM_URL", value = "http://tftesting-b:80/" }
+  ]
+
   health_check = {
     command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
     interval    = 30
@@ -67,6 +71,33 @@ module "ecs_service" {
     startPeriod = 30
     timeout     = 5
   }
-
 }
 
+module "service_b" {
+  source = "../../modules/service"
+
+  service_name_override = "tftesting-b"
+  cluster_arn            = data.aws_ecs_cluster.cluster_test.arn
+  image                  = "public.ecr.aws/nginx/nginx:latest"
+  cpu                    = 256
+  memory                 = 512
+  log_retention_days     = 1
+
+  port_mappings = [
+    { name = "http", containerPort = 80, protocol = "tcp", appProtocol = "http" }
+  ]
+  service_connect_port_name = "http"
+
+  health_check = {
+    command     = ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+    interval    = 30
+    retries     = 3
+    startPeriod = 15
+    timeout     = 5
+  }
+
+  enable_ecs_service_connect    = true
+  service_connect_namespace_arn = data.aws_service_discovery_http_namespace.tftesting.arn
+
+  platform = module.platform
+}
