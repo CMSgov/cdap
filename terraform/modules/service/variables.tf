@@ -37,84 +37,18 @@ variable "ecr_repository_url" {
   default     = null
 }
 
-#
-# mTLS Sidecar
-#
-
-variable "mtls_require_client_cert" {
-  description = "Not yet available. Whether to require client certificates on the mTLS proxy. Set to true only when client cert issuance is configured."
-  type        = bool
-  default     = false
-}
-
-variable "enable_mtls_sidecar" {
-  type        = bool
-  default     = false
-  description = <<-EOT
-    Retrieves the mTLS proxy sidecar from CDAP ECR.
-    This flag is required separately because the data source count must be
-    determinable at plan time, before the cert ARN is known.
-  EOT
-}
-
-variable "mtls_cert_arn" {
-  type        = string
-  default     = null
-  description = "ARN of the PCA-backed private certificate used by the mTLS sidecar. Required when enable_mtls_sidecar = true."
-
-  validation {
-    condition     = !var.enable_mtls_sidecar || var.mtls_cert_arn != null
-    error_message = "mtls_cert_arn is required when enable_mtls_sidecar = true."
-  }
-}
-
-variable "mtls_domain" {
-  description = "FQDN the mTLS cert is issued for. Used by the startup self-test for hostname verification."
-  type        = string
-  default     = null
-}
-
-variable "proxy_listen_port" {
-  type        = number
-  default     = 8443
-  description = <<-EOT
-    Port the mTLS proxy sidecar listens on.
-
-    Traffic flow when enable_mtls_sidecar = true:
-      ALB --> proxy container :proxy_listen_port (mTLS)
-          --> app container   :first port in port_mappings (plain HTTP, localhost)
-
-    The ALB target group is automatically pointed at this port.
-    The caller does not need to set alb_port_name.
-  EOT
-}
-
-variable "proxy_healthcheck_port" {
-  description = "Port for the proxy health check server (plain HTTP, no mTLS)"
-  type        = number
-  default     = 8081
-}
-
-variable "proxy_sidecar_upstream_port" {
-  type        = number
-  default     = 8080
-  description = "Port the primary app container listens on. The proxy forwards to this port on localhost."
-}
-
 variable "alb_security_group_id" {
-  description = "Security group ID of the ALB. Required when enable_alb_integration and mtls_cert_arn are both set. Used to create security group rules allowing ALB traffic to reach the mTLS proxy."
+  description = "Security group ID of the ALB. Required when enable_alb_integration is true."
   type        = string
   default     = null
-
 
   validation {
     condition = !(
-      var.mtls_cert_arn != null &&
       var.enable_alb_integration &&
       var.alb_listener_arn != null &&
       var.alb_security_group_id == null
     )
-    error_message = "alb_security_group_id is required when mtls_cert_arn and alb_listener_arn are both set."
+    error_message = "alb_security_group_id is required when enable_alb_integration and alb_listener_arn are both set."
   }
 }
 
@@ -400,17 +334,6 @@ variable "port_mappings" {
     protocol           = optional(string)
   }))
   default = null
-
-  validation {
-    condition = (
-      !var.enable_mtls_sidecar ||
-      var.port_mappings != null && length([
-        for pm in coalesce(var.port_mappings, []) : pm
-        if pm.name != "proxy" && pm.containerPort != null
-      ]) > 0
-    )
-    error_message = "port_mappings must contain at least one non-proxy named port when enable_mtls_sidecar = true."
-  }
 }
 
 variable "health_check" {

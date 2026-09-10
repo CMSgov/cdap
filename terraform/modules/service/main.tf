@@ -8,58 +8,16 @@ locals {
 
   enable_alb_integration = var.enable_alb_integration && var.alb_listener_arn != null
 
-  # When mTLS is enabled the target group must use HTTPS — proxy is a TLS server
-  effective_tg_protocol = coalesce(
-    local.enable_mtls_sidecar ? "HTTPS" : null,
-    var.alb_target_group_protocol,
-    "HTTP"
-  )
+  effective_tg_protocol = coalesce(var.alb_target_group_protocol, "HTTP")
 
-  # ALB health check hits the plain HTTP health port — not the mTLS port
-  effective_health_check_protocol = local.enable_mtls_sidecar ? "HTTP" : coalesce(
-    var.alb_health_check.protocol,
-    "HTTP"
-  )
+  # ALB health check hits the plain HTTP health port
+  effective_health_check_protocol = coalesce(var.alb_health_check.protocol, "HTTP")
 
   # ALB health check targets the dedicated plain HTTP health port
-  effective_health_check_port = local.enable_mtls_sidecar ? tostring(var.proxy_healthcheck_port) : coalesce(
-    var.alb_health_check.port,
-    "traffic-port"
-  )
+  effective_health_check_port = coalesce(var.alb_health_check.port, "traffic-port")
 
-    proxy_upstream_port = local.enable_mtls_sidecar ? coalesce(
-      try(
-        [for pm in coalesce(var.port_mappings, []) : pm.containerPort
-          if pm.name != "proxy" && pm.containerPort != null
-        ][0],
-        null
-      ),
-      var.proxy_sidecar_upstream_port
-    ) : null
 
-  # Port mappings for the proxy sidecar — mTLS port + dedicated health port
-  proxy_port_mapping = local.enable_mtls_sidecar ? [
-    {
-      name          = "proxy"
-      containerPort = var.proxy_listen_port # mTLS - strict, no exceptions
-      hostPort      = var.proxy_listen_port
-      protocol      = "tcp"
-    },
-    {
-      name          = "health"
-      containerPort = var.proxy_healthcheck_port # plain HTTP — health checks only
-      hostPort      = var.proxy_healthcheck_port
-      protocol      = "tcp"
-    }
-  ] : []
-
-  effective_port_mappings = concat(
-    coalesce(var.port_mappings, []),
-    local.proxy_port_mapping
-  )
-
-  effective_alb_port_name     = local.enable_mtls_sidecar ? "proxy" : var.alb_port_name
-  alb_container_port          = local.enable_alb_integration && local.effective_alb_port_name != null ? try(local.port_map[local.effective_alb_port_name], null) : null
+  alb_container_port          = local.enable_alb_integration && var.alb_port_name != null ? try(local.port_map[var.alb_port_name], null) : null
   use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
 
   ###############
@@ -68,7 +26,7 @@ locals {
 
   # Build a name to containerPort lookup from port_mappings
   port_map = {
-    for pm in coalesce(local.effective_port_mappings, []) :
+    for pm in coalesce(var.port_mappings, []) :
     pm.name => pm.containerPort
     if pm.name != null && pm.containerPort != null
   }
@@ -76,10 +34,7 @@ locals {
   sc_port_name = try(
     coalesce(
       var.service_connect_port_name,
-      local.enable_mtls_sidecar ? "proxy" : try(
-        [for pm in coalesce(var.port_mappings, []) : pm.name if pm.name != null][0],
-        null
-      )
+      [for pm in coalesce(var.port_mappings, []) : pm.name if pm.name != null][0]
     ),
     null
   )
@@ -134,73 +89,6 @@ locals {
     }
     healthCheck = var.health_check
   }
-
-  ###############
-  # mTLS Proxy
-  ###############
-  enable_mtls_sidecar = var.enable_mtls_sidecar
-  mtls_image          = local.enable_mtls_sidecar ? "${var.platform.account_id}.dkr.ecr.${var.platform.primary_region.name}.amazonaws.com/cdap-mtls-sidecar:${data.aws_ssm_parameter.mtls_image_tag[0].value}" : null
-  proxy_container = {
-    name                   = "proxy"
-    image                  = local.mtls_image != null ? local.mtls_image : ""
-    essential              = true
-    readonlyRootFilesystem = true
-
-    linuxParameters = {
-      tmpfs = [
-        {
-          containerPath = "/run/certs"
-          size          = 2 # 2MB
-          mountOptions  = ["noexec", "nosuid", "nodev"]
-        }
-      ]
-    }
-
-    portMappings = local.proxy_port_mapping
-
-    environment = [
-      { name  = "ACM_CERTIFICATE_ARN"
-        value = var.mtls_cert_arn != null ? var.mtls_cert_arn : ""
-      },
-      {
-        name  = "UPSTREAM_URL"
-        value = local.proxy_upstream_port != null ? "http://localhost:${local.proxy_upstream_port}" : ""
-      },
-      {
-        name  = "PROXY_LISTEN_PORT"
-        value = tostring(var.proxy_listen_port)
-      },
-      {
-        name  = "REQUIRE_CLIENT_CERT"
-        value = tostring(var.mtls_require_client_cert)
-      },
-      { name = "TLS_CERT_FILE", value = "/run/certs/cert.pem" },
-      { name = "TLS_KEY_FILE", value = "/run/certs/key.pem" },
-      { name = "TLS_CA_FILE", value = "/run/certs/ca.pem" },
-      { name = "SELFTEST_SERVER_NAME", value = var.mtls_domain },
-      { name = "HEALTH_PORT", value = tostring(var.proxy_healthcheck_port) }
-    ]
-
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        awslogs-group         = aws_cloudwatch_log_group.app.name
-        awslogs-region        = var.platform.primary_region.name
-        awslogs-stream-prefix = "proxy"
-      }
-    }
-
-    healthCheck = {
-      command     = ["/healthcheck"] #uses the go binary built
-      interval    = 30
-      retries     = 3
-      startPeriod = 30
-      timeout     = 5
-    }
-
-    dependsOn = []
-  }
-
 
   ###############
   # Datadog container
@@ -332,8 +220,7 @@ resource "aws_ecs_task_definition" "this" {
   container_definitions = nonsensitive(jsonencode(
     concat(
       [local.app_container],
-      var.enable_datadog_agent ? [local.datadog_container] : [],
-      local.enable_mtls_sidecar ? [local.proxy_container] : [] # ← missing
+      var.enable_datadog_agent ? [local.datadog_container] : []
     )
   ))
 
@@ -419,10 +306,8 @@ resource "aws_ecs_service" "this" {
     for_each = local.enable_alb_integration ? [1] : []
     content {
       target_group_arn = aws_lb_target_group.this[0].arn
-      container_name = local.enable_mtls_sidecar ? "proxy" : (
-        var.service_name_override != null ? var.service_name_override : local.service_name
-      )
-      container_port = local.alb_container_port
+      container_name   = var.service_name_override != null ? var.service_name_override : local.service_name
+      container_port   = local.alb_container_port
     }
   }
 
@@ -494,7 +379,6 @@ locals {
   # AWS target group name limit is 32 characters
   target_group_name = "${substr("${local.service_name_full}-tg", 0, 26)}-${substr(lower(local.effective_tg_protocol), 0, 6)}"
 }
-
 resource "aws_lb_target_group" "this" {
   count = var.enable_alb_integration ? 1 : 0
 
@@ -514,27 +398,17 @@ resource "aws_lb_target_group" "this" {
     healthy_threshold   = var.alb_health_check.healthy_threshold
     unhealthy_threshold = var.alb_health_check.unhealthy_threshold
   }
-
   lifecycle {
     create_before_destroy = true
+
     precondition {
-      condition     = local.enable_mtls_sidecar || var.alb_port_name != null
-      error_message = "alb_port_name is required when alb_listener_arn is set and enable_mtls_sidecar is false."
+      condition     = var.alb_port_name != null
+      error_message = "alb_port_name is required when alb_listener_arn is set."
     }
 
     precondition {
-      condition = (
-        local.enable_mtls_sidecar ||
-        var.alb_port_name == null ||
-        contains(keys(local.port_map), var.alb_port_name)
-      )
+      condition     = var.alb_port_name == null || contains(keys(local.port_map), var.alb_port_name)
       error_message = "alb_port_name '${coalesce(var.alb_port_name, "(null)")}' does not match any named port in port_mappings."
-    }
-
-    # Catch accidental HTTP misconfiguration when mTLS is enabled
-    precondition {
-      condition     = !local.enable_mtls_sidecar || local.effective_tg_protocol == "HTTPS"
-      error_message = "Target group protocol must be HTTPS when mtls_cert_arn is set."
     }
   }
 }
