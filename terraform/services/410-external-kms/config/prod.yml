@@ -1,17 +1,11 @@
 shares:
   bb:
     envs:
-     - prod
-     - sandbox
+      - prod
+      - sandbox
     principal_ssm_key: "aws_account_id"
-    s3_access:
-      envs:
-        - prod
-      write_role_arn_ssm_key: "lambda_role_arn"
-      read_role_arn_ssm_path: "external/dasg_insights/sensitive/bb2_quicksight_role_arn"
   bfd:
     envs:
       - prod
       - sandbox
     principal_ssm_key: "aws_account_id"
-    

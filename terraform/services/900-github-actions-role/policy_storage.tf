@@ -127,8 +127,8 @@ data "aws_iam_policy_document" "github_actions_storage" {
       # Conventional pattern — covers most buckets
       "arn:aws:s3:::${var.app}-${var.env}-*",
       # Domain-style — ${var.app}
-      "arn:aws:s3:::*.${var.app}.cms.gov",
-      "arn:aws:s3:::${var.app}.cms.gov",
+      "arn:aws:s3:::*.${var.app}.cms.gov*",
+      "arn:aws:s3:::${var.app}.cms.gov*",
       # Common / shared buckets
       "arn:aws:s3:::bucket-access-logs-*",
       "arn:aws:s3:::cms-cloud-*",
@@ -155,8 +155,8 @@ data "aws_iam_policy_document" "github_actions_storage" {
       # Conventional pattern
       "arn:aws:s3:::${var.app}-${var.env}-*",
       # Domain-style
-      "arn:aws:s3:::*.${var.app}.cms.gov",
-      "arn:aws:s3:::${var.app}.cms.gov",
+      "arn:aws:s3:::*.${var.app}.cms.gov*",
+      "arn:aws:s3:::${var.app}.cms.gov*",
     ]
   }
 
@@ -176,8 +176,8 @@ data "aws_iam_policy_document" "github_actions_storage" {
       # Conventional pattern
       "arn:aws:s3:::${var.app}-${var.env}-*/*",
       # Domain-style
-      "arn:aws:s3:::*.${var.app}.cms.gov/*",
-      "arn:aws:s3:::${var.app}.cms.gov/*"
+      "arn:aws:s3:::*.${var.app}.cms.gov*/*",
+      "arn:aws:s3:::${var.app}.cms.gov*/*"
     ]
   }
 }
