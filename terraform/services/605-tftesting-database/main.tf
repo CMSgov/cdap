@@ -16,13 +16,12 @@ data "aws_ssm_parameter" "cloudwatch_alarms_topic_arn" {
 
 module "database" {
   count  = local.tftesting_cluster_exists ? 1 : 0
-  source = "../../modules/aurora" # confirm this matches your actual module path
+  source = "../../modules/aurora" 
 
   platform = module.platform
   username = var.username
-
   manage_breakglass_password = true
-  breakglass_rotation_days   = 0
+  breakglass_rotation_days   = 2
 
   instance_class     = var.instance_class
   instance_count     = local.tftesting_instance_count
