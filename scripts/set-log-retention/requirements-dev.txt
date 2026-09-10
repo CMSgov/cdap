@@ -1,0 +1,4 @@
+# scripts/set_log_retention/requirements-dev.txt
+pytest==9.1.1
+pytest-cov==7.1.0
+pylint==4.0.8

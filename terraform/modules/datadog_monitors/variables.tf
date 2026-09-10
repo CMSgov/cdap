@@ -107,6 +107,7 @@ variable "custom_monitors" {
     create              = optional(bool, true)
     draft_status        = optional(string)
     require_full_window = optional(bool, false)
+    evaluation_delay    = optional(number)
   }))
   default = []
 }
