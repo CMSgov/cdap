@@ -161,7 +161,7 @@ output "cdap_env" {
   be either non-prod or prod, or test or prod.
   EOT
   sensitive   = false
-  value       = (var.env == "prod" || var.env == "sandbox" || var.env == "stage" || var.env == "staging") ? "prod" : "non-prod"
+  value       = (var.env == "prod" || var.env == "sandbox" || var.env == "stage" || var.env == "staging") ? "prod" : "test"
 }
 
 output "cdap_public_ips" {

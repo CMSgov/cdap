@@ -11,6 +11,7 @@ variable "platform" {
     public_subnets  = map(object({ id = string }))
     service         = string
     vpc_id          = string
+    cdap_env        = string
     security_groups = map(object({
       id   = string
       arn  = string
