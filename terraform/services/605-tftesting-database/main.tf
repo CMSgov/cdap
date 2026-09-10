@@ -37,6 +37,5 @@ module "database" {
   # that's created in bootstrap.tf and by consuming terraservices.
   enable_iam_database_authentication = true
 
-  enable_breakglass_access_alerting = true
-  breakglass_alert_sns_topic_arn    = data.aws_ssm_parameter.cloudwatch_alarms_topic_arn.value
+  breakglass_alert_sns_topic_arn = data.aws_ssm_parameter.cloudwatch_alarms_topic_arn.value
 }

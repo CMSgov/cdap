@@ -191,25 +191,21 @@ variable "security_group_override" {
   type        = string
 }
 
-variable "enable_breakglass_access_alerting" {
-  description = <<-EOT
-    If true, creates an EventBridge rule that fires whenever the breakglass
-    secret is read via Secrets Manager GetSecretValue, and routes it to
-    breakglass_alert_sns_topic_arn.
-  EOT
-  type        = bool
-  default     = false
-}
-
 variable "breakglass_alert_sns_topic_arn" {
   description = <<-EOT
-    SNS topic ARN to notify when the breakglass secret is read. Required
-    when enable_breakglass_access_alerting = true.
+    SNS topic ARN to notify when the breakglass secret is read. .
   EOT
   type        = string
   default     = null
 }
-
+variable "cloudtrail_log_group_name" {
+  description = <<-EOT
+    Name of the CloudWatch Logs log group CloudTrail management events are
+    already delivered to.
+  EOT
+  type        = string
+  default     = "cms-cloud-cloudtrail-logs"
+}
 
 variable "monitoring_role_path" {
   description = "IAM path for the monitoring role this module creates."

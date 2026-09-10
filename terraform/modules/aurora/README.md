@@ -154,13 +154,13 @@ No requirements.
 | <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | `any` | n/a | yes |
 | <a name="input_aws_backup_tag"></a> [aws\_backup\_tag](#input\_aws\_backup\_tag) | Override for a standard, CDAP-managed backup tag for AWS Backups | `string` | `"4hr1dr_d7_w35_m90"` | no |
 | <a name="input_backup_retention_period"></a> [backup\_retention\_period](#input\_backup\_retention\_period) | Days to retain backups for. | `number` | `1` | no |
-| <a name="input_breakglass_alert_sns_topic_arn"></a> [breakglass\_alert\_sns\_topic\_arn](#input\_breakglass\_alert\_sns\_topic\_arn) | SNS topic ARN to notify when the breakglass secret is read. Required<br/>when enable\_breakglass\_access\_alerting = true. | `string` | `null` | no |
+| <a name="input_breakglass_alert_sns_topic_arn"></a> [breakglass\_alert\_sns\_topic\_arn](#input\_breakglass\_alert\_sns\_topic\_arn) | SNS topic ARN to notify when the breakglass secret is read. . | `string` | `null` | no |
 | <a name="input_breakglass_rotation_days"></a> [breakglass\_rotation\_days](#input\_breakglass\_rotation\_days) | Rotation interval, in days, for the RDS-managed breakglass secret.<br/>Only applies when manage\_breakglass\_password = true. Defaults to 0,<br/>which leaves automatic rotation disabled. | `number` | `0` | no |
+| <a name="input_cloudtrail_log_group_name"></a> [cloudtrail\_log\_group\_name](#input\_cloudtrail\_log\_group\_name) | Name of the CloudWatch Logs log group CloudTrail management events are<br/>already delivered to. | `string` | `"cms-cloud-cloudtrail-logs"` | no |
 | <a name="input_cluster_identifier"></a> [cluster\_identifier](#input\_cluster\_identifier) | Override for the aurora cluster identifier | `string` | `null` | no |
 | <a name="input_cluster_instance_parameters"></a> [cluster\_instance\_parameters](#input\_cluster\_instance\_parameters) | A list of objects containing the values for apply\_method, name, and value that corresponds to the instance-level prameters. | <pre>list(object({<br/>    apply_method = string<br/>    name         = string<br/>    value        = any<br/>  }))</pre> | `[]` | no |
 | <a name="input_cluster_parameters"></a> [cluster\_parameters](#input\_cluster\_parameters) | A list of objects containing the values for apply\_method, name, and value that corresponds to the cluster-level prameters. | <pre>list(object({<br/>    apply_method = string<br/>    name         = string<br/>    value        = any<br/>  }))</pre> | `[]` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | If the DB cluster should have deletion protection enabled. | `bool` | `true` | no |
-| <a name="input_enable_breakglass_access_alerting"></a> [enable\_breakglass\_access\_alerting](#input\_enable\_breakglass\_access\_alerting) | If true, creates an EventBridge rule that fires whenever the breakglass<br/>secret is read via Secrets Manager GetSecretValue, and routes it to<br/>breakglass\_alert\_sns\_topic\_arn. | `bool` | `false` | no |
 | <a name="input_enable_iam_database_authentication"></a> [enable\_iam\_database\_authentication](#input\_enable\_iam\_database\_authentication) | If true, enables the IAM database authentication capability on the<br/>cluster. This only makes IAM auth available -- it does not disable or<br/>replace username/password authentication, and no Postgres role uses it<br/>until a consuming terraservice grants that role `rds_iam` and attaches<br/>its own IAM policy scoped to that dbuser, using the cluster\_resource\_id<br/>this module publishes via SSM. Defaults to true because enabling the<br/>capability has no effect on teams that don't use it. | `bool` | `true` | no |
 | <a name="input_engine_version"></a> [engine\_version](#input\_engine\_version) | Selected major engine version for either RDS DB Instance or RDS Aurora DB Cluster. | `string` | `"16"` | no |
 | <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Desired number of cluster instances | `number` | `1` | no |
@@ -194,8 +194,8 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_cloudwatch_event_rule.breakglass_secret_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
-| [aws_cloudwatch_event_target.breakglass_secret_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
+| [aws_cloudwatch_log_metric_filter.breakglass_secret_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_metric_filter) | resource |
+| [aws_cloudwatch_metric_alarm.breakglass_secret_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_db_parameter_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_parameter_group) | resource |
 | [aws_db_subnet_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group) | resource |
 | [aws_iam_policy.db_monitoring_kms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
