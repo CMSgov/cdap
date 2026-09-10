@@ -21,7 +21,7 @@ variable "min_failure_duration" {
 variable "accept_self_signed" {
   description = "Use sparingly. Allow the test to pass even if using a self signed cert."
   type        = bool
-  default = false
+  default     = false
 }
 
 
@@ -74,7 +74,7 @@ variable "tests" {
     tick_every           = optional(number, 60)
     min_failure_duration = optional(number, null)
     tags                 = optional(list(string), [])
-    accept_self_signed   = optional(bool, false)
+    accept_self_signed   = optional(bool, null)
 
     use_private_location = optional(bool, true)
   }))
