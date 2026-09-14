@@ -176,30 +176,6 @@ module "build_cache" {
   for_each = toset(local.cache_repos)
 
   name          = "${each.key}-buildcache"
-  ssm_parameter = "/${each.key}/${module.standards.account_env_suffix}/buildcachebucket"
-  app           = "cdap"
-  env           = var.env
-  force_destroy = true # cache contents are disposable
-}
-
-resource "aws_ssm_parameter" "codebuild_security_group_id" {
-  for_each = aws_security_group.codebuild_project
-
-  name  = "/${each.key}/${module.standards.account_env_suffix}/codebuild/nonsensitive/security-group-id"
-  value = each.value.id
-  type  = "String"
-
-  tags = {
-    Name = "/${each.key}/${module.standards.account_env_suffix}/codebuild/nonsensitive/security-group-id"
-  }
-}
-
-module "build_cache" {
-  source = "../../modules/bucket" # adjust to your module's actual path
-
-  for_each = toset(local.cache_repos)
-
-  name          = "${each.key}-buildcache"
   app           = "cdap"
   env           = var.env
   force_destroy = true # cache contents are disposable
