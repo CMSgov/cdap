@@ -92,6 +92,14 @@ resource "aws_codebuild_project" "per_repo" {
     type = "NO_ARTIFACTS"
   }
 
+  dynamic "cache" {
+    for_each = contains(local.cache_repos, each.key) ? [1] : []
+    content {
+      type     = "S3"
+      location = "${module.build_cache[each.key].id}/cache"
+    }
+  }
+
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
     image                       = local.arm64_image
@@ -184,4 +192,15 @@ resource "aws_ssm_parameter" "codebuild_security_group_id" {
   tags = {
     Name = "/${each.key}/${module.standards.account_env_suffix}/codebuild/nonsensitive/security-group-id"
   }
+}
+
+module "build_cache" {
+  source = "../../modules/bucket" # adjust to your module's actual path
+
+  for_each = toset(local.cache_repos)
+
+  name          = "${each.key}-buildcache"
+  app           = "cdap"
+  env           = var.env
+  force_destroy = true # cache contents are disposable
 }
