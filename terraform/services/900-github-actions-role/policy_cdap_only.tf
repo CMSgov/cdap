@@ -170,7 +170,7 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     resources = [
       "arn:aws:s3:::bucket-access-logs-*",
       "arn:aws:s3:::bb2-prod-quicksight-export-*",
-      "arn:aws:s3:::*-buildcache"
+      "arn:aws:s3:::*-buildcache*"
 
     ]
     # FIXME: Add GetBucketObjectLockConfiguration when CDAP adds

@@ -161,8 +161,8 @@ data "aws_iam_policy_document" "github_actions_storage" {
       "arn:aws:s3:::*.${var.app}.cms.gov*",
       "arn:aws:s3:::${var.app}.cms.gov*",
       # Static Site Cache buckets
-      "arn:aws:s3:::${var.app}-static-site*",
-      "arn:aws:s3:::${var.app}-website*", #ab2d specific pattern
+      "arn:aws:s3:::${var.app}-static-site-buildcache*",
+      "arn:aws:s3:::${var.app}-website-buildcache*", #ab2d specific pattern
     ]
   }
 
