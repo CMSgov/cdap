@@ -22,3 +22,9 @@ variable "log_retention_days" {
   default     = 180
   description = "Number of days to retain ECS task logs in CloudWatch. Required for production is minimum 180."
 }
+
+variable "supports_service_connect" {
+  type        = bool
+  default     = false
+  description = "Configures namespace for service connect use."
+}
