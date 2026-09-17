@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    key = "long-term-log-retention/terraform.tfstate"
+    key = "log-retention/terraform.tfstate"
   }
 }
 
@@ -23,7 +23,7 @@ module "platform" {
   source    = "../../modules/platform"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app         = var.app
+  app         = "cdap"
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
   service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")

@@ -1,96 +1,93 @@
 locals {
-  firehose_name = "${var.app}-${var.env}-long-term-log-retention"
+  # "shared" marks resources other teams write to or reference
+  # "cdap" marks resources created, managed, and used only by CDAP
+  shared_name = "shared-${var.env}-log-retention"
+  cdap_name   = "cdap-${var.env}-log-retention"
 
   # Writes outside these prefixes are not granted to the delivery role
   firehose_data_prefix  = "cloudwatch/"
   firehose_error_prefix = "firehose-errors/"
 }
 
+# Dedicated CMK so log encryption is managed and rotated independently of the
+# app-env keys
+resource "aws_kms_key" "log_retention" {
+  description             = "Dedicated encryption key for the log retention pipeline (bucket, Firehose, diagnostics log group)"
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+  policy                  = data.aws_iam_policy_document.log_retention_kms.json
+}
+
+resource "aws_kms_alias" "log_retention" {
+  name          = "alias/${local.cdap_name}"
+  target_key_id = aws_kms_key.log_retention.key_id
+}
+
+module "log_bucket" {
+  source = "../../modules/bucket"
+
+  app  = module.platform.app
+  env  = var.env
+  name = local.shared_name
+
+  kms_key_arn        = aws_kms_key.log_retention.arn
+  use_custom_kms_key = true
+
+  # Compliance-mode WORM in prod only: objects cannot be deleted or overwritten
+  # for 6 years by anyone, including root (HIPAA retention requirement).
+  # No lock in test environments
+  object_lock = var.env == "prod" ? {
+    mode  = "COMPLIANCE"
+    years = 6
+  } : null
+  force_destroy = false
+
+  # Writers are limited to the Firehose role and prefix-scoped log delivery
+  # services. all other principals are denied
+  additional_bucket_policies = [data.aws_iam_policy_document.log_bucket_writes.json]
+
+  # GLACIER_IR keeps objects queryable via Athena, unlike GLACIER or
+  # DEEP_ARCHIVE which require restore before read
+  # TODO: determine if we should use GLACIER_IR or GLACIER for long-term storage
+  transitions = [
+    {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    },
+    {
+      days          = 365
+      storage_class = "GLACIER_IR"
+    },
+  ]
+
+  # Expire objects once the 6-year HIPAA retention has elapsed
+  # in prod this is also past the Object Lock retain-until date. Noncurrent
+  # versions and delete markers are cleaned up by the bucket module shortly after.
+  expiration_days = 2200
+
+  ssm_parameter = "/${module.platform.app}/${module.platform.env}/common/nonsensitive/log-retention/bucket"
+}
+
 data "aws_ssm_parameter" "cloudwatch_alarms_topic_arn" {
   name = "/${module.platform.app}/${module.platform.env}/cdap-alarm-topic/nonsensitive/alarms-topic-arn"
 }
 
-# Firehose -> S3 delivery role, write access limited to the data/error prefixes
-data "aws_iam_policy_document" "firehose_assume" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["firehose.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "sts:ExternalId"
-      values   = [module.platform.account_id]
-    }
-  }
-}
-
-data "aws_iam_policy_document" "firehose_delivery" {
-  statement {
-    sid = "BucketMetadata"
-    actions = [
-      "s3:GetBucketLocation",
-      "s3:ListBucket",
-      "s3:ListBucketMultipartUploads",
-    ]
-    resources = [module.log_bucket.arn]
-  }
-  statement {
-    sid = "PrefixLimitedWrites"
-    actions = [
-      "s3:PutObject",
-      "s3:AbortMultipartUpload",
-    ]
-    resources = [
-      "${module.log_bucket.arn}/${local.firehose_data_prefix}*",
-      "${module.log_bucket.arn}/${local.firehose_error_prefix}*",
-    ]
-  }
-
-  statement {
-    sid = "EncryptWithDedicatedKey"
-    actions = [
-      "kms:Decrypt",
-      "kms:GenerateDataKey",
-    ]
-    resources = [aws_kms_key.log_retention.arn]
-  }
-
-  statement {
-    sid       = "DeliveryErrorLogging"
-    actions   = ["logs:PutLogEvents"]
-    resources = ["${aws_cloudwatch_log_group.firehose.arn}:log-stream:*"]
-  }
-}
-
-resource "aws_iam_role" "firehose" {
-  name               = "${local.firehose_name}-firehose"
-  assume_role_policy = data.aws_iam_policy_document.firehose_assume.json
-}
-
-resource "aws_iam_role_policy" "firehose" {
-  name   = "s3-delivery"
-  role   = aws_iam_role.firehose.id
-  policy = data.aws_iam_policy_document.firehose_delivery.json
-}
-
 # Delivery failure diagnostics from Firehose itself
-resource "aws_cloudwatch_log_group" "firehose" {
-  name              = "/aws/kinesisfirehose/${local.firehose_name}"
-  retention_in_days = 30
+module "firehose_log_group" {
+  source = "../../modules/cloudwatch_log_group"
+
+  name               = "/aws/kinesisfirehose/${local.shared_name}"
+  kms_key_id         = aws_kms_key.log_retention.arn
+  log_retention_days = 30
 }
 
 resource "aws_cloudwatch_log_stream" "firehose_s3_delivery" {
   name           = "DestinationDelivery"
-  log_group_name = aws_cloudwatch_log_group.firehose.name
+  log_group_name = module.firehose_log_group.this.name
 }
 
 resource "aws_kinesis_firehose_delivery_stream" "log_retention" {
-  name        = local.firehose_name
+  name        = local.shared_name
   destination = "extended_s3"
 
   server_side_encryption {
@@ -154,75 +151,28 @@ resource "aws_kinesis_firehose_delivery_stream" "log_retention" {
 
     cloudwatch_logging_options {
       enabled         = true
-      log_group_name  = aws_cloudwatch_log_group.firehose.name
+      log_group_name  = module.firehose_log_group.this.name
       log_stream_name = aws_cloudwatch_log_stream.firehose_s3_delivery.name
     }
   }
 }
 
-# CloudWatch Logs -> Firehose role, assumed by subscription filters
-data "aws_iam_policy_document" "cloudwatch_to_firehose_assume" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["logs.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [module.platform.account_id]
-    }
-
-    condition {
-      test     = "ArnLike"
-      variable = "aws:SourceArn"
-      values   = ["arn:aws:logs:${module.platform.primary_region.region}:${module.platform.account_id}:*"]
-    }
-  }
-}
-
-data "aws_iam_policy_document" "cloudwatch_to_firehose" {
-  statement {
-    sid = "PutToLogRetentionFirehose"
-    actions = [
-      "firehose:PutRecord",
-      "firehose:PutRecordBatch",
-    ]
-    resources = [aws_kinesis_firehose_delivery_stream.log_retention.arn]
-  }
-}
-
-resource "aws_iam_role" "cloudwatch_to_firehose" {
-  name               = "${local.firehose_name}-cloudwatch"
-  assume_role_policy = data.aws_iam_policy_document.cloudwatch_to_firehose_assume.json
-}
-
-resource "aws_iam_role_policy" "cloudwatch_to_firehose" {
-  name   = "firehose-put"
-  role   = aws_iam_role.cloudwatch_to_firehose.id
-  policy = data.aws_iam_policy_document.cloudwatch_to_firehose.json
-}
-
 # Discovery for the CloudWatch log group common module's subscription filters
 resource "aws_ssm_parameter" "firehose_arn" {
-  name  = "/cdap/${var.env}/common/nonsensitive/long-term-log-retention/firehose-arn"
+  name  = "/${module.platform.app}/${module.platform.env}/common/nonsensitive/log-retention/firehose-arn"
   type  = "String"
   value = aws_kinesis_firehose_delivery_stream.log_retention.arn
 }
 
 resource "aws_ssm_parameter" "cloudwatch_to_firehose_role_arn" {
-  name  = "/cdap/${var.env}/common/nonsensitive/long-term-log-retention/subscription-role-arn"
+  name  = "/${module.platform.app}/${module.platform.env}/common/nonsensitive/log-retention/subscription-role-arn"
   type  = "String"
   value = aws_iam_role.cloudwatch_to_firehose.arn
 }
 
 # Failure alerting to CDAP
 resource "aws_cloudwatch_metric_alarm" "firehose_delivery_failure" {
-  alarm_name          = "${local.firehose_name}-s3-delivery-failure"
+  alarm_name          = "${local.cdap_name}-s3-delivery-failure"
   alarm_description   = "Firehose is failing to deliver log records to the long-term retention bucket"
   namespace           = "AWS/Firehose"
   metric_name         = "DeliveryToS3.Success"
@@ -242,7 +192,7 @@ resource "aws_cloudwatch_metric_alarm" "firehose_delivery_failure" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "firehose_data_freshness" {
-  alarm_name          = "${local.firehose_name}-data-freshness"
+  alarm_name          = "${local.cdap_name}-data-freshness"
   alarm_description   = "Oldest undelivered record in the log retention Firehose exceeds 15 minutes"
   namespace           = "AWS/Firehose"
   metric_name         = "DeliveryToS3.DataFreshness"
@@ -263,7 +213,7 @@ resource "aws_cloudwatch_metric_alarm" "firehose_data_freshness" {
 
 # Catches partial failures that DeliveryToS3.Success (an average) can dilute
 resource "aws_cloudwatch_metric_alarm" "firehose_throttled_records" {
-  alarm_name          = "${local.firehose_name}-throttled-records"
+  alarm_name          = "${local.cdap_name}-throttled-records"
   alarm_description   = "Log producers are being throttled writing to the log retention Firehose"
   namespace           = "AWS/Firehose"
   metric_name         = "ThrottledRecords"

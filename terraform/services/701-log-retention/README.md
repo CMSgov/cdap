@@ -1,4 +1,4 @@
-# 701-long-term-log-retention
+# 701-log-retention
 
 Provisions the per-AWS-account long-term log storage bucket (one per CDAP
 account: test and prod) that retains logs in accordance with HIPAA requirements.
@@ -11,10 +11,9 @@ account: test and prod) that retains logs in accordance with HIPAA requirements.
     including the root account, until retention expires. Test buckets have no
     Object Lock so misdelivered data is recoverable while iterating
   - A bucket policy denying `s3:PutObject` to every principal except the
-    Firehose delivery role and the S3-direct log delivery services
-    (CloudTrail under `cloudtrail/`, VPC Flow Logs and CloudFront v2 vended
-    delivery under `vpc-flow-logs/` and `cloudfront/`, S3 access logging
-    under `s3-access-logs/`), each scoped to its prefix and this account
+    Firehose delivery role and vended log delivery (VPC Flow Logs and
+    CloudFront v2 under `vpc-flow-logs/` and `cloudfront/`), each scoped to
+    its prefix and this account
   - Versioning (required by Object Lock)
   - Server access logging to the account's `bucket-access-logs` bucket
   - TLS-only bucket policy; read access is deny-by-default via IAM least
@@ -24,8 +23,9 @@ account: test and prod) that retains logs in accordance with HIPAA requirements.
     Athena without a restore step)
   - A lifecycle rule that securely deletes current and noncurrent versions at
     2200 days, after the 6-year Object Lock retention has elapsed
-- A dedicated KMS CMK (with automatic annual rotation) used only for this
-  bucket, so log encryption is managed independently of the account default
+- A dedicated KMS CMK (with automatic annual rotation) used only by this
+  service's pipeline (bucket, Firehose stream, diagnostics log group), so log
+  encryption is managed independently of the account default
   key
 - A Kinesis Firehose delivery stream that receives CloudWatch Logs
   subscription filter data, decompresses the CloudWatch envelope in-stream
@@ -40,7 +40,7 @@ account: test and prod) that retains logs in accordance with HIPAA requirements.
   data freshness, and throttling
 - SSM parameters exposing the bucket name, Firehose ARN, and subscription
   role ARN to log producers, under
-  `/cdap/<env>/common/nonsensitive/long-term-log-retention/`:
+  `/cdap/<env>/common/nonsensitive/log-retention/`:
   - `.../bucket`
   - `.../firehose-arn`
   - `.../subscription-role-arn`
@@ -75,8 +75,7 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_env"></a> [env](#input\_env) | The application environment (test, prod) | `string` | n/a | yes |
-| <a name="input_app"></a> [app](#input\_app) | The application name | `string` | `"cdap"` | no |
+| <a name="input_env"></a> [env](#input\_env) | The application environment (test) | `string` | n/a | yes |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -87,6 +86,7 @@ No requirements.
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
+| <a name="module_firehose_log_group"></a> [firehose\_log\_group](#module\_firehose\_log\_group) | ../../modules/cloudwatch_log_group | n/a |
 | <a name="module_log_bucket"></a> [log\_bucket](#module\_log\_bucket) | ../../modules/bucket | n/a |
 | <a name="module_platform"></a> [platform](#module\_platform) | ../../modules/platform | n/a |
 
@@ -99,7 +99,6 @@ No requirements.
 
 | Name | Type |
 | ---- | ---- |
-| [aws_cloudwatch_log_group.firehose](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_log_stream.firehose_s3_delivery](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_stream) | resource |
 | [aws_cloudwatch_metric_alarm.firehose_data_freshness](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.firehose_delivery_failure](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |

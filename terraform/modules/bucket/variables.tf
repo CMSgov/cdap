@@ -60,7 +60,7 @@ variable "object_lock" {
 }
 
 variable "transitions" {
-  description = "Storage class transitions for current object versions."
+  description = "Storage class transitions for current object versions. This is used currently in the long-term-log-retention bucket for cost savings on long-lived log objects for HIPAA compliance."
   type = list(object({
     days          = number
     storage_class = string
