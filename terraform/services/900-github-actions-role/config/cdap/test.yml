@@ -1,3 +1,4 @@
 additional_kms:
   - "bb-test" # used to share Datadog API keys
   - "bfd-test" # used to share Datadog API keys
+  - "cdap-test-log-retention" # dedicated key for the 701-log-retention pipeline

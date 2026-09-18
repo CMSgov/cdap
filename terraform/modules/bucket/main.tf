@@ -5,6 +5,21 @@ resource "aws_s3_bucket" "this" {
   # Max length on bucket_prefix is 37, so cut it to 36 plus the dash
   bucket_prefix = "${substr(var.name, 0, 36)}-"
   force_destroy = var.force_destroy
+
+  # Object Lock can only be enabled at bucket creation
+  object_lock_enabled = var.object_lock != null
+}
+
+resource "aws_s3_bucket_object_lock_configuration" "this" {
+  count  = var.object_lock != null ? 1 : 0
+  bucket = aws_s3_bucket.this.id
+
+  rule {
+    default_retention {
+      mode  = var.object_lock.mode
+      years = var.object_lock.years
+    }
+  }
 }
 
 resource "aws_ssm_parameter" "bucket" {
@@ -128,6 +143,59 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
+    }
+  }
+
+  dynamic "rule" {
+    for_each = length(var.transitions) > 0 ? [1] : []
+    content {
+      id     = "transitions"
+      status = "Enabled"
+
+      filter {}
+
+      dynamic "transition" {
+        for_each = var.transitions
+        content {
+          days          = transition.value.days
+          storage_class = transition.value.storage_class
+        }
+      }
+    }
+  }
+
+  dynamic "rule" {
+    for_each = var.expiration_days != null ? [var.expiration_days] : []
+    content {
+      id     = "retention-expiration"
+      status = "Enabled"
+
+      filter {}
+
+      expiration {
+        days = rule.value
+      }
+
+      # Expiration above only creates a delete marker; this deletes the
+      # noncurrent version shortly after so data is actually removed
+      noncurrent_version_expiration {
+        noncurrent_days = 30
+      }
+    }
+  }
+
+  # ExpiredObjectDeleteMarker cannot share a rule with days-based expiration
+  dynamic "rule" {
+    for_each = var.expiration_days != null ? [1] : []
+    content {
+      id     = "cleanup-delete-markers"
+      status = "Enabled"
+
+      filter {}
+
+      expiration {
+        expired_object_delete_marker = true
+      }
     }
   }
 }
