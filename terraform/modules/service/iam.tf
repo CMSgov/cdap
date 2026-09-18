@@ -163,6 +163,7 @@ data "aws_iam_policy_document" "service_connect" {
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
       "secretsmanager:UpdateSecret",
+      "secretsmanager:UpdateSecretVersionStage",
       "secretsmanager:DeleteSecret",
       "secretsmanager:PutSecretValue",
       "secretsmanager:TagResource",

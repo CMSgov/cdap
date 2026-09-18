@@ -119,41 +119,16 @@ variable "alb_security_group_id" {
 # -------------------------------------------------------
 # ECS Service Connect (optional)
 # -------------------------------------------------------
-variable "enable_ecs_service_connect" {
-  description = "Enables ECS Service Connect so other services in the namespace can reach this one."
-  type        = bool
-  default     = false
-}
 
-variable "service_connect_namespace_arn" {
-  type        = string
-  default     = null
-  description = <<-EOT
-    ARN of the Cloud Map HTTP namespace to use for ECS Service Connect.
-    When null, Service Connect will not be configured for this service.
-  EOT
-}
-
-variable "service_connect_port" {
-  type        = number
-  default     = null
-  description = "Optional. Defaults to the first containerPort in port_mappings. Override this for port remapping (e.g. expose on :80 while container listens on :8080)."
-}
-
-variable "service_connect_port_name" {
-  type        = string
-  default     = null
-  description = "Optional. Defaults to the first named port in port_mappings. Name of the port mapping to use for Service Connect."
-}
-
-variable "service_connect_client_port" {
-  type        = number
-  default     = null
-  description = <<-EOT
-    Override the port clients use to call this service via Service Connect.
-    Defaults to the containerPort of the named port mapping.
-    Use this for port remapping (e.g. container listens on 8080, clients call on 80 for easy calls by name without port).
-  EOT
+variable "service_connect" {
+  default     = []
+  description = "List of service connect discovery names and ports."
+  type = list(object({
+    discovery_name = string
+    dns_name       = string
+    port           = number
+    port_name      = string
+  }))
 }
 
 variable "deployment_circuit_breaker" {
@@ -263,7 +238,6 @@ variable "load_balancers" {
   }))
   default = null
 }
-
 
 #--------------------
 # ALB Connection

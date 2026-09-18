@@ -433,27 +433,39 @@ resource "aws_ecs_service" "this" {
     }
   }
 
-  dynamic "service_connect_configuration" {
-    for_each = var.enable_ecs_service_connect ? [1] : []
-    content {
-      enabled   = true
-      namespace = var.service_connect_namespace_arn
+  service_connect_configuration {
+    enabled   = (length(var.service_connect) > 0) ? true : false
+    namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace.arn
 
-      service {
-        discovery_name = local.service_name
-        port_name      = local.sc_port_name
+    log_configuration {
+      log_driver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.app.name
+        "awslogs-stream-prefix" = "service-connect"
+        "awslogs-region"        = "us-east-1"
+      }
+    }
+
+    access_log_configuration {
+      format                   = "TEXT"
+      include_query_parameters = "ENABLED"
+    }
+
+    dynamic "service" {
+      for_each = var.service_connect
+
+      content {
+        discovery_name = service.value.discovery_name
+        port_name      = service.value.port_name
 
         client_alias {
-          port = coalesce(
-            var.service_connect_client_port,
-            local.sc_port_name != null ? try(local.port_map[local.sc_port_name], null) : null
-          )
-          dns_name = local.service_name
+          dns_name = service.value.dns_name
+          port     = service.value.port
         }
 
         tls {
-          kms_key  = var.platform.kms_alias_primary.target_key_arn
-          role_arn = aws_iam_role.service_connect[0].arn
+          kms_key  = module.platform.kms_alias_primary.arn
+          role_arn = aws_iam_role.service_connect.arn
 
           issuer_cert_authority {
             aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
@@ -462,6 +474,7 @@ resource "aws_ecs_service" "this" {
       }
     }
   }
+
   deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
   deployment_maximum_percent         = var.deployment_maximum_percent
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
