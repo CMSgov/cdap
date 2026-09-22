@@ -72,7 +72,7 @@ locals {
 
   sc_port_name = try(
     coalesce(
-      var.service_connect_port_name,
+      var.service_connect[0].port_name,
       local.enable_mtls_sidecar ? "proxy" : try(
         [for pm in coalesce(var.port_mappings, []) : pm.name if pm.name != null][0],
         null
