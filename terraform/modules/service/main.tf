@@ -464,7 +464,7 @@ resource "aws_ecs_service" "this" {
         }
 
         tls {
-          kms_key  = var.platform.kms_alias_primary.arn
+          kms_key  = var.platform.kms_alias_primary["target_key_arn"]
           role_arn = aws_iam_role.service_connect[0].arn
 
           issuer_cert_authority {
