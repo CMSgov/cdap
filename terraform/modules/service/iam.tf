@@ -90,7 +90,7 @@ data "aws_iam_policy_document" "execution" {
 #---------------------------
 
 resource "aws_iam_role" "service_connect" {
-  count = var.enable_ecs_service_connect ? 1 : 0
+  count = (length(var.service_connect) > 0) ? 1 : 0
   name  = "${local.service_name_full}-service-connect"
 
   assume_role_policy = jsonencode({
