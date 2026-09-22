@@ -464,8 +464,8 @@ resource "aws_ecs_service" "this" {
         }
 
         tls {
-          kms_key  = module.platform.kms_alias_primary.arn
-          role_arn = aws_iam_role.service_connect.arn
+          kms_key  = var.platform.kms_alias_primary.arn
+          role_arn = aws_iam_role.service_connect[0].arn
 
           issuer_cert_authority {
             aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
