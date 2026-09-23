@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 DD_SERVICE = os.environ.get("DD_SERVICE", "tftesting")
 DD_ENV     = os.environ.get("DD_ENV", "test")
 DD_VERSION = os.environ.get("DD_VERSION", "unknown")
-
 DOWNSTREAM_URL = os.environ.get("DOWNSTREAM_URL", "")
 EMIT_INTERVAL  = int(os.environ.get("EMIT_INTERVAL_SECONDS", 30))
 
