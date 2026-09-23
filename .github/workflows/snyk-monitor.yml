@@ -59,6 +59,9 @@ jobs:
         with:
           params: |
             SNYK_TOKEN=/cdap/prod/code-checks/sensitive/snyk-api-token/${{ inputs.app }}
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
 
       # Install Snyk (authenticates via the SNYK_TOKEN env var automatically)
       - name: Install Snyk
