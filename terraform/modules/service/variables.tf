@@ -488,3 +488,12 @@ variable "dd_version" {
   type        = string
   default     = "1.0.0"
 }
+
+variable "additional_dd_environment" {
+  default     = []
+  description = "A list of additional environment variables to append to the default Datadog environment."
+  type = list(object({
+    name  = string,
+    value = string
+  }))
+}
