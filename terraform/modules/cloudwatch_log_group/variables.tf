@@ -3,6 +3,16 @@ variable "name" {
   description = "Name of the CloudWatch log group."
 }
 
+variable "env" {
+  type        = string
+  description = "The application environment (dev, test, sandbox, prod, mgmt)"
+
+  validation {
+    condition     = contains(["dev", "test", "sandbox", "prod", "mgmt"], var.env)
+    error_message = "Valid value for env is dev, test, sandbox, prod, or mgmt."
+  }
+}
+
 variable "kms_key_id" {
   type        = string
   description = "ARN of the KMS key used to encrypt the log group."

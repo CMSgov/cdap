@@ -1,8 +1,4 @@
 locals {
-  # Wildcard matches the bucket_prefix-generated name, avoiding a
-  # dependency cycle between bucket policy and the bucket module
-  log_bucket_arn_pattern = "arn:aws:s3:::${local.shared_name}-*"
-
   # Vended logs (VPC Flow Logs, CloudFront) are published by AWS directly to
   # S3, bypassing Firehose. CloudTrail is excluded as ours is CMS-managed
   vended_delivery_principal = "delivery.logs.amazonaws.com"
@@ -86,7 +82,7 @@ data "aws_iam_policy_document" "log_bucket_writes" {
     }
 
     actions   = ["s3:PutObject"]
-    resources = ["${local.log_bucket_arn_pattern}/*"]
+    resources = ["${module.log_bucket.arn}/*"]
 
     condition {
       test     = "ArnNotEquals"
@@ -115,7 +111,7 @@ data "aws_iam_policy_document" "log_bucket_writes" {
       "s3:GetBucketAcl",
       "s3:ListBucket"
     ]
-    resources = [local.log_bucket_arn_pattern]
+    resources = [module.log_bucket.arn]
 
     condition {
       test     = "StringEquals"
@@ -134,7 +130,7 @@ data "aws_iam_policy_document" "log_bucket_writes" {
     }
 
     actions   = ["s3:PutObject"]
-    resources = [for p in local.vended_delivery_prefixes : "${local.log_bucket_arn_pattern}/${p}*"]
+    resources = [for p in local.vended_delivery_prefixes : "${module.log_bucket.arn}/${p}*"]
 
     condition {
       test     = "StringEquals"
@@ -197,7 +193,7 @@ data "aws_iam_policy_document" "firehose_delivery" {
   statement {
     sid       = "DeliveryErrorLogging"
     actions   = ["logs:PutLogEvents"]
-    resources = ["${module.firehose_log_group.this.arn}:log-stream:${aws_cloudwatch_log_stream.firehose_s3_delivery.name}"]
+    resources = ["${aws_cloudwatch_log_group.firehose.arn}:log-stream:${aws_cloudwatch_log_stream.firehose_s3_delivery.name}"]
   }
 }
 
@@ -245,6 +241,15 @@ data "aws_iam_policy_document" "cloudwatch_to_firehose" {
       "firehose:PutRecordBatch",
     ]
     resources = [aws_kinesis_firehose_delivery_stream.log_retention.arn]
+  }
+
+  # Puts to an SSE-CMK stream require the producer to generate and use data keys;
+  # Firehose validates both on PutRecord/PutRecordBatch, including the
+  # subscription filter's connectivity test message
+  statement {
+    sid       = "EncryptPutsWithDedicatedKey"
+    actions   = ["kms:GenerateDataKey", "kms:Decrypt"]
+    resources = [aws_kms_key.log_retention.arn]
   }
 }
 
