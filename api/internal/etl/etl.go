@@ -12,6 +12,7 @@ import (
 
 	"github.com/navapbc/its-log/internal/schema"
 	"github.com/navapbc/its-log/internal/types"
+	"go.uber.org/zap"
 )
 
 //go:embed sql
@@ -29,7 +30,8 @@ var defaultStarlark embed.FS
 func LoadEtlSQLAsString(filename string) string {
 	sql, err := defaultSql.ReadFile(path.Join("sql", filename))
 	if err != nil {
-		panic(err)
+		zap.L().Fatal("could not load default etl",
+			zap.String("filename", filename))
 	}
 	return string(sql)
 }
@@ -63,15 +65,21 @@ func loadFilesFromFS(s *types.Storage, dirName string) {
 		filesystem = defaultGolang
 	case "starlark":
 		filesystem = defaultStarlark
+	default:
+		panic("could not find embedded filesystem")
 	}
-	dirEntries, err := fs.ReadDir(filesystem, filepath.Join(dirName))
+
+	dirEntries, err := fs.ReadDir(filesystem, dirName)
 	if err != nil {
-		panic("cannot read embedded directory: " + dirName)
+		zap.L().Fatal("cannot read embedded directory",
+			zap.String("dirName", dirName),
+			zap.Error(err))
 	}
 
 	// Load the default SQL for ETL
 	for _, entry := range dirEntries {
 		filename := entry.Name()
+		// Skip anything flagged as "internal".
 		if !strings.HasPrefix(filename, "internal_") {
 			asBytes, err := fs.ReadFile(filesystem, filepath.Join(dirName, filename))
 			if err != nil {

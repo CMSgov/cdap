@@ -10,6 +10,7 @@ import (
 	"database/sql"
 
 	_ "github.com/duckdb/duckdb-go/v2"
+	"github.com/navapbc/its-log/internal/ilsql"
 	"go.uber.org/zap"
 )
 
@@ -21,10 +22,7 @@ import (
 // SUMMARY
 // ------------------------------------------------------
 func (q *Queries) GetAllSummaries(ctx context.Context) ([]ItslogSummary, error) {
-	getAllSummaries, err := SQLDir.ReadFile("sql/get_all_summaries.sql")
-	if err != nil {
-		return nil, err
-	}
+	getAllSummaries := ilsql.GetEndpointSql("get_all_summaries.sql")
 
 	rows, err := q.db.QueryContext(ctx, string(getAllSummaries))
 	if err != nil {
@@ -64,10 +62,7 @@ func (q *Queries) GetAllSummaries(ctx context.Context) ([]ItslogSummary, error) 
 // `
 
 func (q *Queries) GetDistinctTags(ctx context.Context) ([]string, error) {
-	getDistinctTags, err := SQLDir.ReadFile("sql/get_distinct_tags.sql")
-	if err != nil {
-		return nil, err
-	}
+	getDistinctTags := ilsql.GetEndpointSql("get_distinct_tags.sql")
 
 	rows, err := q.db.QueryContext(ctx, string(getDistinctTags))
 	if err != nil {
@@ -107,14 +102,11 @@ type GetETLRow struct {
 }
 
 func (q *Queries) GetETL(ctx context.Context, name string) (GetETLRow, error) {
-	getETL, err := SQLDir.ReadFile("sql/get_etl.sql")
-	if err != nil {
-		return GetETLRow{}, err
-	}
+	getETL := ilsql.GetEndpointSql("get_etl.sql")
 
 	row := q.db.QueryRowContext(ctx, string(getETL), name)
 	var i GetETLRow
-	err = row.Scan(
+	err := row.Scan(
 		&i.Name,
 		&i.Kind,
 		&i.Body,
@@ -142,11 +134,9 @@ type InsertETLParams struct {
 // ETL
 // ------------------------------------------------------
 func (q *Queries) InsertETL(ctx context.Context, arg InsertETLParams) error {
-	insertETL, err := SQLDir.ReadFile("sql/insert_etl.sql")
-	if err != nil {
-		return err
-	}
-	_, err = q.db.ExecContext(ctx, string(insertETL),
+	insertETL := ilsql.GetEndpointSql("insert_etl.sql")
+
+	_, err := q.db.ExecContext(ctx, string(insertETL),
 		arg.KeyID,
 		arg.Name,
 		arg.Kind,
@@ -175,11 +165,8 @@ type InsertFullSummaryParams struct {
 }
 
 func (q *Queries) InsertFullSummary(ctx context.Context, arg InsertFullSummaryParams) error {
-	insertFullSummary, err := SQLDir.ReadFile("sql/insert_full_summary.sql")
-	if err != nil {
-		return err
-	}
-	_, err = q.db.ExecContext(ctx, string(insertFullSummary),
+	insertFullSummary := ilsql.GetEndpointSql("insert_full_summary.sql")
+	_, err := q.db.ExecContext(ctx, string(insertFullSummary),
 		arg.LastRun,
 		arg.KeyID,
 		arg.Date,
@@ -211,11 +198,8 @@ type InsertSummaryParams struct {
 }
 
 func (q *Queries) InsertSummary(ctx context.Context, arg InsertSummaryParams) error {
-	insertSummary, err := SQLDir.ReadFile("sql/insert_summary.sql")
-	if err != nil {
-		return err
-	}
-	_, err = q.db.ExecContext(ctx, string(insertSummary),
+	insertSummary := ilsql.GetEndpointSql("insert_summary.sql")
+	_, err := q.db.ExecContext(ctx, string(insertSummary),
 		arg.KeyID,
 		arg.Date,
 		arg.Operation,
@@ -249,10 +233,7 @@ type LogEventParams struct {
 // LOGGING
 // ------------------------------------------------------
 func (q *Queries) LogEvent(ctx context.Context, arg LogEventParams) (int64, error) {
-	logEvent, err := SQLDir.ReadFile("sql/log_event.sql")
-	if err != nil {
-		return -1, err
-	}
+	logEvent := ilsql.GetEndpointSql("log_event.sql")
 
 	row := q.db.QueryRowContext(ctx, string(logEvent),
 		arg.Timestamp,
@@ -262,26 +243,9 @@ func (q *Queries) LogEvent(ctx context.Context, arg LogEventParams) (int64, erro
 		arg.Value,
 	)
 	var id int64
-	err = row.Scan(&id)
+	err := row.Scan(&id)
 	return id, err
 }
-
-// const readSummaries = `-- name: ReadSummaries :many
-// ;
-
-// SELECT
-//   date,
-//   operation,
-//   COALESCE(tags, '') as tags,
-//   value,
-//   count
-// FROM itslog_summary
-// WHERE
-//   tags LIKE COALESCE(?, '%')
-//   AND
-//   operation LIKE ?
-// ORDER BY id
-// `
 
 type ReadSummariesParams struct {
 	Tags      string
@@ -297,10 +261,8 @@ type ReadSummariesRow struct {
 }
 
 func (q *Queries) ReadSummaries(ctx context.Context, arg ReadSummariesParams) ([]ReadSummariesRow, error) {
-	readSummaries, err := SQLDir.ReadFile("sql/read_summaries.sql")
-	if err != nil {
-		return nil, err
-	}
+	readSummaries := ilsql.GetEndpointSql("read_summaries.sql")
+
 	rows, err := q.db.QueryContext(ctx, string(readSummaries), arg.Tags, arg.Operation)
 	if err != nil {
 		return nil, err
@@ -329,22 +291,6 @@ func (q *Queries) ReadSummaries(ctx context.Context, arg ReadSummariesParams) ([
 	return items, nil
 }
 
-// const readSummary = `-- name: ReadSummary :one
-// SELECT
-//   date,
-//   operation,
-//   tags,
-//   value,
-//   count
-// FROM itslog_summary
-// WHERE
-//   tags LIKE ?
-//   AND
-//   operation LIKE ?
-// ORDER BY id
-// LIMIT 1
-// `
-
 type ReadSummaryParams struct {
 	Tags      string
 	Operation string
@@ -359,10 +305,7 @@ type ReadSummaryRow struct {
 }
 
 func (q *Queries) ReadSummary(ctx context.Context, arg ReadSummaryParams) (ReadSummaryRow, error) {
-	readSummary, err := SQLDir.ReadFile("sql/read_summary.sql")
-	if err != nil {
-		return ReadSummaryRow{}, err
-	}
+	readSummary := ilsql.GetEndpointSql("read_summary.sql")
 
 	zap.L().Debug("ReadSummary",
 		zap.String("operation", arg.Operation),
@@ -373,7 +316,7 @@ func (q *Queries) ReadSummary(ctx context.Context, arg ReadSummaryParams) (ReadS
 		sql.Named("operation", arg.Operation),
 	)
 	var i ReadSummaryRow
-	err = row.Scan(
+	err := row.Scan(
 		&i.Date,
 		&i.Operation,
 		&i.Tags,
@@ -392,10 +335,7 @@ func (q *Queries) ReadSummary(ctx context.Context, arg ReadSummaryParams) (ReadS
 // `
 
 func (q *Queries) UpdateLastRun(ctx context.Context, name string) error {
-	updateLastRun, err := SQLDir.ReadFile("sql/update_last_run.sql")
-	if err != nil {
-		return err
-	}
-	_, err = q.db.ExecContext(ctx, string(updateLastRun), name)
+	updateLastRun := ilsql.GetEndpointSql("update_last_run.sql")
+	_, err := q.db.ExecContext(ctx, string(updateLastRun), name)
 	return err
 }

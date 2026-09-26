@@ -10,6 +10,7 @@ import (
 	"path"
 
 	"github.com/duckdb/duckdb-go/v2"
+	"github.com/navapbc/its-log/internal/ilsql"
 	"github.com/navapbc/its-log/internal/schema"
 	"github.com/spf13/viper"
 )
@@ -75,7 +76,7 @@ func (s *Storage) InitDB() error {
 
 func (s *Storage) InitTables() error {
 	// Create tables
-	_, err := s.db.ExecContext(context.Background(), schema.DDL)
+	_, err := s.db.ExecContext(context.Background(), ilsql.GetDBSchema())
 	if err != nil {
 		return err
 	}
