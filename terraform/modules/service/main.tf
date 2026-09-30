@@ -124,7 +124,7 @@ locals {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = aws_cloudwatch_log_group.app.name
+        awslogs-group         = module.app_logs.this.name
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
       }
@@ -181,7 +181,7 @@ locals {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = aws_cloudwatch_log_group.app.name
+        awslogs-group         = module.app_logs.this.name
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "proxy"
       }
@@ -219,7 +219,7 @@ locals {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = var.enable_datadog_agent ? aws_cloudwatch_log_group.datadog[0].name : ""
+        awslogs-group         = var.enable_datadog_agent ? module.datadog_logs[0].this.name : ""
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
       }
@@ -272,25 +272,23 @@ locals {
 ##################
 # Cloudwatch
 ##################
-resource "aws_cloudwatch_log_group" "app" {
-  name              = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
-  retention_in_days = var.log_retention_days
-  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
+module "app_logs" {
+  source = "../cloudwatch_log_group"
 
-  tags = {
-    Name = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
-  }
+  name               = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+  env                = var.platform.env
+  kms_key_id         = var.platform.kms_alias_primary.target_key_arn
+  log_retention_days = var.log_retention_days
 }
 
-resource "aws_cloudwatch_log_group" "datadog" {
-  count             = var.enable_datadog_agent ? 1 : 0
-  name              = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
-  retention_in_days = var.log_retention_days
-  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
+module "datadog_logs" {
+  count  = var.enable_datadog_agent ? 1 : 0
+  source = "../cloudwatch_log_group"
 
-  tags = {
-    Name = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
-  }
+  name               = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
+  env                = var.platform.env
+  kms_key_id         = var.platform.kms_alias_primary.target_key_arn
+  log_retention_days = var.log_retention_days
 }
 
 # Versioning
@@ -467,8 +465,8 @@ resource "aws_ecs_service" "this" {
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 
   depends_on = [
-    aws_cloudwatch_log_group.app,
-    aws_cloudwatch_log_group.datadog,
+    module.app_logs,
+    module.datadog_logs,
     aws_lb_listener_rule.this,
     aws_iam_role_policy_attachment.service_connect,
     aws_iam_role.service_connect
