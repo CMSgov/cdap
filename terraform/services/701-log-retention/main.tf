@@ -132,7 +132,7 @@ resource "aws_kinesis_firehose_delivery_stream" "log_retention" {
           # records with no logGroup field; fall back so the partition key
           # is never null
           parameter_name  = "MetadataExtractionQuery"
-          parameter_value = "{log_group: ((.logGroup // \"control-messages\") | ltrimstr(\"/\"))}"
+          parameter_value = "{log_group: (((.logGroup | select(. != null and . != \"\")) // \"control-messages\") | ltrimstr(\"/\"))}"
         }
         parameters {
           parameter_name  = "JsonParsingEngine"

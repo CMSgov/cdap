@@ -18,6 +18,12 @@ variable "kms_key_id" {
   description = "ARN of the KMS key used to encrypt the log group."
 }
 
+variable "skip_destroy" {
+  type        = bool
+  default     = false
+  description = "If true, remove the log group from state without deleting it from AWS."
+}
+
 variable "log_retention_days" {
   type        = number
   default     = 180
