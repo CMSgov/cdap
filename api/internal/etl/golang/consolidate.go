@@ -1,15 +1,14 @@
 package etl
 
 import (
-	"context"
 	"fmt"
 	"log"
 
-	"github.com/navapbc/its-log/internal/schema"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/navapbc/its-log/internal/etl"
+	"github.com/navapbc/its-log/internal/storage"
 )
 
-func Consolidate(etlP *types.RunEtlParams) error {
+func Consolidate(etlP *etl.RunEtlParams) error {
 
 	// Consolidation assumes we want to pull prior summary table(s) into the
 	// current summary table. We rely on the uniqueness constraints and INSERT OR REPLACE
@@ -32,7 +31,7 @@ func Consolidate(etlP *types.RunEtlParams) error {
 		if past_date, ok := past_date_any.(string); ok {
 
 			// Init the past storage
-			past_storage, err := types.NewStorage(etlP.AppId)
+			past_storage, err := storage.NewStorage(etlP.AppId)
 			if err != nil {
 				return fmt.Errorf("could not initialize storage: %s", etlP.AppId)
 			}
@@ -52,26 +51,27 @@ func Consolidate(etlP *types.RunEtlParams) error {
 			past_storage.Lock()
 			defer past_storage.Unlock()
 
-			summaryRows, err := past_storage.Queries.GetAllSummaries(context.Background())
-			if err != nil {
-				return fmt.Errorf("error fetching prior summaries: %s", err.Error())
-			}
+			// FIXME bring back
+			// summaryRows, err := past_storage.Queries.GetAllSummaries(context.Background())
+			// if err != nil {
+			// 	return fmt.Errorf("error fetching prior summaries: %s", err.Error())
+			// }
 
-			for _, srow := range summaryRows {
-
-				err := etlP.Storage.Queries.InsertFullSummary(context.Background(), schema.InsertFullSummaryParams{
-					KeyID:     etlP.KeyId,
-					LastRun:   srow.LastRun,
-					Date:      srow.Date,
-					Operation: srow.Operation,
-					Tags:      srow.Tags,
-					Value:     srow.Value,
-					Count:     srow.Count,
-				})
-				if err != nil {
-					return fmt.Errorf("could not insert summary from %s: %s", past_date, err.Error())
-				}
-			}
+			// for _, srow := range summaryRows {
+			// 	// FIXME: This wants to become a call against a PREPARED statement.
+			// 	err := etlP.Storage.Queries.InsertFullSummary(context.Background(), schema.InsertFullSummaryParams{
+			// 		KeyID:     etlP.KeyId,
+			// 		LastRun:   srow.LastRun,
+			// 		Date:      srow.Date,
+			// 		Operation: srow.Operation,
+			// 		Tags:      srow.Tags,
+			// 		Value:     srow.Value,
+			// 		Count:     srow.Count,
+			// 	})
+			// 	if err != nil {
+			// 		return fmt.Errorf("could not insert summary from %s: %s", past_date, err.Error())
+			// 	}
+			// }
 
 			past_storage.Close()
 		} else {

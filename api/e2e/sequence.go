@@ -1,17 +1,16 @@
 package e2e
 
 import (
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/constants"
-	"github.com/navapbc/its-log/internal/etl"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 )
 
-func RunSequence(t *testing.T, dateOffset int, sequenceName string) *types.Storage {
+func RunSequence(t *testing.T, dateOffset int, sequenceName string) *storage.Storage {
 	date := types.NewILTimeToday()
 	date.SubtractDays(dateOffset)
 
@@ -19,7 +18,7 @@ func RunSequence(t *testing.T, dateOffset int, sequenceName string) *types.Stora
 	if err != nil {
 		panic("could not find key for pupper/pup_admin")
 	}
-	s, err := types.NewStorage(apiKey.AppId)
+	s, err := storage.NewStorage(apiKey.AppId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,9 +33,12 @@ func RunSequence(t *testing.T, dateOffset int, sequenceName string) *types.Stora
 
 	// If we don't do an insert, then nothing loads the
 	// default ETLs. For testing, we have to force the issue.
-	pc, _, _, _ := runtime.Caller(0)
-	funcName := runtime.FuncForPC(pc).Name()
-	etl.LoadDefaultEtlFiles(s, funcName)
+
+	// FIXME: no longer load default ETLs? Leave that to users?
+	// They can do this before processing data.
+	// pc, _, _, _ := runtime.Caller(0)
+	// funcName := runtime.FuncForPC(pc).Name()
+	// etl.LoadDefaultEtlFiles(s, funcName)
 
 	target := "/v1" + constants.SEQUENCE_RUN
 	target = strings.Replace(target, ":date", date.AsYYYYMMDD(), -1)

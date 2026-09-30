@@ -8,5 +8,7 @@ __*
 _base/*
 **.sqlite-wal
 **.sqlite-journal
+**.duckdb
+**.duckdb.wal
 **.prof
 **.test

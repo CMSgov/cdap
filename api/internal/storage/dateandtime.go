@@ -1,4 +1,6 @@
-package types
+package storage
+
+import "github.com/navapbc/its-log/internal/types"
 
 // We name things based on dates
 func (s *Storage) YYYYMMDD() string {
@@ -7,17 +9,17 @@ func (s *Storage) YYYYMMDD() string {
 
 func (s *Storage) SetDateYMD(ymd string) error {
 	if ymd == "today" {
-		s.ILTime = NewILTimeToday()
+		s.ILTime = types.NewILTimeToday()
 		return nil
 	}
-	d, e := NewILTimeFromYMD(ymd)
+	d, e := types.NewILTimeFromYMD(ymd)
 	if e == nil {
 		s.ILTime = d
 	}
 	return e
 }
 
-func (s *Storage) SetDateILT(ilt *ILTime) {
+func (s *Storage) SetDateILT(ilt *types.ILTime) {
 	s.ILTime = ilt
 }
 

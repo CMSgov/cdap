@@ -5,12 +5,13 @@ import (
 	"log"
 	"time"
 
+	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/objectstore"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/spf13/viper"
 )
 
-func copyToBackupBucket(s *types.Storage) (int, error) {
+func copyToBackupBucket(s *storage.Storage) (int, error) {
 	os := objectstore.NewObjectStore("aws")
 	os.SetBucket(viper.GetString("backup.bucket"))
 	os.SetEndpoint(
@@ -37,7 +38,7 @@ func copyToBackupBucket(s *types.Storage) (int, error) {
 	return written, nil
 }
 
-func Backup(etlP *types.RunEtlParams) error {
+func Backup(etlP *etl.RunEtlParams) error {
 	var expectedConsolidateKeys = []string{
 		"dates-to-backup",
 	}
@@ -51,7 +52,7 @@ func Backup(etlP *types.RunEtlParams) error {
 		// We want to copy a database file at a given location.
 		// Create a storage object, and close it.
 		date := d.(string)
-		storage, err := types.NewStorage(etlP.AppId)
+		storage, err := storage.NewStorage(etlP.AppId)
 		if err != nil {
 			return fmt.Errorf("could not initialize storage: %s", etlP.AppId)
 		}

@@ -10,11 +10,11 @@ import (
 	"strings"
 
 	"github.com/navapbc/its-log/internal/constants"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/navapbc/its-log/internal/etl"
 	"github.com/spf13/viper"
 )
 
-func SqliteToCSV(etlP *types.RunEtlParams) error {
+func SqliteToCSV(etlP *etl.RunEtlParams) error {
 	// var sqliteToCsvPrefix string = "sqlite_to_csv"
 	// var sqliteToCsvExpectedKeys = []string{
 	// 	sqliteToCsvPrefix + "-source", sqliteToCsvPrefix + "-destination",

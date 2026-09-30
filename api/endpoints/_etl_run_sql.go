@@ -34,6 +34,7 @@ func callWithParams(etlP *types.RunEtlParams, theSql string) *sql.Row {
 
 	// An SQL step will read from and write to the DB.
 	// Lock and release around this action.
+	// FIXME: This wants to become an EXECUTE if everything is PREPARE
 	etlP.Storage.Lock()
 	etlRow := etlP.Storage.GetDB().QueryRowContext(context.Background(), theSql, args...)
 	etlP.Storage.Unlock()

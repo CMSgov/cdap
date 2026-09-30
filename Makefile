@@ -6,11 +6,8 @@ native:
 e2e:
 	cd api ; make e2e
 
-k6-arm:
-	cd ops/containers ; make k6-arm
-
-k6-amd:
-	cd ops/containers ; make k6-amd
+k6-build:
+	cd ops/containers ; make k6-build
 
 storage:
 	cd ops/containers ; make storage

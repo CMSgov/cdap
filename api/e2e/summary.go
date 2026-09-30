@@ -5,6 +5,7 @@ import (
 
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/constants"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 )
 
@@ -14,7 +15,7 @@ func CheckSummaryValue(operation string, tags string, expected int, date *types.
 	if err != nil {
 		panic("could not find key for pupper/pup_admin")
 	}
-	s, err := types.NewStorage(apiKey.AppId)
+	s, err := storage.NewStorage(apiKey.AppId)
 	if err != nil {
 		panic(err)
 	}

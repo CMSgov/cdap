@@ -1,23 +1,20 @@
 package endpoints
 
 import (
-	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/etl"
-	"github.com/navapbc/its-log/internal/schema"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
+	"go.uber.org/zap"
 )
 
-func checkTheBody(body types.ETLPostBody) (string, error) {
+func checkTheBody(c *gin.Context, body types.ETLPostBody) (string, error) {
 	// This conditional is because we're using CreateEtl for both
 	// strings (unstructured data) and JSON (structured data). The strings
 	// are for SQL and starlark, and the JSON is for sequences.
@@ -25,12 +22,15 @@ func checkTheBody(body types.ETLPostBody) (string, error) {
 	// a "body" element and an "expected-params" element, so that we could
 	// "automate" the detection of what parameters are required for each ETL.
 	theBody := ""
+	var err error = nil
+
 	switch body.Body.(type) {
 	case string:
 		if body.Kind == "sql" || body.Kind == "starlark" {
 			theBody = body.Body.(string)
 		} else {
-			return "", errors.New("only SQL ETL actions may come in as a string")
+			err = errors.New("only SQL ETL actions may come in as a string")
+			break
 		}
 	case []any:
 		if body.Kind == "sequence" {
@@ -44,23 +44,52 @@ func checkTheBody(body types.ETLPostBody) (string, error) {
 					}
 				}
 				if !isOk {
-					return "", errors.New("missing `name` from sequence object")
+					err = errors.New("missing `name` from sequence object")
+					break
 				}
 			}
 			jsonData, err := json.MarshalIndent(body.Body, "", "  ")
 			if err != nil {
-				return "", errors.New("body contains invalid JSON")
+				err = errors.New("body contains invalid JSON")
+				break
 			}
 			theBody = string(jsonData)
 		} else {
-			return "", errors.New("sequences must come in as an array of JSON objects")
+			err = errors.New("sequences must come in as an array of JSON objects")
+			break
 		}
 	default:
 		log.Println(body.Body)
-		return "", fmt.Errorf("body contains something of an unrecognizable type: %T", body.Body)
+		err = fmt.Errorf("body contains something of an unrecognizable type: %T", body.Body)
+		break
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"method":  c.Request.Method,
+			"message": err.Error(),
+			"date":    body.Date,
+			"name":    body.Name,
+		})
+		return "", err
 	}
 
 	return theBody, nil
+}
+
+func SetupGinDB(c *gin.Context, appId string, date string) (*storage.Storage, error) {
+	s, err := storage.SetupDB(appId, date)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"method":  c.Request.Method,
+			"message": "could not initialize storage backend",
+			"date":    date,
+		})
+		return nil, err
+	}
+	return s, nil
 }
 
 func CreateEtl(c *gin.Context) {
@@ -77,59 +106,23 @@ func CreateEtl(c *gin.Context) {
 	appId := base.GetOrPanic(c, "AppId")
 	keyId := base.GetOrPanic(c, "KeyId")
 
-	s, err := types.NewStorage(appId)
+	s, err := SetupGinDB(c, appId, body.Date)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not initialize storage backend",
-			"date":    body.Date,
-			"name":    body.Name,
-		})
+		zap.L().Fatal("could not setup DB for CreateEtl")
+	}
+
+	theBody, err := checkTheBody(c, body)
+	if err != nil {
 		return
 	}
 
-	err = s.SetDateYMD(body.Date)
+	_, err = s.Exec(storage.Endpoint, "insert_etl", storage.EmbedParamMap{
+		"key_id": keyId,
+		"name":   body.Name,
+		"kind":   body.Kind,
+		"body":   theBody,
+	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not parse date; must be YYYY-MM-DD, given " + body.Date,
-			"date":    body.Date,
-			"name":    body.Name,
-		})
-		return
-	}
-
-	err = s.InitDB()
-	if err != nil {
-		log.Println("storage init error: " + err.Error())
-		panic(err)
-	}
-	// We cache whether this is loaded, so it is safe/fast to check every time
-	// we try and load another ETL into the table.
-	pc, _, _, _ := runtime.Caller(0)
-	funcName := runtime.FuncForPC(pc).Name()
-	etl.LoadDefaultEtlFiles(s, funcName)
-
-	theBody, err := checkTheBody(body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": err.Error(),
-			"date":    body.Date,
-			"name":    body.Name,
-		})
-		return
-	}
-
-	if err := s.Queries.InsertETL(context.Background(), schema.InsertETLParams{
-		KeyID: keyId,
-		Name:  body.Name,
-		Kind:  body.Kind,
-		Body:  sql.NullString{String: string(theBody), Valid: true},
-	}); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"method":  c.Request.Method,

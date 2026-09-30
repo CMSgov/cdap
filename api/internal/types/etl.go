@@ -2,8 +2,6 @@ package types
 
 import (
 	"database/sql"
-
-	"github.com/gin-gonic/gin"
 )
 
 type ETLPostBody struct {
@@ -11,15 +9,6 @@ type ETLPostBody struct {
 	Kind string `json:"kind" binding:"required"`
 	Body any    `json:"body" binding:"required"`
 	Date string `json:"date" binding:"required"`
-}
-
-type RunEtlParams struct {
-	AppId   string
-	GinCtx  *gin.Context
-	EtlName string
-	KeyId   string
-	Storage *Storage
-	Payload map[string]any
 }
 
 type SummaryRow struct {

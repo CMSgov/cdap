@@ -1,11 +1,23 @@
-package types
+package etl
 
 import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/navapbc/its-log/internal/storage"
+	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
+
+// FIXME: These need to be at the ETL level, not the type level.
+type RunEtlParams struct {
+	AppId   string
+	GinCtx  *gin.Context
+	EtlName string
+	KeyId   string
+	Storage *storage.Storage
+	Payload map[string]any
+}
 
 type StandardErrorResponseParams struct {
 	c      *gin.Context
@@ -13,7 +25,7 @@ type StandardErrorResponseParams struct {
 	etlP   *RunEtlParams
 	Status int
 	Method string
-	Date   ILTime
+	Date   types.ILTime
 	Name   string
 }
 

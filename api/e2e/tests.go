@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/endpoints"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 )
@@ -106,11 +107,11 @@ func StressTest(t *testing.T, iterations int, jitter int, dateOffset int) {
 	log.Printf("total events: %d\n", total)
 }
 
-func Setup(t *testing.T, dateOffset int) *types.Storage {
+func Setup(t *testing.T, dateOffset int) *storage.Storage {
 	date := types.NewILTimeToday()
 	date.SubtractDays(dateOffset)
 
-	s, err := types.NewStorage("pupper")
+	s, err := storage.NewStorage("pupper")
 	if err != nil {
 		t.Error(err)
 	}
@@ -121,7 +122,7 @@ func Setup(t *testing.T, dateOffset int) *types.Storage {
 	return s
 }
 
-func Cleanup(s *types.Storage) {
+func Cleanup(s *storage.Storage) {
 	s.Delete()
 }
 

@@ -1,117 +1,102 @@
 package etl
 
-import (
-	"context"
-	"database/sql"
-	"embed"
-	"io/fs"
-	"log"
-	"path"
-	"path/filepath"
-	"strings"
+// import (
+// 	"context"
+// 	"database/sql"
+// 	"embed"
+// 	"io/fs"
+// 	"log"
+// 	"path/filepath"
+// 	"strings"
 
-	"github.com/navapbc/its-log/internal/schema"
-	"github.com/navapbc/its-log/internal/types"
-	"go.uber.org/zap"
-)
+// 	"github.com/navapbc/its-log/internal/schema"
+// 	"github.com/navapbc/its-log/internal/storage"
+// 	"go.uber.org/zap"
+// )
 
-//go:embed sql
-var defaultSql embed.FS
+// //go:embed sequence
+// var defaultSeq embed.FS
 
-//go:embed sequence
-var defaultSeq embed.FS
+// //go:embed golang
+// var defaultGolang embed.FS
 
-//go:embed golang
-var defaultGolang embed.FS
+// //go:embed starlark
+// var defaultStarlark embed.FS
 
-//go:embed starlark
-var defaultStarlark embed.FS
+// func fileNameWithoutExtension(fileName string) string {
+// 	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
+// }
 
-func LoadEtlSQLAsString(filename string) string {
-	sql, err := defaultSql.ReadFile(path.Join("sql", filename))
-	if err != nil {
-		zap.L().Fatal("could not load default etl",
-			zap.String("filename", filename))
-	}
-	return string(sql)
-}
+// func insertEtl(s *storage.Storage, key, name, kind, body string) {
+// 	err := s.Queries.InsertETL(context.Background(), schema.InsertETLParams{
+// 		KeyID: key,
+// 		Name:  name,
+// 		Kind:  kind,
+// 		// A golang entry will not have a body.
+// 		Body: sql.NullString{String: body, Valid: true},
+// 	})
+// 	if err != nil {
+// 		log.Printf("could not store SQL in ETL table: %s, %s\n", s.AppId, name)
+// 		log.Printf("err: %s", err.Error())
+// 	}
+// }
 
-func fileNameWithoutExtension(fileName string) string {
-	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
-}
+// func loadFilesFromFS(s *storage.Storage, dirName string) {
+// 	var filesystem embed.FS
+// 	switch dirName {
+// 	case "sequence":
+// 		filesystem = defaultSeq
+// 	case "golang":
+// 		filesystem = defaultGolang
+// 	case "starlark":
+// 		filesystem = defaultStarlark
+// 	default:
+// 		panic("could not find embedded filesystem")
+// 	}
 
-func insertEtl(s *types.Storage, key, name, kind, body string) {
-	err := s.Queries.InsertETL(context.Background(), schema.InsertETLParams{
-		KeyID: key,
-		Name:  name,
-		Kind:  kind,
-		// A golang entry will not have a body.
-		Body: sql.NullString{String: body, Valid: true},
-	})
-	if err != nil {
-		log.Printf("could not store SQL in ETL table: %s, %s\n", s.AppId, name)
-		log.Printf("err: %s", err.Error())
-	}
-}
+// 	dirEntries, err := fs.ReadDir(filesystem, dirName)
+// 	if err != nil {
+// 		zap.L().Fatal("cannot read embedded directory",
+// 			zap.String("dirName", dirName),
+// 			zap.Error(err))
+// 	}
 
-func loadFilesFromFS(s *types.Storage, dirName string) {
-	var filesystem embed.FS
-	switch dirName {
-	case "sql":
-		filesystem = defaultSql
-	case "sequence":
-		filesystem = defaultSeq
-	case "golang":
-		filesystem = defaultGolang
-	case "starlark":
-		filesystem = defaultStarlark
-	default:
-		panic("could not find embedded filesystem")
-	}
+// 	// Load the default SQL for ETL
+// 	for _, entry := range dirEntries {
+// 		filename := entry.Name()
+// 		// Skip anything flagged as "internal".
+// 		if !strings.HasPrefix(filename, "internal_") {
+// 			asBytes, err := fs.ReadFile(filesystem, filepath.Join(dirName, filename))
+// 			if err != nil {
+// 				log.Printf("unable to read file: %v\n", err)
+// 				panic("failed to read file from embedded FS")
+// 			}
+// 			asString := string(asBytes)
+// 			entryName := fileNameWithoutExtension(entry.Name())
+// 			insertEtl(s, "its-log", entryName, dirName, asString)
+// 		}
+// 	}
 
-	dirEntries, err := fs.ReadDir(filesystem, dirName)
-	if err != nil {
-		zap.L().Fatal("cannot read embedded directory",
-			zap.String("dirName", dirName),
-			zap.Error(err))
-	}
+// }
 
-	// Load the default SQL for ETL
-	for _, entry := range dirEntries {
-		filename := entry.Name()
-		// Skip anything flagged as "internal".
-		if !strings.HasPrefix(filename, "internal_") {
-			asBytes, err := fs.ReadFile(filesystem, filepath.Join(dirName, filename))
-			if err != nil {
-				log.Printf("unable to read file: %v\n", err)
-				panic("failed to read file from embedded FS")
-			}
-			asString := string(asBytes)
-			entryName := fileNameWithoutExtension(entry.Name())
-			insertEtl(s, "its-log", entryName, dirName, asString)
-		}
-	}
+// func LoadDefaultEtlFiles(s *storage.Storage, from string) error {
 
-}
+// 	// If the file exists, check that there's something in the ETL.
+// 	_, err := s.Queries.GetETL(context.Background(), "sentinel")
+// 	// If there is nothing in the table, we need to load the ETL
+// 	// into the DB. It is a fresh DB.
+// 	if err != nil {
+// 		// DEBUG LOG
+// 		// log.Printf("LoadDefaultEtlFiles from: %s\n", from)
 
-func LoadDefaultEtlFiles(s *types.Storage, from string) error {
+// 		// These files are embedded in the app's
+// 		// magic filesystem. If we can't read these,
+// 		// we panic. It shouldn't happen.
+// 		loadFilesFromFS(s, "sql")
+// 		loadFilesFromFS(s, "sequence")
+// 		loadFilesFromFS(s, "golang")
+// 		loadFilesFromFS(s, "starlark")
+// 	}
 
-	// If the file exists, check that there's something in the ETL.
-	_, err := s.Queries.GetETL(context.Background(), "sentinel")
-	// If there is nothing in the table, we need to load the ETL
-	// into the DB. It is a fresh DB.
-	if err != nil {
-		// DEBUG LOG
-		// log.Printf("LoadDefaultEtlFiles from: %s\n", from)
-
-		// These files are embedded in the app's
-		// magic filesystem. If we can't read these,
-		// we panic. It shouldn't happen.
-		loadFilesFromFS(s, "sql")
-		loadFilesFromFS(s, "sequence")
-		loadFilesFromFS(s, "golang")
-		loadFilesFromFS(s, "starlark")
-	}
-
-	return nil
-}
+// 	return nil
+// }

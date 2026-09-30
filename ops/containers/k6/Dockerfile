@@ -1,9 +1,12 @@
-FROM amazonlinux:2023
+FROM grafana/k6
 
 # https://github.com/grafana/k6/issues/5120
-RUN dnf install -y golang git
-RUN go install go.k6.io/k6@latest
-RUN mv ~/go/bin/k6 /usr/local/bin/
+# RUN dnf install -y \
+#     golang \
+#     git
+# RUN dnf install -y https://dl.k6.io/rpm/repo.rpm
+# RUN dnf install -y --nogpgcheck k6
+# RUN dnf install -y https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-linux-amd64.rpm
 
 COPY scripts /scripts
 

@@ -1,14 +1,12 @@
 package csp
 
 import (
-	"context"
-	"database/sql"
-	"log"
-	"runtime"
+	"time"
 
-	"github.com/navapbc/its-log/internal/etl"
-	"github.com/navapbc/its-log/internal/schema"
+	_ "github.com/duckdb/duckdb-go/v2"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
+	"go.uber.org/zap"
 )
 
 // Using a nested set of maps, we end up with a structure
@@ -25,6 +23,13 @@ import (
 //	\
 //	 2026-01-01 <- [ e6 ]
 type BufferTree map[string]map[string][]*types.Event
+
+// For use in infinite contexts
+func FlushBuffers(ch_flush_in <-chan types.EventBuffer) {
+	for {
+		FlushBuffersOnce(ch_flush_in)
+	}
+}
 
 // We could be getting things from any number of apps at any given time.
 // Therefore, the buffer needs to be organized for writing.
@@ -63,68 +68,52 @@ func organizeEvents(eventBuffer types.EventBuffer) BufferTree {
 
 }
 
-var isEtlLoaded = make(map[string]bool)
-
 func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 	eventBuffer := <-ch_flush_in
 	org := organizeEvents(eventBuffer)
 
 	for appId, dateMap := range org {
 		for formattedDate, events := range dateMap {
-			s, err := types.NewStorage(appId)
+			s, err := storage.SetupDB(appId, formattedDate)
 			if err != nil {
-				panic("failed to create storage backend")
-			}
-			err = s.SetDateYMD(formattedDate)
-			if err != nil {
-				panic("failed to parse date in FlushBuffersOnce")
+				zap.L().Fatal("could not setup DB in flushbuffers",
+					zap.String("appId", appId), zap.String("date", formattedDate),
+					zap.Error(err))
 			}
 
-			err = s.InitDB()
+			s.GetAppender("itslog_events")
+			start := time.Now() // Record the start time
+			inserted, err := ManyEvents(s, events)
 			if err != nil {
-				log.Println("storage init error: " + err.Error())
-				panic(err)
+				zap.L().Error("error in event insertion", zap.Error(err))
 			}
-
-			_, err = ManyEvents(s, events)
+			s.FlushAppender()
+			s.CloseAppender()
+			duration := time.Since(start)
 
 			if err != nil {
 				// FIXME: really, this should percolate up to a 5xx error
 				// going back to the client. But, there's no direct communication back to
 				// the client at this point, because we buffered the event(s), and then
 				// flushed the buffer. This may have to just be a log that we look for.
-				log.Printf("Failed to write event buffer; lost %d events\n", len(events))
-				log.Println("err: " + err.Error())
+				zap.L().Error("failed to write event buffer; lost events",
+					zap.Int("events_lost", len(events)),
+					zap.Error(err))
+			} else {
+				zap.L().Info("appended events",
+					zap.Int64("count", inserted),
+					zap.Int64("milliseconds", duration.Milliseconds()))
 			}
 
-			// This `if` saves us from attempting to reload multiple times for a single
-			// running session of its-log, but it also means there is no hot-reloading
-			// of the defaults. (Or, there could be, but it would have to be an API call.)
-			// I think this keeps us from hitting the DB too often, so I'm going to leave it.
-			if _, ok := isEtlLoaded[formattedDate]; !ok {
-				pc, _, _, _ := runtime.Caller(0)
-				funcName := runtime.FuncForPC(pc).Name()
-				err := etl.LoadDefaultEtlFiles(s, funcName)
-				if err != nil {
-					log.Println("could not load default ETL files for " + formattedDate + ": " + err.Error())
-				} else {
-					isEtlLoaded[formattedDate] = true
-				}
-			}
-			s.Close()
+			// FIXME: should we close here?
+			// Or, leave sessions open?
+			// s.Close()
 		}
 	}
 
 }
 
-// For use in infinite contexts
-func FlushBuffers(ch_flush_in <-chan types.EventBuffer) {
-	for {
-		FlushBuffersOnce(ch_flush_in)
-	}
-}
-
-func ManyEvents(s *types.Storage, evt_buff []*types.Event) (int64, error) {
+func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 	counter := int64(0)
 
 	s.Lock()
@@ -132,29 +121,36 @@ func ManyEvents(s *types.Storage, evt_buff []*types.Event) (int64, error) {
 	// or leave part way through the loop.
 	defer s.Unlock()
 
+	// The appender must supply all columns.
+	var max_id int64
+	row := s.GetDB().QueryRow("EXECUTE get_max_event_id;")
+	err := row.Scan(&max_id)
+	if err != nil {
+		zap.L().Error("could not get MAX(id) on itslog_events", zap.Error(err))
+	}
+
+	// This could/should become an appender in DuckDB.
+	// https://duckdb.org/docs/current/data/appender
+	// Doing individual commits without a transaction is the slowest
+	// way to do this in DuckDB. Appenders are much better, both for
+	// performance and safety.
 	for _, e := range evt_buff {
 		if e != nil {
 
-			valid_cluster := false
-			if len(e.Cluster) > 0 {
-				valid_cluster = true
-			}
-
-			valid_value := false
-			if len(e.Value) > 0 {
-				valid_value = true
-			}
-
-			_, err := s.Queries.LogEvent(context.Background(), schema.LogEventParams{
-				Timestamp: sql.NullInt64{Int64: e.Timestamp.Unix(), Valid: true},
-				KeyID:     e.KeyId,
-				Cluster:   sql.NullString{String: e.Cluster, Valid: valid_cluster},
-				Tags:      e.TagString,
-				Value:     sql.NullString{String: e.Value, Valid: valid_value},
-			})
+			// We call the 'no lock' version here, because we want to do a large number of inserts
+			// under a single lock.
+			// _, err := s.ExecNoLock(storage.Endpoint, "log_event", storage.EmbedParamMap{
+			// 	"_timestamp": e.Timestamp.Unix(),
+			// 	"_key_id":    e.KeyId,
+			// 	"_cluster":   e.Cluster,
+			// 	"_tags":      e.TagString,
+			// 	"_value":     e.Value,
+			// })
+			max_id += 1
+			err := s.AppendRow(max_id, e.Timestamp.Unix(), e.KeyId, e.Cluster, e.TagString, e.Value)
 
 			if err != nil {
-				log.Println("Error in storing event: " + err.Error())
+				zap.L().Error("error storing event", zap.Error(err))
 				return -1, err
 			}
 			counter += 1
