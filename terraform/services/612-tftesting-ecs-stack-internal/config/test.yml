@@ -1,0 +1,4 @@
+ecs:
+  # this is a testing module, check in code at `0` and recreate resources for dev
+  desired_count: 0
+  cluster: cdap-test-tftesting
