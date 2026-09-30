@@ -284,7 +284,6 @@ resource "aws_iam_policy" "ecs_exec" {
   policy      = data.aws_iam_policy_document.ecs_exec.json
 }
 
-
 data "aws_iam_policy_document" "ecs_exec" {
   statement {
     sid = "AllowECSExec"
@@ -296,4 +295,10 @@ data "aws_iam_policy_document" "ecs_exec" {
     ]
     resources = ["*"]
   }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_exec" {
+  count      = var.enable_execute_command ? 1 : 0
+  role       = aws_iam_role.task.name
+  policy_arn = aws_iam_policy.ecs_exec[0].arn
 }
