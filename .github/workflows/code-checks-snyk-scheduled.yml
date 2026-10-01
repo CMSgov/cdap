@@ -16,4 +16,5 @@ jobs:
     with:
       app: cdap
       ref: main
-    secrets: inherit
+    secrets:
+      PROD_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
