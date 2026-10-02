@@ -186,9 +186,9 @@ Working on "node_modules". It might take a while...
 │ balanced-match@4.0.4      │ MIT            │ MIT            │ -              │
 │ baseline-browser-mapping@ │ Apache 2.0     │ Apache 2.0     │ W3C            │
 │ bowser@2.14.1             │ MIT            │ MIT            │ MIT            │
-│ brace-expansion@1.1.18    │ MIT            │ MIT            │ MIT            │
-│ brace-expansion@2.1.4     │ MIT            │ MIT            │ MIT            │
-│ brace-expansion@5.0.9     │ MIT            │ MIT            │ -              │
+│ brace-expansion@1.1.21    │ MIT            │ MIT            │ MIT            │
+│ brace-expansion@2.1.7     │ MIT            │ MIT            │ MIT            │
+│ brace-expansion@5.0.12    │ MIT            │ MIT            │ -              │
 │ browserslist@4.28.7       │ MIT            │ MIT            │ -              │
 │ bs-logger@0.2.6           │ MIT            │ MIT            │ MIT            │
 │ bser@2.1.1                │ Apache 2.0     │ -              │ -              │
@@ -439,7 +439,7 @@ Working on "node_modules". It might take a while...
 │ uglify-js@3.19.3          │ BSD 2 Clause   │ BSD 2 Clause + │ -              │
 │ undefined@undefined       │ -              │ -              │ -              │
 │ undici-types@7.24.6       │ MIT            │ MIT            │ -              │
-│ undici@8.10.0             │ MIT            │ MIT            │ -              │
+│ undici@8.11.2             │ MIT            │ MIT            │ -              │
 │ unrs-resolver@1.12.2      │ MIT            │ -              │ MIT            │
 │ update-browserslist-db@1. │ MIT            │ MIT            │ -              │
 │ uri-js@4.4.1              │ BSD 2 Clause   │ -              │ -              │
