@@ -4,6 +4,14 @@ For a complete list of resources managed by this module, please see the [Resourc
 
 ## Important Usage Notes
 
+### RDS Enhanced Monitoring
+This module now manages the role that writes enhanced monitoring. To import existing roles:
+
+```terraform import 'module.database.aws_iam_role.db_monitoring' <role-name>
+
+terraform import 'module.database.aws_iam_role_policy_attachment.db_monitoring' \
+  <role-name>/arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole```
+
 ### Platform Module Expectations
 While emerging standardized `platform` isn't strictly required, usage is strongly recommended. **this** module expects the input variable `var.platform` as an object that includes the following, prescriptive fields:
 - `var.platform.is_ephemeral_env`
@@ -143,25 +151,30 @@ No requirements.
 | <a name="input_backup_window"></a> [backup\_window](#input\_backup\_window) | Daily time range during which automated backups are created if automated backups are enabled in UTC, e.g. `04:00-09:00` | `string` | n/a | yes |
 | <a name="input_instance_class"></a> [instance\_class](#input\_instance\_class) | Aurora cluster instance class, restricted to RI instances | `string` | n/a | yes |
 | <a name="input_maintenance_window"></a> [maintenance\_window](#input\_maintenance\_window) | Weekly time range during which system maintenance can occur in UTC, e.g. `wed:04:00-wed:04:30` | `string` | n/a | yes |
-| <a name="input_password"></a> [password](#input\_password) | The database's primary/master credentials password | `string` | n/a | yes |
 | <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. | `any` | n/a | yes |
-| <a name="input_username"></a> [username](#input\_username) | The database's primary/master credentials username | `string` | n/a | yes |
 | <a name="input_aws_backup_tag"></a> [aws\_backup\_tag](#input\_aws\_backup\_tag) | Override for a standard, CDAP-managed backup tag for AWS Backups | `string` | `"4hr1dr_d7_w35_m90"` | no |
 | <a name="input_backup_retention_period"></a> [backup\_retention\_period](#input\_backup\_retention\_period) | Days to retain backups for. | `number` | `1` | no |
+| <a name="input_breakglass_alert_sns_topic_arn"></a> [breakglass\_alert\_sns\_topic\_arn](#input\_breakglass\_alert\_sns\_topic\_arn) | SNS topic ARN to notify when the breakglass secret is read. . | `string` | `null` | no |
+| <a name="input_breakglass_rotation_days"></a> [breakglass\_rotation\_days](#input\_breakglass\_rotation\_days) | Rotation interval, in days, for the RDS-managed breakglass secret.<br/>Only applies when manage\_breakglass\_password = true. Defaults to 0,<br/>which leaves automatic rotation disabled. | `number` | `0` | no |
+| <a name="input_cloudtrail_log_group_name"></a> [cloudtrail\_log\_group\_name](#input\_cloudtrail\_log\_group\_name) | Name of the CloudWatch Logs log group CloudTrail management events are<br/>already delivered to. | `string` | `"cms-cloud-cloudtrail-logs"` | no |
 | <a name="input_cluster_identifier"></a> [cluster\_identifier](#input\_cluster\_identifier) | Override for the aurora cluster identifier | `string` | `null` | no |
 | <a name="input_cluster_instance_parameters"></a> [cluster\_instance\_parameters](#input\_cluster\_instance\_parameters) | A list of objects containing the values for apply\_method, name, and value that corresponds to the instance-level prameters. | <pre>list(object({<br/>    apply_method = string<br/>    name         = string<br/>    value        = any<br/>  }))</pre> | `[]` | no |
 | <a name="input_cluster_parameters"></a> [cluster\_parameters](#input\_cluster\_parameters) | A list of objects containing the values for apply\_method, name, and value that corresponds to the cluster-level prameters. | <pre>list(object({<br/>    apply_method = string<br/>    name         = string<br/>    value        = any<br/>  }))</pre> | `[]` | no |
 | <a name="input_deletion_protection"></a> [deletion\_protection](#input\_deletion\_protection) | If the DB cluster should have deletion protection enabled. | `bool` | `true` | no |
+| <a name="input_enable_iam_database_authentication"></a> [enable\_iam\_database\_authentication](#input\_enable\_iam\_database\_authentication) | If true, enables the IAM database authentication capability on the<br/>cluster. This only makes IAM auth available -- it does not disable or<br/>replace username/password authentication, and no Postgres role uses it<br/>until a consuming terraservice grants that role `rds_iam` and attaches<br/>its own IAM policy scoped to that dbuser, using the cluster\_resource\_id<br/>this module publishes via SSM. Defaults to true because enabling the<br/>capability has no effect on teams that don't use it. | `bool` | `true` | no |
 | <a name="input_engine_version"></a> [engine\_version](#input\_engine\_version) | Selected major engine version for either RDS DB Instance or RDS Aurora DB Cluster. | `string` | `"16"` | no |
 | <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Desired number of cluster instances | `number` | `1` | no |
 | <a name="input_kms_key_override"></a> [kms\_key\_override](#input\_kms\_key\_override) | Override to the platform-managed KMS key | `string` | `null` | no |
+| <a name="input_manage_breakglass_password"></a> [manage\_breakglass\_password](#input\_manage\_breakglass\_password) | If true, RDS creates and manages the breakglass password in AWS<br/>Secrets Manager instead of using var.password. Opt-in and off by<br/>default. Existing username/password behavior is unchanged unless a<br/>team explicitly turns this on. | `bool` | `false` | no |
 | <a name="input_monitoring_interval"></a> [monitoring\_interval](#input\_monitoring\_interval) | The [monitoring\_interval](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#monitoring_interval-1) in seconds determines the time between sampling enhanced monitoring metrics for the cluster. | `number` | `15` | no |
-| <a name="input_monitoring_role_arn"></a> [monitoring\_role\_arn](#input\_monitoring\_role\_arn) | ARN for the IAM role that permits RDS to send enhanced monitoring metrics to CloudWatch Logs. | `string` | `null` | no |
+| <a name="input_monitoring_role_path"></a> [monitoring\_role\_path](#input\_monitoring\_role\_path) | IAM path for the monitoring role this module creates. | `string` | `"/delegatedadmin/developer/"` | no |
+| <a name="input_password"></a> [password](#input\_password) | The database's primary/breakglass credentials password. Required only<br/>when manage\_breakglass\_password = false. Ignored (and may be omitted)<br/>when manage\_breakglass\_password = true, since RDS generates and stores<br/>the breakglass password in Secrets Manager instead. | `string` | `null` | no |
 | <a name="input_security_group_override"></a> [security\_group\_override](#input\_security\_group\_override) | Override for the security group name | `string` | `null` | no |
 | <a name="input_snapshot_identifier"></a> [snapshot\_identifier](#input\_snapshot\_identifier) | When provided, cluster is provisioned using the specified cluster snapshot identifier. | `string` | `null` | no |
 | <a name="input_storage_type"></a> [storage\_type](#input\_storage\_type) | Aurora cluster [storage\_type](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#storage_type-1) | `string` | `""` | no |
 | <a name="input_subnet_group_override"></a> [subnet\_group\_override](#input\_subnet\_group\_override) | Override for the subnet group name | `string` | `null` | no |
-| <a name="input_vpc_security_group_ids"></a> [vpc\_security\_group\_ids](#input\_vpc\_security\_group\_ids) | Additional security group ids for attachment to the database security group. | `list(string)` | `[]` | no |
+| <a name="input_username"></a> [username](#input\_username) | The database's primary/breakglass credentials username. If omitted,<br/>defaults to a name derived from the platform app and environment<br/>(see local.default\_breakglass\_username in locals.tf). | `string` | `null` | no |
+| <a name="input_vpc_security_group_ids"></a> [vpc\_security\_group\_ids](#input\_vpc\_security\_group\_ids) | Deprecated. Additional security group IDs to attach directly to the Aurora cluster.<br/>Service-level DB access should be granted via ingress rules referencing<br/>the published SSM parameter. | `list(string)` | `[]` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -181,13 +194,30 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [aws_cloudwatch_log_metric_filter.breakglass_secret_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_metric_filter) | resource |
+| [aws_cloudwatch_metric_alarm.breakglass_secret_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_db_parameter_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_parameter_group) | resource |
 | [aws_db_subnet_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group) | resource |
+| [aws_iam_policy.db_monitoring_kms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_role.db_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.db_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.db_monitoring_kms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_rds_cluster.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster) | resource |
 | [aws_rds_cluster_instance.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster_instance) | resource |
 | [aws_rds_cluster_parameter_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster_parameter_group) | resource |
+| [aws_secretsmanager_secret_rotation.breakglass_password](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_rotation) | resource |
 | [aws_security_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_ssm_parameter.breakglass_secret_arn](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_ssm_parameter.breakglass_user_secret_arn](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_ssm_parameter.db_cluster_resource_id](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_ssm_parameter.db_security_group_id](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_ssm_parameter.reader_endpoint](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_ssm_parameter.writer_endpoint](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [aws_vpc_security_group_egress_rule.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_iam_policy.developer_boundary_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy) | data source |
+| [aws_iam_policy.rds_monitoring](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy) | data source |
+| [aws_iam_policy_document.db_monitoring_kms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.rds_monitoring_assume](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_rds_engine_version.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/rds_engine_version) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -201,5 +231,9 @@ No modules.
 |------|-------------|
 | <a name="output_aurora_cluster"></a> [aurora\_cluster](#output\_aurora\_cluster) | n/a |
 | <a name="output_aurora_instances"></a> [aurora\_instances](#output\_aurora\_instances) | n/a |
+| <a name="output_breakglass_secret_arn"></a> [breakglass\_secret\_arn](#output\_breakglass\_secret\_arn) | Secrets Manager ARN of the RDS-managed breakglass secret. Null unless manage\_breakglass\_password = true. |
+| <a name="output_db_security_group_id"></a> [db\_security\_group\_id](#output\_db\_security\_group\_id) | Security group ID attached to the cluster. |
+| <a name="output_reader_endpoint"></a> [reader\_endpoint](#output\_reader\_endpoint) | The cluster's reader endpoint, as host:port. |
 | <a name="output_security_group"></a> [security\_group](#output\_security\_group) | n/a |
+| <a name="output_writer_endpoint"></a> [writer\_endpoint](#output\_writer\_endpoint) | The cluster's writer endpoint, as host:port. |
 <!-- END_TF_DOCS -->

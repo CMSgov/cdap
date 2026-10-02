@@ -1,13 +1,64 @@
 variable "username" {
-  # deprecated  = "This will no longer be supported once APIs adopt AWS Secrets Manager manged credentials." #TODO opentofu only
-  description = "The database's primary/master credentials username"
+  description = <<-EOT
+    The database's primary/breakglass credentials username. If omitted,
+    defaults to a name derived from the platform app and environment
+    (see local.default_breakglass_username in locals.tf).
+  EOT
   type        = string
+  default     = null
+
+  validation {
+    condition     = var.username == null || can(regex("^[A-Za-z][A-Za-z0-9_]{0,62}$", var.username))
+    error_message = "username must start with a letter and contain only letters, digits, and underscores (max 63 characters), per RDS/Aurora master username restrictions."
+  }
 }
 
 variable "password" {
-  # deprecated  = "This will no longer be supported once APIs adopt AWS Secrets Manager manged credentials." #TODO opentofu only
-  description = "The database's primary/master credentials password"
+  # deprecated  = "This will no longer be supported once APIs adopt AWS Secrets Manager manged credentials."
+  description = <<-EOT
+    The database's primary/breakglass credentials password. Required only
+    when manage_breakglass_password = false. Ignored (and may be omitted)
+    when manage_breakglass_password = true, since RDS generates and stores
+    the breakglass password in Secrets Manager instead.
+  EOT
   type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "manage_breakglass_password" {
+  description = <<-EOT
+    If true, RDS creates and manages the breakglass password in AWS
+    Secrets Manager instead of using var.password. Opt-in and off by
+    default. Existing username/password behavior is unchanged unless a
+    team explicitly turns this on.
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "breakglass_rotation_days" {
+  description = <<-EOT
+    Rotation interval, in days, for the RDS-managed breakglass secret.
+    Only applies when manage_breakglass_password = true. Defaults to 0,
+    which leaves automatic rotation disabled.
+  EOT
+  type        = number
+  default     = 0
+}
+
+variable "enable_iam_database_authentication" {
+  description = <<-EOT
+    If true, enables the IAM database authentication capability on the
+    cluster. This only makes IAM auth available -- it does not disable or
+    replace username/password authentication, and no Postgres role uses it
+    until a consuming terraservice grants that role `rds_iam` and attaches
+    its own IAM policy scoped to that dbuser, using the cluster_resource_id
+    this module publishes via SSM. Defaults to true because enabling the
+    capability has no effect on teams that don't use it.
+  EOT
+  type        = bool
+  default     = true
 }
 
 variable "platform" {
@@ -71,12 +122,6 @@ variable "deletion_protection" {
 variable "snapshot_identifier" {
   default     = null
   description = "When provided, cluster is provisioned using the specified cluster snapshot identifier."
-  type        = string
-}
-
-variable "monitoring_role_arn" {
-  default     = null
-  description = "ARN for the IAM role that permits RDS to send enhanced monitoring metrics to CloudWatch Logs."
   type        = string
 }
 
@@ -144,4 +189,26 @@ variable "security_group_override" {
   default     = null
   description = "Override for the security group name"
   type        = string
+}
+
+variable "breakglass_alert_sns_topic_arn" {
+  description = <<-EOT
+    SNS topic ARN to notify when the breakglass secret is read. .
+  EOT
+  type        = string
+  default     = null
+}
+variable "cloudtrail_log_group_name" {
+  description = <<-EOT
+    Name of the CloudWatch Logs log group CloudTrail management events are
+    already delivered to.
+  EOT
+  type        = string
+  default     = "cms-cloud-cloudtrail-logs"
+}
+
+variable "monitoring_role_path" {
+  description = "IAM path for the monitoring role this module creates."
+  type        = string
+  default     = "/delegatedadmin/developer/"
 }
