@@ -50,6 +50,30 @@ variable "additional_bucket_policies" {
   type        = list(string)
 }
 
+variable "object_lock" {
+  description = "S3 Object Lock (WORM) default retention. Object Lock can only be enabled at bucket creation. Mode is GOVERNANCE or COMPLIANCE."
+  type = object({
+    mode  = string
+    years = number
+  })
+  default = null
+}
+
+variable "transitions" {
+  description = "Storage class transitions for current object versions. This is used currently in the long-term-log-retention bucket for cost savings on long-lived log objects for HIPAA compliance."
+  type = list(object({
+    days          = number
+    storage_class = string
+  }))
+  default = []
+}
+
+variable "expiration_days" {
+  description = "Days after object creation when current versions expire and noncurrent versions are permanently deleted. Must exceed any Object Lock retention period."
+  type        = number
+  default     = null
+}
+
 # modules/bucket/variables.tf
 variable "additional_bucket_statements" {
   description = "Structured statements that will reference the bucket's ARN. Useful for iterative calls of the module."

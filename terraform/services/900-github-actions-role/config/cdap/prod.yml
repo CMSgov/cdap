@@ -4,4 +4,5 @@ additional_kms:
   - "bfd-sandbox" # used to share Datadog API keys
   - "bfd-prod" # used to share Datadog API keys
   - "aurora_export" # used to share insights data between accounts
+  # - "cdap-prod-log-retention" # dedicated key for the 701-log-retention pipeline
 
