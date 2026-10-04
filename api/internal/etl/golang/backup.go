@@ -68,10 +68,8 @@ func Backup(etlP *etl.RunEtlParams) error {
 
 		// Lock the DB while copying.
 		// Close it so that the WAL is committed.
-		storage.Lock()
 		storage.Close()
 		_, copyErr := copyToBackupBucket(storage)
-		storage.Unlock()
 
 		if copyErr != nil {
 			return copyErr

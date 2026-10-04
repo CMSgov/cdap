@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
 	"embed"
 	"io/fs"
@@ -77,6 +76,7 @@ func (e *EmbedSql) Prepare() {
 	for name, contents := range e.Files {
 		// Prepare everything into the DB if it has not happened before.
 		if _, ok := e.Statements[name]; !ok {
+
 			stmt, err := e.db.Prepare(contents)
 			if err != nil {
 				zap.L().Fatal("cannot prepare embedded SQL statement",
@@ -107,31 +107,19 @@ func (e *EmbedSql) Exec(name string, params EmbedParamMap) (sql.Result, error) {
 	var err error
 
 	if stmt, ok := e.Statements[name]; ok {
-		res, err = stmt.ExecContext(context.Background(), prepped)
+		res, err = stmt.Exec(prepped)
 	} else {
-		res, err = e.db.ExecContext(context.Background(), e.Files[name], prepped)
+		res, err = e.db.Exec(e.Files[name], prepped)
 	}
 
 	return res, err
 }
 
-func (e *EmbedSql) Query(name string, params EmbedParamMap) (*sql.Rows, error) {
-
-	prepped := make([]sql.NamedArg, 0)
-	for name, val := range params {
-		prepped = append(prepped, sql.Named(name, val))
-	}
-
-	return e.Statements[name].QueryContext(context.Background(), prepped)
+func (e *EmbedSql) Query(name string, namedArgs []any) (*sql.Rows, error) {
+	return e.Statements[name].Query(namedArgs...)
 }
 
-func (e *EmbedSql) QueryRow(name string, params EmbedParamMap) *sql.Row {
-
-	prepped := make([]sql.NamedArg, 0)
-	for name, val := range params {
-		prepped = append(prepped, sql.Named(name, val))
-	}
-
-	row := e.Statements[name].QueryRowContext(context.Background(), prepped)
+func (e *EmbedSql) QueryRow(name string, namedArgs []any) *sql.Row {
+	row := e.Statements[name].QueryRow(namedArgs...)
 	return row
 }

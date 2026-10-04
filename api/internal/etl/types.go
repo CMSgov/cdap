@@ -33,12 +33,6 @@ type StandardErrorResponseParams struct {
 	Date   types.ILTime
 	Name   string
 }
-type GetETLRow struct {
-	Name    string
-	Kind    string
-	Body    sql.NullString
-	LastRun sql.NullInt64
-}
 
 func NewStandardErrorResponse(etlP *RunEtlParams, err error) *StandardErrorResponseParams {
 	return &StandardErrorResponseParams{

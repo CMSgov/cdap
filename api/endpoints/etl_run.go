@@ -2,7 +2,6 @@ package endpoints
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -70,38 +69,28 @@ func RunEtl(c *gin.Context) {
 }
 
 func runEtl(etlP *etl.RunEtlParams) error {
-	// FIXME SQL CALL
-	//row, err := etlP.Storage.Queries.GetETL(context.Background(), etlP.EtlName)
-	raw := etlP.Storage.QueryRow(storage.Endpoint,
-		"get_etl",
-		storage.EmbedParamMap{"name": etlP.EtlName})
-
-	// var name, kind, body, lastRun string
-	//err := row.Scan(&name, &kind, &body, &lastRun)
-	var row etl.GetETLRow
-	err := raw.Scan(&row.Name, &row.Kind, &row.Body, &row.LastRun)
-
+	// There is a lock burried down the call tree...
+	// etlP.Storage.Lock("runEtl")
+	etlRow, err := etlP.Storage.GetEtlFromDb(etlP.EtlName)
+	// etlP.Storage.Unlock("runEtl")
 	if err != nil {
-		msg := "could not find/scan ETL step"
-		zap.L().Error(msg,
-			zap.String("etl_name", etlP.EtlName),
-			zap.Any("payload", etlP.Payload))
-		return fmt.Errorf("%s: %s", msg, err.Error())
+		return err
 	}
 
-	switch row.Kind {
+	switch etlRow.Kind {
 	case "sql":
-		err := etlRunSql(etlP, row, nil)
+		err := etlRunSql(etlP, etlRow, nil)
+		// etlP.Storage.Exec(storage.Endpoint, etlP.EtlName, )
 		if err != nil {
 			return err
 		}
 	case "golang":
-		err := etlRunGolang(etlP, row, nil)
+		err := etlRunGolang(etlP, etlRow, nil)
 		if err != nil {
 			return err
 		}
 	case "starlark":
-		err := etlRunStarlark(etlP, row, nil)
+		err := etlRunStarlark(etlP, etlRow, nil)
 		if err != nil {
 			return err
 		}
@@ -110,7 +99,7 @@ func runEtl(etlP *etl.RunEtlParams) error {
 		// The name of the step will have been loaded into the context.
 
 	default:
-		msg := "unknown kind of etl: " + row.Kind
+		msg := "unknown kind of etl: " + etlRow.Kind
 		log.Println(msg)
 		if etlP.GinCtx != nil {
 			ser := etl.NewStandardErrorResponse(etlP, nil)
@@ -119,18 +108,18 @@ func runEtl(etlP *etl.RunEtlParams) error {
 		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
 	}
 
-	// FIXME SQL CALL
-	//updateErr := etlP.Storage.Queries.UpdateLastRun(context.Background(), etlP.EtlName)
-	updateErr := errors.New("FIXME")
+	_, err = etlP.Storage.Exec(storage.Endpoint, "update_last_run", storage.EmbedParamMap{
+		"name": etlP.EtlName,
+	})
 
-	if updateErr != nil {
+	if err != nil {
 		msg := "could not update ETL metadata"
 		log.Println(msg)
 		if etlP.GinCtx != nil {
 			ser := etl.NewStandardErrorResponse(etlP, nil)
 			ser.SetStatus(http.StatusInternalServerError).Send(msg)
 		}
-		return fmt.Errorf("%s: %s", msg, updateErr.Error())
+		return fmt.Errorf("%s: %s", msg, err.Error())
 	}
 
 	return nil

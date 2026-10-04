@@ -1,3 +1,2 @@
 -- WHAT
-PREPARE sentinel AS
-    SELECT 1;
+SELECT 0;

@@ -73,14 +73,22 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 	org := organizeEvents(eventBuffer)
 
 	for appId, dateMap := range org {
+
 		for formattedDate, events := range dateMap {
+
+			zap.L().Debug("FlushBuffersOnce dateMap",
+				zap.String("formatted_date", formattedDate),
+				zap.Int("len(events)", len(events)))
+
 			s, err := storage.SetupDB(appId, formattedDate)
+
 			if err != nil {
 				zap.L().Fatal("could not setup DB in flushbuffers",
 					zap.String("appId", appId), zap.String("date", formattedDate),
 					zap.Error(err))
 			}
 
+			s.Lock("FlushBuffersOnce")
 			s.GetAppender("itslog_events")
 			start := time.Now() // Record the start time
 			inserted, err := ManyEvents(s, events)
@@ -89,6 +97,8 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 			}
 			s.FlushAppender()
 			s.CloseAppender()
+			s.Unlock("FlushBuffersOnce")
+
 			duration := time.Since(start)
 
 			if err != nil {
@@ -119,11 +129,6 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 	counter := int64(0)
 
-	s.Lock()
-	// Unlock regardless of whether we complete
-	// or leave part way through the loop.
-	defer s.Unlock()
-
 	// The appender must supply all columns.
 	var max_id int64
 	row := s.Endpoints.Statements["get_max_event_id"].QueryRow()
@@ -139,19 +144,8 @@ func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 	// performance and safety.
 	for _, e := range evt_buff {
 		if e != nil {
-
-			// We call the 'no lock' version here, because we want to do a large number of inserts
-			// under a single lock.
-			// _, err := s.ExecNoLock(storage.Endpoint, "log_event", storage.EmbedParamMap{
-			// 	"_timestamp": e.Timestamp.Unix(),
-			// 	"_key_id":    e.KeyId,
-			// 	"_cluster":   e.Cluster,
-			// 	"_tags":      e.TagString,
-			// 	"_value":     e.Value,
-			// })
 			max_id += 1
 			err := s.AppendRow(max_id, e.Timestamp.Unix(), e.KeyId, e.Cluster, e.TagString, e.Value)
-
 			if err != nil {
 				zap.L().Error("error storing event", zap.Error(err))
 				return -1, err
@@ -159,9 +153,6 @@ func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 			counter += 1
 		}
 	}
-
-	// DEBUG LOG
-	// log.Printf("ManyEvents: %s <- %d events", s.ILTime.AsYYYYMMDD(), counter)
 
 	return counter, nil
 }

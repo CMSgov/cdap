@@ -88,6 +88,7 @@ func CreateEtl(c *gin.Context) {
 
 	if err != nil {
 		zap.L().Error("etl save error", zap.Error(err))
+
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"method":  c.Request.Method,

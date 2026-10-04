@@ -84,7 +84,7 @@ func CountAllCombinations(etlP *types.RunEtlParams) error {
 		// and an array of arguments in the correct order.
 		query_string, args, err := the_query.ToSql()
 		// Run the query. Get back one value.
-		the_count_row := etlP.Storage.GetDB().QueryRowContext(context.Background(), query_string, args...)
+		the_count_row := etlP.Storage.GetDB().QueryRow(query_string, args...)
 		var the_count int
 		err = the_count_row.Scan(&the_count)
 		if err != nil {
@@ -103,7 +103,7 @@ func CountAllCombinations(etlP *types.RunEtlParams) error {
 	for tag, count := range counts {
 		// Expect all ETLs to return 0 or 1.
 		if count > 0 && !slices.Contains(allTags, tag) {
-			_, err := etlP.Storage.GetDB().ExecContext(context.Background(),
+			_, err := etlP.Storage.GetDB().Exec(
 				cacSql,
 				etlP.KeyId, etlP.Storage.ILTime.AsYYYYMMDD(), tag, count)
 			if err != nil {

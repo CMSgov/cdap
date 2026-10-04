@@ -48,8 +48,8 @@ func Consolidate(etlP *etl.RunEtlParams) error {
 			// Now, we have past storage set up. Copy all of the summary table from it to the
 			// current storage, which is in the etlP parameter. Locking here is possibly
 			// not *strictly* necessary, but safer than not?
-			past_storage.Lock()
-			defer past_storage.Unlock()
+			past_storage.Lock("Consolidate")
+			defer past_storage.Unlock("Consolidate")
 
 			// FIXME bring back
 			// summaryRows, err := past_storage.Queries.GetAllSummaries(context.Background())

@@ -23,3 +23,10 @@ type Storage struct {
 }
 
 type StorageMap map[string]*Storage
+
+type EtlRow struct {
+	Name    string
+	Kind    string
+	Body    sql.NullString
+	LastRun sql.NullInt64
+}

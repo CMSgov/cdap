@@ -1,7 +1,6 @@
 package endpoints
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -10,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/navapbc/its-log/internal/etl"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"go.starlark.net/lib/json"
 	"go.starlark.net/lib/math"
@@ -48,7 +48,7 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 
 		// An SQL step will read from and write to the DB.
 		// Lock and release around this action.
-		rows, err := etlP.Storage.GetDB().QueryContext(context.Background(), queryString, sqlArgs...)
+		rows, err := etlP.Storage.GetDB().Query(queryString, sqlArgs...)
 		if err != nil {
 			return starlark.None, err
 		}
@@ -99,7 +99,7 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 	}
 }
 
-func etlRunStarlark(etlP *etl.RunEtlParams, row etl.GetETLRow, tx *sql.Tx) error {
+func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) error {
 	// Run the query
 	if !row.Body.Valid {
 		msg := "sql is null for ETL step"
@@ -183,7 +183,6 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row etl.GetETLRow, tx *sql.Tx) error
 	}
 
 	// Now, write them to the summary table.
-	etlP.Storage.Lock()
 	for _, e := range arr {
 		summ := etl.InsertSummaryParams{
 			KeyID:     etlP.KeyId,
@@ -198,11 +197,9 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row etl.GetETLRow, tx *sql.Tx) error
 		// FIXME: SQL CALL FOR INSERT OF SUMMARY
 		// err := etlP.Storage.Queries.InsertSummary(context.Background(), summ)
 		if err != nil {
-			etlP.Storage.Unlock()
 			return err
 		}
 	}
-	etlP.Storage.Unlock()
 
 	return nil
 }
