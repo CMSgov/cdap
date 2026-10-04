@@ -17,7 +17,7 @@ In one terminal, run the storage stack (a [ministack](https://ministack.org/) S3
 make storage
 ```
 
-and in another, run the E2E:
+and in another, run the E2E: 
 
 ```
 make test

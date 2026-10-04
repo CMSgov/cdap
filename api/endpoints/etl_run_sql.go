@@ -10,15 +10,12 @@ import (
 	"strings"
 
 	"github.com/navapbc/its-log/internal/constants"
-	etl "github.com/navapbc/its-log/internal/etl/golang"
-	"github.com/navapbc/its-log/internal/schema"
-
-	"github.com/navapbc/its-log/internal/types"
+	etl "github.com/navapbc/its-log/internal/etl"
+	etlgo "github.com/navapbc/its-log/internal/etl/golang"
+	"github.com/navapbc/its-log/internal/storage"
 )
 
-const SQL_NAMED_PARAM_SYMBOL = "$"
-
-func callWithParams(etlP *types.RunEtlParams, theSql string) *sql.Row {
+func callWithParams(etlP *etl.RunEtlParams, theSql string) *sql.Row {
 	paramMap := map[string]string{
 		"key_id": etlP.KeyId,
 		"app_id": etlP.AppId,
@@ -27,7 +24,7 @@ func callWithParams(etlP *types.RunEtlParams, theSql string) *sql.Row {
 
 	args := make([]any, 0)
 	for param, val := range paramMap {
-		if strings.Contains(theSql, SQL_NAMED_PARAM_SYMBOL+param) {
+		if strings.Contains(theSql, storage.SQL_NAMED_PARAM_SYMBOL+param) {
 			args = append(args, sql.Named(param, val))
 		}
 	}
@@ -42,13 +39,13 @@ func callWithParams(etlP *types.RunEtlParams, theSql string) *sql.Row {
 	return etlRow
 }
 
-func etlRunSql(etlP *types.RunEtlParams, row schema.GetETLRow, tx *sql.Tx) error {
+func etlRunSql(etlP *etl.RunEtlParams, row etl.GetETLRow, tx *sql.Tx) error {
 	// Run the query
 	if !row.Body.Valid {
 		msg := "sql is null for ETL step"
 		log.Println(msg)
 		if etlP.GinCtx != nil {
-			ser := types.NewStandardErrorResponse(etlP, errors.New(msg))
+			ser := etl.NewStandardErrorResponse(etlP, errors.New(msg))
 			ser.SetStatus(http.StatusInternalServerError).Send(msg)
 		}
 		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
@@ -71,7 +68,7 @@ func etlRunSql(etlP *types.RunEtlParams, row schema.GetETLRow, tx *sql.Tx) error
 	default:
 		msg := err.Error()
 		if etlP.GinCtx != nil {
-			ser := types.NewStandardErrorResponse(etlP, err)
+			ser := etl.NewStandardErrorResponse(etlP, err)
 			ser.SetStatus(http.StatusInternalServerError).Send(msg)
 		}
 		//log.Println(msg)
@@ -81,9 +78,9 @@ func etlRunSql(etlP *types.RunEtlParams, row schema.GetETLRow, tx *sql.Tx) error
 	return nil
 }
 
-func etlRunGolang(etlP *types.RunEtlParams, row schema.GetETLRow, tx *sql.Tx) error {
+func etlRunGolang(etlP *etl.RunEtlParams, row etl.GetETLRow, tx *sql.Tx) error {
 	functionName := row.Name
-	if function, ok := etl.GolangETLMap[functionName]; ok {
+	if function, ok := etlgo.GolangETLMap[functionName]; ok {
 		// Like the SQL actions, lock/unlock around what we do.
 		// This saves the Golang ETLs from having to manage locks internal
 		// to each individual action.
@@ -94,6 +91,7 @@ func etlRunGolang(etlP *types.RunEtlParams, row schema.GetETLRow, tx *sql.Tx) er
 			return err
 		}
 	} else {
+		// FIXME: we need to pass an error back.
 		fmt.Printf("Function %s not found\n", functionName)
 	}
 

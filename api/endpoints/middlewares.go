@@ -41,6 +41,8 @@ func AuthMiddleWare(permissions []types.PermissionType) gin.HandlerFunc {
 			}
 		}
 		// Otherwise, fail.
+		// This is a very quiet failure for the client.
+		// It sends a 401 with no explanation.
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 }

@@ -105,8 +105,11 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 					zap.Int64("milliseconds", duration.Milliseconds()))
 			}
 
-			// FIXME: should we close here?
-			// Or, leave sessions open?
+			// Should we close here?
+			// NO. We leave sessions open, and cache them in a map.
+			// We assume we will only have so many apps open.
+			// This *might* be an issue as we roll day-to-day.
+			// That could be handled down in the Storage abstraction.
 			// s.Close()
 		}
 	}
@@ -123,7 +126,7 @@ func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 
 	// The appender must supply all columns.
 	var max_id int64
-	row := s.GetDB().QueryRow("EXECUTE get_max_event_id;")
+	row := s.Endpoints.Statements["get_max_event_id"].QueryRow()
 	err := row.Scan(&max_id)
 	if err != nil {
 		zap.L().Error("could not get MAX(id) on itslog_events", zap.Error(err))

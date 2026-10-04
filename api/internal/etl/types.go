@@ -1,7 +1,12 @@
 package etl
 
 import (
+	"crypto/sha1"
+	"database/sql"
+	"encoding/hex"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/storage"
@@ -28,6 +33,12 @@ type StandardErrorResponseParams struct {
 	Date   types.ILTime
 	Name   string
 }
+type GetETLRow struct {
+	Name    string
+	Kind    string
+	Body    sql.NullString
+	LastRun sql.NullInt64
+}
 
 func NewStandardErrorResponse(etlP *RunEtlParams, err error) *StandardErrorResponseParams {
 	return &StandardErrorResponseParams{
@@ -43,7 +54,6 @@ func (ser *StandardErrorResponseParams) SetStatus(status int) *StandardErrorResp
 }
 
 func (ser *StandardErrorResponseParams) Send(msg string) {
-
 	zap.L().Error("ERR",
 		zap.Int("status", ser.Status),
 		zap.String("msg", msg),
@@ -58,7 +68,6 @@ func (ser *StandardErrorResponseParams) Send(msg string) {
 		"date":    ser.etlP.Storage.YYYYMMDD(),
 		"name":    ser.etlP.EtlName,
 	})
-	return
 }
 
 type StandardOkResponseParams struct {
@@ -95,4 +104,79 @@ func (sok *StandardOkResponseParams) Send() {
 		"date":   date,
 		"name":   name,
 	})
+}
+
+// ID        int64
+// LastRun   time.Time
+// Date      int64
+// KeyID     string
+// Operation string
+// Tags      sql.NullString
+// Value     sql.NullString
+// Count     float64
+
+type ItslogEtl struct {
+	ID       int64
+	Inserted int64
+	LastRun  sql.NullInt64
+	KeyID    string
+	Name     string
+	Kind     string
+	Body     sql.NullString
+}
+
+type ItslogEvent struct {
+	ID        int64
+	Timestamp sql.NullInt64
+	KeyID     string
+	Cluster   sql.NullString
+	Tags      string
+	Value     sql.NullString
+}
+
+type ItslogSummary struct {
+	ID        int64
+	LastRun   int64
+	Date      string
+	KeyID     string
+	Operation string
+	Tags      string
+	Value     string
+	Count     float64
+	Hash      sql.NullString
+}
+
+func (ils *ItslogSummary) ReturnHash() string {
+	fields := []string{
+		ils.Date,
+		ils.KeyID,
+		ils.Operation,
+		ils.Tags,
+		ils.Value,
+		strconv.FormatFloat(ils.Count, 'f', 3, 64),
+	}
+	joined := strings.Join(fields, "-")
+	h := sha1.New()
+	h.Write([]byte(joined))
+	hashed := hex.EncodeToString(h.Sum(nil))
+	return hashed
+}
+
+func (ils *ItslogSummary) UpdateHash() {
+	hashed := ils.ReturnHash()
+	ils.Hash = sql.NullString{String: hashed, Valid: true}
+}
+
+func (ils ItslogSummary) IsHashSameAs(other ItslogSummary) bool {
+	return ils.ReturnHash() == other.ReturnHash()
+}
+
+type InsertSummaryParams struct {
+	KeyID     string
+	Date      string
+	Operation string
+	Tags      string
+	Value     string
+	Count     float64
+	Hash      sql.NullString
 }

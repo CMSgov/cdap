@@ -87,11 +87,11 @@ func (e *EmbedSql) Prepare() {
 			}
 			zap.L().Debug("prepared statement", zap.String("name", name))
 			e.Statements[name] = stmt
-			_, err = stmt.Exec()
-			if err != nil {
-				zap.L().Fatal("could not prepare statement",
-					zap.String("name", name))
-			}
+			// _, err = stmt.Exec()
+			// if err != nil {
+			// 	zap.L().Fatal("could not prepare statement",
+			// 		zap.String("name", name))
+			// }
 		}
 	}
 }
@@ -123,4 +123,15 @@ func (e *EmbedSql) Query(name string, params EmbedParamMap) (*sql.Rows, error) {
 	}
 
 	return e.Statements[name].QueryContext(context.Background(), prepped)
+}
+
+func (e *EmbedSql) QueryRow(name string, params EmbedParamMap) *sql.Row {
+
+	prepped := make([]sql.NamedArg, 0)
+	for name, val := range params {
+		prepped = append(prepped, sql.Named(name, val))
+	}
+
+	row := e.Statements[name].QueryRowContext(context.Background(), prepped)
+	return row
 }

@@ -1,18 +1,18 @@
 package endpoints
 
 import (
-	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/etl"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/navapbc/its-log/internal/storage"
+	"go.uber.org/zap"
 )
 
 // This is the handler if we call it directly from the API.
@@ -35,20 +35,13 @@ func RunEtl(c *gin.Context) {
 		payload = make(map[string]any)
 	}
 
-	s, err := types.NewStorage(appId)
+	s, err := SetupGinDB(c, appId, date)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not initialize storage backend",
-			"date":    date,
-			"name":    name,
-		})
-		return
+		zap.L().Fatal("could not setup DB for RunEtl")
 	}
 
 	dateErr := s.SetDateYMD(date)
-	etlP := &types.RunEtlParams{
+	etlP := &etl.RunEtlParams{
 		AppId:   appId,
 		KeyId:   keyId,
 		GinCtx:  c,
@@ -57,33 +50,42 @@ func RunEtl(c *gin.Context) {
 		Payload: payload,
 	}
 
+	// FUTURE IMPROVEMENT: Could this pattern be used in etl_create?
 	if dateErr != nil {
-		ser := types.NewStandardErrorResponse(etlP, dateErr)
+		ser := etl.NewStandardErrorResponse(etlP, dateErr)
 		ser.SetStatus(http.StatusInternalServerError).Send("could not parse date; must be YYYY-MM-DD")
 		return
 	}
-	s.InitDB()
 
-	pc, _, _, _ := runtime.Caller(0)
-	funcName := runtime.FuncForPC(pc).Name()
-	etl.LoadDefaultEtlFiles(s, funcName)
+	s.InitDB()
 
 	etlErr := runEtl(etlP)
 
 	if etlErr == nil {
-		types.NewStandardOkResponse(c, etlP).SetStatus(http.StatusOK).Send()
+		etl.NewStandardOkResponse(c, etlP).SetStatus(http.StatusOK).Send()
 	} else {
-		ser := types.NewStandardErrorResponse(etlP, etlErr)
+		ser := etl.NewStandardErrorResponse(etlP, etlErr)
 		ser.SetStatus(http.StatusInternalServerError).Send("golang ETL error")
 	}
 }
 
-func runEtl(etlP *types.RunEtlParams) error {
-	row, err := etlP.Storage.Queries.GetETL(context.Background(), etlP.EtlName)
+func runEtl(etlP *etl.RunEtlParams) error {
+	// FIXME SQL CALL
+	//row, err := etlP.Storage.Queries.GetETL(context.Background(), etlP.EtlName)
+	raw := etlP.Storage.QueryRow(storage.Endpoint,
+		"get_etl",
+		storage.EmbedParamMap{"name": etlP.EtlName})
+
+	// var name, kind, body, lastRun string
+	//err := row.Scan(&name, &kind, &body, &lastRun)
+	var row etl.GetETLRow
+	err := raw.Scan(&row.Name, &row.Kind, &row.Body, &row.LastRun)
 
 	if err != nil {
-		msg := "could not find ETL step"
-		log.Println(msg)
+		msg := "could not find/scan ETL step"
+		zap.L().Error(msg,
+			zap.String("etl_name", etlP.EtlName),
+			zap.Any("payload", etlP.Payload))
 		return fmt.Errorf("%s: %s", msg, err.Error())
 	}
 
@@ -111,19 +113,21 @@ func runEtl(etlP *types.RunEtlParams) error {
 		msg := "unknown kind of etl: " + row.Kind
 		log.Println(msg)
 		if etlP.GinCtx != nil {
-			ser := types.NewStandardErrorResponse(etlP, nil)
+			ser := etl.NewStandardErrorResponse(etlP, nil)
 			ser.SetStatus(http.StatusInternalServerError).Send(msg)
 		}
 		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
 	}
 
-	updateErr := etlP.Storage.Queries.UpdateLastRun(context.Background(), etlP.EtlName)
+	// FIXME SQL CALL
+	//updateErr := etlP.Storage.Queries.UpdateLastRun(context.Background(), etlP.EtlName)
+	updateErr := errors.New("FIXME")
 
 	if updateErr != nil {
 		msg := "could not update ETL metadata"
 		log.Println(msg)
 		if etlP.GinCtx != nil {
-			ser := types.NewStandardErrorResponse(etlP, nil)
+			ser := etl.NewStandardErrorResponse(etlP, nil)
 			ser.SetStatus(http.StatusInternalServerError).Send(msg)
 		}
 		return fmt.Errorf("%s: %s", msg, updateErr.Error())

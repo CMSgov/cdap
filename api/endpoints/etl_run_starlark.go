@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/navapbc/its-log/internal/schema"
+	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/types"
 	"go.starlark.net/lib/json"
 	"go.starlark.net/lib/math"
@@ -21,7 +21,7 @@ import (
 // -----------
 // Running Starlark ETLs
 
-func queryFun(etlP *types.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	return func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		var queryTable string
 		var queryString string
@@ -99,12 +99,12 @@ func queryFun(etlP *types.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Bui
 	}
 }
 
-func etlRunStarlark(etlP *types.RunEtlParams, row schema.GetETLRow, tx *sql.Tx) error {
+func etlRunStarlark(etlP *etl.RunEtlParams, row etl.GetETLRow, tx *sql.Tx) error {
 	// Run the query
 	if !row.Body.Valid {
 		msg := "sql is null for ETL step"
 		err := fmt.Errorf("etl body is not valid")
-		ser := types.NewStandardErrorResponse(etlP, err)
+		ser := etl.NewStandardErrorResponse(etlP, err)
 		ser.SetStatus(http.StatusInternalServerError).Send(msg)
 		return err
 	}
@@ -148,9 +148,9 @@ func etlRunStarlark(etlP *types.RunEtlParams, row schema.GetETLRow, tx *sql.Tx) 
 	// contain starlark dictionaries. These need to be turned into Golang structs.
 	// FIXME: what if someone wants `summary` rows? This does not work.
 	// consider using map[string]any instead.
-	arr := make([]schema.ItslogSummary, 0)
+	arr := make([]etl.ItslogSummary, 0)
 	for elem := range v.(*starlark.List).Elements() {
-		srjs := schema.ItslogSummary{}
+		srjs := etl.ItslogSummary{}
 		for _, k := range elem.(*starlark.Dict).Keys() {
 			s, _ := starlark.AsString(k)
 			switch s {
@@ -185,7 +185,7 @@ func etlRunStarlark(etlP *types.RunEtlParams, row schema.GetETLRow, tx *sql.Tx) 
 	// Now, write them to the summary table.
 	etlP.Storage.Lock()
 	for _, e := range arr {
-		summ := schema.InsertSummaryParams{
+		summ := etl.InsertSummaryParams{
 			KeyID:     etlP.KeyId,
 			Date:      etlP.Storage.ILTime.AsYYYYMMDD(),
 			Operation: e.Operation,
@@ -195,7 +195,8 @@ func etlRunStarlark(etlP *types.RunEtlParams, row schema.GetETLRow, tx *sql.Tx) 
 		}
 		summ.Hash = sql.NullString{String: e.ReturnHash(), Valid: true}
 
-		err := etlP.Storage.Queries.InsertSummary(context.Background(), summ)
+		// FIXME: SQL CALL FOR INSERT OF SUMMARY
+		// err := etlP.Storage.Queries.InsertSummary(context.Background(), summ)
 		if err != nil {
 			etlP.Storage.Unlock()
 			return err

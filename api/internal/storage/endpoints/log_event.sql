@@ -1,9 +1,13 @@
--- name: LogEvent :one
-PREPARE log_event AS
-INSERT INTO itslog_events (
-  timestamp, key_id, cluster, tags, value
-) VALUES (
-  $_timestamp, $_key_id, $_cluster, $_tags, $_value
-)
-RETURNING id
-;
+-- NOTE: this does not get used.
+-- Under DuckDB, we use an Appender for performance.
+-- This is a direct-to-db write from memory. It is 
+-- faster for large number of sequential inserts, which we 
+-- do whenever we are logging events.
+-- INSERT INTO itslog_events (
+--   timestamp, key_id, cluster, tags, value
+-- ) VALUES (
+--   $_timestamp, $_key_id, $_cluster, $_tags, $_value
+-- )
+-- RETURNING id
+-- ;
+SELECT 0;

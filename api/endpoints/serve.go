@@ -105,9 +105,9 @@ func addEtlEndpoints(rG *gin.RouterGroup) {
 	auth_adminV1.Use(AuthMiddleWare(permissions))
 
 	// Insert a new ETL step
-	// FIXME auth_adminV1.POST(constants.ETL_CREATE, CreateEtl)
+	auth_adminV1.POST(constants.ETL_CREATE, CreateEtl)
 	// Run an ETL step
-	// FIXME auth_adminV1.POST(constants.ETL_RUN, RunEtl)
+	auth_adminV1.POST(constants.ETL_RUN, RunEtl)
 }
 
 // METADATA ENDPOINTS

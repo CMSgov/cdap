@@ -9,9 +9,12 @@ import (
 	"log"
 	"os"
 	"path"
+	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/duckdb/duckdb-go/v2"
+	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -23,6 +26,8 @@ const (
 	Schema StoredSql = iota
 	Endpoint
 )
+
+const SQL_NAMED_PARAM_SYMBOL = "$"
 
 var activeStorageConnections StorageMap = make(StorageMap, 0)
 
@@ -124,43 +129,27 @@ func (s *Storage) InitDB() error {
 	return nil
 }
 
-func BuildExecuteCall(name string, params EmbedParamMap) (string, error) {
-	bound_params := make([]string, 0)
-	for name, val := range params {
-		switch v := val.(type) {
-		case nil:
-			// Don't include nil values?
-			// bound_params = append(bound_params, fmt.Sprintf("%s := %v", name, val))
-		case string:
-			if v == "" {
-				bound_params = append(bound_params, fmt.Sprintf("%s:=''", name))
-			} else {
-				bound_params = append(bound_params, fmt.Sprintf("%s:='%v'", name, val))
-			}
-		default:
-			bound_params = append(bound_params, fmt.Sprintf("%s:=%v", name, v))
-		}
-	}
-	return fmt.Sprintf("EXECUTE %s(%s);", name, strings.Join(bound_params, ",")), nil
-}
-
 func (s *Storage) ExecNoLock(kind StoredSql, name string, params EmbedParamMap) (sql.Result, error) {
 
 	switch kind {
 	case Schema:
-		// FIXME: infinite recursion...
 		res, err := s.Schema.Exec(name, EmbedParamMap{})
 		return res, err
 	case Endpoint:
 		if _, ok := s.Endpoints.Statements[name]; ok {
-			call, err := BuildExecuteCall(name, params)
+			args, err := s.PrepareNamedArgs(name, params)
 			if err != nil {
 				return nil, err
 			}
-			// FIXME WRONG
-			res, err := s.db.ExecContext(context.Background(), call)
+			// Get the SQL
+			theSql := s.Endpoints.Files[name]
+			res, err := s.db.ExecContext(context.Background(), theSql, args...)
 			if err != nil {
-				zap.L().Debug("ExecContext failure", zap.String("call", call))
+				zap.L().Error("ExecContext failure",
+					zap.String("name", name),
+					zap.Any("params", params),
+					zap.Any("args", args),
+					zap.Error(err))
 			}
 			return res, err
 		} else {
@@ -203,6 +192,22 @@ func (s *Storage) Query(kind StoredSql, name string, params EmbedParamMap) (*sql
 	s.Unlock()
 
 	return res, err
+}
+
+func (s *Storage) QueryRow(kind StoredSql, name string, params EmbedParamMap) *sql.Row {
+	var row *sql.Row
+	s.Lock()
+	switch kind {
+	case Endpoint:
+		row = s.Endpoints.QueryRow(name, params)
+	default:
+		zap.L().Error("Query: unknown kind of stored SQL",
+			zap.Int("kind", int(kind)),
+			zap.String("name", name))
+	}
+	s.Unlock()
+
+	return row
 }
 
 func (s *Storage) InitTables() error {
@@ -274,4 +279,45 @@ func (s *Storage) CloseAppender() {
 func (s *Storage) AppendRow(row ...driver.Value) error {
 	err := s.appender.AppendRow(row...)
 	return err
+}
+
+// Consumes the name of embedded SQL and a parameter map.
+// Finds the named params in the SQL (which must begin with $_)
+// and looks up the name in the map, returning a list of sql.NamedArgs
+// matching the variables needed to execute the SQL
+func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, error) {
+	// Look for the named params expected in the SQL
+	if _, ok := s.Endpoints.Files[name]; !ok {
+		return nil, fmt.Errorf("could not prepare args for %s; not found", name)
+	}
+	theSql := s.Endpoints.Files[name]
+	re := regexp.MustCompile(`\` + SQL_NAMED_PARAM_SYMBOL + `(_[a-zA-Z0-9_]+)`)
+	matches := re.FindAllString(theSql, -1)
+	zap.L().Debug("found named args in SQL",
+		zap.Any("named_args", matches))
+
+	// Check all of the params are in the args we found
+	for key := range params {
+		zap.L().Debug("matching params to expected args",
+			zap.String("param", key),
+			zap.Any("matches", matches))
+		if !slices.Contains(matches, fmt.Sprintf("%s_%s", SQL_NAMED_PARAM_SYMBOL, key)) {
+			return nil, fmt.Errorf("%s not found in SQL named arg list", key)
+		}
+	}
+	// And, check everything we found in the SQL is in the params
+	for _, arg := range matches {
+		trimmed := strings.Replace(arg, "$_", "", 1)
+		zap.L().Debug("matching args to params", zap.String("arg", arg), zap.String("trimmed", trimmed))
+		if _, ok := params[trimmed]; !ok {
+			return nil, fmt.Errorf("%s found in SQL but not in params", trimmed)
+		}
+	}
+
+	// At this point, we should be good to go.
+	named := make([]any, 0)
+	for arg, val := range params {
+		named = append(named, sql.Named(arg, val))
+	}
+	return named, nil
 }
