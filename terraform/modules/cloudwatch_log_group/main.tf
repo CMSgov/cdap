@@ -7,6 +7,7 @@ resource "aws_cloudwatch_log_group" "this" {
   retention_in_days = var.log_retention_days
   kms_key_id        = var.kms_key_id
   skip_destroy      = var.skip_destroy
+  tags              = var.tags
 }
 
 data "aws_ssm_parameter" "firehose_arn" {
