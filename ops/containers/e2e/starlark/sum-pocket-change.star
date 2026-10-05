@@ -26,6 +26,7 @@ def summarize():
         {"operation": "total.pocketchange", "count": total},
         {"operation": "total.pocketchange.json", "tags": json.encode(sums), "count": 0}
     ]
+    print(result)
     return result
 
 # print(summarize())

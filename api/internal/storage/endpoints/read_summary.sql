@@ -1,6 +1,4 @@
--- name: ReadSummary :one
-PREPARE read_summary AS
-  SELECT 
+SELECT 
     date, 
     operation, 
     tags, 
@@ -11,6 +9,6 @@ PREPARE read_summary AS
     tags LIKE $tags
     AND
     operation LIKE $operation
-  ORDER BY id
+  ORDER BY id DESC
   LIMIT 1
   ;

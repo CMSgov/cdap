@@ -156,7 +156,7 @@ func addSummaryEndpoints(rG *gin.RouterGroup) {
 	auth_adminV1ReadOnly.Use(AuthMiddleWare(permsRO))
 	auth_adminV1ReadWrite.Use(AuthMiddleWare(permsRW))
 
-	// FIXME auth_adminV1ReadOnly.POST(constants.SUMMARY_READ, SummaryRead)
+	auth_adminV1ReadOnly.POST(constants.SUMMARY_READ, SummaryRead)
 	// FIXME auth_adminV1ReadWrite.POST(constants.SUMMARY_CREATE, SummaryCreate)
 
 }

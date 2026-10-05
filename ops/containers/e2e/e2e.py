@@ -121,9 +121,10 @@ def test_create_etl(filename):
         the_length = len(encoded)
         mod = the_length % 4
         encoded = encoded + "="*mod
-    if "sql" in filename:
+
+    if ".sql" in filename:
         kind = "sql"
-    elif "star" in filename:
+    elif ".star" in filename:
         kind = "starlark"
     else:
         kind = "BAD_ETL_TYPE"
@@ -191,6 +192,35 @@ def test_parallel_inserts(N):
     p2.join()
 
 
+# def log_create(cluster, tags, value):
+#     global PARAMS
+#     url = f'{PARAMS.base()}/v1/log/create'
+#     body = {}
+#     if len(str(cluster)) > 1:
+#         body["cluster"] = str(cluster)
+#     if len(str(value)) > 1:
+#         body["value"] = str(value)
+#     body["tags"] = tags
+#     res = PARAMS.session().post(
+#         url, headers=PARAMS.headers("PUPPERLOG"), json=body)
+#     return res
+
+
+def test_pocketchange():
+    global PARAMS
+    for i in range(100):
+        res: requests.Response = log_create(None, ["pocketchange"], json.dumps({
+            "pennies": 1
+        }))
+        if res.status_code > 399:
+            print(res.text)
+            res.close()
+            sys.exit(-1)
+    res.close()
+    test_create_etl('starlark/sum-pocket-change.star')
+    test_run_etl("sum-pocket-change")
+
+
 def main():
     global PARAMS
     PARAMS = Params()
@@ -203,6 +233,8 @@ def main():
     test_run_etl("count-total")
     test_create_etl('starlark/total-summary-count.star')
     test_run_etl("total-summary-count")
+
+    test_pocketchange()
 
     # wait_for_healthcheck()
     # test_parallel_inserts(3)
