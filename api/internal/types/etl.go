@@ -13,7 +13,7 @@ type ETLPostBody struct {
 
 type SummaryRow struct {
 	ID        int64          `json:"id"`
-	LastRun   int64          `json:"last_run"`
+	Inserted  int64          `json:"last_run"`
 	Date      string         `json:"date"`
 	KeyId     string         `json:"key_id"`
 	Operation string         `json:"operation"`

@@ -1,2 +1,4 @@
-SELECT max(id) from itslog_events LIMIT 1;
+SELECT id from itslog_events 
+ORDER BY id DESC
+LIMIT 1;
     

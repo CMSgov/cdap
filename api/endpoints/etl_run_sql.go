@@ -57,12 +57,24 @@ func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow, tx *sql.Tx) error 
 		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
 	}
 
+	max_id, err := etlP.Storage.GetMaxId("get_max_etl_id", storage.EmbedParamMap{
+		"name": etlP.EtlName,
+	})
+	if err != nil {
+		return err
+	}
+	etlP.Payload["etl_id"] = max_id
+
 	// Expect all ETLs to return 0 or 1.
-	etlP = insertDefaultParams(etlP)
 	sqlRow := callWithParams(etlP, etlRow.Body.String)
+	if sqlRow.Err() != nil {
+		zap.L().Error("callWithParams failed",
+			zap.Error(sqlRow.Err()))
+		return sqlRow.Err()
+	}
 
 	var success int64 = -1
-	err := sqlRow.Scan(&success)
+	err = sqlRow.Scan(&success)
 	switch err {
 	case sql.ErrNoRows:
 		log.Println("No rows were returned!")

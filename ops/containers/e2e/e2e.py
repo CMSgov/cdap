@@ -121,10 +121,16 @@ def test_create_etl(filename):
         the_length = len(encoded)
         mod = the_length % 4
         encoded = encoded + "="*mod
+    if "sql" in filename:
+        kind = "sql"
+    elif "star" in filename:
+        kind = "starlark"
+    else:
+        kind = "BAD_ETL_TYPE"
 
     body = {
         "name": Path(filename).stem,
-        "kind": "sql",
+        "kind": kind,
         "body": encoded,
         "date": "today"
     }
@@ -191,12 +197,12 @@ def main():
 
     wait_for_healthcheck()
     test_sequential_event_logging(1)
-    # test_create_etl('sql/sentinel.sql')
+    test_create_etl('sql/sentinel.sql')
     test_create_etl('sql/count-total.sql')
-    # test_run_etl("sentinel")
-    test_run_etl("count-total", {
-        "key_id": "blah",
-    })
+    test_run_etl("sentinel")
+    test_run_etl("count-total")
+    test_create_etl('starlark/total-summary-count.star')
+    test_run_etl("total-summary-count")
 
     # wait_for_healthcheck()
     # test_parallel_inserts(3)

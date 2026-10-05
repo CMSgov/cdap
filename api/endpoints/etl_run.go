@@ -77,10 +77,11 @@ func runEtl(etlP *etl.RunEtlParams) error {
 		return err
 	}
 
+	etlP = insertDefaultParams(etlP)
+
 	switch etlRow.Kind {
 	case "sql":
 		err := etlRunSql(etlP, etlRow, nil)
-		// etlP.Storage.Exec(storage.Endpoint, etlP.EtlName, )
 		if err != nil {
 			return err
 		}
@@ -108,8 +109,18 @@ func runEtl(etlP *etl.RunEtlParams) error {
 		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
 	}
 
-	_, err = etlP.Storage.Exec(storage.Endpoint, "update_last_run", storage.EmbedParamMap{
+	max_id, err := etlP.Storage.GetMaxId("get_max_etl_id", storage.EmbedParamMap{
 		"name": etlP.EtlName,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = etlP.Storage.Exec(storage.Endpoint, "update_last_run", storage.EmbedParamMap{
+		"key_id":   etlP.KeyId,
+		"etl_id":   max_id,
+		"etl_name": etlP.EtlName,
+		"activity": "run etl via API",
 	})
 
 	if err != nil {

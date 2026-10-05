@@ -35,18 +35,27 @@ CREATE TABLE IF NOT EXISTS itslog_summary (
 -- See https://stackoverflow.com/questions/22699409/sqlite-null-and-unique
 -- We want NULL values to count towards uniqueness here.
 -- Seems like it might work for DuckDB, too.
-CREATE UNIQUE INDEX IF NOT EXISTS summary_ndx ON itslog_summary 
-    (date, operation, IFNULL(tags, 'index_default'), IFNULL(value, 'index_default'));
+-- CREATE UNIQUE INDEX IF NOT EXISTS summary_ndx ON itslog_summary 
+--     (date, operation, IFNULL(tags, 'index_default'), IFNULL(value, 'index_default'));
 
 CREATE SEQUENCE IF NOT EXISTS itslog_etl_id_seq START 1;
 
 CREATE TABLE IF NOT EXISTS itslog_etl (
     id INTEGER PRIMARY KEY default nextval('itslog_etl_id_seq'),
     inserted INTEGER DEFAULT (epoch(now())) NOT NULL,
-    last_run INTEGER,
     key_id TEXT NOT NULL,
     name TEXT NOT NULL,
     kind TEXT NOT NULL,
     body TEXT
 );
-CREATE UNIQUE INDEX IF NOT EXISTS step_name_ndx ON itslog_etl (name);
+
+CREATE SEQUENCE IF NOT EXISTS itslog_activity_id_seq START 1;
+
+CREATE TABLE IF NOT EXISTS itslog_activity (
+    id INTEGER PRIMARY KEY default nextval('itslog_activity_id_seq'),
+    timestamp INTEGER DEFAULT (epoch(now())) NOT NULL,
+    key_id TEXT NOT NULL,
+    etl_id INTEGER REFERENCES itslog_etl(id),
+    etl_name TEXT NOT NULL,
+    activity TEXT NOT NULL
+);

@@ -32,7 +32,7 @@ func serve_cmd(cmd *cobra.Command, args []string) {
 		os.Exit(-1)
 	}
 
-	defer base.ConfigureLoggers(viper.GetString("ginmode")).Sync()
+	defer base.ConfigureLoggers(viper.GetString("zapmode")).Sync()
 
 	// Load the API keys from the environment
 	err = base.GetApiKeys()

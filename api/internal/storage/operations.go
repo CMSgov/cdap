@@ -54,7 +54,7 @@ func SetupDB(appId string, date string) (*Storage, error) {
 
 	s, err := ReuseStorage(appId, date)
 	if err == nil {
-		zap.L().Debug("SetupDb reusing storage",
+		zap.L().Debug("SetupDB reusing storage",
 			zap.String("app_id", appId), zap.String("date", date))
 		return s, nil
 	}
@@ -148,14 +148,47 @@ func (s *Storage) InitDB() error {
 	s.Endpoints.Init(db)
 	s.Endpoints.Prepare()
 
+	activeStorageConnections[s.AppId+s.YYYYMMDD()] = s
+
 	return nil
 }
+
+// func (s *Storage) CheckAndRestart() {
+// 	// It is possible things could go sideways, and DuckDB will go into restricted mode.
+// 	// We need to start a new DB session in that case.
+// 	appId := s.AppId
+// 	date := s.YYYYMMDD()
+// 	key := appId + date
+
+// 	if s, ok := activeStorageConnections[key]; ok {
+
+// 		var err error
+
+// 		if !s.lock.TryLock() {
+// 			s.Unlock("CheckAndRestart was not locked")
+// 		} else {
+// 			s.Unlock("CheckAndRestart was locked")
+// 		}
+
+// 		s.Close()
+// 		activeStorageConnections[key] = nil
+
+// 		s, err = NewStorage(appId)
+// 		err = s.InitDB()
+
+// 		if err != nil {
+// 			zap.L().Error("could not recover",
+// 				zap.Error(err))
+// 			panic("could not recover db in CheckAndRestart")
+// 		}
+// 	}
+// }
 
 func (s *Storage) ExecNoLock(kind StoredSql, name string, params EmbedParamMap) (sql.Result, error) {
 
 	switch kind {
 	case Schema:
-		res, err := s.Schema.Exec(name, EmbedParamMap{})
+		res, err := s.Schema.Exec(name, make([]any, 0))
 		return res, err
 	case Endpoint:
 		if _, ok := s.Endpoints.Statements[name]; ok {
@@ -264,19 +297,21 @@ func (s *Storage) GetDB() *sql.DB {
 }
 
 func (s *Storage) Lock(location string) {
-	s.lock.Lock()
 	zap.L().Debug("== Lock ==",
 		zap.String("app_id", s.AppId),
 		zap.String("date", s.YYYYMMDD()),
 		zap.String("location", location))
+	s.lock.Lock()
+
 }
 
 func (s *Storage) Unlock(location string) {
-	s.lock.Unlock()
+
 	zap.L().Debug("== Unlock ==",
 		zap.String("app_id", s.AppId),
 		zap.String("date", s.YYYYMMDD()),
 		zap.String("location", location))
+	s.lock.Unlock()
 }
 
 func (s *Storage) Delete() {
@@ -293,6 +328,8 @@ func (s *Storage) GetAppender(table string) {
 
 	conn, err := s.connector.Connect(context.Background())
 	if err != nil {
+		zap.L().Error("couild not get raw connector",
+			zap.Error(err))
 		panic("could not get raw connector")
 	}
 	appender, err := duckdb.NewAppenderFromConn(conn, "", table)
@@ -330,7 +367,7 @@ func (s *Storage) GetEtlFromDb(name string) (EtlRow, error) {
 	// var name, kind, body, lastRun string
 	//err := row.Scan(&name, &kind, &body, &lastRun)
 	var etlRow EtlRow
-	err := raw.Scan(&etlRow.Name, &etlRow.Kind, &etlRow.Body, &etlRow.LastRun)
+	err := raw.Scan(&etlRow.Inserted, &etlRow.Name, &etlRow.Kind, &etlRow.Body)
 
 	if err != nil {
 		msg := "could not get ETL from DB"
@@ -347,7 +384,6 @@ func (s *Storage) GetEtlFromDb(name string) (EtlRow, error) {
 // and looks up the name in the map, returning a list of sql.NamedArgs
 // matching the variables needed to execute the SQL
 func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, error) {
-	zap.L().Debug("given params", zap.Any("params", params))
 
 	// Look for the named params expected in the SQL
 	var theSql string
@@ -362,34 +398,48 @@ func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, er
 	}
 	re := regexp.MustCompile(`\` + SQL_NAMED_PARAM_SYMBOL + `([a-zA-Z0-9_]+)`)
 	matches := re.FindAllString(theSql, -1)
-	zap.L().Debug("found named args in SQL",
+
+	zap.L().Debug("PrepareNamedArgs found named args in SQL",
 		zap.Any("named_args", matches),
 		zap.String("the_sql", theSql))
 
-	// Check all of the params are in the args we found
-	// NOPE. We can have more params than there are args.
-	// for key := range params {
-	// 	zap.L().Debug("matching params to expected args",
-	// 		zap.String("param", key),
-	// 		zap.Any("matches", matches))
-	// 	if !slices.Contains(matches, fmt.Sprintf("%s%s", SQL_NAMED_PARAM_SYMBOL, key)) {
-	// 		return nil, fmt.Errorf("%s not found in SQL named arg list", key)
-	// 	}
-	// }
-
 	// And, check everything we found in the SQL is in the params
+	named := make([]any, 0)
+
 	for _, arg := range matches {
 		trimmed := strings.Replace(arg, "$", "", 1)
 		zap.L().Debug("matching args to params", zap.String("arg", arg), zap.String("trimmed", trimmed))
 		if _, ok := params[trimmed]; !ok {
+			zap.L().Error("found in SQL but not in params",
+				zap.String("trimmed", trimmed))
 			return nil, fmt.Errorf("%s found in SQL but not in params", trimmed)
+		} else {
+			named = append(named, sql.Named(trimmed, params[trimmed]))
+
+		}
+	}
+	return named, nil
+}
+
+func (s *Storage) GetMaxId(etl string, params EmbedParamMap) (int64, error) {
+	// The appender must supply all columns.
+	var max_id int64
+	args, err := s.PrepareNamedArgs(etl, params)
+	if err != nil {
+		zap.L().Error("could not prepare args for GetMaxId", zap.Error(err))
+	}
+	row := s.Endpoints.Statements[etl].QueryRow(args...)
+	err = row.Scan(&max_id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			zap.L().Debug("GetMaxId nothing in result set; returning 0")
+			return 0, nil
+		} else {
+			zap.L().Error("could not get max for id",
+				zap.String("etl", etl), zap.Any("params", params), zap.Error(err))
+			return -1, fmt.Errorf("could not get max id")
 		}
 	}
 
-	// At this point, we should be good to go.
-	named := make([]any, 0)
-	for arg, val := range params {
-		named = append(named, sql.Named(arg, val))
-	}
-	return named, nil
+	return max_id, nil
 }

@@ -72,7 +72,7 @@ type LogEventParams struct {
 }
 
 func (q *Queries) LogEvent(ctx context.Context, arg LogEventParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, logEvent,
+	row := q.db.QueryRow(logEvent,
 		arg.Timestamp,
 		arg.KeyID,
 		arg.Cluster,

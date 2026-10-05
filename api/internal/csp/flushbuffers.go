@@ -129,12 +129,9 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 	counter := int64(0)
 
-	// The appender must supply all columns.
-	var max_id int64
-	row := s.Endpoints.Statements["get_max_event_id"].QueryRow()
-	err := row.Scan(&max_id)
+	max_id, err := s.GetMaxId("get_max_event_id", storage.EmbedParamMap{})
 	if err != nil {
-		zap.L().Error("could not get MAX(id) on itslog_events", zap.Error(err))
+		return -1, err
 	}
 
 	// This could/should become an appender in DuckDB.

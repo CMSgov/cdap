@@ -96,20 +96,27 @@ func (e *EmbedSql) Prepare() {
 	}
 }
 
-func (e *EmbedSql) Exec(name string, params EmbedParamMap) (sql.Result, error) {
-
-	prepped := make([]sql.NamedArg, 0)
-	for name, val := range params {
-		prepped = append(prepped, sql.Named(name, val))
-	}
+func (e *EmbedSql) Exec(name string, args []any) (sql.Result, error) {
 
 	var res sql.Result = nil
 	var err error
 
 	if stmt, ok := e.Statements[name]; ok {
-		res, err = stmt.Exec(prepped)
+		res, err = stmt.Exec(args...)
+		if err != nil {
+			zap.L().Error("EmbedSql Exec if",
+				zap.String("name", name),
+				zap.Any("args", args),
+				zap.Error(err))
+		}
 	} else {
-		res, err = e.db.Exec(e.Files[name], prepped)
+		res, err = e.db.Exec(e.Files[name], args)
+		if err != nil {
+			zap.L().Error("EmbedSql Exec else",
+				zap.String("name", name),
+				zap.Any("args", args),
+				zap.Error(err))
+		}
 	}
 
 	return res, err

@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	gotime "time"
+
 	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
@@ -16,6 +18,7 @@ import (
 	"go.starlark.net/lib/time"
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
+	"go.uber.org/zap"
 )
 
 // -----------
@@ -40,17 +43,24 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 
 		sqlArgs := make([]any, 0)
 		for param, val := range paramMap {
-			if strings.Contains(queryString, ":"+param) {
-				log.Println(etlP.EtlName + " replacing :" + param + " with " + val)
+			if strings.Contains(queryString, "$"+param) {
+				zap.L().Debug("StarLark query prep",
+					zap.String("table", queryTable),
+					zap.Any("params", paramMap))
 				sqlArgs = append(sqlArgs, sql.Named(param, val))
 			}
 		}
 
 		// An SQL step will read from and write to the DB.
 		// Lock and release around this action.
+		etlP.Storage.Lock("Starlark queryFun")
 		rows, err := etlP.Storage.GetDB().Query(queryString, sqlArgs...)
+		etlP.Storage.Unlock("Starlark queryFun")
 		if err != nil {
 			return starlark.None, err
+		}
+		if rows.Err() != nil {
+			return starlark.None, rows.Err()
 		}
 
 		// DEBUG LOG
@@ -75,13 +85,12 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 				}
 			case "summary":
 				var row types.SummaryRow
-				if err := rows.Scan(&row.ID, &row.LastRun, &row.Date, &row.KeyId, &row.Operation, &row.Tags, &row.Value, &row.Count, &row.Hash); err != nil {
+				if err := rows.Scan(&row.ID, &row.Inserted, &row.Date, &row.KeyId, &row.Operation, &row.Tags, &row.Value, &row.Count, &row.Hash); err != nil {
 					return starlark.None, err
 				} else {
 					d := starlark.NewDict(10)
 					id := strconv.FormatInt(row.ID, 10)
 					d.SetKey(starlark.String("id"), starlark.String(id))
-					d.SetKey(starlark.String("last_run"), starlark.MakeInt64(row.LastRun))
 					d.SetKey(starlark.String("date"), starlark.String(row.KeyId))
 					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
 					d.SetKey(starlark.String("operation"), starlark.String(row.Operation))
@@ -184,19 +193,25 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 
 	// Now, write them to the summary table.
 	for _, e := range arr {
-		summ := etl.InsertSummaryParams{
-			KeyID:     etlP.KeyId,
-			Date:      etlP.Storage.ILTime.AsYYYYMMDD(),
-			Operation: e.Operation,
-			Tags:      e.Tags,
-			Value:     e.Value,
-			Count:     float64(e.Count),
-		}
-		summ.Hash = sql.NullString{String: e.ReturnHash(), Valid: true}
+		seconds := gotime.Now().Unix()
+		etlP.Payload["key_id"] = etlP.KeyId
+		etlP.Payload["date"] = seconds
+		etlP.Payload["operation"] = e.Operation
+		etlP.Payload["tags"] = e.Tags
+		etlP.Payload["value"] = e.Value
+		etlP.Payload["count"] = float64(e.Count)
+		etlP.Payload["hash"] = sql.NullString{String: e.ReturnHash(), Valid: true}
 
-		// FIXME: SQL CALL FOR INSERT OF SUMMARY
-		// err := etlP.Storage.Queries.InsertSummary(context.Background(), summ)
+		args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
 		if err != nil {
+			return err
+		}
+
+		_, err = etlP.Storage.Endpoints.Exec("insert_full_summary", args)
+		if err != nil {
+			zap.L().Error("etlRunStarlark Exec",
+				zap.Any("payload", etlP.Payload),
+				zap.Error(err))
 			return err
 		}
 	}
