@@ -242,13 +242,13 @@ data "aws_iam_policy_document" "cloudwatch_to_firehose" {
     ]
     resources = [aws_kinesis_firehose_delivery_stream.log_retention.arn]
   }
-  
+
   statement {
-    sid       = "EncryptPutsWithDedicatedKey"
-    actions   = [
+    sid = "EncryptPutsWithDedicatedKey"
+    actions = [
       "kms:GenerateDataKey",
       "kms:Decrypt"
-      ]
+    ]
     resources = [aws_kms_key.log_retention.arn]
   }
 }
