@@ -112,7 +112,7 @@ resource "aws_kinesis_firehose_delivery_stream" "log_retention" {
     }
 
     # Subscription filter records arrive gzipped. decompress the CloudWatch
-    # envelope in-stream to avoid double-zipping, making the data queryable by Athena,
+    # envelope in-stream to avoid double-zipping, making the data queryable by Athena (future),
     # and partition S3 keys by source log group
     processing_configuration {
       enabled = true
@@ -129,7 +129,7 @@ resource "aws_kinesis_firehose_delivery_stream" "log_retention" {
         type = "MetadataExtraction"
         parameters {
           # CloudWatch Logs periodically sends CONTROL_MESSAGE keep-alive
-          # records with no logGroup field; fall back so the partition key
+          # records with no logGroup field. Fall back so the partition key
           # is never null
           parameter_name  = "MetadataExtractionQuery"
           parameter_value = "{log_group: (((.logGroup | select(. != null and . != \"\")) // \"control-messages\") | ltrimstr(\"/\"))}"
