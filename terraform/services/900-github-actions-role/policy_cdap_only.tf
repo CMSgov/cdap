@@ -102,6 +102,7 @@ data "aws_iam_policy_document" "github_actions_cdap" {
       "kms:EnableKeyRotation",
       "kms:PutKeyPolicy",
       "kms:TagResource",
+      "kms:GetKeyPolicy"
     ]
     resources = length(data.aws_kms_alias.cdap_managed_kms) > 0 ? concat(
       # Additional/adhoc keys from config files
@@ -166,15 +167,15 @@ data "aws_iam_policy_document" "github_actions_cdap" {
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
+      "s3:PutBucketObjectLockConfiguration",
     ]
     resources = [
       "arn:aws:s3:::bucket-access-logs-*",
       "arn:aws:s3:::bb2-prod-quicksight-export-*",
-      "arn:aws:s3:::*-buildcache*"
-
+      "arn:aws:s3:::*-buildcache*",
+      # Long-term log retention bucket (701-log-retention)
+      "arn:aws:s3:::shared-${var.env}-log-retention-*",
     ]
-    # FIXME: Add GetBucketObjectLockConfiguration when CDAP adds
-    #        log retention / object lock management via Tofu
   }
   # CDAP creates and manages all hosted zones including specialty ones
   # e.g. snowflakecomputing.com via PrivateLink
