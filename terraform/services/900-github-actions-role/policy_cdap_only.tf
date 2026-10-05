@@ -73,10 +73,10 @@ data "aws_iam_policy_document" "github_actions_cdap" {
   statement {
     sid = "VPCNetwork"
     actions = [
-        "ec2:CreateVpcEndpoint",
-        "ec2:DescribeVpcEndpoints",
-        "ec2:ModifyVpcEndpoint",
-        "ec2:DeleteVpcEndpoints"
+      "ec2:CreateVpcEndpoint",
+      "ec2:DescribeVpcEndpoints",
+      "ec2:ModifyVpcEndpoint",
+      "ec2:DeleteVpcEndpoints"
     ]
     resources = ["*"]
   }
