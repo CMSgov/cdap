@@ -148,6 +148,8 @@ No modules.
 | [datadog_monitor.rds_replica_lag_high](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.s3_http_response_4xx](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.s3_http_response_5xx](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
+| [datadog_monitor.sensitive_data_apm](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
+| [datadog_monitor.sensitive_data_rum](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.sns_failed_notifications](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.sqs_dlq_messages_visible](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
 | [datadog_monitor.sqs_message_age](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor) | resource |
