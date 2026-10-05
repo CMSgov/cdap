@@ -3,7 +3,7 @@ locals {
 }
 
 import {
-  to = module.sns_to_slack_function.aws_cloudwatch_log_group.function
+  to = module.sns_to_slack_function.module.function_logs.aws_cloudwatch_log_group.this
   id = "/aws/lambda/${local.full_name}"
 }
 
