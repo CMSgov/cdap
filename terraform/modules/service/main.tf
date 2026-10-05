@@ -2,6 +2,9 @@ locals {
   service_name      = coalesce(var.service_name_override, var.platform.service)
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
 
+  app_log_group_name     = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+  datadog_log_group_name = "${local.app_log_group_name}/datadog-agent"
+
   ###############
   # Networking
   ###############
@@ -275,20 +278,28 @@ locals {
 module "app_logs" {
   source = "../cloudwatch_log_group"
 
-  name               = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+  name               = local.app_log_group_name
   env                = var.platform.env
   kms_key_id         = var.platform.kms_alias_primary.target_key_arn
   log_retention_days = var.log_retention_days
+
+  tags = {
+    Name = local.app_log_group_name
+  }
 }
 
 module "datadog_logs" {
   count  = var.enable_datadog_agent ? 1 : 0
   source = "../cloudwatch_log_group"
 
-  name               = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
+  name               = local.datadog_log_group_name
   env                = var.platform.env
   kms_key_id         = var.platform.kms_alias_primary.target_key_arn
   log_retention_days = var.log_retention_days
+
+  tags = {
+    Name = local.datadog_log_group_name
+  }
 }
 
 # Versioning
