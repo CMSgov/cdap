@@ -32,6 +32,7 @@ No requirements.
 | <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | ARN of the KMS key used to encrypt the log group. | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Name of the CloudWatch log group. | `string` | n/a | yes |
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | Number of days to retain logs in CloudWatch. Required for production is minimum 180. | `number` | `180` | no |
+| <a name="input_skip_destroy"></a> [skip\_destroy](#input\_skip\_destroy) | If true, remove the log group from state without deleting it from AWS. | `bool` | `false` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
