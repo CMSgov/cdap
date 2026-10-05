@@ -11,6 +11,7 @@ import (
 	etl "github.com/navapbc/its-log/internal/etl"
 	etlgo "github.com/navapbc/its-log/internal/etl/golang"
 	"github.com/navapbc/its-log/internal/storage"
+	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
 
@@ -28,6 +29,22 @@ func callWithParams(etlP *etl.RunEtlParams, theSql string) *sql.Row {
 	return etlRow
 }
 
+func insertDefaultParams(etlP *etl.RunEtlParams) *etl.RunEtlParams {
+	payload := etlP.Payload
+	payload["key_id"] = etlP.KeyId
+	payload["app_id"] = etlP.AppId
+	// If the date is in the payload, and it is today, convert it.
+	if v, ok := payload["date"]; ok {
+		if v == "today" {
+			payload["date"] = types.NewILTimeToday().AsYYYYMMDD()
+		}
+	} else {
+		payload["date"] = types.NewILTimeToday().AsYYYYMMDD()
+	}
+	etlP.Payload = payload
+	return etlP
+}
+
 func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow, tx *sql.Tx) error {
 	// Run the query
 	if !etlRow.Body.Valid {
@@ -41,6 +58,7 @@ func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow, tx *sql.Tx) error 
 	}
 
 	// Expect all ETLs to return 0 or 1.
+	etlP = insertDefaultParams(etlP)
 	sqlRow := callWithParams(etlP, etlRow.Body.String)
 
 	var success int64 = -1

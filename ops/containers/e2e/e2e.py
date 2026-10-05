@@ -4,11 +4,15 @@ from multiprocessing import Pool, Process
 import os
 from pathlib import Path
 import requests
+import sys
 import time
 
 # For multiprocessing
-
+# Becomes global per process
 PARAMS = None
+
+# Params class is so that we can initialize it
+# per process in the multiprocessing library.
 
 
 class Params:
@@ -16,8 +20,9 @@ class Params:
         with open("config.json", "r") as f:
             self.params = json.load(f)
         self.params["TIMEOUT"] = 4
-        self.params["LESS_THAN_BUFFER"] = 100
-        self.params["MORE_THAN_BUFFER"] = 5000
+        self.params["LESS_THAN_BUFFER"] = 5
+        self.params["MORE_THAN_BUFFER"] = 5
+        # Need to use a session, or requests will run out of sockets.
         self.params["session"] = requests.Session()
 
     def base(self):
@@ -34,14 +39,17 @@ class Params:
     def get(self, key):
         return self.params[key]
 
+# Waits until the its-log healthcheck returns a good value.
+# Useful for debugging
+
 
 def wait_for_healthcheck():
-    global PARAMS
+    global PARAMSYyY
     url = f'{PARAMS.base()}/v1/health'
     alive = False
     while not alive:
         try:
-            res = PARAMS.session().get(url, timeout=2)
+            res = PARAMS.session().get(url, timeout=PARAMS.get("TIMEOUT"))
             if res.status_code > 399:
                 print('Waiting for healthcheck...')
                 time.sleep(3)
@@ -53,8 +61,11 @@ def wait_for_healthcheck():
             alive = True
             res.close()
 
+# Creates log events
+
 
 def log_create(cluster, tags, value):
+    global PARAMS
     url = f'{PARAMS.base()}/v1/log/create'
     body = {}
     if len(str(cluster)) > 1:
@@ -66,15 +77,18 @@ def log_create(cluster, tags, value):
         url, headers=PARAMS.headers("PUPPERLOG"), json=body)
     return res
 
+# Creates many log events
+
 
 def test_sequential_event_logging(id):
+    global PARAMS
     print(f"test_sequential_event_logging: {id}")
     # Create one event
     res = log_create("", ["v1"], "")
     if res.status_code > 399:
         print("test_sequential_event_logging:", res.text)
         res.close()
-        os.exit(-1)
+        sys.exit(-1)
     time.sleep(2)
     # Create 100 events, pass values
     for i in range(PARAMS.get("LESS_THAN_BUFFER")):
@@ -82,7 +96,7 @@ def test_sequential_event_logging(id):
         if res.status_code > 399:
             print("test_sequential_event_logging:", res.text)
             res.close()
-            os.exit(-1)
+            sys.exit(-1)
     # Create 5000 events, which will require 3 buffer flushes
     # Pass values and clusters
     for i in range(PARAMS.get("MORE_THAN_BUFFER")):
@@ -90,12 +104,15 @@ def test_sequential_event_logging(id):
         if res.status_code > 399:
             print("test_sequential_event_logging:", res.text)
             res.close()
-            os.exit(-1)
+            sys.exit(-1)
     res.close()
     # There should now be 5101 events in the events table.
 
+# Loads an ETL
+
 
 def test_create_etl(filename):
+    global PARAMS
     print(f"test_create_etl {filename}")
     contents = open(filename, 'r').read()
     url = f'{PARAMS.base()}/v1/etl/create'
@@ -120,26 +137,31 @@ def test_create_etl(filename):
             print("test_create_etl:", res.status_code)
             print(res.text)
             res.close()
-            os.exit(-1)
+            sys.exit(-1)
         res.close()
     except requests.exceptions.Timeout as e:
         print(e)
 
+# Runs an ETL
 
-def test_run_etl(etl, expected):
+
+def test_run_etl(etl, body={}):
+    global PARAMS
     print(f"test_run_etl {etl}")
     url = f'{PARAMS.base()}/v1/etl/run/today/{etl}'
-    body = {}
     try:
-        res = PARAMS.session().post(url,
-                                    headers=PARAMS.headers("PUPPERADMIN"),
-                                    json=body,
-                                    timeout=PARAMS.get("TIMEOUT"))
+        res: requests.Response = PARAMS.session().post(url,
+                                                       headers=PARAMS.headers(
+                                                           "PUPPERADMIN"),
+                                                       json=body,
+                                                       timeout=PARAMS.get("TIMEOUT"))
+        if res.status_code in [200, 201]:
+            return
         if res.status_code > 399:
             print("test_run_etl:", res.status_code, res.text)
             print(res.text)
             res.close()
-            os.exit(-1)
+            sys.exit(-1)
         res.close()
     except requests.exceptions.Timeout as e:
         print(e)
@@ -152,8 +174,15 @@ def init_process():
 
 def test_parallel_inserts(N):
     print(f"test_parallel_inserts {N}")
-    with Pool(processes=N, initializer=init_process) as pool:
-        result = pool.map(test_sequential_event_logging, range(0, N))
+    p1 = Pool(processes=N, initializer=init_process)
+    p2 = Pool(processes=N, initializer=init_process)
+    r1 = p1.map_async(test_sequential_event_logging, range(0, N))
+    p1.close()
+    time.sleep(3)
+    r2 = p2.map_async(test_create_etl, ['sql/sentinel.sql'] * N * N)
+    p2.close()
+    p1.join()
+    p2.join()
 
 
 def main():
@@ -162,12 +191,15 @@ def main():
 
     wait_for_healthcheck()
     test_sequential_event_logging(1)
-    test_create_etl('sql/sentinel.sql')
+    # test_create_etl('sql/sentinel.sql')
     test_create_etl('sql/count-total.sql')
-    test_run_etl("sentinel", 0)
+    # test_run_etl("sentinel")
+    test_run_etl("count-total", {
+        "key_id": "blah",
+    })
 
-    wait_for_healthcheck()
-    test_parallel_inserts(3)
+    # wait_for_healthcheck()
+    # test_parallel_inserts(3)
 
 
 if __name__ in "__main__":

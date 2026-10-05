@@ -347,6 +347,8 @@ func (s *Storage) GetEtlFromDb(name string) (EtlRow, error) {
 // and looks up the name in the map, returning a list of sql.NamedArgs
 // matching the variables needed to execute the SQL
 func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, error) {
+	zap.L().Debug("given params", zap.Any("params", params))
+
 	// Look for the named params expected in the SQL
 	var theSql string
 	if _, ok := s.Endpoints.Files[name]; !ok {
