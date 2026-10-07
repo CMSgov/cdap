@@ -87,6 +87,11 @@ jobs:
         run: |
           ./gradlew clean publishToMavenLocal -x test --write-locks
 
+      - name: Run gradle for lambdas
+        working-directory: lambdas
+        run: |
+          ./gradlew clean publishToMavenLocal -x test --write-locks
+    
       - name: Run Snyk Code
         env:
           PROJECT_NAME: 'Snyk monitor'
