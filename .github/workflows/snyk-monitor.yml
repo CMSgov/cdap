@@ -68,6 +68,11 @@ jobs:
         run: |
           sudo npm install -g snyk@${SNYK_CLI_VERSION}
 
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
       - name: Run mvn install for main project
         run: |
           mvn -U clean install -s settings.xml -Dcheckstyle.skip -DskipTests -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
