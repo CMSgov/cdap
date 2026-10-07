@@ -21,7 +21,7 @@ on:
         required: true
 
 env:
-  SNYK_CLI_VERSION: 1.1306.2
+  SNYK_CLI_VERSION: 1.1306.4
 
 jobs:
   checks:
