@@ -68,6 +68,20 @@ jobs:
         run: |
           sudo npm install -g snyk@${SNYK_CLI_VERSION}
 
+      - name: Run mvn install for main project
+        run: |
+          mvn -U clean install -s settings.xml -Dcheckstyle.skip -DskipTests
+          
+      - name: Run gradle for events
+        working-directory: events
+        run: |
+          ./gradlew clean publishToMavenLocal -x test --write-locks
+
+      - name: Run gradle for contracts
+        working-directory: contracts
+        run: |
+          ./gradlew clean publishToMavenLocal -x test --write-locks
+
       - name: Run Snyk Code
         env:
           PROJECT_NAME: 'Snyk monitor'
