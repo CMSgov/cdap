@@ -70,7 +70,7 @@ jobs:
 
       - name: Run mvn install for main project
         run: |
-          mvn -U clean install -s settings.xml -Dcheckstyle.skip -DskipTests
+          mvn -U clean install -s settings.xml -Dcheckstyle.skip -DskipTests -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
           
       - name: Run gradle for events
         working-directory: events
