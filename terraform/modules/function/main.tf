@@ -129,6 +129,14 @@ resource "aws_lambda_function" "this" {
     security_group_ids = [aws_security_group.function.id]
   }
 
+  dynamic "file_system_config" {
+    for_each = var.file_system_config != null ? [var.file_system_config] : []
+    content {
+      arn              = file_system_config.value.arn
+      local_mount_path = file_system_config.value.local_mount_path
+    }
+  }
+
   environment {
     variables = var.dd_enabled ? merge(var.environment_variables, local.dd_env_vars) : var.environment_variables
   }

@@ -158,6 +158,28 @@ variable "function_role_inline_policies" {
   default     = {}
 }
 
+# ── Storage / File System ────────────────────────────────────────────────────
+
+variable "file_system_config" {
+  description = <<-EOT
+    Optional configuration block for mounting an Amazon EFS or S3 Files file system
+    to the Lambda function. When provided, Lambda mounts the target access point
+    to the specified local mount path inside the container environment.
+    ARN must be the ARN of an EFS or S3 Files Access Point.
+    local_mount_path must start with '/mnt/'.
+  EOT
+  type = object({
+    arn              = string
+    local_mount_path = string
+  })
+  default = null
+
+  validation {
+    condition     = var.file_system_config == null || can(regex("^/mnt/", var.file_system_config.local_mount_path))
+    error_message = "local_mount_path must start with '/mnt/'."
+  }
+}
+
 # ── Advanced / Migration strategies ─────────────────────────────────────────────────
 
 variable "additional_admin_role_arns" {
