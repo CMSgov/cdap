@@ -173,6 +173,11 @@ variable "file_system_config" {
     local_mount_path = string
   })
   default = null
+
+  validation {
+    condition     = var.file_system_config == null || can(regex("^/mnt/", var.file_system_config.local_mount_path))
+    error_message = "local_mount_path must start with '/mnt/'."
+  }
 }
 
 # ── Advanced / Migration strategies ─────────────────────────────────────────────────
