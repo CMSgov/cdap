@@ -131,6 +131,12 @@ variable "service_connect" {
   }))
 }
 
+variable "service_connect_enabled" {
+  default     = false
+  description = "Boolean value determining whether service connect is enabled"
+  type        = bool
+}
+
 variable "deployment_circuit_breaker" {
   type = object({
     enable   = optional(bool, true)
