@@ -49,7 +49,6 @@ module "my_s3_files" {
   app         = "bcda"
   env         = "dev"
   name        = "attribution-import-files"
-  bucket_id   = module.my_bucket.id
   bucket_arn  = module.my_bucket.arn
   kms_key_arn = aws_kms_key.my_key.arn
   read_only   = true
@@ -112,7 +111,6 @@ module "my_lambda" {
 | <a name="input_allowed_security_group_ids"></a> [allowed\_security\_group\_ids](#input\_allowed\_security\_group\_ids) | List of security group IDs permitted to mount the file system over NFS (TCP port 2049) | `list(string)` | `[]` | no |
 | <a name="input_app"></a> [app](#input\_app) | The application name (ab2d, bcda, bb, bfd, cdap, dpc) | `string` | n/a | yes |
 | <a name="input_bucket_arn"></a> [bucket\_arn](#input\_bucket\_arn) | Target S3 bucket ARN to mount | `string` | n/a | yes |
-| <a name="input_bucket_id"></a> [bucket\_id](#input\_bucket\_id) | Target S3 bucket ID/name to mount | `string` | n/a | yes |
 | <a name="input_env"></a> [env](#input\_env) | The application environment (dev, test, sandbox, prod, mgmt) | `string` | n/a | yes |
 | <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | Optional KMS Key ARN used for encryption at rest. If null, AWS managed encryption is used. | `string` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Identifier suffix for the S3 Files resources (e.g. 'attribution-import-files') | `string` | n/a | yes |
