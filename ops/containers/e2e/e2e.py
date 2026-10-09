@@ -1,3 +1,7 @@
+from tests.params import Params, PARAMS
+from tests.log_create import log_create
+from tests.pocketchange import test_pocketchange
+
 import base64
 import json
 from multiprocessing import Pool, Process
@@ -7,44 +11,13 @@ import requests
 import sys
 import time
 
-# For multiprocessing
-# Becomes global per process
-PARAMS = None
-
-# Params class is so that we can initialize it
-# per process in the multiprocessing library.
-
-
-class Params:
-    def __init__(self):
-        with open("config.json", "r") as f:
-            self.params = json.load(f)
-        self.params["TIMEOUT"] = 4
-        self.params["LESS_THAN_BUFFER"] = 5
-        self.params["MORE_THAN_BUFFER"] = 5
-        # Need to use a session, or requests will run out of sockets.
-        self.params["session"] = requests.Session()
-
-    def base(self):
-        return f'http://{self.params["ITSLOG_SERVE_HOST"]}:{self.params["ITSLOG_SERVE_PORT"]}'
-
-    def headers(self, type):
-        return {
-            "x-api-key": self.params[f"ITSLOG_APIKEY_{type}"]["key"]
-        }
-
-    def session(self):
-        return self.params["session"]
-
-    def get(self, key):
-        return self.params[key]
 
 # Waits until the its-log healthcheck returns a good value.
 # Useful for debugging
 
 
 def wait_for_healthcheck():
-    global PARAMSYyY
+    global PARAMS
     url = f'{PARAMS.base()}/v1/health'
     alive = False
     while not alive:
@@ -63,19 +36,6 @@ def wait_for_healthcheck():
 
 # Creates log events
 
-
-def log_create(cluster, tags, value):
-    global PARAMS
-    url = f'{PARAMS.base()}/v1/log/create'
-    body = {}
-    if len(str(cluster)) > 1:
-        body["cluster"] = str(cluster)
-    if len(str(value)) > 1:
-        body["value"] = str(value)
-    body["tags"] = tags
-    res = PARAMS.session().post(
-        url, headers=PARAMS.headers("PUPPERLOG"), json=body)
-    return res
 
 # Creates many log events
 
@@ -111,67 +71,7 @@ def test_sequential_event_logging(id):
 # Loads an ETL
 
 
-def test_create_etl(filename):
-    global PARAMS
-    print(f"test_create_etl {filename}")
-    contents = open(filename, 'r').read()
-    url = f'{PARAMS.base()}/v1/etl/create'
-    encoded = base64.b64encode(contents.encode("utf-8")).decode("ascii")
-    if len(encoded) % 4 != 0:
-        the_length = len(encoded)
-        mod = the_length % 4
-        encoded = encoded + "="*mod
-
-    if ".sql" in filename:
-        kind = "sql"
-    elif ".star" in filename:
-        kind = "starlark"
-    else:
-        kind = "BAD_ETL_TYPE"
-
-    body = {
-        "name": Path(filename).stem,
-        "kind": kind,
-        "body": encoded,
-        "date": "today"
-    }
-    try:
-        res = PARAMS.session().post(url,
-                                    headers=PARAMS.headers("PUPPERADMIN"),
-                                    json=body,
-                                    timeout=PARAMS.get("TIMEOUT"))
-        if res.status_code > 399:
-            print("test_create_etl:", res.status_code)
-            print(res.text)
-            res.close()
-            sys.exit(-1)
-        res.close()
-    except requests.exceptions.Timeout as e:
-        print(e)
-
 # Runs an ETL
-
-
-def test_run_etl(etl, body={}):
-    global PARAMS
-    print(f"test_run_etl {etl}")
-    url = f'{PARAMS.base()}/v1/etl/run/today/{etl}'
-    try:
-        res: requests.Response = PARAMS.session().post(url,
-                                                       headers=PARAMS.headers(
-                                                           "PUPPERADMIN"),
-                                                       json=body,
-                                                       timeout=PARAMS.get("TIMEOUT"))
-        if res.status_code in [200, 201]:
-            return
-        if res.status_code > 399:
-            print("test_run_etl:", res.status_code, res.text)
-            print(res.text)
-            res.close()
-            sys.exit(-1)
-        res.close()
-    except requests.exceptions.Timeout as e:
-        print(e)
 
 
 def init_process():
@@ -192,33 +92,30 @@ def test_parallel_inserts(N):
     p2.join()
 
 
-# def log_create(cluster, tags, value):
-#     global PARAMS
-#     url = f'{PARAMS.base()}/v1/log/create'
-#     body = {}
-#     if len(str(cluster)) > 1:
-#         body["cluster"] = str(cluster)
-#     if len(str(value)) > 1:
-#         body["value"] = str(value)
-#     body["tags"] = tags
-#     res = PARAMS.session().post(
-#         url, headers=PARAMS.headers("PUPPERLOG"), json=body)
-#     return res
-
-
-def test_pocketchange():
+def summary_read(operation, expected):
     global PARAMS
-    for i in range(100):
-        res: requests.Response = log_create(None, ["pocketchange"], json.dumps({
-            "pennies": 1
-        }))
+    print(f"summary_read {operation}")
+    url = f'{PARAMS.base()}/v1/summary/read'
+    try:
+        res: requests.Response = PARAMS.session().post(url,
+                                                       headers=PARAMS.headers(
+                                                           "PUPPERADMIN"),
+                                                       json=body,
+                                                       timeout=PARAMS.get("TIMEOUT"))
+        if res.status_code in [200, 201]:
+            return
         if res.status_code > 399:
+            print("test_run_etl:", res.status_code, res.text)
             print(res.text)
             res.close()
             sys.exit(-1)
-    res.close()
-    test_create_etl('starlark/sum-pocket-change.star')
-    test_run_etl("sum-pocket-change")
+        res.close()
+    except requests.exceptions.Timeout as e:
+        print(e)
+
+
+def test_insert_summary():
+    pass
 
 
 def main():
@@ -234,7 +131,13 @@ def main():
     test_create_etl('starlark/total-summary-count.star')
     test_run_etl("total-summary-count")
 
+    # pocketchange inserts data, runs a Starlark ETL,
+    # and then fetches the result to check if it is right.
     test_pocketchange()
+
+    # insert_summary tests if we can insert a summary and then
+    # read back the value we stored
+    test_insert_summary()
 
     # wait_for_healthcheck()
     # test_parallel_inserts(3)
