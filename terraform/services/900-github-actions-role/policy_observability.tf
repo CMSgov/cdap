@@ -63,6 +63,13 @@ data "aws_iam_policy_document" "github_actions_observability" {
       "arn:aws:logs:*:*:log-group:/aws/ecs/fargate/${var.app}-${var.env}/*/*",
       "arn:aws:logs:*:*:log-group:/aws/ecs/fargate/${var.app}-${var.env}/*/*:*",
 
+      # ECS Fargate — ephemeral envs, whose names end with the parent env
+      # /aws/ecs/fargate/${app}-<ephemeral>-${env}/${service}[/${subservice}]
+      "arn:aws:logs:*:*:log-group:/aws/ecs/fargate/${var.app}-*-${var.env}*",
+      "arn:aws:logs:*:*:log-group:/aws/ecs/fargate/${var.app}-*-${var.env}*:*",
+      "arn:aws:logs:*:*:log-group:/aws/ecs/fargate/${var.app}-*-${var.env}/*/*",
+      "arn:aws:logs:*:*:log-group:/aws/ecs/fargate/${var.app}-*-${var.env}/*/*:*",
+
       # Lambda
       # /aws/lambda/${app}-${env}-*
       "arn:aws:logs:*:*:log-group:/aws/lambda/${var.app}-${var.env}-*",

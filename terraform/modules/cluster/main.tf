@@ -6,6 +6,7 @@ locals {
 module "ecs_container_insights_logs" {
   source             = "../cloudwatch_log_group"
   name               = "/aws/ecs/containerinsights/${local.cluster_name}/performance"
+  env                = var.platform.env
   log_retention_days = var.log_retention_days
   kms_key_id         = var.platform.kms_alias_primary.target_key_arn
 }

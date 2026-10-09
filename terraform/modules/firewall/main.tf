@@ -249,6 +249,7 @@ module "waf_log_group" {
 
   # WAF log group names MUST be prefixed with "aws-waf-logs-"
   name       = "aws-waf-logs-${var.name}"
+  env        = var.platform.env
   kms_key_id = var.platform.kms_alias_primary.target_key_arn
 }
 

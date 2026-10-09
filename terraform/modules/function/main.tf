@@ -167,12 +167,14 @@ resource "aws_lambda_permission" "cloudwatch_events" {
   source_arn    = aws_cloudwatch_event_rule.this[0].arn
 }
 
-# Manage cloudwatch log group to ensure compliant
-resource "aws_cloudwatch_log_group" "function" {
-  name              = "/aws/lambda/${local.full_name_string}"
-  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
-  skip_destroy      = strcontains(local.env, "prod") ? true : false
-  retention_in_days = var.log_retention_days
+module "function_logs" {
+  source = "../cloudwatch_log_group"
+
+  name               = "/aws/lambda/${local.full_name_string}"
+  env                = local.env
+  kms_key_id         = var.platform.kms_alias_primary.target_key_arn
+  log_retention_days = var.log_retention_days
+  skip_destroy       = strcontains(local.env, "prod") ? true : false
 }
 
 resource "aws_lambda_invocation" "liveness_check" {

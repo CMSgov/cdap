@@ -1,3 +1,7 @@
+# Lambda function module 
+This allows manual testing of the module at terraform/modules/function. 
+This will provision a basic lambda, from the source code in ./lambda_src/ and verify liveness using the invocation in the function module. 
+
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -8,7 +12,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.64.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.66.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -26,14 +30,7 @@ No requirements.
 -->
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-| ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_env"></a> [env](#input\_env) | The application environment (dev, test, sandbox, prod, mgmt), or an ephemeral environment name ending in one of those (e.g. mybranch-dev) | `string` | n/a | yes |
-| <a name="input_kms_key_id"></a> [kms\_key\_id](#input\_kms\_key\_id) | ARN of the KMS key used to encrypt the log group. | `string` | n/a | yes |
-| <a name="input_name"></a> [name](#input\_name) | Name of the CloudWatch log group. | `string` | n/a | yes |
-| <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | Number of days to retain logs in CloudWatch. Required for production is minimum 180. | `number` | `180` | no |
-| <a name="input_skip_destroy"></a> [skip\_destroy](#input\_skip\_destroy) | If true, remove the log group from state without deleting it from AWS. | `bool` | `false` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Additional tags to apply to the log group. | `map(string)` | `{}` | no |
+No inputs.
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -42,7 +39,10 @@ No requirements.
 -->
 ## Modules
 
-No modules.
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_platform"></a> [platform](#module\_platform) | ../../modules/platform | n/a |
+| <a name="module_tftesting_function"></a> [tftesting\_function](#module\_tftesting\_function) | ../../modules/function | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -53,10 +53,9 @@ No modules.
 
 | Name | Type |
 | ---- | ---- |
-| [aws_cloudwatch_log_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
-| [aws_cloudwatch_log_subscription_filter.long_term_retention](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_subscription_filter) | resource |
-| [aws_ssm_parameter.firehose_arn](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
-| [aws_ssm_parameter.subscription_role_arn](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
+| [aws_ssm_parameter.inline_policy_test](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_ssm_parameter.test_config](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
+| [aws_iam_policy_document.ssm_inline_test](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -67,5 +66,7 @@ No modules.
 
 | Name | Description |
 | ---- | ----------- |
-| <a name="output_this"></a> [this](#output\_this) | The CloudWatch log group. |
+| <a name="output_function_arn"></a> [function\_arn](#output\_function\_arn) | ARN of the test Lambda function |
+| <a name="output_function_name"></a> [function\_name](#output\_function\_name) | Name of the test Lambda function |
+| <a name="output_function_version"></a> [function\_version](#output\_function\_version) | Published version of the test Lambda |
 <!-- END_TF_DOCS -->

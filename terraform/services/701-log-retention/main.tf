@@ -72,18 +72,18 @@ data "aws_ssm_parameter" "cloudwatch_alarms_topic_arn" {
   name = "/${module.platform.app}/${module.platform.env}/cdap-alarm-topic/nonsensitive/alarms-topic-arn"
 }
 
-# Delivery failure diagnostics from Firehose itself
-module "firehose_log_group" {
-  source = "../../modules/cloudwatch_log_group"
-
-  name               = "/aws/kinesisfirehose/${local.shared_name}"
-  kms_key_id         = aws_kms_key.log_retention.arn
-  log_retention_days = 30
+# Delivery failure diagnostics from Firehose itself. Raw resource rather than the
+# cloudwatch_log_group module. Subscribing this group would feed the Firehose's
+# own delivery errors back into it and create a loop.
+resource "aws_cloudwatch_log_group" "firehose" {
+  name              = "/aws/kinesisfirehose/${local.shared_name}"
+  retention_in_days = 30
+  kms_key_id        = aws_kms_key.log_retention.arn
 }
 
 resource "aws_cloudwatch_log_stream" "firehose_s3_delivery" {
   name           = "DestinationDelivery"
-  log_group_name = module.firehose_log_group.this.name
+  log_group_name = aws_cloudwatch_log_group.firehose.name
 }
 
 resource "aws_kinesis_firehose_delivery_stream" "log_retention" {
@@ -112,7 +112,7 @@ resource "aws_kinesis_firehose_delivery_stream" "log_retention" {
     }
 
     # Subscription filter records arrive gzipped. decompress the CloudWatch
-    # envelope in-stream to avoid double-zipping, making the data queryable by Athena,
+    # envelope in-stream to avoid double-zipping, making the data queryable by Athena (future),
     # and partition S3 keys by source log group
     processing_configuration {
       enabled = true
@@ -128,8 +128,11 @@ resource "aws_kinesis_firehose_delivery_stream" "log_retention" {
       processors {
         type = "MetadataExtraction"
         parameters {
+          # CloudWatch Logs periodically sends CONTROL_MESSAGE keep-alive
+          # records with no logGroup field. Fall back so the partition key
+          # is never null
           parameter_name  = "MetadataExtractionQuery"
-          parameter_value = "{log_group: (.logGroup | ltrimstr(\"/\"))}"
+          parameter_value = "{log_group: (((.logGroup | select(. != null and . != \"\")) // \"control-messages\") | ltrimstr(\"/\"))}"
         }
         parameters {
           parameter_name  = "JsonParsingEngine"
@@ -151,7 +154,7 @@ resource "aws_kinesis_firehose_delivery_stream" "log_retention" {
 
     cloudwatch_logging_options {
       enabled         = true
-      log_group_name  = module.firehose_log_group.this.name
+      log_group_name  = aws_cloudwatch_log_group.firehose.name
       log_stream_name = aws_cloudwatch_log_stream.firehose_s3_delivery.name
     }
   }

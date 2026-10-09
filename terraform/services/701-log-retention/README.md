@@ -86,7 +86,6 @@ No requirements.
 
 | Name | Source | Version |
 | ---- | ------ | ------- |
-| <a name="module_firehose_log_group"></a> [firehose\_log\_group](#module\_firehose\_log\_group) | ../../modules/cloudwatch_log_group | n/a |
 | <a name="module_log_bucket"></a> [log\_bucket](#module\_log\_bucket) | ../../modules/bucket | n/a |
 | <a name="module_platform"></a> [platform](#module\_platform) | ../../modules/platform | n/a |
 
@@ -99,6 +98,7 @@ No requirements.
 
 | Name | Type |
 | ---- | ---- |
+| [aws_cloudwatch_log_group.firehose](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_cloudwatch_log_stream.firehose_s3_delivery](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_stream) | resource |
 | [aws_cloudwatch_metric_alarm.firehose_data_freshness](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.firehose_delivery_failure](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
