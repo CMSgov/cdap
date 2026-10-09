@@ -26,7 +26,6 @@ resource "aws_iam_role_policy" "execution" {
   policy = data.aws_iam_policy_document.execution[0].json
 }
 
-
 data "aws_iam_policy_document" "execution" {
   count = var.execution_role_arn != null ? 0 : 1
   statement {
@@ -77,7 +76,7 @@ data "aws_iam_policy_document" "execution" {
   }
 
   dynamic "statement" {
-    for_each = var.enable_ecs_service_connect ? [1] : []
+    for_each = (length(var.service_connect) > 0) ? [1] : []
     content {
       sid       = "AllowPassServiceConnectRole"
       actions   = ["iam:PassRole"]
@@ -91,7 +90,7 @@ data "aws_iam_policy_document" "execution" {
 #---------------------------
 
 resource "aws_iam_role" "service_connect" {
-  count = var.enable_ecs_service_connect ? 1 : 0
+  count = (length(var.service_connect) > 0) ? 1 : 0
   name  = "${local.service_name_full}-service-connect"
 
   assume_role_policy = jsonencode({
@@ -112,14 +111,14 @@ resource "aws_iam_role" "service_connect" {
 }
 
 resource "aws_iam_policy" "service_connect" {
-  count       = var.enable_ecs_service_connect ? 1 : 0
+  count       = (length(var.service_connect) > 0) ? 1 : 0
   name        = "${local.service_name_full}-service-connect"
   description = "Base permissions for ECS Service Connect TLS lifecycle"
   policy      = data.aws_iam_policy_document.service_connect.json
 }
 
 resource "aws_iam_role_policy_attachment" "service_connect" {
-  count      = var.enable_ecs_service_connect ? 1 : 0
+  count      = (length(var.service_connect) > 0) ? 1 : 0
   role       = aws_iam_role.service_connect[0].name
   policy_arn = aws_iam_policy.service_connect[0].arn
 }
@@ -137,7 +136,7 @@ data "aws_iam_policy_document" "service_connect" {
   }
 
   dynamic "statement" {
-    for_each = var.enable_ecs_service_connect ? [1] : []
+    for_each = (length(var.service_connect) > 0) ? [1] : []
     content {
       sid = "AllowCertManagement"
       actions = [
@@ -163,6 +162,7 @@ data "aws_iam_policy_document" "service_connect" {
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",
       "secretsmanager:UpdateSecret",
+      "secretsmanager:UpdateSecretVersionStage",
       "secretsmanager:DeleteSecret",
       "secretsmanager:PutSecretValue",
       "secretsmanager:TagResource",
@@ -284,7 +284,6 @@ resource "aws_iam_policy" "ecs_exec" {
   policy      = data.aws_iam_policy_document.ecs_exec.json
 }
 
-
 data "aws_iam_policy_document" "ecs_exec" {
   statement {
     sid = "AllowECSExec"
@@ -296,4 +295,10 @@ data "aws_iam_policy_document" "ecs_exec" {
     ]
     resources = ["*"]
   }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_exec" {
+  count      = var.enable_execute_command ? 1 : 0
+  role       = aws_iam_role.task.name
+  policy_arn = aws_iam_policy.ecs_exec[0].arn
 }

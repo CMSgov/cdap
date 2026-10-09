@@ -69,6 +69,18 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     resources = ["*"]
   }
 
+  # VPC network management
+  statement {
+    sid = "VPCNetwork"
+    actions = [
+      "ec2:CreateVpcEndpoint",
+      "ec2:DescribeVpcEndpoints",
+      "ec2:ModifyVpcEndpoint",
+      "ec2:DeleteVpcEndpoints"
+    ]
+    resources = ["*"]
+  }
+
   # ECR Read — CDAP needs to describe all apps' repositories
   # for cross-app infrastructure management
   statement {
