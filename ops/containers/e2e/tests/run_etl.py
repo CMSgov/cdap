@@ -1,4 +1,4 @@
-from tests.params import PARAMS
+from .params import PARAMS
 import requests
 import sys
 
@@ -6,7 +6,14 @@ import sys
 def test_run_etl(etl, body={}):
     global PARAMS
     print(f"test_run_etl {etl}")
-    url = f'{PARAMS.base()}/v1/etl/run/{etl}'
+    url = f'{PARAMS.base()}/v1/etl/run'
+    default = {
+        "name": etl,
+        "date": "today",
+    }
+    body = default | body
+    print(body)
+
     try:
         res: requests.Response = PARAMS.session().post(url,
                                                        headers=PARAMS.headers(
@@ -17,7 +24,6 @@ def test_run_etl(etl, body={}):
             return
         if res.status_code > 399:
             print("test_run_etl:", res.status_code, res.text)
-            print(res.text)
             res.close()
             sys.exit(-1)
         res.close()

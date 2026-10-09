@@ -1,21 +1,53 @@
-from tests.params import PARAMS
-from tests.create_etl import test_create_etl
-from tests.log_create import log_create
-from tests.run_etl import test_run_etl
+from .params import PARAMS
+from .create_etl import test_create_etl
+from .log_create import log_create
+from .run_etl import test_run_etl
+from .summary_read import summary_read
 
 import requests
+import json
+import sys
+import time
 
 
 def test_pocketchange():
     global PARAMS
-    for i in range(100):
+    NUMBER_OF_PENNIES = 100
+    existing_pennies = 0
+
+    test_create_etl('starlark/sum-pocket-change.star')
+    test_run_etl("sum-pocket-change")
+    js = summary_read("total.pocketchange")
+
+    if js and "count" in js:
+        existing_pennies = js["count"]
+        print(f"🟢 found {NUMBER_OF_PENNIES} pennies pre-existing")
+    else:
+        print(f"🟢 found no pennies")
+
+    for i in range(NUMBER_OF_PENNIES):
         res: requests.Response = log_create(None, ["pocketchange"], json.dumps({
             "pennies": 1
         }))
         if res.status_code > 399:
-            print(res.text)
             res.close()
             sys.exit(-1)
     res.close()
-    test_create_etl('starlark/sum-pocket-change.star')
+
+    # We have to wait until the buffer flushes to count the pennies.
+    time.sleep(3)
+
     test_run_etl("sum-pocket-change")
+    js = summary_read("total.pocketchange")
+    # response := gin.H{
+    #     "status":    constants.OK,
+    #     "date":      summaryRow.Date,
+    #     "operation": summaryRow.Operation,
+    #     "value":     summaryRow.Value,
+    #     "tags":      summaryRow.Tags,
+    #     "count":     summaryRow.Count,
+    # }
+    if js["count"] == NUMBER_OF_PENNIES + existing_pennies:
+        print(f"🟢 found {NUMBER_OF_PENNIES + existing_pennies} pennies")
+    else:
+        print("🔴 bad penny")

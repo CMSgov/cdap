@@ -1,4 +1,4 @@
-from tests.params import PARAMS
+from .params import PARAMS
 
 
 def log_create(cluster, tags, value):
@@ -12,4 +12,5 @@ def log_create(cluster, tags, value):
     body["tags"] = tags
     res = PARAMS.session().post(
         url, headers=PARAMS.headers("PUPPERLOG"), json=body)
+
     return res

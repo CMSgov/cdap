@@ -27,6 +27,7 @@ func SummaryRead(c *gin.Context) {
 	if err := c.ShouldBindJSON(&body); err != nil {
 		// If an error occurs (e.g., invalid JSON, missing required fields),
 		// return a 400 Bad Request error
+		zap.L().Error("should bind", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": fmt.Sprintf("should bind: %s", err.Error())})
 		return
 	}

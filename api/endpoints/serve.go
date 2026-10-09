@@ -141,9 +141,9 @@ func addSequenceEndpoints(rG *gin.RouterGroup) {
 	// It's actually just inserting an entry into the
 	// ETL table with the correct values. We give it a 'sequence'
 	// endpoint, but it is interchangeable.
-	// FIXME auth_adminV1.POST(constants.SEQUENCE_CREATE, CreateEtl)
+	auth_adminV1.POST(constants.SEQUENCE_CREATE, SequenceCreate)
 	// Run a sequence
-	// FIXME auth_adminV1.POST(constants.SEQUENCE_RUN, RunSequence)
+	auth_adminV1.POST(constants.SEQUENCE_RUN, SequenceRun)
 }
 
 // SUMMARY ENDPOINTS
@@ -157,6 +157,6 @@ func addSummaryEndpoints(rG *gin.RouterGroup) {
 	auth_adminV1ReadWrite.Use(AuthMiddleWare(permsRW))
 
 	auth_adminV1ReadOnly.POST(constants.SUMMARY_READ, SummaryRead)
-	// FIXME auth_adminV1ReadWrite.POST(constants.SUMMARY_CREATE, SummaryCreate)
+	auth_adminV1ReadWrite.POST(constants.SUMMARY_CREATE, SummaryCreate)
 
 }

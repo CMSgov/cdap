@@ -1,12 +1,5 @@
-import json
 import requests
-
-# For multiprocessing
-# Becomes global per process
-PARAMS = None
-
-# Params class is so that we can initialize it
-# per process in the multiprocessing library.
+import json
 
 
 class Params:
@@ -32,3 +25,8 @@ class Params:
 
     def get(self, key):
         return self.params[key]
+
+
+# For multiprocessing
+# Becomes global per process
+PARAMS = Params()

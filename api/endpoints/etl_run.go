@@ -14,14 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// This is the handler if we call it directly from the API.
-// We only get the gin context.
-func RunEtl(c *gin.Context) {
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
-	date := c.Param("date")
-	name := c.Param("name")
-
+func checkRunEtlBody(c *gin.Context) (map[string]any, error) {
 	// ETL steps can have an arbitrary POST body
 	// But, they might send nothing.
 	body, err := io.ReadAll(c.Request.Body)
@@ -33,6 +26,44 @@ func RunEtl(c *gin.Context) {
 	if jsonErr != nil {
 		payload = make(map[string]any)
 	}
+
+	zap.L().Debug("payload", zap.Any("payload", payload))
+	for _, k := range []string{"date", "name"} {
+		if _, ok := payload[k]; !ok {
+			return nil, fmt.Errorf("missing in body: %s", k)
+		}
+		switch t := payload[k].(type) {
+		case string:
+			// OK
+		default:
+			return nil, fmt.Errorf("expected a string for %s; received %T", k, t)
+		}
+	}
+	return payload, nil
+}
+
+// This is the handler if we call it directly from the API.
+// We only get the gin context.
+func RunEtl(c *gin.Context) {
+	appId := base.GetOrPanic(c, "AppId")
+	keyId := base.GetOrPanic(c, "KeyId")
+
+	payload, err := checkRunEtlBody(c)
+	if err != nil {
+		bogoStorage, _ := storage.NewStorage(appId)
+		ser := etl.NewStandardErrorResponse(&etl.RunEtlParams{
+			AppId:   appId,
+			KeyId:   keyId,
+			GinCtx:  c,
+			Storage: bogoStorage,
+			EtlName: "unknown",
+			Payload: payload,
+		}, err)
+		ser.SetStatus(http.StatusBadRequest).Send("ETL run must have a name and date")
+		return
+	}
+	date := payload["date"].(string)
+	name := payload["name"].(string)
 
 	s, err := SetupGinDB(c, appId, date)
 	if err != nil {
@@ -52,7 +83,7 @@ func RunEtl(c *gin.Context) {
 	// FUTURE IMPROVEMENT: Could this pattern be used in etl_create?
 	if dateErr != nil {
 		ser := etl.NewStandardErrorResponse(etlP, dateErr)
-		ser.SetStatus(http.StatusInternalServerError).Send("could not parse date; must be YYYY-MM-DD")
+		ser.SetStatus(http.StatusBadRequest).Send("could not parse date; must be YYYY-MM-DD")
 		return
 	}
 
@@ -104,7 +135,7 @@ func runEtl(etlP *etl.RunEtlParams) error {
 		log.Println(msg)
 		if etlP.GinCtx != nil {
 			ser := etl.NewStandardErrorResponse(etlP, nil)
-			ser.SetStatus(http.StatusInternalServerError).Send(msg)
+			ser.SetStatus(http.StatusBadRequest).Send(msg)
 		}
 		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
 	}

@@ -11,6 +11,12 @@ type ETLPostBody struct {
 	Date string `json:"date" binding:"required"`
 }
 
+type SequencePostBody struct {
+	Name string           `json:"name" binding:"required"`
+	Kind string           `json:"kind" binding:"required"`
+	Body []map[string]any `json:"body" binding:"required"`
+	Date string           `json:"date" binding:"required"`
+}
 type SummaryRow struct {
 	ID        int64          `json:"id"`
 	Inserted  int64          `json:"last_run"`

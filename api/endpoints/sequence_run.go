@@ -1,26 +1,26 @@
 package endpoints
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/etl"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
+	"go.uber.org/zap"
 )
 
 // Run a sequence immediately, synchronously.
-func RunSequence(c *gin.Context) {
+func SequenceRun(c *gin.Context) {
 	appId := base.GetOrPanic(c, "AppId")
 	keyId := base.GetOrPanic(c, "KeyId")
-	sequenceName := c.Param("name")
-	sequenceDate := c.Param("date")
+	// sequenceName := c.Param("name")
+	// sequenceDate := c.Param("date")
 
 	// // ETL steps can have an arbitrary POST body?
 	body, err := io.ReadAll(c.Request.Body)
@@ -33,7 +33,20 @@ func RunSequence(c *gin.Context) {
 		payload = make(map[string]any)
 	}
 
-	s, err := types.NewStorage(appId)
+	for _, key := range []string{"name", "date"} {
+		if _, ok := payload[key]; !ok {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"method":  c.Request.Method,
+				"message": key + " must be present in the body",
+			})
+			return
+		}
+	}
+	sequenceName := payload["name"].(string)
+	sequenceDate := payload["date"].(string)
+
+	s, err := storage.NewStorage(appId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -58,20 +71,9 @@ func RunSequence(c *gin.Context) {
 	}
 	s.InitDB()
 
-	pc, _, _, _ := runtime.Caller(0)
-	funcName := runtime.FuncForPC(pc).Name()
-	etl.LoadDefaultEtlFiles(s, funcName)
-
-	seq, err := s.Queries.GetETL(context.Background(), sequenceName)
+	seq, err := s.GetEtlFromDb(sequenceName)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not find sequence",
-			"date":    s.YYYYMMDD(),
-			"name":    sequenceName,
-		})
-		return
+		zap.L().Error("get sequence from db", zap.Error(err))
 	}
 
 	// Sequences are JSON.
@@ -108,7 +110,7 @@ func RunSequence(c *gin.Context) {
 		// DEBUG LOG
 		// log.Printf("date[%s] sequence[%s] step[%s]\n", s.YYYYMMDD(), sequenceName, step.Name)
 
-		sequenceError := runEtl(&types.RunEtlParams{
+		sequenceError := runEtl(&etl.RunEtlParams{
 			AppId:   appId,
 			KeyId:   keyId,
 			GinCtx:  nil,

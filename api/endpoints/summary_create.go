@@ -1,19 +1,17 @@
 package endpoints
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"runtime"
 	"sort"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/etl"
-	"github.com/navapbc/its-log/internal/schema"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
+	"go.uber.org/zap"
 )
 
 func SummaryCreate(c *gin.Context) {
@@ -30,7 +28,7 @@ func SummaryCreate(c *gin.Context) {
 	appId := base.GetOrPanic(c, "AppId")
 	keyId := base.GetOrPanic(c, "KeyId")
 
-	s, err := types.NewStorage(appId)
+	s, err := storage.NewStorage(appId)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -60,58 +58,41 @@ func SummaryCreate(c *gin.Context) {
 		panic(err)
 	}
 
-	// We cache whether this is loaded, so it is safe/fast to check every time
-	// we try and load another ETL into the table.
-	pc, _, _, _ := runtime.Caller(0)
-	funcName := runtime.FuncForPC(pc).Name()
-	etl.LoadDefaultEtlFiles(s, funcName)
-
 	// The tags field comes in as a JSON array. It needs to become
 	// a sorted, dot-separated string.
 	sort.Strings(body.Tags)
 	theTags := strings.Join(body.Tags, ".")
 
-	// Load an ItslogSummary structure first.
-	// This has a hashing method that we can use to correctly hash
-	// the summary on insert. This saves calling `hash-summaries`
-	// after-the-fact.
+	_, err = s.Exec(storage.Endpoint, "insert_etl", storage.EmbedParamMap{
+		"key_id":    keyId,
+		"date":      body.Date,
+		"operation": body.Operation,
+		"tags":      theTags,
+		"value":     body.Value,
+		"count":     body.Count,
+	})
 
-	ils := schema.ItslogSummary{
-		// NOTE: Let the sqlite engine insert the default
-		// LastRun:   time.Now().Unix(),
-		KeyID:     keyId,
-		Date:      body.Date,
-		Operation: body.Operation,
-		Tags:      theTags,
-		Value:     body.Value,
-		Count:     body.Count,
-	}
-	ils.UpdateHash()
+	if err != nil {
+		zap.L().Error("etl save error", zap.Error(err))
 
-	if err := s.Queries.InsertFullSummary(context.Background(), schema.InsertFullSummaryParams{
-		LastRun:   ils.LastRun,
-		KeyID:     ils.KeyID,
-		Date:      ils.Date,
-		Operation: ils.Operation,
-		Tags:      ils.Tags,
-		Value:     ils.Value,
-		Count:     ils.Count,
-		Hash:      ils.Hash,
-	}); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not save summary",
-			"date":    body.Date,
-			"name":    body.Operation,
+		c.JSON(http.StatusNotImplemented, gin.H{
+			"status":    "error",
+			"method":    c.Request.Method,
+			"message":   "could not save ETL step",
+			"date":      body.Date,
+			"operation": body.Operation,
 		})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"status": "ok",
-		"method": c.Request.Method,
-		"date":   body.Date,
-		"name":   body.Operation,
+		"status":    "ok",
+		"method":    c.Request.Method,
+		"date":      body.Date,
+		"operation": body.Operation,
+		"tags":      theTags,
+		"value":     body.Value,
+		"count":     body.Count,
 	})
+
 }

@@ -48,6 +48,10 @@ func ReuseStorage(appId string, date string) (*Storage, error) {
 	return nil, fmt.Errorf("storage not found for %s", date)
 }
 
+// func RemoveStorage(appId string, date string) {
+// 	delete(activeStorageConnections, appId+date)
+// }
+
 // Helper for the endpoints and other uses across the codebase
 // This is the preferred entrypoint to the Storage API.
 func SetupDB(appId string, date string) (*Storage, error) {
@@ -153,37 +157,6 @@ func (s *Storage) InitDB() error {
 	return nil
 }
 
-// func (s *Storage) CheckAndRestart() {
-// 	// It is possible things could go sideways, and DuckDB will go into restricted mode.
-// 	// We need to start a new DB session in that case.
-// 	appId := s.AppId
-// 	date := s.YYYYMMDD()
-// 	key := appId + date
-
-// 	if s, ok := activeStorageConnections[key]; ok {
-
-// 		var err error
-
-// 		if !s.lock.TryLock() {
-// 			s.Unlock("CheckAndRestart was not locked")
-// 		} else {
-// 			s.Unlock("CheckAndRestart was locked")
-// 		}
-
-// 		s.Close()
-// 		activeStorageConnections[key] = nil
-
-// 		s, err = NewStorage(appId)
-// 		err = s.InitDB()
-
-// 		if err != nil {
-// 			zap.L().Error("could not recover",
-// 				zap.Error(err))
-// 			panic("could not recover db in CheckAndRestart")
-// 		}
-// 	}
-// }
-
 func (s *Storage) ExecNoLock(kind StoredSql, name string, params EmbedParamMap) (sql.Result, error) {
 
 	switch kind {
@@ -224,6 +197,7 @@ func (s *Storage) ExecNoLock(kind StoredSql, name string, params EmbedParamMap) 
 func (s *Storage) Exec(kind StoredSql, name string, params EmbedParamMap) (sql.Result, error) {
 	s.Lock("Exec")
 	res, err := s.ExecNoLock(kind, name, params)
+	s.Flush()
 	s.Unlock("Exec")
 	return res, err
 }
@@ -292,6 +266,15 @@ func (s *Storage) Close() {
 	s.db.Close()
 }
 
+func (s *Storage) Flush() {
+
+	_, err := s.db.Exec("CHECKPOINT;")
+	if err != nil {
+		panic("could not checkpoint the DB")
+	}
+
+}
+
 func (s *Storage) GetDB() *sql.DB {
 	return s.db
 }
@@ -352,6 +335,7 @@ func (s *Storage) CloseAppender() {
 		zap.L().Fatal("could not close appender", zap.Error(err))
 	}
 	s.appender = nil
+	s.Flush()
 }
 
 func (s *Storage) AppendRow(row ...driver.Value) error {

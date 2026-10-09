@@ -1,7 +1,8 @@
 from pathlib import Path
-from tests.params import PARAMS
+from .params import PARAMS
 import base64
 import requests
+import sys
 
 
 def test_create_etl(filename):
@@ -28,16 +29,20 @@ def test_create_etl(filename):
         "body": encoded,
         "date": "today"
     }
+
     try:
-        res = PARAMS.session().post(url,
-                                    headers=PARAMS.headers("PUPPERADMIN"),
-                                    json=body,
-                                    timeout=PARAMS.get("TIMEOUT"))
+        res: requests.Response = PARAMS.session().post(url,
+                                                       headers=PARAMS.headers(
+                                                           "PUPPERADMIN"),
+                                                       json=body,
+                                                       timeout=PARAMS.get("TIMEOUT"))
         if res.status_code > 399:
             print("test_create_etl:", res.status_code)
             print(res.text)
             res.close()
             sys.exit(-1)
+        if res.status_code == 201:
+            print(f"🟢 {res.status_code}")
         res.close()
     except requests.exceptions.Timeout as e:
         print(e)

@@ -120,7 +120,7 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 			// We assume we will only have so many apps open.
 			// This *might* be an issue as we roll day-to-day.
 			// That could be handled down in the Storage abstraction.
-			// s.Close()
+			s.Flush()
 		}
 	}
 

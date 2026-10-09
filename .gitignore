@@ -3,7 +3,7 @@ cmd/config.yaml
 **.sqlite
 its-log
 .vscode/settings.json
-__*
+__py*
 .DS_Store
 _base/*
 **.sqlite-wal

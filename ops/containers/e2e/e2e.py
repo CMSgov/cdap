@@ -1,12 +1,18 @@
-from tests.params import Params, PARAMS
-from tests.log_create import log_create
-from tests.pocketchange import test_pocketchange
 
+from multiprocessing import Pool, Process
+from pathlib import Path
+from tests import (
+    log_create,
+    Params,
+    PARAMS,
+    test_create_etl,
+    test_run_etl,
+    test_pocketchange
+)
+from http import HTTPStatus
 import base64
 import json
-from multiprocessing import Pool, Process
 import os
-from pathlib import Path
 import requests
 import sys
 import time
@@ -45,27 +51,44 @@ def test_sequential_event_logging(id):
     print(f"test_sequential_event_logging: {id}")
     # Create one event
     res = log_create("", ["v1"], "")
-    if res.status_code > 399:
+    if res.status_code == HTTPStatus.OK:
+        print(f"🟢 {res.status_code} created 1 event")
+    else:
         print("test_sequential_event_logging:", res.text)
         res.close()
         sys.exit(-1)
+
     time.sleep(2)
     # Create 100 events, pass values
-    for i in range(PARAMS.get("LESS_THAN_BUFFER")):
+    all_ok = True
+    N = PARAMS.get("LESS_THAN_BUFFER")
+    for i in range(N):
         res = log_create("", ["v2", "centi"], i)
-        if res.status_code > 399:
+        if res.status_code != HTTPStatus.OK:
+            all_ok = False
             print("test_sequential_event_logging:", res.text)
             res.close()
-            sys.exit(-1)
+    if all_ok:
+        print(f"🟢 created {N} events")
+    else:
+        print("🔴 FAILURE in test_sequential_event_logging")
+        sys.exit(-1)
     # Create 5000 events, which will require 3 buffer flushes
     # Pass values and clusters
-    for i in range(PARAMS.get("MORE_THAN_BUFFER")):
+    all_ok = True
+    N = PARAMS.get("MORE_THAN_BUFFER")
+    for i in range(N):
         res = log_create(f"c{i % 1000}", ["v3", "milli"], i)
-        if res.status_code > 399:
+        if res.status_code != HTTPStatus.OK:
             print("test_sequential_event_logging:", res.text)
             res.close()
             sys.exit(-1)
     res.close()
+    if all_ok:
+        print(f"🟢 created {N} events")
+    else:
+        print("🔴 FAILURE in test_sequential_event_logging")
+        sys.exit(-1)
     # There should now be 5101 events in the events table.
 
 # Loads an ETL
@@ -92,35 +115,11 @@ def test_parallel_inserts(N):
     p2.join()
 
 
-def summary_read(operation, expected):
-    global PARAMS
-    print(f"summary_read {operation}")
-    url = f'{PARAMS.base()}/v1/summary/read'
-    try:
-        res: requests.Response = PARAMS.session().post(url,
-                                                       headers=PARAMS.headers(
-                                                           "PUPPERADMIN"),
-                                                       json=body,
-                                                       timeout=PARAMS.get("TIMEOUT"))
-        if res.status_code in [200, 201]:
-            return
-        if res.status_code > 399:
-            print("test_run_etl:", res.status_code, res.text)
-            print(res.text)
-            res.close()
-            sys.exit(-1)
-        res.close()
-    except requests.exceptions.Timeout as e:
-        print(e)
-
-
 def test_insert_summary():
     pass
 
 
 def main():
-    global PARAMS
-    PARAMS = Params()
 
     wait_for_healthcheck()
     test_sequential_event_logging(1)
