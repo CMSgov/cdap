@@ -21,11 +21,6 @@ variable "name" {
   type        = string
 }
 
-variable "bucket_id" {
-  description = "Target S3 bucket ID/name to mount"
-  type        = string
-}
-
 variable "bucket_arn" {
   description = "Target S3 bucket ARN to mount"
   type        = string
