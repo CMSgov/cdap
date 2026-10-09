@@ -90,7 +90,7 @@ data "aws_iam_policy_document" "execution" {
 #---------------------------
 
 resource "aws_iam_role" "service_connect" {
-  count = (length(var.service_connect) > 0) ? 1 : 0
+  count = var.service_connect_enabled ? 1 : 0
   name  = "${local.service_name_full}-service-connect"
 
   assume_role_policy = jsonencode({
@@ -111,14 +111,14 @@ resource "aws_iam_role" "service_connect" {
 }
 
 resource "aws_iam_policy" "service_connect" {
-  count       = (length(var.service_connect) > 0) ? 1 : 0
+  count       = var.service_connect_enabled ? 1 : 0
   name        = "${local.service_name_full}-service-connect"
   description = "Base permissions for ECS Service Connect TLS lifecycle"
   policy      = data.aws_iam_policy_document.service_connect.json
 }
 
 resource "aws_iam_role_policy_attachment" "service_connect" {
-  count      = (length(var.service_connect) > 0) ? 1 : 0
+  count      = var.service_connect_enabled ? 1 : 0
   role       = aws_iam_role.service_connect[0].name
   policy_arn = aws_iam_policy.service_connect[0].arn
 }

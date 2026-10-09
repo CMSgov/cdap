@@ -438,7 +438,7 @@ resource "aws_ecs_service" "this" {
   }
 
   service_connect_configuration {
-    enabled   = (length(var.service_connect) > 0) ? true : false
+    enabled   = var.service_connect_enabled ? true : false
     namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace.arn
 
     log_configuration {
