@@ -39,14 +39,7 @@ def test_pocketchange():
 
     test_run_etl("sum-pocket-change")
     js = summary_read("total.pocketchange")
-    # response := gin.H{
-    #     "status":    constants.OK,
-    #     "date":      summaryRow.Date,
-    #     "operation": summaryRow.Operation,
-    #     "value":     summaryRow.Value,
-    #     "tags":      summaryRow.Tags,
-    #     "count":     summaryRow.Count,
-    # }
+
     if js["count"] == NUMBER_OF_PENNIES + existing_pennies:
         print(f"🟢 found {NUMBER_OF_PENNIES + existing_pennies} pennies")
     else:
