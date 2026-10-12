@@ -44,7 +44,7 @@ func organizeEvents(eventBuffer types.EventBuffer) BufferTree {
 			// If it isn't nil, lets grab the date from the event.
 			// From test endpoints, this can vary widely.
 			d := evt.Timestamp
-			formatted_date := d.Format("2006-01-02")
+			formattedDate := d.Format("2006-01-02")
 
 			if _, ok := org[evt.AppId]; !ok {
 				// If we have not seen this app before, we have to initialize it
@@ -53,13 +53,17 @@ func organizeEvents(eventBuffer types.EventBuffer) BufferTree {
 
 			// Now, have we seen this date before from that app?
 			if _, ok := org[evt.AppId]; !ok {
-				org[evt.AppId][formatted_date] = make([]*types.Event, 0)
+				org[evt.AppId][formattedDate] = make([]*types.Event, 0)
 			}
 
 			// We're ready; append the event
-			org[evt.AppId][formatted_date] = append(org[evt.AppId][formatted_date], evt)
+			org[evt.AppId][formattedDate] = append(org[evt.AppId][formattedDate], evt)
 
 			// DEBUG LOG
+			zap.L().Debug("organize events",
+				zap.String("appId", evt.AppId),
+				zap.String("date", formattedDate),
+			)
 			// log.Printf("organizeEvents: %s[%s] <- %s", evt.AppId, formatted_date, evt)
 		}
 	}
@@ -147,9 +151,14 @@ func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 				zap.L().Error("error storing event", zap.Error(err))
 				return -1, err
 			}
+			zap.L().Debug("ManyEvents",
+				zap.Int64("id", max_id),
+				zap.String("key_id", e.KeyId),
+				zap.String("tags", e.TagString))
 			counter += 1
 		}
 	}
 
+	zap.L().Debug("ManyEvents", zap.Int64("counter", counter))
 	return counter, nil
 }

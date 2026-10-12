@@ -3,6 +3,7 @@ package endpoints
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
@@ -46,6 +47,17 @@ func CreateEtl(c *gin.Context) {
 	appId := base.GetOrPanic(c, "AppId")
 	keyId := base.GetOrPanic(c, "KeyId")
 
+	// DuckDB wants Base64 values padded to mod(len, 4).
+	// We'll make sure the padding is right, even though the client
+	// should do this work.
+	etl := strings.ReplaceAll(body.Body, "=", "")
+	offset := len(etl) % 4
+	if offset != 0 {
+		for range 4 - offset {
+			etl += "="
+		}
+	}
+
 	s, err := SetupGinDB(c, appId, body.Date)
 	if err != nil {
 		zap.L().Fatal("could not setup DB for CreateEtl")
@@ -55,7 +67,7 @@ func CreateEtl(c *gin.Context) {
 		"key_id": keyId,
 		"name":   body.Name,
 		"kind":   body.Kind,
-		"body":   body.Body,
+		"body":   etl,
 	})
 
 	if err != nil {

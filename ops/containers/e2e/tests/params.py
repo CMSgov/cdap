@@ -7,8 +7,8 @@ class Params:
         with open("config.json", "r") as f:
             self.params = json.load(f)
         self.params["TIMEOUT"] = 4
-        self.params["LESS_THAN_BUFFER"] = 5
-        self.params["MORE_THAN_BUFFER"] = 5
+        self.params["LESS_THAN_BUFFER"] = 100
+        self.params["MORE_THAN_BUFFER"] = 5000
         # Need to use a session, or requests will run out of sockets.
         self.params["session"] = requests.Session()
 

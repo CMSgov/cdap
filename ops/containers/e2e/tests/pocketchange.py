@@ -1,7 +1,7 @@
 from .params import PARAMS
-from .create_etl import test_create_etl
+from .create_etl import create_etl
 from .log_create import log_create
-from .run_etl import test_run_etl
+from .run_etl import run_etl
 from .summary_read import summary_read
 
 import requests
@@ -15,8 +15,8 @@ def test_pocketchange():
     NUMBER_OF_PENNIES = 100
     existing_pennies = 0
 
-    test_create_etl('starlark/sum-pocket-change.star')
-    test_run_etl("sum-pocket-change")
+    create_etl('starlark/sum-pocket-change.star')
+    run_etl("sum-pocket-change")
     js = summary_read("total.pocketchange")
 
     if js and "count" in js:
@@ -37,7 +37,7 @@ def test_pocketchange():
     # We have to wait until the buffer flushes to count the pennies.
     time.sleep(3)
 
-    test_run_etl("sum-pocket-change")
+    run_etl("sum-pocket-change")
     js = summary_read("total.pocketchange")
 
     if js["count"] == NUMBER_OF_PENNIES + existing_pennies:

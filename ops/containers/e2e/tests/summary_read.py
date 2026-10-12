@@ -6,7 +6,6 @@ import sys
 
 def summary_read(operation):
     global PARAMS
-    print(f"summary_read {operation}")
     url = f'{PARAMS.base()}/v1/summary/read'
     try:
         res: requests.Response = PARAMS.session().post(url,
@@ -27,6 +26,5 @@ def summary_read(operation):
             sys.exit(-1)
         res.close()
     except requests.exceptions.Timeout as e:
-        print(e)
         res.close()
         sys.exit(-1)
