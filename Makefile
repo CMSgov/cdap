@@ -19,7 +19,15 @@ e2e: container-api container-e2e
 	docker compose \
 	-f ops/containers/docker-compose-e2e.yaml \
 	up \
+	--no-attach itslog \
 	--abort-on-container-exit
+
+e2e-noisy: container-api container-e2e
+	docker compose \
+	-f ops/containers/docker-compose-e2e.yaml \
+	up \
+	--abort-on-container-exit
+
 
 k6: container-api container-k6
 	docker compose \
