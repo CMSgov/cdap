@@ -28,8 +28,6 @@ e2e-noisy: container-api container-e2e
 	up \
 	--abort-on-container-exit
 
-
-
 k6: container-api container-k6
 	docker compose \
 	-f ops/containers/docker-compose-k6.yaml \
