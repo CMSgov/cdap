@@ -3,8 +3,9 @@ import json
 
 
 class Params:
-    def __init__(self):
-        with open("config.json", "r") as f:
+    def __init__(self, env):
+        print(f"Loading params: {env}")
+        with open(env, "r") as f:
             self.params = json.load(f)
         self.params["TIMEOUT"] = 4
         self.params["LESS_THAN_BUFFER"] = 100
@@ -27,6 +28,4 @@ class Params:
         return self.params[key]
 
 
-# For multiprocessing
-# Becomes global per process
-PARAMS = Params()
+PARAMS = None

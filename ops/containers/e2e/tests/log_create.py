@@ -1,8 +1,7 @@
 from .params import PARAMS
 
 
-def log_create(cluster, tags, value):
-    global PARAMS
+def log_create(PARAMS, cluster, tags, value):
     url = f'{PARAMS.base()}/v1/log/create'
     body = {}
     if len(str(cluster)) > 1:

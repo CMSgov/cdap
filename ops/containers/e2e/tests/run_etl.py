@@ -3,7 +3,7 @@ import requests
 import sys
 
 
-def run_etl(etl, body={}):
+def run_etl(PARAMS, etl, body={}):
     url = f'{PARAMS.base()}/v1/etl/run'
     default = {
         "name": etl,
@@ -28,7 +28,6 @@ def run_etl(etl, body={}):
         print(e)
 
 
-def test_run_etl(etl, body={}):
-    global PARAMS
+def test_run_etl(PARAMS, etl, body={}):
     print(f"== test_run_etl {etl}")
-    return run_etl(etl, body)
+    return run_etl(PARAMS, etl, body)

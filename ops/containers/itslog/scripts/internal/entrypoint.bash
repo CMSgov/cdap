@@ -20,6 +20,7 @@ export ITSLOG_APIKEY_PHLLC_LOG=$(jq -n \
 export ITSLOG_BUFFER_FLUSHWAITSEC=1
 export ITSLOG_BUFFER_LENGTH=2000
 export ITSLOG_GINMODE="debug" # debug or release
+export ITSLOG_ZAPMODE="info" # debug or info
 export ITSLOG_HASH_SEED=42
 export ITSLOG_PROXIES_TRUSTED="TBD"
 export ITSLOG_SERVE_HOST="0.0.0.0"

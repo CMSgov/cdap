@@ -1,0 +1,10 @@
+include:
+  - path: ./docker-compose.yaml
+services:
+  e2e:
+    image: itslog-e2e
+    command: python3 /app/e2e.py --env config-container.json
+    depends_on:
+      itslog:
+        condition: service_healthy
+

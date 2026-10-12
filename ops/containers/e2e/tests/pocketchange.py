@@ -10,14 +10,13 @@ import sys
 import time
 
 
-def test_pocketchange():
-    global PARAMS
+def test_pocketchange(PARAMS):
     NUMBER_OF_PENNIES = 100
     existing_pennies = 0
 
-    create_etl('starlark/sum-pocket-change.star')
-    run_etl("sum-pocket-change")
-    js = summary_read("total.pocketchange")
+    create_etl(PARAMS, 'starlark/sum-pocket-change.star')
+    run_etl(PARAMS, "sum-pocket-change")
+    js = summary_read(PARAMS, "total.pocketchange")
 
     if js and "count" in js:
         existing_pennies = js["count"]
@@ -26,7 +25,7 @@ def test_pocketchange():
         print(f"🟢 found no pennies")
 
     for i in range(NUMBER_OF_PENNIES):
-        res: requests.Response = log_create(None, ["pocketchange"], json.dumps({
+        res: requests.Response = log_create(PARAMS, None, ["pocketchange"], json.dumps({
             "pennies": 1
         }))
         if res.status_code > 399:
@@ -37,8 +36,8 @@ def test_pocketchange():
     # We have to wait until the buffer flushes to count the pennies.
     time.sleep(3)
 
-    run_etl("sum-pocket-change")
-    js = summary_read("total.pocketchange")
+    run_etl(PARAMS, "sum-pocket-change")
+    js = summary_read(PARAMS, "total.pocketchange")
 
     if js["count"] == NUMBER_OF_PENNIES + existing_pennies:
         print(f"🟢 found {NUMBER_OF_PENNIES + existing_pennies} pennies")

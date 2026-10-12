@@ -94,8 +94,8 @@ func addLoggingEndpoints(rG *gin.RouterGroup, ch_evt_out chan<- *types.Event) {
 	auth_logV1 := rG.Group("/")
 	permissions := []types.PermissionType{constants.Log, constants.Test}
 	auth_logV1.Use(AuthMiddleWare(permissions))
-	auth_logV1.POST(constants.LOG_CREATE, LogCreate(ch_evt_out, constants.Log))
-	auth_logV1.POST(constants.LOG_CREATE_DATE, LogCreate(ch_evt_out, constants.Test))
+	auth_logV1.POST(LOG_CREATE, LogCreate(ch_evt_out, constants.Log))
+	auth_logV1.POST(LOG_CREATE_DATE, LogCreate(ch_evt_out, constants.Test))
 }
 
 // ETL ENDPOINTS
@@ -105,15 +105,15 @@ func addEtlEndpoints(rG *gin.RouterGroup) {
 	auth_adminV1.Use(AuthMiddleWare(permissions))
 
 	// Insert a new ETL step
-	auth_adminV1.POST(constants.ETL_CREATE, CreateEtl)
+	auth_adminV1.POST(ETL_CREATE, CreateEtl)
 	// Run an ETL step
-	auth_adminV1.POST(constants.ETL_RUN, RunEtl)
+	auth_adminV1.POST(ETL_RUN, RunEtl)
 }
 
 // METADATA ENDPOINTS
 func addMetadataEndpoints(rG *gin.RouterGroup) {
 	// The healthcheck is a public endpoint
-	rG.GET(constants.METADATA_HEALTH, func(c *gin.Context) {
+	rG.GET(METADATA_HEALTH, func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
@@ -127,7 +127,7 @@ func addMetadataEndpoints(rG *gin.RouterGroup) {
 		constants.Test,
 	}
 	auth_adminV1.Use(AuthMiddleWare(permissions))
-	auth_adminV1.GET(constants.METADATA_STATUS, status.GinHandler)
+	auth_adminV1.GET(METADATA_STATUS, status.GinHandler)
 
 }
 
@@ -141,9 +141,9 @@ func addSequenceEndpoints(rG *gin.RouterGroup) {
 	// It's actually just inserting an entry into the
 	// ETL table with the correct values. We give it a 'sequence'
 	// endpoint, but it is interchangeable.
-	auth_adminV1.POST(constants.SEQUENCE_CREATE, SequenceCreate)
+	auth_adminV1.POST(SEQUENCE_CREATE, SequenceCreate)
 	// Run a sequence
-	auth_adminV1.POST(constants.SEQUENCE_RUN, SequenceRun)
+	auth_adminV1.POST(SEQUENCE_RUN, SequenceRun)
 }
 
 // SUMMARY ENDPOINTS
@@ -156,7 +156,7 @@ func addSummaryEndpoints(rG *gin.RouterGroup) {
 	auth_adminV1ReadOnly.Use(AuthMiddleWare(permsRO))
 	auth_adminV1ReadWrite.Use(AuthMiddleWare(permsRW))
 
-	auth_adminV1ReadOnly.POST(constants.SUMMARY_READ, SummaryRead)
-	auth_adminV1ReadWrite.POST(constants.SUMMARY_CREATE, SummaryCreate)
+	auth_adminV1ReadOnly.POST(SUMMARY_READ, SummaryRead)
+	auth_adminV1ReadWrite.POST(SUMMARY_CREATE, SummaryCreate)
 
 }

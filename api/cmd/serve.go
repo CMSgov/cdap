@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/navapbc/its-log/endpoints"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/endpoints"
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

@@ -4,8 +4,7 @@ import requests
 import sys
 
 
-def summary_read(operation):
-    global PARAMS
+def summary_read(PARAMS, operation):
     url = f'{PARAMS.base()}/v1/summary/read'
     try:
         res: requests.Response = PARAMS.session().post(url,

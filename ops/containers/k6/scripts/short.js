@@ -44,7 +44,7 @@ const applications = [
     "WhatMeds"
 ]
 
-const url = "http://" + ITSLOG_HOST + ":" + ITSLOG_PORT + "/v1/log";
+const url = "http://" + ITSLOG_HOST + ":" + ITSLOG_PORT + "/v1/log/create";
 // Simulated user behavior
 export default function () {
     const N = 100;

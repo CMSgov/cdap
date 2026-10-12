@@ -8,11 +8,11 @@ import sys
 import time
 
 
-def create_N_events(N, cluster, tags, value):
+def create_N_events(PARAMS, N, cluster, tags, value):
     # Create one event
     created = 0
     for _ in range(N):
-        res = log_create(cluster, tags, value)
+        res = log_create(PARAMS, cluster, tags, value)
         if res.status_code == HTTPStatus.OK:
             created += 1
         else:
@@ -22,29 +22,28 @@ def create_N_events(N, cluster, tags, value):
     return created
 
 
-def test_sequential_event_logging(id):
-    global PARAMS
+def test_sequential_event_logging(PARAMS, id):
     print(f"== test_sequential_event_logging: {id}")
 
     time.sleep(PARAMS.get("TIMEOUT"))
-    create_etl("sql/count-total.sql")
-    run_etl("count-total")
+    create_etl(PARAMS, "sql/count-total.sql")
+    run_etl(PARAMS, "count-total")
 
-    js = summary_read("count.total")
+    js = summary_read(PARAMS, "count.total")
     initial_events = -1
     if js and "count" in js:
         initial_events = js["count"]
         print(f"🔵 {initial_events} found")
     else:
         print(js)
-    create_N_events(1, "", ["v1"], "")
+    create_N_events(PARAMS, 1, "", ["v1"], "")
     print(f"🟢 created 1 event")
 
     time.sleep(PARAMS.get("TIMEOUT"))
 
     # Create 100 events, pass values
     N = PARAMS.get("LESS_THAN_BUFFER")
-    inserted = create_N_events(N, "", ["v2", "centi"], "")
+    inserted = create_N_events(PARAMS, N, "", ["v2", "centi"], "")
     if N == inserted:
         print(f"🟢 created {N} events")
     else:
@@ -54,7 +53,7 @@ def test_sequential_event_logging(id):
     # Create 5000 events, which will require 3 buffer flushes
     # Pass values and clusters
     N = PARAMS.get("MORE_THAN_BUFFER")
-    inserted = create_N_events(N, "", ["v2", "centi"], "")
+    inserted = create_N_events(PARAMS, N, "", ["v2", "centi"], "")
     if N == inserted:
         print(f"🟢 created {N} events")
     else:
@@ -63,8 +62,8 @@ def test_sequential_event_logging(id):
 
     time.sleep(PARAMS.get("TIMEOUT"))
 
-    run_etl("count-total")
-    js = summary_read("count.total")
+    run_etl(PARAMS, "count-total")
+    js = summary_read(PARAMS, "count.total")
     final_events = -1
     if js and "count" in js:
         final_events = js["count"]

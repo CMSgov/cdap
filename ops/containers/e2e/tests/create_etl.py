@@ -15,7 +15,7 @@ def get_contents(filename):
     return encoded
 
 
-def create_etl(filename):
+def create_etl(PARAMS, filename):
     encoded = get_contents(filename)
 
     if ".sql" in filename:
@@ -51,8 +51,7 @@ def create_etl(filename):
         print(e)
 
 
-def test_create_etl(filename):
-    global PARAMS
+def test_create_etl(PARAMS, filename):
     print(f"== test_create_etl {filename}")
-    code = create_etl(filename)
+    code = create_etl(PARAMS, filename)
     print(f"🟢 test_create_etl {code}")

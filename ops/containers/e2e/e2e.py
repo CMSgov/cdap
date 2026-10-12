@@ -1,9 +1,8 @@
-
+import click
 from pathlib import Path
 from tests import (
     log_create,
-    Params,
-    PARAMS,
+    params,
     test_create_etl,
     test_run_etl,
     test_pocketchange,
@@ -21,33 +20,42 @@ import time
 # Useful for debugging
 
 
-def test_insert_summary():
+def test_insert_summary(PARAMS):
     pass
 
 
-def main():
+@click.command()
+@click.option('--env', default="config-local.json", help='Local env')
+def main(env):
+    # For multiprocessing
+    # Becomes global per process
+    PARAMS = params.Params(env)
 
-    wait_for_healthcheck()
-    test_create_etl('sql/sentinel.sql')
-    test_run_etl("sentinel")
-    test_create_etl('sql/count-total.sql')
-    test_run_etl("count-total")
+    wait_for_healthcheck(PARAMS)
+    test_create_etl(PARAMS, 'sql/sentinel.sql')
+    test_run_etl(PARAMS, "sentinel")
+    test_create_etl(PARAMS, 'sql/count-total.sql')
+    test_run_etl(PARAMS, "count-total")
 
-    test_sequential_event_logging(1)
+    test_sequential_event_logging(PARAMS, 1)
 
-    test_create_etl('starlark/total-summary-count.star')
-    test_run_etl("total-summary-count")
+    test_create_etl(PARAMS, 'starlark/total-summary-count.star')
+    test_run_etl(PARAMS, "total-summary-count")
 
     # pocketchange inserts data, runs a Starlark ETL,
     # and then fetches the result to check if it is right.
-    test_pocketchange()
+    test_pocketchange(PARAMS)
 
     # insert_summary tests if we can insert a summary and then
     # read back the value we stored
-    test_insert_summary()
+    test_insert_summary(PARAMS)
 
-    wait_for_healthcheck()
-    test_parallel_inserts(3)
+    wait_for_healthcheck(PARAMS)
+    test_parallel_inserts(PARAMS, 3)
+
+    print("====================")
+    print("==     SUCCESS    ==")
+    print("====================")
 
 
 if __name__ in "__main__":

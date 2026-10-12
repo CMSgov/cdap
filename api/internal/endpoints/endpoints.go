@@ -1,4 +1,4 @@
-package constants
+package endpoints
 
 const LOG_CREATE = "/log/create"
 const LOG_CREATE_DATE = "/log/create/date"

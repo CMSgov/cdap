@@ -8,18 +8,16 @@ from multiprocessing import Pool, Process
 
 
 def init_process():
-    global PARAMS
-    PARAMS = Params()
+    pass
 
 
-def test_parallel_inserts(N):
-    global PARAMS
+def test_parallel_inserts(PARAMS, N):
     print(f"test_parallel_inserts {N}")
     p1 = Pool(processes=N, initializer=init_process)
     p2 = Pool(processes=N, initializer=init_process)
 
-    run_etl("count-total")
-    js = summary_read("count.total")
+    run_etl(PARAMS, "count-total")
+    js = summary_read(PARAMS, "count.total")
     initial_events = -1
     if js and "count" in js:
         initial_events = js["count"]
@@ -29,18 +27,18 @@ def test_parallel_inserts(N):
 
     params = []
     for _ in range(N):
-        params.append([N*1000, "", ["P", "parallel"], ""])
+        params.append([PARAMS, N*1000, "", ["P", "parallel"], ""])
     r1 = p1.map_async(create_N_events, params)
     p1.close()
-    r2 = p2.map_async(create_etl, ['sql/sentinel.sql'] * N * N)
+    r2 = p2.map_async(create_etl, [PARAMS, 'sql/sentinel.sql'] * N * N)
     p2.close()
     p1.join()
     p2.join()
 
     time.sleep(PARAMS.get("TIMEOUT"))
 
-    run_etl("count-total")
-    js = summary_read("count.total")
+    run_etl(PARAMS, "count-total")
+    js = summary_read(PARAMS, "count.total")
     final_events = -1
     if js and "count" in js:
         final_events = js["count"]
