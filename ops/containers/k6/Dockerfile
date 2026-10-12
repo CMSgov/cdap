@@ -1,10 +1,14 @@
-FROM amazonlinux:2023
+FROM grafana/k6:latest AS k6_source
 
-# https://github.com/grafana/k6/issues/5120
-RUN dnf install -y golang git
-RUN go install go.k6.io/k6@latest
-RUN mv ~/go/bin/k6 /usr/local/bin/
+# Step 2: Use your preferred base image (e.g., Node, Alpine, or Ubuntu)
+FROM alpine:latest
 
-COPY scripts /scripts
+# Install any required dependencies your environment needs
+RUN apk add --no-cache ca-certificates
 
-CMD [ "k6", "run", "10k.js" ]
+# Copy the k6 binary from the official image into your path
+COPY --from=k6_source /usr/bin/k6 /usr/bin/k6
+
+COPY ops/containers/k6/scripts scripts 
+
+# CMD [ "k6", "run", "10k.js" ]
