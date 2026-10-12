@@ -44,10 +44,10 @@ const applications = [
     "WhatMeds"
 ]
 
-const url = "http://" + ITSLOG_HOST + ":" + ITSLOG_PORT + "/v1/log/create";
+const url = "http://" + ITSLOG_HOST + ":" + ITSLOG_PORT + "/v1/log";
 // Simulated user behavior
 export default function () {
-    const N = 500;
+    const N = 10;
 
     const params = {
         headers: { "x-api-key": __ENV.ITSLOG_APIKEY }
@@ -72,6 +72,7 @@ export default function () {
                         console.log(url);
                         console.log(data);
                         console.log(params);
+                        console.log(resp.json());
                         sleep(10);
                     }
                 }
