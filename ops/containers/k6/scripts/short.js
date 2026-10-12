@@ -47,7 +47,7 @@ const applications = [
 const url = "http://" + ITSLOG_HOST + ":" + ITSLOG_PORT + "/v1/log";
 // Simulated user behavior
 export default function () {
-    const N = 10;
+    const N = 100;
 
     const params = {
         headers: { "x-api-key": __ENV.ITSLOG_APIKEY }
