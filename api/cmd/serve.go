@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/navapbc/its-log/endpoints"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/endpoints"
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,7 +32,7 @@ func serve_cmd(cmd *cobra.Command, args []string) {
 		os.Exit(-1)
 	}
 
-	defer base.ConfigureLoggers(viper.GetString("ginmode")).Sync()
+	defer base.ConfigureLoggers(viper.GetString("zapmode")).Sync()
 
 	// Load the API keys from the environment
 	err = base.GetApiKeys()

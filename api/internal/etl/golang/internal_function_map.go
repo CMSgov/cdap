@@ -1,0 +1,15 @@
+package etl
+
+import "github.com/navapbc/its-log/internal/etl"
+
+// Any file that starts with internal_ will not be pulled
+// into the SQLite table. The map is not actual ETL code,
+// so we leave it out of the table.
+var GolangETLMap = map[string]func(*etl.RunEtlParams) error{
+	// FIXME
+	// "count-all-combinations": CountAllCombinations,
+	"db-to-csv":      SqliteToCSV,
+	"consolidate":    Consolidate,
+	"hash-summaries": HashSummaries,
+	"backup":         Backup,
+}

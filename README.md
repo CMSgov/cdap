@@ -6,22 +6,13 @@
 
 On a Mac M4, `its-log` can sustain logging 30K events/second to a local SQLite database.
 
+## development
+
+We recommend using VSCode. A `launch.json` is provided that configures the debugger for building and testing the API. F5 launches `its-log` under the debugger, Shift-F5 brings `its-log` down.
 
 ## testing
 
-`its-log` can test itself. It will run sequential correctness tests followed by parallel stress tests, exercising itself end-to-end and validating database contention correctness.
-
-In one terminal, run the storage stack (a [ministack](https://ministack.org/) S3):
-
-```
-make storage
-```
-
-and in another, run the E2E:
-
-```
-make test
-```
+`make test` will build and run `its-log` locally, and then launch a Python script that runs a complete suite of E2E tests. 
 
 ## debugging its-log
 

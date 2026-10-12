@@ -1,31 +1,23 @@
-.PHONY: amd native
+.PHONY: build test stress
 
-native:
-	cd api ; make native
+prep-local:
+	mkdir -p ~/.its-log/data
 
-e2e:
-	cd api ; make e2e
+build: prep-local
+	cd api ; go build -o its-log
 
-k6-arm:
-	cd ops/containers ; make k6-arm
+container-api: prep-local
+	docker build -t itslog-app -f ops/containers/itslog/Dockerfile .
 
-k6-amd:
-	cd ops/containers ; make k6-amd
+container-e2e: prep-local
+	docker build -t itslog-e2e -f ops/containers/e2e/Dockerfile .
 
-storage:
-	cd ops/containers ; make storage
 
-itslog-arm:
-	cd ops/containers ; make itslog-arm
-
-itslog-arm-build:
-	cd ops/containers ; make itslog-arm-build
-
-itslog-amd:
-	cmd ops/containers ; make itslog-amd
-
-generate:
-	cd api ; make generate
+e2e: container-api container-e2e
+	docker compose \
+	-f ops/containers/docker-compose-e2e.yaml \
+	up \
+	--abort-on-container-exit
 
 test:
-	cd api ; make test
+	echo hi

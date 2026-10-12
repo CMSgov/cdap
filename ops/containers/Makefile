@@ -1,4 +1,4 @@
-.PHONY: e2e amd arm k6 kd-arm k6-amd itslog itslog-arm itslog-amd 
+.PHONY: e2e amd arm k6 k6-build kd-arm k6-amd itslog itslog-arm itslog-amd 
 
 e2e:
 	docker compose \
@@ -27,9 +27,14 @@ k6:
 	up \
 	--abort-on-container-exit
 
-k6-arm: arm k6
+k6-build:
+	export BUILDX_METADATA_PROVENANCE=false ;\
+	docker compose \
+	-f docker-compose-k6.yaml \
+	up \
+	--build \
+	--abort-on-container-exit
 
-k6-amd: amd k6
 
 itslog:
 	docker compose \
