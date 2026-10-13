@@ -52,8 +52,6 @@ module "my_s3_files" {
   bucket_arn  = module.my_bucket.arn
   kms_key_arn = aws_kms_key.my_key.arn
   read_only   = true
-
-  allowed_security_group_ids = [module.my_lambda.security_group_id]
 }
 
 module "my_lambda" {
@@ -68,7 +66,34 @@ module "my_lambda" {
     local_mount_path = "/mnt/data"
   }
 }
+
+# Standalone security group rules connecting Lambda and S3 Files:
+# 1. Allow NFS ingress to S3 Files mount targets from Lambda
+resource "aws_vpc_security_group_ingress_rule" "s3_files_from_lambda" {
+  security_group_id            = module.my_s3_files.security_group_id
+  referenced_security_group_id = module.my_lambda.security_group_id
+  ip_protocol                  = "tcp"
+  from_port                    = 2049
+  to_port                      = 2049
+  description                  = "Allow NFS ingress from Lambda to S3 Files mount targets"
+}
+
+# 2. Allow NFS egress from Lambda to S3 Files mount targets
+# (Required: the Lambda module default security group only allows outbound HTTPS/443)
+resource "aws_vpc_security_group_egress_rule" "lambda_to_s3_files" {
+  security_group_id            = module.my_lambda.security_group_id
+  referenced_security_group_id = module.my_s3_files.security_group_id
+  ip_protocol                  = "tcp"
+  from_port                    = 2049
+  to_port                      = 2049
+  description                  = "Allow NFS egress from Lambda to S3 Files mount targets"
+}
 ```
+
+> [!NOTE]
+> **Security Group Ordering & Module Dependencies:**
+> When integrating with `modules/function`, avoid passing `module.my_lambda.security_group_id` into `allowed_security_group_ids` directly, as referencing module outputs back and forth creates a Terraform module dependency cycle. Use standalone ingress and egress rules as shown above. `allowed_security_group_ids` can be used when client security groups are provisioned independently prior to this module.
+
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -108,7 +133,7 @@ module "my_lambda" {
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_allowed_security_group_ids"></a> [allowed\_security\_group\_ids](#input\_allowed\_security\_group\_ids) | List of security group IDs permitted to mount the file system over NFS (TCP port 2049) | `list(string)` | `[]` | no |
+| <a name="input_allowed_security_group_ids"></a> [allowed\_security\_group\_ids](#input\_allowed\_security\_group\_ids) | List of security group IDs permitted to mount the file system over NFS (TCP port 2049). Use this when client security groups are known upfront. When connecting to modules that consume this module's outputs (e.g. modules/function), define standalone rules in the caller to avoid dependency cycles. | `list(string)` | `[]` | no |
 | <a name="input_app"></a> [app](#input\_app) | The application name (ab2d, bcda, bb, bfd, cdap, dpc) | `string` | n/a | yes |
 | <a name="input_bucket_arn"></a> [bucket\_arn](#input\_bucket\_arn) | Target S3 bucket ARN to mount | `string` | n/a | yes |
 | <a name="input_env"></a> [env](#input\_env) | The application environment (dev, test, sandbox, prod, mgmt) | `string` | n/a | yes |
@@ -126,6 +151,6 @@ module "my_lambda" {
 | <a name="output_access_point_id"></a> [access\_point\_id](#output\_access\_point\_id) | ID of the S3 Files access point |
 | <a name="output_file_system_arn"></a> [file\_system\_arn](#output\_file\_system\_arn) | ARN of the S3 Files file system |
 | <a name="output_file_system_id"></a> [file\_system\_id](#output\_file\_system\_id) | ID of the S3 Files file system |
-| <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | ID of the security group attached to the mount targets (for client egress security group rules) |
+| <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | ID of the security group attached to the mount targets (use to wire NFS ingress and egress rules in caller service) |
 | <a name="output_service_role_arn"></a> [service\_role\_arn](#output\_service\_role\_arn) | ARN of the IAM role used by S3 Files to access the backing S3 bucket |
 <!-- END_TF_DOCS -->

@@ -19,7 +19,7 @@ output "file_system_arn" {
 }
 
 output "security_group_id" {
-  description = "ID of the security group attached to the mount targets (for client egress security group rules)"
+  description = "ID of the security group attached to the mount targets (use to wire NFS ingress and egress rules in caller service)"
   value       = aws_security_group.mount_targets.id
 }
 
