@@ -5,3 +5,12 @@ resource "aws_vpc_endpoint" "s3" {
   route_table_ids   = data.aws_route_tables.private.ids
   tags              = merge(module.platform.default_tags, { Name = "${var.app}-east-${var.env}-s3-gw-endpoint" })
 }
+
+
+resource "aws_vpc_endpoint" "dynamodb" {
+  vpc_id            = data.aws_vpc.this.id
+  service_name      = "com.amazonaws.${module.platform.primary_region.name}.dynamodb"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = data.aws_route_tables.private.ids
+  tags = merge(module.platform.default_tags, { Name = "${module.platform.primary_region.name}-dynamodb-gw-endpoint" })
+}
