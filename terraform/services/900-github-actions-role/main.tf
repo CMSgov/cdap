@@ -97,6 +97,7 @@ locals {
     },
     var.app == "cdap" ? {
       cdap-mgmt = data.aws_iam_policy_document.github_actions_cdap.json
+      cdap-kms  = data.aws_iam_policy_document.github_actions_cdap_kms.json
     } : {}
   )
 }

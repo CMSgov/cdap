@@ -95,41 +95,6 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     resources = ["*"]
   }
 
-
-  statement {
-    sid = "KmsCreate"
-    actions = [
-      "kms:CreateKey",
-      "kms:CreateAlias",
-      "kms:Describe*"
-    ]
-    resources = ["*"]
-  }
-
-  # FIXME CDAP manages all KMS keys so this permission could be broad
-  # FIXME Deprecate the bcda key as the account environment key
-  statement {
-    sid = "KmsKeyAdmin"
-    actions = [
-      "kms:EnableKeyRotation",
-      "kms:PutKeyPolicy",
-      "kms:TagResource",
-    ]
-    resources = length(data.aws_kms_alias.cdap_managed_kms) > 0 ? concat(
-      # Additional/adhoc keys from config files
-      values(data.aws_kms_alias.cdap_managed_kms)[*].target_key_arn,
-      # Per-app, per-env environment keys (e.g. ab2d-test, dpc-dev, etc.)
-      values(data.aws_kms_alias.cdap_managed_env_keys)[*].target_key_arn,
-      values(data.aws_kms_alias.cdap_managed_env_keys_secondary)[*].target_key_arn,
-      # Account-level keys
-      [data.aws_kms_alias.environment_key.target_key_arn],
-      [data.aws_kms_alias.account_env_old.target_key_arn],
-      [data.aws_kms_alias.account_env_old_secondary.target_key_arn],
-      [data.aws_kms_alias.account_env.target_key_arn],
-      [data.aws_kms_alias.account_env_secondary.target_key_arn],
-    ) : ["*"]
-  }
-
   # Secrets Manager - only CDAP uses this
   statement {
     actions = [
@@ -178,16 +143,35 @@ data "aws_iam_policy_document" "github_actions_cdap" {
       "s3:PutBucketVersioning",
       "s3:PutEncryptionConfiguration",
       "s3:PutLifecycleConfiguration",
+      "s3:PutBucketObjectLockConfiguration",
     ]
     resources = [
       "arn:aws:s3:::bucket-access-logs-*",
       "arn:aws:s3:::bb2-prod-quicksight-export-*",
-      "arn:aws:s3:::*-buildcache*"
-
+      "arn:aws:s3:::*-buildcache*",
+      # Long-term log retention bucket (701-log-retention)
+      "arn:aws:s3:::shared-${var.env}-log-retention-*",
     ]
-    # FIXME: Add GetBucketObjectLockConfiguration when CDAP adds
-    #        log retention / object lock management via Tofu
   }
+  # Log retention delivery stream - managed by 701-log-retention
+  statement {
+    sid = "FirehoseLogRetention"
+    actions = [
+      "firehose:CreateDeliveryStream",
+      "firehose:DeleteDeliveryStream",
+      "firehose:DescribeDeliveryStream",
+      "firehose:ListTagsForDeliveryStream",
+      "firehose:StartDeliveryStreamEncryption",
+      "firehose:StopDeliveryStreamEncryption",
+      "firehose:TagDeliveryStream",
+      "firehose:UntagDeliveryStream",
+      "firehose:UpdateDestination",
+    ]
+    resources = [
+      "arn:aws:firehose:*:*:deliverystream/shared-${var.env}-log-retention",
+    ]
+  }
+
   # CDAP creates and manages all hosted zones including specialty ones
   # e.g. snowflakecomputing.com via PrivateLink
   # Other teams should not be creating hosted zones directly
@@ -204,6 +188,45 @@ data "aws_iam_policy_document" "github_actions_cdap" {
   }
 
   # Add other CDAP-only services here as needed...
+}
+
+# Use separate policy to avoid the
+# 6,144-character IAM managed policy size limit
+data "aws_iam_policy_document" "github_actions_cdap_kms" {
+  statement {
+    sid = "KmsCreate"
+    actions = [
+      "kms:CreateKey",
+      "kms:CreateAlias",
+      "kms:Describe*"
+    ]
+    resources = ["*"]
+  }
+
+  # FIXME CDAP manages all KMS keys so this permission could be broad
+  # FIXME Deprecate the bcda key as the account environment key
+  statement {
+    sid = "KmsKeyAdmin"
+    actions = [
+      "kms:EnableKeyRotation",
+      "kms:PutKeyPolicy",
+      "kms:TagResource",
+      "kms:GetKeyPolicy"
+    ]
+    resources = length(data.aws_kms_alias.cdap_managed_kms) > 0 ? concat(
+      # Additional/adhoc keys from config files
+      values(data.aws_kms_alias.cdap_managed_kms)[*].target_key_arn,
+      # Per-app, per-env environment keys (e.g. ab2d-test, dpc-dev, etc.)
+      values(data.aws_kms_alias.cdap_managed_env_keys)[*].target_key_arn,
+      values(data.aws_kms_alias.cdap_managed_env_keys_secondary)[*].target_key_arn,
+      # Account-level keys
+      [data.aws_kms_alias.environment_key.target_key_arn],
+      [data.aws_kms_alias.account_env_old.target_key_arn],
+      [data.aws_kms_alias.account_env_old_secondary.target_key_arn],
+      [data.aws_kms_alias.account_env.target_key_arn],
+      [data.aws_kms_alias.account_env_secondary.target_key_arn],
+    ) : ["*"]
+  }
 }
 
 resource "aws_iam_policy" "github_actions_cdap" {
