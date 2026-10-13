@@ -39,10 +39,13 @@ data "aws_iam_policy_document" "s3files_bucket_access" {
     sid = "S3BucketAccess"
     actions = concat(
       [
+        "s3:GetBucketLocation",
+        "s3:GetBucketVersioning",
         "s3:GetObject",
         "s3:GetObjectVersion",
+        "s3:GetObjectVersionTagging",
         "s3:ListBucket",
-        "s3:GetBucketLocation",
+        "s3:ListBucketVersions",
       ],
       var.read_only ? [] : [
         "s3:PutObject",
