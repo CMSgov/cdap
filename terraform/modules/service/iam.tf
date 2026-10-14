@@ -34,7 +34,7 @@ data "aws_iam_policy_document" "execution" {
       "ecr:BatchCheckLayerAvailability",
       "ecr:GetDownloadUrlForLayer",
       "ecr:BatchGetImage",
-      "logs:CreateLogGroup",
+      # No logs:CreateLogGroup. Log groups are Terraform managed to ensure long term storage compliance
       "logs:CreateLogStream",
       "logs:PutLogEvents"
     ]
