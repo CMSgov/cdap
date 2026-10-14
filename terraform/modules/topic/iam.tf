@@ -119,3 +119,48 @@ data "aws_iam_policy_document" "this" {
     }
   }
 }
+
+# Role SNS assumes to write delivery status logs
+data "aws_iam_policy_document" "delivery_status_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["sns.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "delivery_status_logs" {
+  statement {
+    sid = "WriteDeliveryStatusLogs"
+    # No logs:CreateLogGroup. Log groups are Terraform-managed so drift fails loudly
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = [
+      "${module.delivery_logs.this.arn}:*",
+      "${module.delivery_failure_logs.this.arn}:*",
+    ]
+  }
+}
+
+resource "aws_iam_role" "delivery_status" {
+  name               = "${local.topic_name}-sns-delivery-status"
+  path               = "/delegatedadmin/developer/"
+  assume_role_policy = data.aws_iam_policy_document.delivery_status_assume.json
+}
+
+resource "aws_iam_role_policy" "delivery_status" {
+  name   = "${local.topic_name}-delivery-status-logs"
+  role   = aws_iam_role.delivery_status.id
+  policy = data.aws_iam_policy_document.delivery_status_logs.json
+}

@@ -7,8 +7,8 @@
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.67.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -27,7 +27,7 @@ No requirements.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_name"></a> [name](#input\_name) | Short name for this topic's purpose, e.g. "alarms" or "alarm-to-slack".<br/>Used to construct the default topic name and, if enabled, the default<br/>SSM parameter path. | `string` | n/a | yes |
 | <a name="input_platform"></a> [platform](#input\_platform) | Object that describes standardized platform values. Must expose app, env, service, and kms\_alias\_primary.target\_key\_arn. | `any` | n/a | yes |
 | <a name="input_additional_publisher_iam_arns"></a> [additional\_publisher\_iam\_arns](#input\_additional\_publisher\_iam\_arns) | IAM role/user ARNs granted sns:Publish directly on this topic. This<br/>module does not create those IAM identities -- it only grants the<br/>topic-side resource policy statement; the consuming terraservice owns<br/>the role/user itself. | `list(string)` | `[]` | no |
@@ -38,8 +38,10 @@ No requirements.
 | <a name="input_buckets"></a> [buckets](#input\_buckets) | ARNs of S3 buckets that need to publish event notifications to this<br/>topic. When non-empty, adds a topic policy statement allowing<br/>s3.amazonaws.com to publish. | `list(string)` | `[]` | no |
 | <a name="input_create_ssm_parameter"></a> [create\_ssm\_parameter](#input\_create\_ssm\_parameter) | Publishes this topic's ARN to SSM Parameter Store, at<br/>ssm\_parameter\_name\_override if set, otherwise at the default path<br/>constructed from platform.app, platform.env, platform.service, and<br/>var.name. Off by default -- not every topic needs to be discoverable<br/>by other terraservices. | `bool` | `false` | no |
 | <a name="input_kms_key_override"></a> [kms\_key\_override](#input\_kms\_key\_override) | Do not favor. Override to the platform-managed KMS key. Defaults to var.platform.kms\_alias\_primary.target\_key\_arn. | `string` | `null` | no |
+| <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | Number of days to retain SNS delivery status logs in CloudWatch. Production minimum is 180. Value is validated by the cloudwatch\_log\_group module. | `number` | `180` | no |
 | <a name="input_sqs_subscriptions"></a> [sqs\_subscriptions](#input\_sqs\_subscriptions) | Names of existing SQS queues (looked up by name, not created by this module) to subscribe to this topic. | `list(string)` | `[]` | no |
 | <a name="input_ssm_parameter_name_override"></a> [ssm\_parameter\_name\_override](#input\_ssm\_parameter\_name\_override) | Overrides the constructed SSM parameter path entirely. Only used when create\_ssm\_parameter = true. | `string` | `null` | no |
+| <a name="input_success_feedback_sample_rate"></a> [success\_feedback\_sample\_rate](#input\_success\_feedback\_sample\_rate) | Percentage (0-100) of successful deliveries to log. Failed deliveries are always logged. | `number` | `0` | no |
 | <a name="input_topic_name_override"></a> [topic\_name\_override](#input\_topic\_name\_override) | Overrides the constructed topic name ({platform.app}-{platform.env}-<br/>{name}) entirely. SNS topic names are immutable in AWS -- changing<br/>this later forces the topic to be destroyed and recreated. Required<br/>when adopting this module for an existing topic whose name predates<br/>this convention. | `string` | `null` | no |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -49,7 +51,10 @@ No requirements.
 -->
 ## Modules
 
-No modules.
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_delivery_failure_logs"></a> [delivery\_failure\_logs](#module\_delivery\_failure\_logs) | ../cloudwatch_log_group | n/a |
+| <a name="module_delivery_logs"></a> [delivery\_logs](#module\_delivery\_logs) | ../cloudwatch_log_group | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -59,14 +64,19 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
+| [aws_iam_role.delivery_status](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy.delivery_status](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy) | resource |
 | [aws_sns_topic.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
 | [aws_sns_topic_policy.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_policy) | resource |
 | [aws_sns_topic_subscription.additional](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_sns_topic_subscription.sqs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_ssm_parameter.topic_arn](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_iam_policy_document.delivery_status_assume](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.delivery_status_logs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_sqs_queue.subscriptions](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/sqs_queue) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -77,6 +87,6 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_arn"></a> [arn](#output\_arn) | ARN for the SNS topic |
 <!-- END_TF_DOCS -->
