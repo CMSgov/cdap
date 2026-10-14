@@ -17,8 +17,9 @@ locals {
           app     = config_data.app
           service = svc.name
 
-          tag_rules            = try(svc.tag_rules, [])
-          untagged_expiry_days = try(svc.untagged_expiry_days, null)
+          tag_rules                 = try(svc.tag_rules, [])
+          untagged_expiry_days      = try(svc.untagged_expiry_days, null)
+          permitted_cross_accounts  = try(svc.permitted_cross_accounts, false)
         }
       ]
     ]) : pair.key => pair
@@ -46,6 +47,7 @@ module "ecr_repo" {
   platform = module.platform[each.value.app]
   service  = each.value.service
 
-  tag_rules            = each.value.tag_rules
-  untagged_expiry_days = each.value.untagged_expiry_days
+  tag_rules                 = each.value.tag_rules
+  untagged_expiry_days      = each.value.untagged_expiry_days
+  permitted_cross_accounts  = each.value.permitted_cross_accounts
 }

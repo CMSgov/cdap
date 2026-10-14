@@ -79,3 +79,22 @@ variable "untagged_expiry_days" {
   type        = number
   default     = 14
 }
+
+variable "permitted_cross_accounts" {
+  description = <<-EOT
+    Boolean flag on whether or not the ECR images can be shared across AWS accounts
+
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "cross_ecr_access_account_ids" {
+  description = <<-EOT
+    If images in an ECR repo are able to be accessed by other AWS accounts, this 
+    variable stores the different account ids that can access the repo
+
+  EOT
+  type        = list(string)
+  default     = []
+}
