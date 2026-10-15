@@ -1,7 +1,6 @@
 locals {
-  app = coalesce(var.app, try(var.platform.app, null))
-  env = coalesce(var.env, try(var.platform.env, null))
-
+  app       = var.platform.app
+  env       = var.platform.env
   full_name = "${local.app}-${local.env}-${var.name}"
 
   vpc_id     = var.vpc_id != null ? var.vpc_id : module.vpc[0].id
