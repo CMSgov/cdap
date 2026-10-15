@@ -54,10 +54,12 @@ resource "aws_sns_topic" "this" {
   http_failure_feedback_role_arn    = aws_iam_role.delivery_status.arn
   http_success_feedback_sample_rate = var.success_feedback_sample_rate
 
-  # SNS must never create these groups itself as they would escape retention management
+  # SNS must never create these groups itself as they would escape retention management.
+  # The role policy must be attached before SNS validates/uses the feedback role.
   depends_on = [
     module.delivery_logs,
     module.delivery_failure_logs,
+    aws_iam_role_policy.delivery_status,
   ]
 }
 
