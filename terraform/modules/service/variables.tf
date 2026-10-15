@@ -470,6 +470,12 @@ variable "additional_task_role_policies" {
   EOT
 }
 
+variable "needs_s3_access" {
+  description = "Whether this function's own code calls S3 directly"
+  type        = bool
+  default     = false
+}
+
 ## Monitoring
 variable "enable_datadog_agent" {
   description = "Whether to include the Datadog agent sidecar container. Disable for batch/job tasks, tasks with tight resource limits, or tasks without Datadog network access."
