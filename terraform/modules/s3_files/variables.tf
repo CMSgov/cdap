@@ -1,17 +1,28 @@
+variable "platform" {
+  description = "Object representing the CDAP platform module."
+  type = object({
+    app               = optional(string)
+    env               = optional(string)
+    kms_alias_primary = object({ target_key_arn = string })
+  })
+}
+
 variable "app" {
-  description = "The application name (ab2d, bcda, bb, bfd, cdap, dpc)"
+  description = "The application name (ab2d, bcda, bb, bfd, cdap, dpc). If null, defaults to platform.app."
   type        = string
+  default     = null
   validation {
-    condition     = contains(["ab2d", "bcda", "bb", "bfd", "cdap", "dpc"], var.app)
+    condition     = var.app == null || contains(["ab2d", "bcda", "bb", "bfd", "cdap", "dpc"], var.app)
     error_message = "Valid value for app is ab2d, bcda, bb, bfd, cdap, or dpc."
   }
 }
 
 variable "env" {
-  description = "The application environment (dev, test, sandbox, prod, mgmt)"
+  description = "The application environment (dev, test, sandbox, prod, mgmt). If null, defaults to platform.env."
   type        = string
+  default     = null
   validation {
-    condition     = contains(["dev", "test", "sandbox", "prod", "mgmt"], var.env)
+    condition     = var.env == null || contains(["dev", "test", "sandbox", "prod", "mgmt"], var.env)
     error_message = "Valid value for env is dev, test, sandbox, prod, or mgmt."
   }
 }
@@ -24,12 +35,6 @@ variable "name" {
 variable "bucket_arn" {
   description = "Target S3 bucket ARN to mount"
   type        = string
-}
-
-variable "kms_key_arn" {
-  description = "Optional KMS Key ARN used for encryption at rest. If null, AWS managed encryption is used."
-  type        = string
-  default     = null
 }
 
 variable "read_only" {
