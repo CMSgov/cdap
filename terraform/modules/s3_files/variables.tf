@@ -1,30 +1,10 @@
 variable "platform" {
   description = "Object representing the CDAP platform module."
   type = object({
-    app               = optional(string)
-    env               = optional(string)
+    app               = string
+    env               = string
     kms_alias_primary = object({ target_key_arn = string })
   })
-}
-
-variable "app" {
-  description = "The application name (ab2d, bcda, bb, bfd, cdap, dpc). If null, defaults to platform.app."
-  type        = string
-  default     = null
-  validation {
-    condition     = var.app == null || contains(["ab2d", "bcda", "bb", "bfd", "cdap", "dpc"], var.app)
-    error_message = "Valid value for app is ab2d, bcda, bb, bfd, cdap, or dpc."
-  }
-}
-
-variable "env" {
-  description = "The application environment (dev, test, sandbox, prod, mgmt). If null, defaults to platform.env."
-  type        = string
-  default     = null
-  validation {
-    condition     = var.env == null || contains(["dev", "test", "sandbox", "prod", "mgmt"], var.env)
-    error_message = "Valid value for env is dev, test, sandbox, prod, or mgmt."
-  }
 }
 
 variable "name" {
