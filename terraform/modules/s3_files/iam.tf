@@ -37,22 +37,19 @@ data "aws_iam_policy_document" "s3files_bucket_access" {
     ]
   }
 
-  dynamic "statement" {
-    for_each = var.kms_key_arn != null ? [1] : []
-    content {
-      sid = "KMSKeyAccess"
-      actions = concat(
-        [
-          "kms:Decrypt",
-          "kms:DescribeKey",
-        ],
-        var.read_only ? [] : [
-          "kms:Encrypt",
-          "kms:GenerateDataKey",
-        ]
-      )
-      resources = [var.kms_key_arn]
-    }
+  statement {
+    sid = "KMSKeyAccess"
+    actions = concat(
+      [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+      ],
+      var.read_only ? [] : [
+        "kms:Encrypt",
+        "kms:GenerateDataKey",
+      ]
+    )
+    resources = [var.platform.kms_alias_primary.target_key_arn]
   }
 }
 
