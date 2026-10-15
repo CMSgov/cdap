@@ -132,11 +132,9 @@ resource "aws_vpc_security_group_egress_rule" "lambda_to_s3_files" {
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_allowed_security_group_ids"></a> [allowed\_security\_group\_ids](#input\_allowed\_security\_group\_ids) | List of security group IDs permitted to mount the file system over NFS (TCP port 2049). Use this when client security groups are known upfront. When connecting to modules that consume this module's outputs (e.g. modules/function), define standalone rules in the caller to avoid dependency cycles. | `list(string)` | `[]` | no |
-| <a name="input_app"></a> [app](#input\_app) | The application name (ab2d, bcda, bb, bfd, cdap, dpc). If null, defaults to platform.app. | `string` | `null` | no |
 | <a name="input_bucket_arn"></a> [bucket\_arn](#input\_bucket\_arn) | Target S3 bucket ARN to mount | `string` | n/a | yes |
-| <a name="input_env"></a> [env](#input\_env) | The application environment (dev, test, sandbox, prod, mgmt). If null, defaults to platform.env. | `string` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Identifier suffix for the S3 Files resources (e.g. 'attribution-import-files') | `string` | n/a | yes |
-| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP platform module. | <pre>object({<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>    app               = optional(string)<br/>    env               = optional(string)<br/>  })</pre> | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP platform module. | <pre>object({<br/>    app               = string<br/>    env               = string<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>  })</pre> | n/a | yes |
 | <a name="input_read_only"></a> [read\_only](#input\_read\_only) | Whether the file system access should enforce read-only operations. Defaults to true. | `bool` | `true` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | Optional list of subnet IDs for mount targets. When null, uses the shared CDAP subnets module. | `list(string)` | `null` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | Optional VPC ID. When null, uses the shared CDAP vpc module. | `string` | `null` | no |
