@@ -35,7 +35,8 @@ This module provisions an **Amazon S3 Files** file system on top of an existing 
 ## Features
 
 - Mounts an S3 bucket via NFS without requiring preliminary file downloads or local disk buffering.
-- Automatically resolves private subnets using the shared CDAP `subnets` module and provisions mount targets across all availability zones.
+- Automatically resolves VPC ID and private subnets from the CDAP `platform` module, provisioning mount targets across all availability zones.
+- Encrypts file system data at rest and scopes IAM access using the CDAP `platform` primary KMS key.
 - Creates a dedicated security group for mount targets and manages NFS (TCP 2049) ingress rules from allowed client security groups.
 - Defaults to read-only (`ro`) operations to enforce least privilege.
 - Uses delegated admin IAM role paths (`/delegatedadmin/developer/`).
@@ -55,8 +56,7 @@ module "my_s3_files" {
 module "my_lambda" {
   source = "github.com/CMSgov/cdap//terraform/modules/function?ref=<TAG>"
 
-  app         = "bcda"
-  env         = "dev"
+  platform    = module.platform
   name        = "my-lambda"
   ...
   file_system_config = {
