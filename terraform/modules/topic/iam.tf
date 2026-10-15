@@ -32,7 +32,7 @@ data "aws_iam_policy_document" "this" {
       condition {
         test     = "StringEquals"
         variable = "aws:SourceAccount"
-        values   = [data.aws_caller_identity.current.account_id]
+        values   = [var.platform.aws_caller_identity.account_id]
       }
     }
   }
@@ -54,7 +54,7 @@ data "aws_iam_policy_document" "this" {
       condition {
         test     = "StringEquals"
         variable = "aws:SourceAccount"
-        values   = [data.aws_caller_identity.current.account_id]
+        values   = [var.platform.aws_caller_identity.account_id]
       }
     }
   }
@@ -76,7 +76,7 @@ data "aws_iam_policy_document" "this" {
       condition {
         test     = "StringEquals"
         variable = "aws:SourceAccount"
-        values   = [data.aws_caller_identity.current.account_id]
+        values   = [var.platform.aws_caller_identity.account_id]
       }
     }
   }
@@ -133,7 +133,7 @@ data "aws_iam_policy_document" "delivery_status_assume" {
     condition {
       test     = "StringEquals"
       variable = "aws:SourceAccount"
-      values   = [data.aws_caller_identity.current.account_id]
+      values   = [var.platform.aws_caller_identity.account_id]
     }
   }
 }

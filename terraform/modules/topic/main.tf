@@ -7,13 +7,9 @@ locals {
   ssm_parameter_name         = coalesce(var.ssm_parameter_name_override, local.default_ssm_parameter_name)
 
   # Names are dictated by SNS delivery status logging. It writes only to these
-  delivery_log_group_name         = "sns/${data.aws_region.current.region}/${data.aws_caller_identity.current.account_id}/${local.topic_name}"
+  delivery_log_group_name         = "sns/${var.platform.primary_region.name}/${var.platform.aws_caller_identity.account_id}/${local.topic_name}"
   delivery_failure_log_group_name = "${local.delivery_log_group_name}/Failure"
 }
-
-data "aws_caller_identity" "current" {}
-
-data "aws_region" "current" {}
 
 module "delivery_logs" {
   source = "../cloudwatch_log_group"
