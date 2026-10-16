@@ -13,7 +13,7 @@ container-e2e: prep-local
 	docker build -t itslog-e2e:latest -f ops/containers/e2e/Dockerfile --load .
 
 container-k6: prep-local
-	docker build -t itslog-k6 -f ops/containers/k6/Dockerfile .
+	docker build -t itslog-k6 -f ops/containers/k6/Dockerfile --load .
 
 e2e: container-api container-e2e
 	docker compose \
