@@ -88,13 +88,3 @@ variable "permitted_cross_accounts" {
   type        = bool
   default     = false
 }
-
-variable "cross_ecr_access_account_ids" {
-  description = <<-EOT
-    If images in an ECR repo are able to be accessed by other AWS accounts, this 
-    variable stores the different account ids that can access the repo
-
-  EOT
-  type        = list(string)
-  default     = []
-}

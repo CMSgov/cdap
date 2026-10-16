@@ -1,6 +1,15 @@
+data "aws_caller_identity" "current" {}
+
 locals {
+  bb_aws_account_id = module.standards.ssm["bb"].aws_account_id.value
+
+  all_cross_account_ids = concat(
+    [local.bb_aws_account_id],
+    [data.aws_caller_identity.current.account_id],
+  )
+
   cross_ecr_access_account_ids = [
-    for account_id in var.cross_ecr_access_account_ids : "arn:aws:iam::${account_id}:root"
+    for account_id in local.all_cross_account_ids : "arn:aws:iam::${account_id}:root"
   ]
 
   enable_cross_account_policy = var.permitted_cross_accounts && length(local.cross_ecr_access_account_ids) > 0
