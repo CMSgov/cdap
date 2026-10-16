@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 # The run stage
 FROM golang:1.26.0-trixie AS prod
-RUN apt update ; apt install -y jq awscli
+RUN apt update ; apt install -y jq
 
 WORKDIR /app
 COPY --from=builder /app/api/its-log .
