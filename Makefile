@@ -34,3 +34,9 @@ k6: container-api container-k6
 	up \
 	--no-attach itslog \
 	--abort-on-container-exit
+
+run: container-api
+	docker compose \
+	-f ops/containers/docker-compose.yaml \
+	up \
+	--abort-on-container-exit
