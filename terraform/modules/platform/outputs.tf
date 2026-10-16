@@ -96,7 +96,7 @@ output "logging_bucket" {
 
 output "security_groups" {
   description = "Map of current VPC's common [aws_security_group data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group#attribute-reference), keyed by `name`"
-  sensitive   = true
+  sensitive   = false
   value       = data.aws_security_group.this
 }
 
