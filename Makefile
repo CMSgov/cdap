@@ -7,10 +7,10 @@ build: prep-local
 	cd api ; go build -o its-log .
 
 container-api: prep-local
-	docker build -t itslog-api -f ops/containers/itslog/Dockerfile .
+	docker build -t itslog-api:latest -f ops/containers/itslog/Dockerfile --load .
 
 container-e2e: prep-local
-	docker build -t itslog-e2e -f ops/containers/e2e/Dockerfile .
+	docker build -t itslog-e2e:latest -f ops/containers/e2e/Dockerfile --load .
 
 container-k6: prep-local
 	docker build -t itslog-k6 -f ops/containers/k6/Dockerfile .
