@@ -79,3 +79,12 @@ variable "untagged_expiry_days" {
   type        = number
   default     = 14
 }
+
+variable "permitted_cross_accounts" {
+  description = <<-EOT
+    Boolean flag on whether or not the ECR images can be shared across AWS accounts
+
+  EOT
+  type        = bool
+  default     = false
+}

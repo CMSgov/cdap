@@ -4,3 +4,6 @@ services:
     untagged_expiry_days: 2
   - name: "mtls-sidecar"
     untagged_expiry_days: 20
+  - name: "its-log"
+    untagged_expiry_days: 20
+    permitted_cross_accounts: true
