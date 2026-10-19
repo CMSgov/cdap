@@ -14,13 +14,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-func SqliteToCSV(etlP *etl.RunEtlParams) error {
-	// var sqliteToCsvPrefix string = "sqlite_to_csv"
-	// var sqliteToCsvExpectedKeys = []string{
-	// 	sqliteToCsvPrefix + "-source", sqliteToCsvPrefix + "-destination",
+func DBToCSV(etlP *etl.RunEtlParams) error {
+	// var DBToCsvPrefix string = "db_to_csv"
+	// var DBToCsvExpectedKeys = []string{
+	// 	DBToCsvPrefix + "-source", DBToCsvPrefix + "-destination",
 	// }
 
-	// err := hasExpectedKeys(etlP, sqliteToCsvExpectedKeys)
+	// err := hasExpectedKeys(etlP, DBToCsvExpectedKeys)
 	// if err != nil {
 	// 	return err
 	// }
@@ -34,8 +34,7 @@ func SqliteToCSV(etlP *etl.RunEtlParams) error {
 		defer rows.Close()
 
 		// The CSV file will be based on the app name, the date, and
-		// the table name. It will be stored to the same path as the SQLite
-		// databases.
+		// the table name. It will be stored to the same path as the databases.
 		csvFilename := strings.Join(
 			[]string{
 				etlP.AppId,
