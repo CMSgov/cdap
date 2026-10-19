@@ -453,7 +453,7 @@ resource "aws_ecs_service" "this" {
     log_configuration {
       log_driver = "awslogs"
       options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.app.name
+        "awslogs-group"         = module.app_logs.this.name
         "awslogs-stream-prefix" = "service-connect"
         "awslogs-region"        = "us-east-1"
       }
