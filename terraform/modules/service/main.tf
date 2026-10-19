@@ -447,13 +447,13 @@ resource "aws_ecs_service" "this" {
   }
 
   service_connect_configuration {
-    enabled   = (length(var.service_connect) > 0) ? true : false
+    enabled   = var.service_connect_enabled ? true : false
     namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace.arn
 
     log_configuration {
       log_driver = "awslogs"
       options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.app.name
+        "awslogs-group"         = module.app_logs.this.name
         "awslogs-stream-prefix" = "service-connect"
         "awslogs-region"        = "us-east-1"
       }
