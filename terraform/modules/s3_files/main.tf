@@ -3,7 +3,7 @@ locals {
   env        = var.platform.env
   full_name  = "${local.app}-${local.env}-${var.name}"
   vpc_id     = var.platform.vpc_id
-  subnet_ids = [for s in var.platform.private_subnets : s.id]
+  subnet_ids = nonsensitive([for s in var.platform.private_subnets : s.id])
 }
 
 # ── S3 Files Resources ──────────────────────────────────────────────────────
