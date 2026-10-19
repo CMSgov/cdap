@@ -17,15 +17,13 @@ data "aws_iam_policy_document" "s3files_bucket_access" {
       [
         "s3:GetBucketLocation",
         "s3:GetBucketVersioning",
-        "s3:GetObject",
-        "s3:GetObjectVersion",
-        "s3:GetObjectVersionTagging",
+        "s3:GetObject*",
         "s3:ListBucket",
         "s3:ListBucketVersions",
       ],
       var.read_only ? [] : [
-        "s3:PutObject",
-        "s3:DeleteObject",
+        "s3:PutObject*",
+        "s3:DeleteObject*",
         "s3:AbortMultipartUpload",
         "s3:ListMultipartUploadParts",
         "s3:ListBucketMultipartUploads",
@@ -39,16 +37,12 @@ data "aws_iam_policy_document" "s3files_bucket_access" {
 
   statement {
     sid = "KMSKeyAccess"
-    actions = concat(
-      [
-        "kms:Decrypt",
-        "kms:DescribeKey",
-      ],
-      var.read_only ? [] : [
-        "kms:Encrypt",
-        "kms:GenerateDataKey",
-      ]
-    )
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey",
+      "kms:Encrypt",
+      "kms:GenerateDataKey*",
+    ]
     resources = [var.platform.kms_alias_primary.target_key_arn]
   }
 }
