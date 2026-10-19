@@ -41,27 +41,40 @@ data "aws_iam_policy_document" "github_actions_storage" {
 
   # S3 Files
   statement {
+    sid = "S3FilesRead"
+    actions = [
+      "s3files:GetFileSystem",
+      "s3files:GetMountTarget",
+      "s3files:GetAccessPoint",
+      "s3files:ListTagsForResource",
+    ]
+    resources = [
+      "arn:aws:s3files:*:*:file-system/*",
+    ]
+  }
+
+  statement {
+    sid = "S3FilesWrite"
     actions = [
       # file system
       "s3files:CreateFileSystem",
       "s3files:DeleteFileSystem",
-      "s3files:GetFileSystem",
       "s3files:TagResource",
       "s3files:UntagResource",
-      "s3files:ListTagsForResource",
 
       # mount target
       "s3files:CreateMountTarget",
       "s3files:DeleteMountTarget",
-      "s3files:GetMountTarget",
       "s3files:UpdateMountTarget",
 
       # access point
       "s3files:CreateAccessPoint",
       "s3files:DeleteAccessPoint",
-      "s3files:GetAccessPoint",
     ]
-    resources = ["*"]
+
+    resources = [
+      "arn:aws:s3files:*:*:file-system/*",
+    ]
   }
 
   # RDS
