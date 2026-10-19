@@ -1,9 +1,10 @@
 locals {
-  app        = var.platform.app
-  env        = var.platform.env
-  full_name  = "${local.app}-${local.env}-${var.name}"
-  vpc_id     = var.platform.vpc_id
-  subnet_ids = nonsensitive([for s in var.platform.private_subnets : s.id])
+  app         = var.platform.app
+  env         = var.platform.env
+  full_name   = "${local.app}-${local.env}-${var.name}"
+  vpc_id      = var.platform.vpc_id
+  subnet_ids  = nonsensitive([for s in var.platform.private_subnets : s.id])
+  kms_key_arn = coalesce(var.kms_key_arn, var.platform.kms_alias_primary.target_key_arn)
 }
 
 # ── S3 Files Resources ──────────────────────────────────────────────────────
@@ -11,7 +12,7 @@ locals {
 resource "aws_s3files_file_system" "this" {
   bucket     = var.bucket_arn
   role_arn   = aws_iam_role.s3files.arn
-  kms_key_id = var.platform.kms_alias_primary.target_key_arn
+  kms_key_id = local.kms_key_arn
 
   tags = {
     Name = local.full_name

@@ -49,7 +49,7 @@ data "aws_iam_policy_document" "s3files_bucket_access" {
         "kms:GenerateDataKey",
       ]
     )
-    resources = [var.platform.kms_alias_primary.target_key_arn]
+    resources = distinct([local.kms_key_arn, var.platform.kms_alias_primary.target_key_arn])
   }
 }
 

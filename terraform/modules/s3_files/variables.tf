@@ -30,3 +30,10 @@ variable "allowed_security_group_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "kms_key_arn" {
+  description = "Optional KMS key ARN used to encrypt the S3 Files file system and for decrypting the backing S3 bucket. Defaults to var.platform.kms_alias_primary.target_key_arn."
+  type        = string
+  default     = null
+}
+
