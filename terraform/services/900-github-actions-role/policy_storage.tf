@@ -39,6 +39,31 @@ data "aws_iam_policy_document" "github_actions_storage" {
     resources = ["*"]
   }
 
+  # S3 Files
+  statement {
+    actions = [
+      # file system
+      "s3files:CreateFileSystem",
+      "s3files:DeleteFileSystem",
+      "s3files:GetFileSystem",
+      "s3files:TagResource",
+      "s3files:UntagResource",
+      "s3files:ListTagsForResource",
+
+      # mount target
+      "s3files:CreateMountTarget",
+      "s3files:DeleteMountTarget",
+      "s3files:GetMountTarget",
+      "s3files:UpdateMountTarget",
+
+      # access point
+      "s3files:CreateAccessPoint",
+      "s3files:DeleteAccessPoint",
+      "s3files:GetAccessPoint",
+    ]
+    resources = ["*"]
+  }
+
   # RDS
 
   # Read Describe* cannot be resource-scoped
