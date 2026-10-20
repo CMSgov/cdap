@@ -4,11 +4,8 @@ data "aws_iam_policy_document" "s3files_assume_role" {
     actions = ["sts:AssumeRole"]
 
     principals {
-      type = "Service"
-      identifiers = [
-        "elasticfilesystem.amazonaws.com",
-        "s3files.amazonaws.com",
-      ]
+      type        = "Service"
+      identifiers = ["elasticfilesystem.amazonaws.com"]
     }
   }
 }
