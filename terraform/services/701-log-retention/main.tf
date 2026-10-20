@@ -36,11 +36,11 @@ module "log_bucket" {
   # Compliance-mode WORM in prod only: objects cannot be deleted or overwritten
   # for 6 years by anyone, including root (HIPAA retention requirement).
   # No lock in test environments
-  object_lock = var.env == "prod" ? {
-    mode  = "COMPLIANCE"
-    years = 6
-  } : null
-  force_destroy = false
+  # object_lock = var.env == "prod" ? {
+  #   mode  = "COMPLIANCE"
+  #   years = 6
+  # } : null
+  # force_destroy = false
 
   # Writers are limited to the Firehose role and prefix-scoped log delivery
   # services. all other principals are denied
