@@ -1,4 +1,5 @@
 locals {
+  # Get the config file per environment we manage 
   app_configs = {
     for f in fileset("${path.module}/config", "*/*.yml") :
     dirname(f) => {
@@ -9,6 +10,7 @@ locals {
     if trimsuffix(basename(f), ".yml") == var.env
   }
 
+  # get each key value pair from the config 
   all_repos = {
     for pair in flatten([
       for config_key, config_data in local.app_configs : [
@@ -17,18 +19,28 @@ locals {
           app     = config_data.app
           service = svc.name
 
-          tag_rules                = try(svc.tag_rules, [])
-          untagged_expiry_days     = try(svc.untagged_expiry_days, null)
-          permitted_cross_accounts = try(svc.permitted_cross_accounts, false)
+          tag_rules            = try(svc.tag_rules, [])
+          untagged_expiry_days = try(svc.untagged_expiry_days, null)
+          account_id_paths     = try(svc.external_account_share.account_id_paths, [])
         }
       ]
     ]) : pair.key => pair
   }
 
+  # limit ssm lookups if multiple repositories are shared with the same accounts lookup just once
+  all_account_id_paths = toset(flatten([for repo in local.all_repos : repo.account_id_paths]))
+
   cdap_env = contains(["sandbox", "prod"], var.env) ? "prod" : "test"
 }
 
-# One platform module per app — each has its own KMS key
+
+data "aws_ssm_parameter" "external_account_id" {
+  for_each        = local.all_account_id_paths
+  name            = each.value
+  with_decryption = true
+}
+
+# One platform module per app, each has its own KMS key
 module "platform" {
   for_each = local.app_configs
 
@@ -49,7 +61,10 @@ module "ecr_repo" {
   platform = module.platform[each.value.app]
   service  = each.value.service
 
-  tag_rules                = each.value.tag_rules
-  untagged_expiry_days     = each.value.untagged_expiry_days
-  permitted_cross_accounts = each.value.permitted_cross_accounts
+  tag_rules            = each.value.tag_rules
+  untagged_expiry_days = each.value.untagged_expiry_days
+
+  external_account_share = [
+    for path in each.value.account_id_paths : data.aws_ssm_parameter.external_account_id[path].value
+  ]
 }

@@ -80,11 +80,12 @@ variable "untagged_expiry_days" {
   default     = 14
 }
 
-variable "permitted_cross_accounts" {
+variable "external_account_share" {
   description = <<-EOT
-    Boolean flag on whether or not the ECR images can be shared across AWS accounts
-
+    Optional AWS account IDs to share this repository with for
+    cross-account pull access. When non-empty, a repository policy is
+    attached granting those accounts permission to pull images.
   EOT
-  type        = bool
-  default     = false
+  type        = list(string)
+  default     = []
 }
