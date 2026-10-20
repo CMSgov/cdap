@@ -1,0 +1,14 @@
+cmd/config.yaml
+/data/*
+**.sqlite
+its-log
+.vscode/settings.json
+__py*
+.DS_Store
+_base/*
+**.sqlite-wal
+**.sqlite-journal
+**.duckdb
+**.duckdb.wal
+**.prof
+**.test
