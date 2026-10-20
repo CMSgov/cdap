@@ -4,7 +4,7 @@ locals {
   monitors_manager         = var.monitors_manager ? ["monitors_read", "monitors_write", "monitors_downtime", "integrations_read"] : []
   synthetics_manager       = var.synthetics_manager ? ["synthetics_read", "synthetics_write", "synthetics_global_variable_read", "synthetics_global_variable_write", "synthetics_private_location_read"] : []
   users_manager            = var.users_manager ? ["user_access_manage", "user_access_read", "teams_manage"] : []
-  org_config_manager       = var.org_config_manager ? ["monitor_config_policy_write", "create_webhooks"] : []
+  org_config_manager       = var.org_config_manager ? ["monitor_config_policy_write", "create_webhooks", "data_scanner_write", "data_scanner_read"] : []
   private_location_manager = var.private_location_manager ? ["synthetics_private_location_write", "synthetics_private_location_read"] : []
 
   application_key_permissions = concat(

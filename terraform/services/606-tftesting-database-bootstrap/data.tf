@@ -2,14 +2,14 @@ locals {
   aurora_app_name = "cdap"
 }
 
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-
 data "aws_ssm_parameter" "cluster_resource_id" {
-  name = "/${local.aurora_app_name}/${module.platform.env}/tftesting-database/nonsensitive/db-cluster-resource-id"
+  count = local.tftesting_cluster_exists ? 1 : 0
+  name  = "/${local.aurora_app_name}/${module.platform.env}/tftesting-database/nonsensitive/db-cluster-resource-id"
 }
 
 data "aws_ssm_parameter" "db_security_group_id" {
+  count = local.tftesting_cluster_exists ? 1 : 0
+
   name = "/${local.aurora_app_name}/${module.platform.env}/tftesting-database/nonsensitive/db-security-group-id"
 }
 

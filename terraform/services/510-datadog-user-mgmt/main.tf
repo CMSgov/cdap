@@ -70,6 +70,9 @@ resource "datadog_role" "incident_responder" {
   permission {
     id = data.datadog_permissions.all.permissions["apm_api_catalog_read"]
   }
+  permission {
+    id = data.datadog_permissions.all.permissions["error_tracking_read"]
+  }
 
   permission {
     id = data.datadog_permissions.all.permissions["synthetics_read"]

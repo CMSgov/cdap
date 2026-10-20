@@ -9,7 +9,7 @@ Establishes configuration that is used for the entire DASG APIs Datadog Organiza
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_datadog"></a> [datadog](#provider\_datadog) | ~>4.4 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -20,7 +20,8 @@ Establishes configuration that is used for the entire DASG APIs Datadog Organiza
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~>6.0 |
 | <a name="requirement_datadog"></a> [datadog](#requirement\_datadog) | ~>4.4 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -39,7 +40,9 @@ No inputs.
 -->
 ## Modules
 
-No modules.
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_standards"></a> [standards](#module\_standards) | ../../modules/standards | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -49,8 +52,9 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [datadog_monitor_config_policy.env_tag](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor_config_policy) | resource |
+| [datadog_sensitive_data_scanner_group.main](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/sensitive_data_scanner_group) | resource |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

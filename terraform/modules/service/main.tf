@@ -2,6 +2,9 @@ locals {
   service_name      = coalesce(var.service_name_override, var.platform.service)
   service_name_full = "${var.platform.app}-${var.platform.env}-${local.service_name}"
 
+  app_log_group_name     = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+  datadog_log_group_name = "${local.app_log_group_name}/datadog-agent"
+
   ###############
   # Networking
   ###############
@@ -72,7 +75,7 @@ locals {
 
   sc_port_name = try(
     coalesce(
-      var.service_connect_port_name,
+      var.service_connect[0].port_name,
       local.enable_mtls_sidecar ? "proxy" : try(
         [for pm in coalesce(var.port_mappings, []) : pm.name if pm.name != null][0],
         null
@@ -124,7 +127,7 @@ locals {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = aws_cloudwatch_log_group.app.name
+        awslogs-group         = module.app_logs.this.name
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
       }
@@ -181,7 +184,7 @@ locals {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = aws_cloudwatch_log_group.app.name
+        awslogs-group         = module.app_logs.this.name
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "proxy"
       }
@@ -219,7 +222,7 @@ locals {
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = var.enable_datadog_agent ? aws_cloudwatch_log_group.datadog[0].name : ""
+        awslogs-group         = var.enable_datadog_agent ? module.datadog_logs[0].this.name : ""
         awslogs-region        = var.platform.primary_region.name
         awslogs-stream-prefix = "${var.platform.app}-${var.platform.env}"
       }
@@ -248,23 +251,27 @@ locals {
       }
     ]
 
-    environment = [
-      { name = "ECS_FARGATE", value = "true" },
-      { name = "DD_APM_ENABLED", value = "true" },
-      { name = "DD_APM_NON_LOCAL_TRAFFIC", value = "true" },
-      { name = "DD_APM_RECEIVER_PORT", value = "8126" },
-      { name = "DD_APM_TELEMETRY_ENABLED", value = "false" },
-      { name = "DD_DATA_STREAMS_ENABLED", value = "false" },
-      { name = "DD_DOGSTATSD_NON_LOCAL_TRAFFIC", value = "true" },
-      { name = "DD_DOGSTATSD_PORT", value = "8125" }, # Default
-      { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" },
-      { name = "DD_ENV", value = var.platform.env },
-      { name = "DD_LOGS_ENABLED", value = "false" }, # DD logging is currently not approved
-      { name = "DD_PROCESS_AGENT_ENABLED", value = "true" },
-      { name = "DD_SERVICE", value = local.service_name },
-      { name = "DD_SITE", value = "ddog-gov.com" },
-      { name = "DD_TAGS", value = "application:${var.platform.app}, service:${local.service_name}" },
-    ]
+    environment = concat(
+      [
+        { name = "ECS_FARGATE", value = "true" },
+        { name = "DD_APM_ENABLED", value = "true" },
+        { name = "DD_APM_NON_LOCAL_TRAFFIC", value = "true" },
+        { name = "DD_APM_RECEIVER_PORT", value = "8126" },
+        { name = "DD_APM_TELEMETRY_ENABLED", value = "false" },
+        { name = "DD_DATA_STREAMS_ENABLED", value = "false" },
+        { name = "DD_DOGSTATSD_NON_LOCAL_TRAFFIC", value = "true" },
+        { name = "DD_DOGSTATSD_PORT", value = "8125" }, # Default
+        { name = "DD_ECS_TASK_COLLECTION_ENABLED", value = "true" },
+        { name = "DD_ENV", value = var.platform.env },
+        { name = "DD_LOGS_ENABLED", value = "false" }, # DD logging is currently not approved
+        { name = "DD_PROCESS_AGENT_ENABLED", value = "true" },
+        { name = "DD_SERVICE", value = local.service_name },
+        { name = "DD_SITE", value = "ddog-gov.com" },
+        { name = "DD_TAGS", value = "application:${var.platform.app}, service:${local.service_name}" },
+      ],
+      var.additional_dd_environment
+    )
+
     secrets = [{ name = "DD_API_KEY", valueFrom = data.aws_ssm_parameter.datadog_api_key.name }]
   }
 }
@@ -272,24 +279,30 @@ locals {
 ##################
 # Cloudwatch
 ##################
-resource "aws_cloudwatch_log_group" "app" {
-  name              = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
-  retention_in_days = var.log_retention_days
-  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
+module "app_logs" {
+  source = "../cloudwatch_log_group"
+
+  name               = local.app_log_group_name
+  env                = var.platform.env
+  kms_key_id         = var.platform.kms_alias_primary.target_key_arn
+  log_retention_days = var.log_retention_days
 
   tags = {
-    Name = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}"
+    Name = local.app_log_group_name
   }
 }
 
-resource "aws_cloudwatch_log_group" "datadog" {
-  count             = var.enable_datadog_agent ? 1 : 0
-  name              = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
-  retention_in_days = var.log_retention_days
-  kms_key_id        = var.platform.kms_alias_primary.target_key_arn
+module "datadog_logs" {
+  count  = var.enable_datadog_agent ? 1 : 0
+  source = "../cloudwatch_log_group"
+
+  name               = local.datadog_log_group_name
+  env                = var.platform.env
+  kms_key_id         = var.platform.kms_alias_primary.target_key_arn
+  log_retention_days = var.log_retention_days
 
   tags = {
-    Name = "/aws/ecs/fargate/${var.platform.app}-${var.platform.env}/${local.service_name}/datadog-agent"
+    Name = local.datadog_log_group_name
   }
 }
 
@@ -433,26 +446,38 @@ resource "aws_ecs_service" "this" {
     }
   }
 
-  dynamic "service_connect_configuration" {
-    for_each = var.enable_ecs_service_connect ? [1] : []
-    content {
-      enabled   = true
-      namespace = var.service_connect_namespace_arn
+  service_connect_configuration {
+    enabled   = var.service_connect_enabled ? true : false
+    namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace.arn
 
-      service {
-        discovery_name = local.service_name
-        port_name      = local.sc_port_name
+    log_configuration {
+      log_driver = "awslogs"
+      options = {
+        "awslogs-group"         = module.app_logs.this.name
+        "awslogs-stream-prefix" = "service-connect"
+        "awslogs-region"        = "us-east-1"
+      }
+    }
+
+    access_log_configuration {
+      format                   = "TEXT"
+      include_query_parameters = "ENABLED"
+    }
+
+    dynamic "service" {
+      for_each = var.service_connect
+
+      content {
+        discovery_name = service.value.discovery_name
+        port_name      = service.value.port_name
 
         client_alias {
-          port = coalesce(
-            var.service_connect_client_port,
-            local.sc_port_name != null ? try(local.port_map[local.sc_port_name], null) : null
-          )
-          dns_name = local.service_name
+          dns_name = service.value.dns_name
+          port     = service.value.port
         }
 
         tls {
-          kms_key  = var.platform.kms_alias_primary.target_key_arn
+          kms_key  = var.platform.kms_alias_primary["target_key_arn"]
           role_arn = aws_iam_role.service_connect[0].arn
 
           issuer_cert_authority {
@@ -462,13 +487,14 @@ resource "aws_ecs_service" "this" {
       }
     }
   }
+
   deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
   deployment_maximum_percent         = var.deployment_maximum_percent
   health_check_grace_period_seconds  = var.health_check_grace_period_seconds
 
   depends_on = [
-    aws_cloudwatch_log_group.app,
-    aws_cloudwatch_log_group.datadog,
+    module.app_logs,
+    module.datadog_logs,
     aws_lb_listener_rule.this,
     aws_iam_role_policy_attachment.service_connect,
     aws_iam_role.service_connect

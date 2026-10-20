@@ -105,7 +105,7 @@ data "aws_iam_policy_document" "default_function" {
       "logs:CreateLogStream",
       "logs:PutLogEvents",
     ]
-    resources = ["${aws_cloudwatch_log_group.function.arn}:*"]
+    resources = ["${module.function_logs.this.arn}:*"]
   }
 
   statement {

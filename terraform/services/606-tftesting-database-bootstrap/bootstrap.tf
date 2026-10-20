@@ -1,21 +1,30 @@
+locals {
+  tftesting_config         = yamldecode(file("${path.module}/config/default.yml"))["tftesting"]
+  tftesting_state          = local.tftesting_config.state
+  tftesting_cluster_exists = contains(["idle", "running"], local.tftesting_state)
+
+  # bootstrap needs an actual live instance to connect to, not just a
+  # cluster shell with zero instances
+  tftesting_bootstrap_ready = local.tftesting_state == "running"
+}
+
 data "aws_ssm_parameter" "writer_endpoint" {
-  name = "/${local.aurora_app_name}/${module.platform.env}/tftesting-database/nonsensitive/writer-endpoint"
+  count = local.tftesting_cluster_exists ? 1 : 0
+  name  = "/${local.aurora_app_name}/${module.platform.env}/tftesting-database/nonsensitive/writer-endpoint"
 }
 
 data "aws_ssm_parameter" "breakglass_secret_arn" {
-  name = "/${local.aurora_app_name}/${module.platform.env}/tftesting-database/nonsensitive/breakglass-user-secret-arn"
+  count = local.tftesting_cluster_exists ? 1 : 0
+  name  = "/${local.aurora_app_name}/${module.platform.env}/tftesting-database/nonsensitive/breakglass-user-secret-arn"
 }
 
 locals {
-  db_host = split(":", data.aws_ssm_parameter.writer_endpoint.value)[0]
+  db_host = local.tftesting_cluster_exists ? split(":", data.aws_ssm_parameter.writer_endpoint[0].value)[0] : null
 }
 
-# Breakglass-authenticated, for only this step: its
-# only job is creating tftesting_migrator and
-# granting rds_iam, so nothing downstream ever needs this
-# credential again.
-#
 resource "null_resource" "bootstrap_roles" {
+  count = local.tftesting_bootstrap_ready ? 1 : 0
+
   triggers = {
     bootstrap_sha = filesha256("${path.module}/bootstrap.sql")
   }
@@ -23,7 +32,7 @@ resource "null_resource" "bootstrap_roles" {
   provisioner "local-exec" {
     working_dir = path.module
     environment = {
-      SECRET_ARN        = data.aws_ssm_parameter.breakglass_secret_arn.value
+      SECRET_ARN        = data.aws_ssm_parameter.breakglass_secret_arn[0].value
       PGHOST            = local.db_host
       PGPORT            = "5432"
       PGDATABASE        = "postgres"
