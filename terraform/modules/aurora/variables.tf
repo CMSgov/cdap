@@ -61,6 +61,12 @@ variable "enable_iam_database_authentication" {
   default     = true
 }
 
+variable "needs_s3_access" {
+  description = "Whether this database calls S3 directly and will do so through VPC endpoint"
+  type        = bool
+  default     = false
+}
+
 variable "platform" {
   description = "Object that describes standardized platform values."
   type        = any

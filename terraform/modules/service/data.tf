@@ -35,3 +35,7 @@ data "aws_service_discovery_http_namespace" "service_discovery_namespace" {
   name = "${var.platform.env}.${var.platform.app}.cmscloud.local"
 }
 
+data "aws_security_group" "endpoint_clients" {
+  name   = "${module.platform.primary_vpc_name}-vpce-clients"
+  vpc_id = module.platform.vpc_id
+}

@@ -20,7 +20,7 @@ data "aws_ec2_managed_prefix_list" "s3" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "to_s3" {
-  count = var.needs_s3_access ? 1 : 0
+  count             = var.needs_s3_access ? 1 : 0
   security_group_id = aws_security_group.task[0].id
   prefix_list_id    = data.aws_ec2_managed_prefix_list.s3.id
   from_port         = 443

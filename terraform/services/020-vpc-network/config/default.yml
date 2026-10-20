@@ -1,0 +1,17 @@
+enable_interface_endpoints: false
+restrict_egress: false
+interface_services:
+  - ssm
+  - ssmmessages
+  - ec2messages
+  - kms
+  - secretsmanager
+  - logs
+  - monitoring
+  - sts
+  - ecr.api
+  - ecr.dkr
+  - sqs
+  - sns
+  - rds
+  - ec2

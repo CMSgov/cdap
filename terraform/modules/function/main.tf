@@ -126,7 +126,7 @@ resource "aws_lambda_function" "this" {
 
   vpc_config {
     subnet_ids         = module.subnets.ids
-    security_group_ids = [aws_security_group.function.id]
+    security_group_ids = [aws_security_group.function.id, data.aws_security_group.endpoint_clients.id]
   }
 
   dynamic "file_system_config" {
