@@ -106,6 +106,12 @@ resource "aws_codebuild_project" "per_repo" {
     type                        = "ARM_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
     privileged_mode             = true
+
+    environment_variable {
+      name  = "AWS_STS_REGIONAL_ENDPOINTS"
+      value = "regional"
+      type  = "PLAINTEXT"
+    }
   }
 
   vpc_config {
