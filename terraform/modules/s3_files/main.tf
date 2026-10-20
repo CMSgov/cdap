@@ -16,6 +16,10 @@ resource "aws_s3files_file_system" "this" {
   tags = {
     Name = local.full_name
   }
+
+  depends_on = [
+    aws_iam_role_policy.s3files,
+  ]
 }
 
 resource "aws_s3files_mount_target" "this" {
