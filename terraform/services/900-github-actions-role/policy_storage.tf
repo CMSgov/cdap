@@ -43,14 +43,17 @@ data "aws_iam_policy_document" "github_actions_storage" {
   statement {
     sid = "S3FilesRead"
     actions = [
+      "s3files:Describe*",
+      "s3files:GetAccessPoint",
       "s3files:GetFileSystem",
       "s3files:GetMountTarget",
-      "s3files:GetAccessPoint",
+      "s3files:GetSynchronizationConfiguration",
+      "s3files:ListAccessPoints",
+      "s3files:ListFileSystems",
+      "s3files:ListMountTargets",
       "s3files:ListTagsForResource",
     ]
-    resources = [
-      "arn:aws:s3files:*:*:file-system/*",
-    ]
+    resources = ["*"]
   }
 
   statement {
@@ -59,6 +62,8 @@ data "aws_iam_policy_document" "github_actions_storage" {
       # file system
       "s3files:CreateFileSystem",
       "s3files:DeleteFileSystem",
+      "s3files:PutFileSystemPolicy",
+      "s3files:DeleteFileSystemPolicy",
       "s3files:TagResource",
       "s3files:UntagResource",
 
@@ -70,11 +75,13 @@ data "aws_iam_policy_document" "github_actions_storage" {
       # access point
       "s3files:CreateAccessPoint",
       "s3files:DeleteAccessPoint",
+
+      # synchronization
+      "s3files:PutSynchronizationConfiguration",
+      "s3files:DeleteSynchronizationConfiguration",
     ]
 
-    resources = [
-      "arn:aws:s3files:*:*:file-system/*",
-    ]
+    resources = ["*"]
   }
 
   # RDS

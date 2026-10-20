@@ -70,19 +70,22 @@ data "aws_iam_policy_document" "github_actions_compute" {
     #        uses an opaque ID. Consider tagging as compensating control.
   }
 
-  # EC2 - Security Groups & VPC inspection only (no instance launching)
+  # EC2 - Security Groups, Network Interfaces & VPC inspection only (no instance launching)
   statement {
     actions = [
       "ec2:AuthorizeSecurityGroupEgress",
       "ec2:AuthorizeSecurityGroupIngress",
       "ec2:CreateLaunchTemplateVersion",
+      "ec2:CreateNetworkInterface",
       "ec2:CreateSecurityGroup",
       "ec2:CreateTags",
-      "ec2:DeleteTags",
+      "ec2:DeleteNetworkInterface",
       "ec2:DeleteSecurityGroup",
+      "ec2:DeleteTags",
       "ec2:Describe*",
       "ec2:GetManagedPrefixListEntries",
       "ec2:GetSecurityGroupsForVpc",
+      "ec2:ModifyNetworkInterfaceAttribute",
       "ec2:RevokeSecurityGroupEgress",
       "ec2:RevokeSecurityGroupIngress",
     ]
