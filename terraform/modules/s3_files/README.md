@@ -38,7 +38,6 @@ This module provisions an **Amazon S3 Files** file system on top of an existing 
 - Automatically resolves VPC ID and private subnets from the CDAP `platform` module, provisioning mount targets across all availability zones.
 - Encrypts file system data at rest and scopes IAM access using the CDAP `platform` primary KMS key.
 - Creates a dedicated security group for mount targets and manages NFS (TCP 2049) ingress rules from allowed client security groups.
-- Defaults to read-only (`ro`) operations to enforce least privilege.
 - Uses delegated admin IAM role paths (`/delegatedadmin/developer/`).
 
 ## Usage Example
@@ -50,7 +49,6 @@ module "my_s3_files" {
   platform   = module.platform
   name       = "attribution-import-files"
   bucket_arn = module.my_bucket.arn
-  read_only  = true
 }
 
 module "my_lambda" {
@@ -132,7 +130,6 @@ No modules.
 | <a name="input_bucket_arn"></a> [bucket\_arn](#input\_bucket\_arn) | Target S3 bucket ARN to mount | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Identifier suffix for the S3 Files resources (e.g. 'attribution-import-files') | `string` | n/a | yes |
 | <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP platform module. | <pre>object({<br/>    app               = string<br/>    env               = string<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>    vpc_id            = string<br/>    private_subnets   = map(object({ id = string }))<br/>  })</pre> | n/a | yes |
-| <a name="input_read_only"></a> [read\_only](#input\_read\_only) | Whether the file system access should enforce read-only operations. Defaults to true. | `bool` | `true` | no |
 
 ## Outputs
 
