@@ -1,0 +1,13 @@
+include:
+  - path: ./docker-compose.yaml
+services:
+  k6:
+    image: itslog-k6
+    command: run /scripts/short.js
+    environment:
+      ITSLOG_HOST: itslog
+      ITSLOG_PORT: 8888
+      ITSLOG_APIKEY: "1234567890123456123456789012345612345678901234561234567890123456"
+    depends_on:
+      itslog:
+        condition: service_healthy
