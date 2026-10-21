@@ -36,4 +36,8 @@ resource "aws_s3files_access_point" "this" {
   tags = {
     Name = "${local.full_name}-ap"
   }
+
+  depends_on = [
+    aws_s3files_mount_target.this,
+  ]
 }
