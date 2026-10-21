@@ -1,19 +1,19 @@
 resource "aws_security_group" "function" {
   name        = "${local.full_name_string}-function"
   description = "For the ${local.full_name_string} function"
-  vpc_id      = module.vpc.id
+  vpc_id      = var.platform.vpc_id
 }
 
 # -------------------------------------------------------
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
 data "aws_security_group" "endpoints" {
-  name   = "${var.platform.primary_vpc_name}-vpce-endpoints"
+  name   = "${var.platform.vpc_name}-vpce-endpoints"
   vpc_id = var.platform.vpc_id
 }
 
 data "aws_security_group" "endpoint_clients" {
-  name   = "${var.platform.primary_vpc_name}-vpce-clients"
+  name   = "${var.platform.vpc_name}-vpce-clients"
   vpc_id = var.platform.vpc_id
 }
 

@@ -76,7 +76,7 @@ data "aws_rds_engine_version" "this" {
 }
 
 data "aws_security_group" "endpoint_clients" {
-  name   = "${var.platform.primary_vpc_name}-vpce-clients"
+  name   = "${var.platform.vpc_name}-vpce-clients"
   vpc_id = var.platform.vpc_id
 }
 

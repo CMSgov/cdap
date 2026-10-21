@@ -14,7 +14,7 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
 data "aws_security_group" "endpoints" {
-  name   = "${var.platform.primary_vpc_name}-vpce-endpoints"
+  name   = "${var.platform.vpc_name}-vpce-endpoints"
   vpc_id = var.platform.vpc_id
 }
 

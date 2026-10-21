@@ -2,7 +2,7 @@
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
 data "aws_security_group" "endpoints" {
-  name   = "${module.platform.primary_vpc_name}-vpce-endpoints"
+  name   = "${module.platform.vpc_name}-vpce-endpoints"
   vpc_id = module.platform.vpc_id
 }
 

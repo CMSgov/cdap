@@ -3,7 +3,7 @@ data "aws_ssm_parameter" "github_token" {
 }
 
 data "aws_security_group" "endpoint_clients" {
-  name   = "${module.platform.primary_vpc_name}-vpce-clients"
+  name   = "${module.platform.vpc_name}-vpce-clients"
   vpc_id = module.platform.vpc_id
 }
 
