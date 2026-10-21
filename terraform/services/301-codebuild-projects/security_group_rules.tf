@@ -14,8 +14,8 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
 data "aws_security_group" "endpoints" {
-  name   = "${var.platform.vpc_name}-vpce-endpoints"
-  vpc_id = var.platform.vpc_id
+  name   = "${module.platform.vpc_name}-vpce-endpoints"
+  vpc_id = module.platform.vpc_id
 }
 
 resource "aws_vpc_security_group_egress_rule" "to_endpoints" {
@@ -28,7 +28,7 @@ resource "aws_vpc_security_group_egress_rule" "to_endpoints" {
 }
 
 data "aws_ec2_managed_prefix_list" "s3" {
-  name = "com.amazonaws.${var.platform.primary_region.name}.s3"
+  name = "com.amazonaws.${module.platform.primary_region.name}.s3"
 }
 
 resource "aws_vpc_security_group_egress_rule" "to_s3" {
