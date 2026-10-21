@@ -27,7 +27,7 @@ resource "aws_vpc_security_group_egress_rule" "to_endpoints" {
 }
 
 data "aws_ec2_managed_prefix_list" "s3" {
-  name = "com.amazonaws.${module.platform.primary_region.name}.s3"
+  name = "com.amazonaws.${var.platform.primary_region.name}.s3"
 }
 
 resource "aws_vpc_security_group_egress_rule" "to_s3" {
