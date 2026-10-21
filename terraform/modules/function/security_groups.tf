@@ -8,13 +8,13 @@ resource "aws_security_group" "function" {
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
 data "aws_security_group" "endpoints" {
-  name   = "${module.platform.primary_vpc_name}-vpce-endpoints"
-  vpc_id = module.platform.vpc_id
+  name   = "${var.platform.primary_vpc_name}-vpce-endpoints"
+  vpc_id = var.platform.vpc_id
 }
 
 data "aws_security_group" "endpoint_clients" {
-  name   = "${module.platform.primary_vpc_name}-vpce-clients"
-  vpc_id = module.platform.vpc_id
+  name   = "${var.platform.primary_vpc_name}-vpce-clients"
+  vpc_id = var.platform.vpc_id
 }
 
 resource "aws_vpc_security_group_egress_rule" "to_endpoints" {
