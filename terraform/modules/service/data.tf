@@ -37,5 +37,5 @@ data "aws_service_discovery_http_namespace" "service_discovery_namespace" {
 
 data "aws_security_group" "endpoint_clients" {
   name   = "${var.platform.vpc_name}-vpce-clients"
-  vpc_id = module.platform.vpc_id
+  vpc_id = var.platform.vpc_id
 }
