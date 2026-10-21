@@ -45,16 +45,6 @@ resource "aws_iam_role_policy_attachment" "ssm_read_only" {
   policy_arn = data.aws_iam_policy.ssm_read_only.arn
 }
 
-# Network
-resource "aws_security_group" "codebuild_project" {
-  for_each = toset(local.repos)
-
-  name = "${each.key}-${module.standards.account_env_suffix}-codebuild-project"
-
-  description = "For the ${module.standards.account_env_suffix} ${each.key}"
-  vpc_id      = module.standards.cdap_vpc.id
-}
-
 resource "aws_codebuild_source_credential" "github" {
   auth_type   = "PERSONAL_ACCESS_TOKEN"
   server_type = "GITHUB"
@@ -108,7 +98,8 @@ resource "aws_codebuild_project" "per_repo" {
     subnets = module.subnets.ids
     security_group_ids = [
       data.aws_security_group.security_tools.id,
-      aws_security_group.codebuild_project[each.key].id
+      aws_security_group.codebuild_project[each.key].id,
+      data.aws_security_group.endpoint_clients.id
     ]
   }
 

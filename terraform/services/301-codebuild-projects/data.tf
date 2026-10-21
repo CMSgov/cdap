@@ -2,11 +2,6 @@ data "aws_ssm_parameter" "github_token" {
   name = "/cdap/${var.env}/codebuild-projects/sensitive/github-token"
 }
 
-data "aws_security_group" "endpoint_clients" {
-  name   = "${module.platform.vpc_name}-vpce-clients"
-  vpc_id = module.platform.vpc_id
-}
-
 data "aws_security_group" "security_tools" {
   vpc_id = module.standards.cdap_vpc.id
   name   = "cmscloud-security-tools"

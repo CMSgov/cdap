@@ -23,8 +23,13 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
 data "aws_security_group" "endpoints" {
-  name   = "${module.standards.vpc_name}-vpce-endpoints"
-  vpc_id = module.standards.vpc_id
+  name   = "cdap-east-${module.standards.env}-vpce-endpoints"
+  vpc_id = module.standards.cdap_vpc.id
+}
+
+data "aws_security_group" "endpoint_clients" {
+  name   = "cdap-east-${module.standards.env}-vpce-clients"
+  vpc_id = module.standards.cdap_vpc.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "to_endpoints" {
@@ -42,6 +47,8 @@ data "aws_ec2_managed_prefix_list" "s3" {
 }
 
 resource "aws_vpc_security_group_egress_rule" "to_s3" {
+  for_each = aws_security_group.codebuild_project
+
   security_group_id = aws_security_group.codebuild_project[each.key].id
   prefix_list_id    = data.aws_ec2_managed_prefix_list.s3.id
   from_port         = 443
