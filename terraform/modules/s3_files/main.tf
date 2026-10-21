@@ -3,7 +3,7 @@ locals {
   env        = var.platform.env
   full_name  = "${local.app}-${local.env}-${var.name}"
   vpc_id     = var.platform.vpc_id
-  subnet_ids = [for s in var.platform.private_subnets : s.id]
+  subnet_ids = nonsensitive([for s in var.platform.private_subnets : s.id])
 }
 
 # ── S3 Files Resources ──────────────────────────────────────────────────────
@@ -16,6 +16,10 @@ resource "aws_s3files_file_system" "this" {
   tags = {
     Name = local.full_name
   }
+
+  depends_on = [
+    aws_iam_role_policy.s3files,
+  ]
 }
 
 resource "aws_s3files_mount_target" "this" {
@@ -32,4 +36,8 @@ resource "aws_s3files_access_point" "this" {
   tags = {
     Name = "${local.full_name}-ap"
   }
+
+  depends_on = [
+    aws_s3files_mount_target.this,
+  ]
 }

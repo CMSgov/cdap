@@ -101,3 +101,22 @@ variable "ssm_parameter_name_override" {
   type        = string
   default     = null
 }
+
+variable "log_retention_days" {
+  description = "Number of days to retain SNS delivery status logs in CloudWatch. Production minimum is 180. Value is validated by the cloudwatch_log_group module."
+  type        = number
+  default     = 180
+  nullable    = false
+}
+
+variable "success_feedback_sample_rate" {
+  description = "Percentage (0-100) of successful deliveries to log. Failed deliveries are always logged."
+  type        = number
+  default     = 0
+  nullable    = false
+
+  validation {
+    condition     = var.success_feedback_sample_rate >= 0 && var.success_feedback_sample_rate <= 100
+    error_message = "success_feedback_sample_rate must be between 0 and 100."
+  }
+}

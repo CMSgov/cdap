@@ -19,11 +19,6 @@ variable "bucket_arn" {
   type        = string
 }
 
-variable "read_only" {
-  description = "Whether the file system access should enforce read-only operations. Defaults to true."
-  type        = bool
-  default     = true
-}
 
 variable "allowed_security_group_ids" {
   description = "List of security group IDs permitted to mount the file system over NFS (TCP port 2049). Use this when client security groups are known upfront. When connecting to modules that consume this module's outputs (e.g. modules/function), define standalone rules in the caller to avoid dependency cycles."
