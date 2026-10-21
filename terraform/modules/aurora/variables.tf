@@ -68,7 +68,7 @@ variable "platform" {
 
 variable "kms_key_override" { #TODO: Consider removing this all together.
   default     = null
-  description = "Override to the platform-managed KMS key"
+  description = "Override to the platform-managed KMS key. Also encrypts the postgresql log group. The key policy must allow the CloudWatch Logs service principal."
   type        = string
 }
 
@@ -211,4 +211,10 @@ variable "monitoring_role_path" {
   description = "IAM path for the monitoring role this module creates."
   type        = string
   default     = "/delegatedadmin/developer/"
+}
+
+variable "log_retention_days" {
+  description = "Override for the number of days to retain exported postgresql logs in CloudWatch. When null, the cloudwatch_log_group module's default (180) applies. Value is validated by the cloudwatch_log_group module."
+  type        = number
+  default     = null
 }
