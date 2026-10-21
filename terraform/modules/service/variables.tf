@@ -364,6 +364,8 @@ variable "platform" {
     account_id         = string
     vpc_id             = string
     account_env_suffix = string
+    vpc_name           = string
+
   })
 }
 

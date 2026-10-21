@@ -13,7 +13,7 @@ CMS Cloud generates our VPCs, though we set this configuration.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.67.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.69.1 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -58,7 +58,12 @@ CMS Cloud generates our VPCs, though we set this configuration.
 
 | Name | Type |
 |------|------|
+| [aws_security_group.endpoint_clients](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.endpoints](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_vpc_endpoint.interface](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
 | [aws_vpc_endpoint.s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
+| [aws_vpc_security_group_ingress_rule.endpoints_https_from_clients](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.endpoints_https_from_zscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_route_tables.private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route_tables) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -68,5 +73,7 @@ CMS Cloud generates our VPCs, though we set this configuration.
 -->
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_endpoint_clients_security_group_id"></a> [endpoint\_clients\_security\_group\_id](#output\_endpoint\_clients\_security\_group\_id) | n/a |
 <!-- END_TF_DOCS -->
