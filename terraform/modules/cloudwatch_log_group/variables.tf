@@ -33,6 +33,7 @@ variable "tags" {
 variable "log_retention_days" {
   type        = number
   default     = 180
+  nullable    = false # callers may pass null to fall back to this default
   description = "Number of days to retain logs in CloudWatch. Required for production is minimum 180."
 
   validation {
@@ -42,5 +43,11 @@ variable "log_retention_days" {
       var.log_retention_days
     )
     error_message = "log_retention_days must be a value supported by CloudWatch Logs (e.g. 30, 90, 180, 365, 731). See: https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutRetentionPolicy.html"
+  }
+
+  validation {
+    # 0 means never-expire, which satisfies the minimum.
+    condition     = !endswith(var.env, "prod") || var.log_retention_days == 0 || var.log_retention_days >= 180
+    error_message = "log_retention_days must be at least 180 (or 0 for never-expire) in production environments."
   }
 }

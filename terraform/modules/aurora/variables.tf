@@ -214,8 +214,7 @@ variable "monitoring_role_path" {
 }
 
 variable "log_retention_days" {
-  description = "Number of days to retain exported postgresql logs in CloudWatch. Production minimum is 180. Value is validated by the cloudwatch_log_group module."
+  description = "Override for the number of days to retain exported postgresql logs in CloudWatch. When null, the cloudwatch_log_group module's default (180) applies. Value is validated by the cloudwatch_log_group module."
   type        = number
-  default     = 180
-  nullable    = false
+  default     = null
 }
