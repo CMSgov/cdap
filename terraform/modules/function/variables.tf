@@ -133,9 +133,10 @@ variable "schedule_expression" {
 }
 
 variable "log_retention_days" {
-  description = "Number of days to retain Lambda function logs in CloudWatch. If null, no retention policy is set and retention is managed externally (e.g., via cdap/scripts/set-log-retention/)."
   type        = number
   default     = 180
+  nullable    = false
+  description = "Number of days to retain Lambda function logs in CloudWatch. Production minimum is 180. Value is validated by the cloudwatch_log_group module."
 }
 
 # ── IAM / Permissions ─────────────────────────────────────────────────────────

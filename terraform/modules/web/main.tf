@@ -187,6 +187,7 @@ module "firewall" {
   name         = local.naming_prefix
   app          = var.platform.app
   env          = var.platform.env
+  platform     = var.platform
   scope        = "CLOUDFRONT"
   content_type = "APPLICATION_JSON"
   ip_sets      = coalesce([aws_wafv2_ip_set.this.arn], var.existing_ip_sets)

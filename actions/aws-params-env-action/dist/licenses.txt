@@ -267,7 +267,7 @@ Working on "node_modules". It might take a while...
 │ glob@7.2.3                │ ISC            │ ISC            │ -              │
 │ globals@14.0.0            │ MIT            │ MIT            │ -              │
 │ graceful-fs@4.2.11        │ ISC            │ ISC            │ -              │
-│ handlebars@4.7.9          │ MIT            │ MIT            │ -              │
+│ handlebars@4.7.10         │ MIT            │ MIT            │ -              │
 │ has-flag@4.0.0            │ MIT            │ MIT            │ -              │
 │ html-escaper@2.0.2        │ MIT            │ MIT            │ -              │
 ├───────────────────────────┼────────────────┼────────────────┼────────────────┤

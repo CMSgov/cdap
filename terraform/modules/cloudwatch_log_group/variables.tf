@@ -3,9 +3,31 @@ variable "name" {
   description = "Name of the CloudWatch log group."
 }
 
+variable "env" {
+  type        = string
+  description = "The application environment (dev, test, sandbox, prod, mgmt), or an ephemeral environment name ending in one of those (e.g. mybranch-dev)"
+
+  validation {
+    condition     = can(regex("(dev|test|sandbox|prod|mgmt)$", var.env))
+    error_message = "Valid value for env is dev, test, sandbox, prod, mgmt, or an ephemeral environment name ending in one of those."
+  }
+}
+
 variable "kms_key_id" {
   type        = string
   description = "ARN of the KMS key used to encrypt the log group."
+}
+
+variable "skip_destroy" {
+  type        = bool
+  default     = false
+  description = "If true, remove the log group from state without deleting it from AWS."
+}
+
+variable "tags" {
+  type        = map(string)
+  default     = {}
+  description = "Additional tags to apply to the log group."
 }
 
 variable "log_retention_days" {

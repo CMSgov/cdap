@@ -24,6 +24,7 @@ data "aws_iam_policy_document" "github_actions_messaging" {
     ]
     resources = [
       "arn:aws:events:*:*:rule/${var.app}-${var.env}-*",
+      "arn:aws:events:*:*:rule/DO-NOT-DELETE-S3-Files-*",
     ]
   }
 
