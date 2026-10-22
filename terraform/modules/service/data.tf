@@ -34,8 +34,3 @@ data "aws_ssm_parameter" "mtls_image_tag" {
 data "aws_service_discovery_http_namespace" "service_discovery_namespace" {
   name = "${var.platform.env}.${var.platform.app}.cmscloud.local"
 }
-
-data "aws_security_group" "vpce_clients_all" {
-  name   = "${var.platform.vpc_name}-vpce-all-clients"
-  vpc_id = var.platform.vpc_id
-}
