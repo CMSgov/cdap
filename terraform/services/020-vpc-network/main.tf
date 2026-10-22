@@ -31,6 +31,19 @@ resource "aws_security_group" "endpoints_build" {
   description = "Interface endpoints used only during build/provisioning (tofu apply)"
 }
 
+# Client Security Groups 
+resource "aws_security_group" "vpce_all_clients" {
+  name        = "${module.platform.vpc_name}-vpce-all-clients"
+  vpc_id      = module.platform.vpc_id
+  description = "Membership SG: attach to any resource needing interface endpoint access (every provisioned resource, plus CodeBuild)"
+}
+
+resource "aws_security_group" "vpce_platform_clients" {
+  name        = "${module.platform.vpc_name}-vpce-build-clients"
+  vpc_id      = module.platform.vpc_id
+  description = "Membership SG: CodeBuild/CI only — additional build-time-only interface endpoint access"
+}
+
 # VPC Endpoints 
 
 resource "aws_vpc_endpoint" "all" {

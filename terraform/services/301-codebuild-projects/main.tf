@@ -100,7 +100,7 @@ resource "aws_codebuild_project" "per_repo" {
       data.aws_security_group.security_tools.id,
       aws_security_group.codebuild_project[each.key].id,
       data.aws_security_group.vpce_all_clients.id,
-      data.aws_security_group.vpce_build_clients.id
+      data.aws_security_group.vpce_platform_clients.id
     ]
   }
 

@@ -21,7 +21,7 @@ all_interface_services:
 all_global_interface_services: [] # none today; kept for future additions
 
 # Only called by tofu apply (provisioning/control-plane), never by a
-# running resource. Attach vpce_build_clients, in addition to vpce_all_clients, to get this set.
+# running resource. Attach vpce_platform_clients, in addition to vpce_all_clients, to get this set.
 build_interface_services:
   - application-autoscaling # ECS target-tracking scaling policies (control-plane only)
   - backup # (us-east-1) AWS Backup vault only; secondary us-west-2 vault calls use the general egress path

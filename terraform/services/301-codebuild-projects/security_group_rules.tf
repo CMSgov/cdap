@@ -28,7 +28,7 @@ data "aws_security_group" "vpce_all_clients" {
   vpc_id = var.platform.vpc_id
 }
 
-data "aws_security_group" "vpce_build_clients" {
-  name   = "${var.platform.primary_vpc_name}-vpce-build-clients"
+data "aws_security_group" "vpce_platform_clients" {
+  name   = "${var.platform.primary_vpc_name}-vpce-platform-clients"
   vpc_id = var.platform.vpc_id
 }
