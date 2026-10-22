@@ -39,41 +39,28 @@ sonar_extra_args: "..."      # rarely needed — prefer sonar-project.properties
 
 # Adding a module that calls AWS APIs or other AWS services
 
-If your module's resource makes any AWS API call from inside the VPC (directly, through the AWS provider itself, through a local-exec/data lookup, or through application code at runtime), it needs explicit sec group rules to reach our interface/gateway endpoints. There is no default path anymore; egress is intentionally not open by default.
+If your module's resource makes any AWS API call from inside the VPC (directly, through the AWS provider itself, through a local-exec/data lookup, or through application code at runtime), it needs explicit security group membership to reach our interface/gateway endpoints. There is no default path anymore; egress is intentionally not open by default.
 
 1. Does your resource have its own security group?
 
-If yes: 
-a. Add a data lookup for the shared endpoint-clients SG: 
-```
-data "aws_security_group" "endpoint_clients" {
-  name   = "${var.platform.vpc_name}-vpce-clients"
-  vpc_id = var.platform.vpc_id
-}
-```
+   If yes: 
+      a. Add a data lookup for the shared endpoint-clients SG: 
+            ```
+            data "aws_security_group" "endpoint_clients" {
+            name   = "${var.platform.vpc_name}-vpce-clients"
+            vpc_id = var.platform.vpc_id
+            }
+         ```
 
-b. Attach data.aws_security_group.endpoint_clients.id to your resource's security group list, alongside whatever else it already has. This is what grants your resource ingress on the endpoints SG. It is not optional and there is no CIDR fallback.
+      b. 
+         Attach data.aws_security_group.endpoint_clients.id to your resource's security group list, alongside whatever else it already has. One attachment covers your resources acces to AWS services: SSM, KMS, Secrets Manager, CloudWatch Logs, STS, ECR, SQS, SNS, Lambda invoke, Service Connect, and S3. It is not optional and there is no CIDR fallback.
 
-c. If your resource also talks to S3, add the S3 prefix-list egress rule, gated behind a needs_s3_access variable so teams can opt out when it doesn't apply. S3 is a gateway endpoint, not an interface endpoint: it has no ENI and no security group of its own, as such, we reference the prefix list and use the bool variable:
+   If no (your resource has no SG of its own, e.g., SNS, SQS, CloudWatch Log Groups as managed services): no networking change is needed. These are reached by other resources' egress rules, not by anything of their own. You may still need an IAM permission to gain access to those resources, even if the network was successfully traversed.
 
-```
-data "aws_ec2_managed_prefix_list" "s3" {
-  count = var.needs_s3_access ? 1 : 0
-  name  = "com.amazonaws.${var.platform.primary_region.name}.s3"
-}
+2. Does your module run as part of a tofu apply, not just at runtime?
+  
+   If your module's own tofu apply calls something beyond the standard set above and provisions IAM roles, RDS/Aurora clusters, Backup plans, Route 53 zones, CloudFront distributions, EventBridge rules/schedules, Application Auto Scaling targets, or similar, that's a build-time-only call. We assume this is only through Codebuild and ZScaler. You don't need to do anything in your module for this; it's already covered as long as the service appears on our build-services list. If you're adding a genuinely new AWS service dependency that isn't on either list yet, flag it in your PR so we can confirm which list it belongs on.
 
-resource "aws_vpc_security_group_egress_rule" "to_s3" {
-  count             = var.needs_s3_access ? 1 : 0
-  security_group_id = <your resource's SG id>
-  prefix_list_id    = data.aws_ec2_managed_prefix_list.s3[0].id
-  from_port         = 443
-  to_port           = 443
-  ip_protocol       = "tcp"
-}
-```
-
-If no (your resource has no SG of its own, e.g., SNS, SQS, CloudWatch Log Groups as managed services): no networking change is needed. These are reached by other resources' egress rules, not by anything of their own. You may still need an IAM permission to gain access to those resources, even if the network was successfully traversed.
-
-2. Does your resource make calls indirectly?
-For a local-exec provisioner, a CLI call shelled out from a build step, or application code calling the SDK at runtime all count, the module author is responsible for identifying these. Tofu plan won't surface them. Note any such calls in your PR description so reviewers can check the service against the endpoint list.
+3. Does your resource make calls indirectly?
+   For a local-exec provisioner, a CLI call shelled out from a build step, or application code calling the SDK at runtime all count, the module author is responsible for identifying these. Tofu plan won't surface them. Note any such calls in your PR description so reviewers can check the service against the endpoint list.
 

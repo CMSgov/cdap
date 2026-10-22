@@ -23,23 +23,12 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
 # -------------------------------------------------------
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
-data "aws_security_group" "endpoint_clients" {
-  name   = "cdap-east-${module.standards.env}-vpce-clients"
-  vpc_id = module.standards.cdap_vpc.id
+data "aws_security_group" "vpc_all_clients" {
+  name   = "${var.platform.primary_vpc_name}-vpce-all-clients"
+  vpc_id = var.platform.vpc_id
 }
 
-data "aws_ec2_managed_prefix_list" "s3" {
-  name = "com.amazonaws.${module.standards.primary_region.name}.s3"
+data "aws_security_group" "vpc_build_clients" {
+  name   = "${var.platform.primary_vpc_name}-vpce-build-clients"
+  vpc_id = var.platform.vpc_id
 }
-
-resource "aws_vpc_security_group_egress_rule" "to_s3" {
-  for_each = aws_security_group.codebuild_project
-
-  security_group_id = aws_security_group.codebuild_project[each.key].id
-  prefix_list_id    = data.aws_ec2_managed_prefix_list.s3.id
-  from_port         = 443
-  to_port           = 443
-  ip_protocol       = "tcp"
-  description       = "S3 via gateway endpoint"
-}
-

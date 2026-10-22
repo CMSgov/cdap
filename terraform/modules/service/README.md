@@ -89,7 +89,6 @@ No requirements.
 | <a name="input_mtls_cert_arn"></a> [mtls\_cert\_arn](#input\_mtls\_cert\_arn) | ARN of the PCA-backed private certificate used by the mTLS sidecar.<br/>When provided, enables mtls sidecar. | `string` | `null` | no |
 | <a name="input_mtls_domain"></a> [mtls\_domain](#input\_mtls\_domain) | FQDN the mTLS cert is issued for. Used by the startup self-test for hostname verification. | `string` | `null` | no |
 | <a name="input_mtls_require_client_cert"></a> [mtls\_require\_client\_cert](#input\_mtls\_require\_client\_cert) | Not yet available. Whether to require client certificates on the mTLS proxy. Set to true only when client cert issuance is configured. | `bool` | `false` | no |
-| <a name="input_needs_s3_access"></a> [needs\_s3\_access](#input\_needs\_s3\_access) | Whether this function's own code calls S3 directly | `bool` | `false` | no |
 | <a name="input_port_mappings"></a> [port\_mappings](#input\_port\_mappings) | The list of port mappings for the container. Port mappings allow containers to access ports on the host container instance to send or receive traffic. For task definitions that use the awsvpc network mode, only specify the containerPort. | <pre>list(object({<br/>    appProtocol        = optional(string)<br/>    containerPort      = optional(number)<br/>    containerPortRange = optional(string)<br/>    hostPort           = optional(number)<br/>    name               = optional(string)<br/>    protocol           = optional(string)<br/>  }))</pre> | `null` | no |
 | <a name="input_proxy_healthcheck_port"></a> [proxy\_healthcheck\_port](#input\_proxy\_healthcheck\_port) | Port for the proxy health check server (plain HTTP, no mTLS) | `number` | `8081` | no |
 | <a name="input_proxy_listen_port"></a> [proxy\_listen\_port](#input\_proxy\_listen\_port) | Port the mTLS proxy sidecar listens on.<br/><br/>Traffic flow when enable\_mtls\_sidecar = true:<br/>  ALB --> proxy container :proxy\_listen\_port (mTLS)<br/>      --> app container   :first port in port\_mappings (plain HTTP, localhost)<br/><br/>The ALB target group is automatically pointed at this port.<br/>The caller does not need to set alb\_port\_name. | `number` | `8443` | no |
@@ -141,22 +140,20 @@ No requirements.
 | [aws_ssm_parameter.image_tag](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [aws_vpc_security_group_egress_rule.alb_to_task_health](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.alb_to_task_proxy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.to_endpoints](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.to_s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.alb_to_health](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.alb_to_proxy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.datadog_synthetics](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.datadog_to_app](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.datadog_to_health](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.datadog_to_proxy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [aws_ec2_managed_prefix_list.s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ec2_managed_prefix_list) | data source |
 | [aws_iam_policy_document.ecs_exec](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.execution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.service_connect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.task](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_ram_resource_share.pace_ca](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ram_resource_share) | data source |
 | [aws_security_group.endpoint_clients](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
-| [aws_security_group.endpoints](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
+| [aws_security_group.vpc_all_clients](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_service_discovery_http_namespace.service_discovery_namespace](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/service_discovery_http_namespace) | data source |
 | [aws_ssm_parameter.active_image_tag](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
 | [aws_ssm_parameter.datadog_api_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |

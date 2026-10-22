@@ -18,10 +18,6 @@ resource "aws_vpc_endpoint" "s3" {
   }
 }
 
-data "aws_ec2_managed_prefix_list" "s3" {
-  name = "com.amazonaws.${module.platform.primary_region.name}.s3"
-}
-
 # Endpoint Security Groups
 resource "aws_security_group" "endpoints_all" {
   name        = "${module.platform.vpc_name}-vpce-endpoints-all"

@@ -145,7 +145,6 @@ No requirements.
 | <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | Number of days to retain Lambda function logs in CloudWatch. Production minimum is 180. Value is validated by the cloudwatch\_log\_group module. | `number` | `180` | no |
 | <a name="input_memory_size"></a> [memory\_size](#input\_memory\_size) | Lambda function memory size | `number` | `null` | no |
 | <a name="input_name"></a> [name](#input\_name) | Deprecated. Only use for override. Name of the lambda function | `string` | `null` | no |
-| <a name="input_needs_s3_access"></a> [needs\_s3\_access](#input\_needs\_s3\_access) | Whether this function's own code calls S3 directly (unrelated to packaging — Lambda image pulls never traverse the VPC) | `bool` | `false` | no |
 | <a name="input_rollback_version"></a> [rollback\_version](#input\_rollback\_version) | S3 object version ID of a previous "function.zip" to roll back to.<br/>When null (default), Lambda uses the latest version of function.zip.<br/>When set, Lambda is pinned to that specific S3 object version.<br/><br/>To list available version IDs:<br/>  aws s3api list-object-versions \<br/>    --bucket <zip\_bucket\_name> \<br/>    --prefix function.zip \<br/>    --query 'Versions[*].{VersionId:VersionId, LastModified:LastModified}' | `string` | `null` | no |
 | <a name="input_runtime"></a> [runtime](#input\_runtime) | Lambda function runtime | `string` | `"python3.11"` | no |
 | <a name="input_schedule_expression"></a> [schedule\_expression](#input\_schedule\_expression) | Cron or rate expression for a scheduled function | `string` | `""` | no |
@@ -189,19 +188,16 @@ No requirements.
 | [aws_s3_object.empty_function_zip](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_s3_object.function_zip](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_object) | resource |
 | [aws_security_group.function](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
-| [aws_vpc_security_group_egress_rule.to_endpoints](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
-| [aws_vpc_security_group_egress_rule.to_s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.default](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
 | [archive_file.function](https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [aws_ec2_managed_prefix_list.s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ec2_managed_prefix_list) | data source |
 | [aws_iam_openid_connect_provider.github](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_openid_connect_provider) | data source |
 | [aws_iam_policy_document.cicd_manage_lambda_objects](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.default_function](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.function_assume_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_role.admin](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role) | data source |
 | [aws_iam_role.dasg_admin](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role) | data source |
-| [aws_security_group.endpoint_clients](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
-| [aws_security_group.endpoints](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
+| [aws_security_group.vpc_all_clients](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_ssm_parameter.dd_api_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.

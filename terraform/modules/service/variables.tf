@@ -405,6 +405,7 @@ variable "health_check" {
   default = null
 }
 
+# FIXME Remove option for external security groups in PLT-1824
 variable "security_groups" {
   description = <<-EOT
     For most use cases, leave this empty. List of additional security group IDs to attach to the ECS task alongside the
@@ -478,11 +479,6 @@ variable "additional_task_role_policies" {
   EOT
 }
 
-variable "needs_s3_access" {
-  description = "Whether this function's own code calls S3 directly"
-  type        = bool
-  default     = false
-}
 
 ## Monitoring
 variable "enable_datadog_agent" {
