@@ -2,6 +2,12 @@
 Establishes network configuration for our VPCs to support in-network traffic. 
 CMS Cloud generates our VPCs, though we set this configuration. 
 
+# General notes:
+The list in config AWS service control-plane/API access only. It does not cover:
+    - Non-AWS/third-party destinations (Datadog, etc.), they need their own scoped CIDR/prefix-list egress exception.
+    - Services with no PrivateLink support, or requiring Transit Gateway for cross-region access.
+    - Membership in the `endpoint_clients` security group is what actually grants a resource access to the defined endpoints.
+    Being on this list only means the endpoint exists in the VPC, it does not grant anything by itself.
 
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.

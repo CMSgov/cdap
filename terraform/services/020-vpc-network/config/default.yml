@@ -1,21 +1,30 @@
 enable_interface_endpoints: false
 interface_services:
-  - ssm
-  - ssmmessages
-  - ec2messages
+  - application-autoscaling # ECS target-tracking scaling policies (control-plane only)
+  - backup # (us-east-1) AWS Backup vault only; secondary us-west-2 vault calls will use the general egress path
+  - cloudfront # control plane limited to us-east-1 by AWS
+  - codebuild # CodeBuild's own tofu apply managing its own project definition
+  - ec2 # EC2/VPC "data" lookups in tofu
+  - ec2messages # SSM Session Manager agent (EC2)
+  - ecr.api # ECR control-plane (auth tokens, private repo metadata)
+  - ecr.dkr # ECR image layer push/pull
+  - ecs-agent # added to support Service Connect's Envoy proxy management traffic
+  - events # classic CloudWatch Events / EventBridge rules (control-plane only)
+  - iam # control-plane limited by AWS to us-east-1
+  - kinesis-firehose # provisioning delivery streams via tofu (does not serve internal routes for existing kinesis use cases)
   - kms
+  - lambda # covers Invoke/InvokeAsync and other control-plane calls. does NOT cover Function URLs, which have no PrivateLink path
+  - logs # CloudWatch Logs API; required for every Lambda function and ECS task
+  - monitoring # CloudWatch metrics/alarms API
+  - rds # Aurora cluster provisioning and any the local-exec modify-db-cluster call
+  - route53 # hosted zone/record management via tofu; not for actual DNS resolution which uses the VPC's built-in resolver
+  - scheduler # EventBridge Scheduler (aws_scheduler_schedule)
   - secretsmanager
-  - lambda
-  - logs
-  - monitoring
-  - sts
-  - ecr.api
-  - ecr.dkr
-  - sqs
   - sns
-  - rds
-  - ec2
-  - backup
-  - route53
-  - iam # due to limitations in AWS control plane for IAM interface should only be applied in us-east-1 at the time of this comment
-# FIX ME add cloudwatch event rules and application autoscaling
+  - sqs
+  - ssm # parameter lookups, GetParameter, etc.
+  - ssmmessages # SSM Session Manager agent channel
+  - sts # requires AWS_STS_REGIONAL_ENDPOINTS=regional on callers as SDK defaults to the global endpoint, which this does NOT cover
+
+
+# A list of available interfaces can be found: https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html
