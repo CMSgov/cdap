@@ -1,3 +1,14 @@
+# FIXME Remove in PLT-1824
+resource "aws_vpc_security_group_egress_rule" "https" {
+  count             = (length(var.security_groups) == 0) ? 1 : 0
+  security_group_id = aws_security_group.task[0].id
+  from_port         = 443
+  to_port           = 443
+  ip_protocol       = "tcp"
+  cidr_ipv4         = "0.0.0.0/0"
+  description       = "Allow HTTPS outbound (ECR, CloudWatch, SSM)"
+}
+
 # -------------------------------------------------------
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------

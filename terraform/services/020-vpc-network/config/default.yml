@@ -1,5 +1,4 @@
 enable_interface_endpoints: false
-restrict_egress: false
 interface_services:
   - ssm
   - ssmmessages
@@ -15,3 +14,4 @@ interface_services:
   - sns
   - rds
   - ec2
+# FIX ME add cloudwatch event rules and application autoscaling

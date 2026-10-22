@@ -1,3 +1,10 @@
+resource "aws_vpc_security_group_egress_rule" "this" {
+  cidr_ipv4         = "0.0.0.0/0"
+  description       = "Allow all egress"
+  ip_protocol       = "-1"
+  security_group_id = aws_security_group.this.id
+}
+
 data "aws_ec2_managed_prefix_list" "s3" {
   count = var.needs_s3_access ? 1 : 0
   name  = "com.amazonaws.${var.platform.primary_region.name}.s3"
