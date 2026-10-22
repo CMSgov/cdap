@@ -425,7 +425,7 @@ resource "aws_ecs_service" "this" {
     # FIXME Remove option for external security groups in PLT-1824
     security_groups = (length(var.security_groups) == 0) ? concat(
       [aws_security_group.task[0].id],
-    [data.aws_security_group.endpoint_clients.id]) : concat(var.security_groups, [data.aws_security_group.endpoint_clients.id])
+    [data.aws_security_group.vpce_all_clients.id]) : concat(var.security_groups, [data.aws_security_group.vpce_all_clients.id])
   }
 
   dynamic "load_balancer" {

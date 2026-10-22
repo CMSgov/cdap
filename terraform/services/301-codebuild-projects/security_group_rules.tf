@@ -23,12 +23,12 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
 # -------------------------------------------------------
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
-data "aws_security_group" "vpc_all_clients" {
+data "aws_security_group" "vpce_all_clients" {
   name   = "${var.platform.primary_vpc_name}-vpce-all-clients"
   vpc_id = var.platform.vpc_id
 }
 
-data "aws_security_group" "vpc_build_clients" {
+data "aws_security_group" "vpce_build_clients" {
   name   = "${var.platform.primary_vpc_name}-vpce-build-clients"
   vpc_id = var.platform.vpc_id
 }

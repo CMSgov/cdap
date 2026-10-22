@@ -46,14 +46,14 @@ If your module's resource makes any AWS API call from inside the VPC (directly, 
    If yes: 
       a. Add a data lookup for the shared endpoint-clients SG: 
             ```
-            data "aws_security_group" "endpoint_clients" {
-            name   = "${var.platform.vpc_name}-vpce-clients"
+            data "aws_security_group" "vpce_all_clients" {
+            name   = "${var.platform.vpc_name}-vpce-all-clients"
             vpc_id = var.platform.vpc_id
             }
          ```
 
       b. 
-         Attach data.aws_security_group.endpoint_clients.id to your resource's security group list, alongside whatever else it already has. One attachment covers your resources acces to AWS services: SSM, KMS, Secrets Manager, CloudWatch Logs, STS, ECR, SQS, SNS, Lambda invoke, Service Connect, and S3. It is not optional and there is no CIDR fallback.
+         Attach data.aws_security_group.vpce_all_clients.id to your resource's security group list, alongside whatever else it already has. One attachment covers your resources acces to AWS services: SSM, KMS, Secrets Manager, CloudWatch Logs, STS, ECR, SQS, SNS, Lambda invoke, Service Connect, and S3. It is not optional and there is no CIDR fallback.
 
    If no (your resource has no SG of its own, e.g., SNS, SQS, CloudWatch Log Groups as managed services): no networking change is needed. These are reached by other resources' egress rules, not by anything of their own. You may still need an IAM permission to gain access to those resources, even if the network was successfully traversed.
 

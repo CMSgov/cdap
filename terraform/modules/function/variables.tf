@@ -183,12 +183,6 @@ variable "file_system_config" {
   }
 }
 
-variable "needs_s3_access" {
-  description = "Whether this function's own code calls S3 directly (unrelated to packaging — Lambda image pulls never traverse the VPC)"
-  type        = bool
-  default     = false
-}
-
 # ── Advanced / Migration strategies ─────────────────────────────────────────────────
 
 variable "additional_admin_role_arns" {

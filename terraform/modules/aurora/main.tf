@@ -75,8 +75,8 @@ data "aws_rds_engine_version" "this" {
   latest       = true
 }
 
-data "aws_security_group" "endpoint_clients" {
-  name   = "${var.platform.vpc_name}-vpce-clients"
+data "aws_security_group" "vpce_all_clients" {
+  name   = "${var.platform.vpc_name}-vpce-all-clients"
   vpc_id = var.platform.vpc_id
 }
 
@@ -124,7 +124,7 @@ resource "aws_rds_cluster" "this" {
     var.platform.security_groups.cmscloud-security-tools.id,
     var.platform.security_groups.remote-management.id,
     var.platform.security_groups.zscaler-private.id,
-    data.aws_security_group.endpoint_clients.id,
+    data.aws_security_group.vpce_all_clients.id,
     var.vpc_security_group_ids
   ])
 
