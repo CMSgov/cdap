@@ -143,6 +143,7 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ecs:Describe*",
       "ecs:List*",
       "servicediscovery:GetNamespace",
+      "servicediscovery:ListNamespaces",
       "servicediscovery:ListTagsForResource",
     ]
     resources = ["*"] # Describe*/List* cannot be resource-scoped
