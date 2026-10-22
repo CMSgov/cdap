@@ -7,7 +7,8 @@ resource "aws_security_group" "codebuild_project" {
   vpc_id      = module.standards.cdap_vpc.id
 }
 
-# FIXME Evaluate how this can be limited, requires retrieval of all build dependencies 
+# FIXME Evaluate how this can be limited, requires retrieval of all build dependencies. 
+# FIXME Evaluate how this can be limited, requires multi-region use of IAM (IP based egress for secondary provider though primary provider is using interface endpoint)
 resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
   for_each = aws_security_group.codebuild_project
 

@@ -15,4 +15,6 @@ interface_services:
   - sns
   - rds
   - ec2
+  - backup
+  - iam # due to limitations in AWS control plane for IAM interface should only be applied in us-east-1 at the time of this comment
 # FIX ME add cloudwatch event rules and application autoscaling
