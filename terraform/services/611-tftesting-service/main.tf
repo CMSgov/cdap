@@ -28,8 +28,6 @@ module "tftesting_service" {
 
   force_new_deployment = true
 
-  enable_ecs_service_connect = false
-
   deployment_circuit_breaker = {
     enable   = true
     rollback = false
