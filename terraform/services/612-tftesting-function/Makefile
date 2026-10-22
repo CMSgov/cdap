@@ -14,7 +14,7 @@ deploy:
 # Re-run the liveness check only. Function code/zip is untouched.
 # Use this after changing infra OUTSIDE this module to confirm the Lambda can still reach its dependencies.
 test-invocation:
-	cd $(TF_DIR) && tofu apply -replace='$(INVOCATION_ADDR)'
+	cd $(TF_DIR) && tofu apply -target='$(INVOCATION_ADDR)' -replace='$(INVOCATION_ADDR)'
 
 # Force a full destroy/recreate of the Lambda function itself, with no
 # code change, then run the liveness check against the fresh function.

@@ -5,6 +5,7 @@ interface_services:
   - ec2messages
   - kms
   - secretsmanager
+  - lambda
   - logs
   - monitoring
   - sts

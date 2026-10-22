@@ -5,6 +5,6 @@ module "cdap_cluster" {
 }
 
 resource "aws_service_discovery_http_namespace" "test" {
-  name        = "cdap-${var.env}.cmscloud.local"
+  name        = "${var.env}.cdap.cmscloud.local"
   description = "Service Connect namespace for ECS module testing"
 }
