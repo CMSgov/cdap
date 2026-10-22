@@ -93,6 +93,7 @@ variable "instance_count" {
   type        = number
 }
 
+#FIXME PLT-1824 Remove this option and assume security groups are handled within module 
 variable "vpc_security_group_ids" {
   default     = []
   description = <<-EOT

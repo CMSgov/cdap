@@ -66,6 +66,8 @@ The list in config AWS service control-plane/API access only. It does not cover:
 |------|------|
 | [aws_security_group.endpoints_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group.endpoints_build](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.vpce_clients_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.vpce_clients_platform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_vpc_endpoint.all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
 | [aws_vpc_endpoint.all_global](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
 | [aws_vpc_endpoint.build](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
@@ -90,5 +92,6 @@ The list in config AWS service control-plane/API access only. It does not cover:
 
 | Name | Description |
 |------|-------------|
-| <a name="output_endpoint_clients_security_group_id"></a> [endpoint\_clients\_security\_group\_id](#output\_endpoint\_clients\_security\_group\_id) | n/a |
+| <a name="output_vpce_clients_all_security_group_id"></a> [vpce\_clients\_all\_security\_group\_id](#output\_vpce\_clients\_all\_security\_group\_id) | n/a |
+| <a name="output_vpce_clients_platform_security_group_id"></a> [vpce\_clients\_platform\_security\_group\_id](#output\_vpce\_clients\_platform\_security\_group\_id) | n/a |
 <!-- END_TF_DOCS -->

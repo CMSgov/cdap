@@ -1,3 +1,13 @@
+locals {
+  rds_cluster_security_group_ids = flatten([
+    aws_security_group.this.id,
+    var.platform.security_groups.cmscloud-security-tools.id,
+    var.platform.security_groups.remote-management.id,
+    var.platform.security_groups.zscaler-private.id,
+    var.needs_s3_access ? [data.aws_security_group.vpc_all_clients[0].id] : [],
+    var.vpc_security_group_ids
+  ])
+}
 resource "aws_db_subnet_group" "this" {
   description = "${local.service_prefix} database subnet group"
   name        = coalesce(var.subnet_group_override, local.service_prefix)
@@ -75,7 +85,8 @@ data "aws_rds_engine_version" "this" {
   latest       = true
 }
 
-data "aws_security_group" "vpce_all_clients" {
+data "aws_security_group" "vpce_clients_all" {
+  count = var.needs_s3_access ? 1 : 0 
   name   = "${var.platform.vpc_name}-vpce-all-clients"
   vpc_id = var.platform.vpc_id
 }
@@ -119,14 +130,7 @@ resource "aws_rds_cluster" "this" {
   copy_tags_to_snapshot           = true
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
-  vpc_security_group_ids = flatten([
-    aws_security_group.this.id,
-    var.platform.security_groups.cmscloud-security-tools.id,
-    var.platform.security_groups.remote-management.id,
-    var.platform.security_groups.zscaler-private.id,
-    data.aws_security_group.vpce_all_clients.id,
-    var.vpc_security_group_ids
-  ])
+  vpc_security_group_ids = local.rds_cluster_security_group_ids
 
   depends_on = [
     aws_iam_role_policy_attachment.db_monitoring,
