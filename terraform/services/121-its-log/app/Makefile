@@ -5,10 +5,10 @@ prep-local:
 	mkdir -p ~/.its-log/data
 
 build: prep-local
-	cd api ; go build -o its-log .
+	cd src/api ; go build -o its-log .
 
 container-api: prep-local
-	$(CONTAINER_CMD) build -t itslog-api:latest -f src/ops/containers/itslog/Dockerfile --load .
+	$(CONTAINER_CMD) build -t itslog-api:latest -f Dockerfile --load .
 
 container-e2e: prep-local
 	$(CONTAINER_CMD) build -t itslog-e2e:latest -f src/ops/containers/e2e/Dockerfile --load .
