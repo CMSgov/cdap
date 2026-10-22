@@ -10,7 +10,9 @@ locals {
   config = merge(local.default_config, local.env_config_path_config)
 
   enable_interface_endpoints = local.config.enable_interface_endpoints
-  interface_services         = local.enable_interface_endpoints ? local.config.interface_services : []
+
+  interface_services        = local.enable_interface_endpoints ? local.config.interface_services : []
+  global_interface_services = local.enable_interface_endpoints ? local.config.global_interface_services : []
 }
 
 resource "aws_vpc_endpoint" "s3" {
@@ -45,3 +47,15 @@ resource "aws_vpc_endpoint" "interface" {
   tags = { Name = "${module.platform.vpc_name}-vpce-${each.value}" }
 }
 
+
+resource "aws_vpc_endpoint" "interface_global" {
+  for_each            = toset(local.global_interface_services)
+  vpc_id              = module.platform.vpc_id
+  service_name        = "com.amazonaws.${each.value}"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = keys(module.platform.private_subnets)
+  security_group_ids  = [aws_security_group.endpoints.id]
+  private_dns_enabled = true
+
+  tags = { Name = "${module.platform.vpc_name}-vpce-${each.value}" }
+}
