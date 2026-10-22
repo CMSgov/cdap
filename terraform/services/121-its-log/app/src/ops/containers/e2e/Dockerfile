@@ -14,7 +14,7 @@ RUN dnf update -y && \
 WORKDIR /app
 
 # Copy and install requirements separately to leverage Docker layer caching
-COPY ops/containers/e2e .
+COPY src/ops/containers/e2e .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Specify the command to run your app
