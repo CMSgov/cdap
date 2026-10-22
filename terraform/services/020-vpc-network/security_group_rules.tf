@@ -60,3 +60,4 @@ resource "aws_vpc_security_group_egress_rule" "all_clients_to_s3" {
   ip_protocol       = "tcp"
   description       = "S3 via gateway endpoint"
 }
+
