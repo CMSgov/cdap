@@ -33,16 +33,6 @@ data "aws_security_group" "endpoint_clients" {
   vpc_id = module.standards.cdap_vpc.id
 }
 
-resource "aws_vpc_security_group_egress_rule" "to_endpoints" {
-  for_each                     = aws_security_group.codebuild_project
-  security_group_id            = aws_security_group.codebuild_project[each.key].id
-  referenced_security_group_id = data.aws_security_group.endpoints.id
-  from_port                    = 443
-  to_port                      = 443
-  ip_protocol                  = "tcp"
-  description                  = "Interface endpoints (SSM, KMS, Secrets Manager, logs, STS, ECR, SQS, SNS)"
-}
-
 data "aws_ec2_managed_prefix_list" "s3" {
   name = "com.amazonaws.${module.standards.primary_region.name}.s3"
 }

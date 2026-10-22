@@ -27,15 +27,6 @@ data "aws_security_group" "endpoint_clients" {
   vpc_id = var.platform.vpc_id
 }
 
-resource "aws_vpc_security_group_egress_rule" "to_endpoints" {
-  security_group_id            = aws_security_group.function.id
-  referenced_security_group_id = data.aws_security_group.endpoints.id
-  from_port                    = 443
-  to_port                      = 443
-  ip_protocol                  = "tcp"
-  description                  = "Interface endpoints (SSM, KMS, Secrets Manager, logs, STS, ECR, SQS, SNS)"
-}
-
 data "aws_ec2_managed_prefix_list" "s3" {
   name = "com.amazonaws.${var.platform.primary_region.name}.s3"
 }
