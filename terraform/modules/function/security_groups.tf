@@ -19,7 +19,7 @@ resource "aws_vpc_security_group_egress_rule" "default" {
 # -------------------------------------------------------
 
 data "aws_security_group" "vpce_clients_all" {
-  name   = "${var.platform.primary_vpc_name}-vpce-all-clients"
+  name   = "${var.platform.vpc_name}-vpce-all-clients"
   vpc_id = var.platform.vpc_id
 }
 
