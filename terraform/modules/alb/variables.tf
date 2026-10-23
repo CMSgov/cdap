@@ -98,6 +98,16 @@ variable "internal" {
   description = "true = private (internal) ALB; false = public (internet-facing) ALB."
 }
 
+#
+# Domain Management 
+#
+
+variable "internal_record_name" {
+  type        = string
+  default     = null
+  description = "Subdomain label for this ALB's record, e.g. 'api-admin'"
+}
+
 # -------------------------------------------------------
 # TLS / ACM
 # -------------------------------------------------------

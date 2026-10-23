@@ -36,6 +36,7 @@ No requirements.
 | <a name="input_enable_zscaler_ingress"></a> [enable\_zscaler\_ingress](#input\_enable\_zscaler\_ingress) | When true, adds an ingress rule allowing the Zscaler private App<br/>Connector to reach the ALB on HTTPS:443.<br/>Enable this when the ALB is registered in cmscloud.local DNS and<br/>accessed by developers via Zscaler.<br/>Should be set alongside enable\_zscaler\_endpoint = true on the<br/>acm\_certificate module. | `bool` | `false` | no |
 | <a name="input_extra_listeners"></a> [extra\_listeners](#input\_extra\_listeners) | Additional HTTPS listeners beyond the default 443 | <pre>map(object({<br/>    port                = number<br/>    acm_certificate_arn = optional(string)<br/>    ssl_policy          = optional(string)<br/>  }))</pre> | `{}` | no |
 | <a name="input_internal"></a> [internal](#input\_internal) | true = private (internal) ALB; false = public (internet-facing) ALB. | `bool` | `true` | no |
+| <a name="input_internal_record_name"></a> [internal\_record\_name](#input\_internal\_record\_name) | Subdomain label for this ALB's record, e.g. 'api-admin' | `string` | `null` | no |
 | <a name="input_name_override"></a> [name\_override](#input\_name\_override) | Override for the ALB name. Defaults to '<var.platform.app>-<var.platform.env>-<var.platform.service>-alb'. | `string` | `null` | no |
 | <a name="input_security_group_ids"></a> [security\_group\_ids](#input\_security\_group\_ids) | Security group IDs to attach to the ALB. | `list(string)` | `[]` | no |
 | <a name="input_ssl_policy"></a> [ssl\_policy](#input\_ssl\_policy) | TLS security policy. Default enforces TLS 1.2+ per CMS/FISMA requirements. | `string` | `"ELBSecurityPolicy-TLS13-1-2-2021-06"` | no |
@@ -62,6 +63,7 @@ No modules.
 | [aws_lb.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
 | [aws_lb_listener.http_redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_listener.https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
+| [aws_route53_record.internal_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_security_group.alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_vpc_security_group_ingress_rule.codebuild](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
@@ -69,6 +71,7 @@ No modules.
 | [aws_vpc_security_group_ingress_rule.https_public](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.https_security_tools](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.https_zscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_route53_zone.internal](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 | [aws_security_group.codebuild_repo](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.

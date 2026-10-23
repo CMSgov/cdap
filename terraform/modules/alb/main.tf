@@ -84,3 +84,27 @@ resource "aws_security_group" "alb" {
     Name = "${local.alb_name}-sg"
   }
 }
+
+# -------------------------------------------------------
+# Route53
+# -------------------------------------------------------
+
+data "aws_route53_zone" "internal" {
+  count        = var.internal_record_name ? 1 : 0
+  name         = "${var.platform.env}.${var.platform.app}.internal.cms.gov"
+  private_zone = true
+  vpc_id       = var.platform.vpc_id
+}
+
+resource "aws_route53_record" "internal_alb" {
+  count   = var.internal_record_name ? 1 : 0
+  zone_id = data.aws_route53_zone.internal[0].zone_id
+  name    = "${var.internal_record_name}.${data.aws_route53_zone.internal[0].name}"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.this.dns_name
+    zone_id                = aws_lb.this.zone_id
+    evaluate_target_health = true
+  }
+}
