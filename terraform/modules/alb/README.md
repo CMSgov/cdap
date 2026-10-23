@@ -30,6 +30,7 @@ No requirements.
 |------|-------------|------|---------|:--------:|
 | <a name="input_acm_certificate_arn"></a> [acm\_certificate\_arn](#input\_acm\_certificate\_arn) | ARN of the ACM certificate (public or private CA) for the HTTPS listener.<br/>   Pass either:<br/>     - module.acm.private\_cert\_arn  for internal/Zscaler endpoints<br/>     - module.acm.public\_cert\_arn   for public *.<app>.cms.gov endpoints<br/>   Required — this module enforces TLS on all listeners. | `string` | n/a | yes |
 | <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP platform module. | <pre>object({<br/>    app             = string<br/>    env             = string<br/>    primary_region  = object({ name = string })<br/>    private_subnets = map(object({ id = string }))<br/>    public_subnets  = map(object({ id = string }))<br/>    service         = string<br/>    vpc_id          = string<br/>    security_groups = map(object({<br/>      id   = string<br/>      arn  = string<br/>      name = string<br/>    }))<br/>  })</pre> | n/a | yes |
+| <a name="input_create_zscaler_dns_record"></a> [create\_zscaler\_dns\_record](#input\_create\_zscaler\_dns\_record) | n/a | `bool` | `false` | no |
 | <a name="input_enable_datadog_synthetics_ingress"></a> [enable\_datadog\_synthetics\_ingress](#input\_enable\_datadog\_synthetics\_ingress) | When true, adds an ingress rule allowing the Datadog synthetics<br/>private location runner to reach the ALB on HTTPS:443.<br/>Use in dev/test environments where Datadog private location<br/>synthetic tests are configured against this ALB. | `bool` | `false` | no |
 | <a name="input_enable_http_redirect"></a> [enable\_http\_redirect](#input\_enable\_http\_redirect) | When true, adds an HTTP:80 listener that redirects all traffic to HTTPS:443. | `bool` | `true` | no |
 | <a name="input_enable_ingress_from_codebuild_repo"></a> [enable\_ingress\_from\_codebuild\_repo](#input\_enable\_ingress\_from\_codebuild\_repo) | When populated, adds an ingress rule allowing the Codebuild security group access through 443 | `string` | `null` | no |
@@ -64,6 +65,7 @@ No modules.
 | [aws_lb_listener.http_redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_listener.https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_route53_record.internal_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
+| [aws_route53_record.zscaler_alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_security_group.alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_vpc_security_group_ingress_rule.codebuild](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
@@ -72,6 +74,7 @@ No modules.
 | [aws_vpc_security_group_ingress_rule.https_security_tools](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.https_zscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_route53_zone.internal](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
+| [aws_route53_zone.zscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 | [aws_security_group.codebuild_repo](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.

@@ -2,6 +2,8 @@ locals {
   alb_name   = var.name_override != null ? var.name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}-alb"
   managed_sg = length(var.security_group_ids) == 0
 
+  internal_fqdn = var.internal ? "${var.internal_record_name}.${data.aws_route53_zone.internal[0].name}" : null
+
   # Support explicitly provided subnets, or fall back to the platform's private subnets
   subnet_ids = var.subnet_ids != null ? var.subnet_ids : (
     var.internal
@@ -35,6 +37,7 @@ resource "aws_lb" "this" {
 # their own listener rules with path/host conditions.
 # -------------------------------------------------------
 resource "aws_lb_listener" "https" {
+  count             = var.listener_certificate_arn != null ? 1 : 0
   load_balancer_arn = aws_lb.this.arn
   port              = 443
   protocol          = "HTTPS"
@@ -100,6 +103,26 @@ resource "aws_route53_record" "internal_alb" {
   count   = var.internal_record_name ? 1 : 0
   zone_id = data.aws_route53_zone.internal[0].zone_id
   name    = "${var.internal_record_name}.${data.aws_route53_zone.internal[0].name}"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.this.dns_name
+    zone_id                = aws_lb.this.zone_id
+    evaluate_target_health = true
+  }
+}
+
+data "aws_route53_zone" "zscaler" {
+  count        = var.create_zscaler_dns_record ? 1 : 0
+  name         = "${var.platform.env}.${var.platform.app}.cmscloud.local"
+  private_zone = true
+  vpc_id       = var.platform.vpc_id
+}
+
+resource "aws_route53_record" "zscaler_alb" {
+  count   = var.create_zscaler_dns_record ? 1 : 0
+  zone_id = data.aws_route53_zone.zscaler[0].zone_id
+  name    = "${var.internal_record_name}.${data.aws_route53_zone.zscaler[0].name}"
   type    = "A"
 
   alias {

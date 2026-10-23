@@ -108,6 +108,11 @@ variable "internal_record_name" {
   description = "Subdomain label for this ALB's record, e.g. 'api-admin'"
 }
 
+variable "create_zscaler_dns_record" {
+  type    = bool
+  default = false
+}
+
 # -------------------------------------------------------
 # TLS / ACM
 # -------------------------------------------------------
