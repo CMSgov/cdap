@@ -37,6 +37,6 @@ resource "aws_ecs_cluster" "this" {
 
 resource "aws_service_discovery_http_namespace" "this" {
   count       = var.supports_service_connect ? 1 : 0
-  name        = "${local.cluster_name}.sc.internal.cms.gov"
+  name        = "sc.${local.cluster_name}.internal.cms.gov"
   description = "${local.cluster_name} Service Connect namespace."
 }
