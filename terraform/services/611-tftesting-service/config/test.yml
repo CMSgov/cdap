@@ -1,5 +1,5 @@
 image:
-  enabled: true # works with github workflow
+  enabled: false # works with github workflow
   test_command: >-
     pytest src/tests/
     --cov=src

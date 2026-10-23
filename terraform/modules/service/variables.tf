@@ -364,6 +364,8 @@ variable "platform" {
     account_id         = string
     vpc_id             = string
     account_env_suffix = string
+    vpc_name           = string
+
   })
 }
 
@@ -403,6 +405,7 @@ variable "health_check" {
   default = null
 }
 
+# FIXME Remove option for external security groups in PLT-1824
 variable "security_groups" {
   description = <<-EOT
     For most use cases, leave this empty. List of additional security group IDs to attach to the ECS task alongside the
@@ -475,6 +478,7 @@ variable "additional_task_role_policies" {
     Has no effect when task_role_arn is set (external role).
   EOT
 }
+
 
 ## Monitoring
 variable "enable_datadog_agent" {

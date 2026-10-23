@@ -1,9 +1,10 @@
 resource "aws_security_group" "function" {
   name        = "${local.full_name_string}-function"
   description = "For the ${local.full_name_string} function"
-  vpc_id      = module.vpc.id
+  vpc_id      = var.platform.vpc_id
 }
 
+# FIXME Remove this rule in PLT-1824
 resource "aws_vpc_security_group_egress_rule" "default" {
   security_group_id = aws_security_group.function.id
   cidr_ipv4         = "0.0.0.0/0"
@@ -12,3 +13,13 @@ resource "aws_vpc_security_group_egress_rule" "default" {
   to_port           = 443
   description       = "Allow HTTPS for SSM, CloudWatch, etc."
 }
+
+# -------------------------------------------------------
+# Use VPC Gateway and Interface Endpoints
+# -------------------------------------------------------
+
+data "aws_security_group" "vpce_clients_all" {
+  name   = "${var.platform.vpc_name}-vpce-clients-all"
+  vpc_id = var.platform.vpc_id
+}
+

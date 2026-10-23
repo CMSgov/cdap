@@ -36,3 +36,31 @@ test_command: "..."          # overrides the language default
 language_version: "3.13"     # overrides the language default
 sonar_extra_args: "..."      # rarely needed — prefer sonar-project.properties
 ```
+
+# Adding a module that calls AWS APIs or other AWS services
+
+If your module's resource makes any AWS API call from inside the VPC (directly, through the AWS provider itself, through a local-exec/data lookup, or through application code at runtime), it needs explicit security group membership to reach our interface/gateway endpoints. There is no default path anymore; egress is intentionally not open by default.
+
+1. Does your resource have its own security group?
+
+   If yes: 
+      a. Add a data lookup for the shared endpoint-clients SG: 
+            ```
+            data "aws_security_group" "vpce_clients_all" {
+            name   = "${var.platform.vpc_name}-vpce-clients-all"
+            vpc_id = var.platform.vpc_id
+            }
+         ```
+
+      b. 
+         Attach data.aws_security_group.vpce_clients_all.id to your resource's security group list, alongside whatever else it already has. One attachment covers your resources acces to AWS services: SSM, KMS, Secrets Manager, CloudWatch Logs, STS, ECR, SQS, SNS, Lambda invoke, Service Connect, and S3. It is not optional and there is no CIDR fallback.
+
+   If no (your resource has no SG of its own, e.g., SNS, SQS, CloudWatch Log Groups as managed services): no networking change is needed. These are reached by other resources' egress rules, not by anything of their own. You may still need an IAM permission to gain access to those resources, even if the network was successfully traversed.
+
+2. Does your module run as part of a tofu apply, not just at runtime?
+  
+   If your module's own tofu apply calls something beyond the standard set above and provisions IAM roles, RDS/Aurora clusters, Backup plans, Route 53 zones, CloudFront distributions, EventBridge rules/schedules, Application Auto Scaling targets, or similar, that's a build-time-only call. We assume this is only through Codebuild and ZScaler. You don't need to do anything in your module for this; it's already covered as long as the service appears on our build-services list. If you're adding a genuinely new AWS service dependency that isn't on either list yet, flag it in your PR so we can confirm which list it belongs on.
+
+3. Does your resource make calls indirectly?
+   For a local-exec provisioner, a CLI call shelled out from a build step, or application code calling the SDK at runtime all count, the module author is responsible for identifying these. Tofu plan won't surface them. Note any such calls in your PR description so reviewers can check the service against the endpoint list.
+

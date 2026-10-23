@@ -86,6 +86,7 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ec2:GetManagedPrefixListEntries",
       "ec2:GetSecurityGroupsForVpc",
       "ec2:ModifyNetworkInterfaceAttribute",
+      "ec2:ModifySecurityGroupRules",
       "ec2:RevokeSecurityGroupEgress",
       "ec2:RevokeSecurityGroupIngress",
     ]
@@ -143,6 +144,7 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ecs:Describe*",
       "ecs:List*",
       "servicediscovery:GetNamespace",
+      "servicediscovery:ListNamespaces",
       "servicediscovery:ListTagsForResource",
     ]
     resources = ["*"] # Describe*/List* cannot be resource-scoped

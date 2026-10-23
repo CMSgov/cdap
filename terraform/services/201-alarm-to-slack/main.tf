@@ -53,7 +53,7 @@ module "sns_to_slack_function" {
 }
 
 module "sns_to_slack_queue" {
-  source = "github.com/CMSgov/cdap/terraform/modules/queue?ref=b177921621c97d02dc4a21f830e4532147aa0749"
+  source = "../../modules/queue"
 
   name          = local.full_name
   function_name = module.sns_to_slack_function.name

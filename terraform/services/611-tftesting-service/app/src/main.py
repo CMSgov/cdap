@@ -63,6 +63,7 @@ class HealthHandler(BaseHTTPRequestHandler):
             self.wfile.write(
                 f"pong from {DD_SERVICE} env={DD_ENV} version={DD_VERSION}".encode()
             )
+            
         elif self.path == "/integration-test":
             # a live Service Connect call and return the result
             result = {"status": "unknown", "response": None, "error": None}

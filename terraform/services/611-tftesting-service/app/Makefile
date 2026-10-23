@@ -1,6 +1,6 @@
 .PHONY: build up down restart logs logs-app logs-agent \
         test test-coverage test-local shell clean requirements \
-        ecr-login push scale scale-up scale-down
+        ecr-login push scale scale-up scale-down test-network 
 
 # -------------------------------------------------------
 # Configuration
@@ -12,6 +12,7 @@ ENV                ?= test
 SERVICE_NAME       := tftesting-service
 IMAGE_TAG          ?= $(shell git rev-parse HEAD)
 CLUSTER_NAME       := cdap-test-tftesting
+LOG_GROUP          ?= /aws/ecs/fargate/cdap-$(ENV)/$(SERVICE_NAME)
 
 # Only evaluated by targets that use them
 AWS_ACCOUNT_ID = $(shell aws sts get-caller-identity --query Account --output text)
@@ -163,3 +164,19 @@ scale-up: scale
 ## Scale ECS service down to 0 tasks
 scale-down: DESIRED_COUNT = 0
 scale-down: scale
+
+## Force a fresh task (new ENI), then check whether it launched. Task setup in service module uses SSM/KMS (secrets) and ECR/logs through the interface interface.
+test-network:
+	@$(MAKE) scale-down
+	@$(MAKE) scale-up
+	@echo "--- Recent ECS service events ---"
+	@aws ecs describe-services \
+	  --cluster "$(CLUSTER_NAME)" \
+	  --services "cdap-$(ENV)-$(SERVICE_NAME)" \
+	  --query 'services[0].events[0:10].[createdAt,message]' --output table
+	@echo "--- Current task status/stop reason ---"
+	@TASK_ARN=$$(aws ecs list-tasks --cluster "$(CLUSTER_NAME)" \
+	    --service-name "cdap-$(ENV)-$(SERVICE_NAME)" --query 'taskArns[0]' --output text); \
+	  aws ecs describe-tasks --cluster "$(CLUSTER_NAME)" --tasks "$$TASK_ARN" \
+	    --query 'tasks[0].[lastStatus,stoppedReason,containers[*].[name,lastStatus,reason]]' \
+	    --output table

@@ -168,6 +168,7 @@ No requirements.
 | <a name="input_manage_breakglass_password"></a> [manage\_breakglass\_password](#input\_manage\_breakglass\_password) | If true, RDS creates and manages the breakglass password in AWS<br/>Secrets Manager instead of using var.password. Opt-in and off by<br/>default. Existing username/password behavior is unchanged unless a<br/>team explicitly turns this on. | `bool` | `false` | no |
 | <a name="input_monitoring_interval"></a> [monitoring\_interval](#input\_monitoring\_interval) | The [monitoring\_interval](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#monitoring_interval-1) in seconds determines the time between sampling enhanced monitoring metrics for the cluster. | `number` | `15` | no |
 | <a name="input_monitoring_role_path"></a> [monitoring\_role\_path](#input\_monitoring\_role\_path) | IAM path for the monitoring role this module creates. | `string` | `"/delegatedadmin/developer/"` | no |
+| <a name="input_needs_s3_access"></a> [needs\_s3\_access](#input\_needs\_s3\_access) | Whether this database calls S3 directly and will do so through VPC endpoint | `bool` | `false` | no |
 | <a name="input_password"></a> [password](#input\_password) | The database's primary/breakglass credentials password. Required only<br/>when manage\_breakglass\_password = false. Ignored (and may be omitted)<br/>when manage\_breakglass\_password = true, since RDS generates and stores<br/>the breakglass password in Secrets Manager instead. | `string` | `null` | no |
 | <a name="input_security_group_override"></a> [security\_group\_override](#input\_security\_group\_override) | Override for the security group name | `string` | `null` | no |
 | <a name="input_snapshot_identifier"></a> [snapshot\_identifier](#input\_snapshot\_identifier) | When provided, cluster is provisioned using the specified cluster snapshot identifier. | `string` | `null` | no |
@@ -219,6 +220,7 @@ No modules.
 | [aws_iam_policy_document.db_monitoring_kms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.rds_monitoring_assume](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_rds_engine_version.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/rds_engine_version) | data source |
+| [aws_security_group.vpce_clients_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

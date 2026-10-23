@@ -7,6 +7,16 @@ data "aws_ecs_cluster" "tftesting" {
   cluster_name = local.cluster_name
 }
 
+resource "aws_ssm_parameter" "test_ssm_parameter" {
+  name = "/cdap/test/tftesting/service/testvalue"
+  # only setting as secure for testing
+  type = "SecureString"
+  # not an actually secure string
+  value = "tftesting"
+
+  key_id = module.platform.kms_alias_primary.id
+}
+
 module "tftesting_service" {
   enable_execute_command = false
   source                 = "../../modules/service/"
@@ -16,7 +26,6 @@ module "tftesting_service" {
   cluster_arn = data.aws_ecs_cluster.tftesting.arn
   cpu         = 512
   memory      = 1024
-
 
   health_check = {
     command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]

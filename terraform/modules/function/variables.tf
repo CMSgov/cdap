@@ -18,6 +18,8 @@ variable "platform" {
     kms_alias_primary = object({ target_key_arn = string })
     primary_region    = object({ name = string })
     account_id        = string
+    vpc_id            = string
+    vpc_name          = string
   })
 }
 

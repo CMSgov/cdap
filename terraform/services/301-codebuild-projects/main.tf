@@ -45,27 +45,6 @@ resource "aws_iam_role_policy_attachment" "ssm_read_only" {
   policy_arn = data.aws_iam_policy.ssm_read_only.arn
 }
 
-# Network
-resource "aws_security_group" "codebuild_project" {
-  for_each = toset(local.repos)
-
-  name = "${each.key}-${module.standards.account_env_suffix}-codebuild-project"
-
-  description = "For the ${module.standards.account_env_suffix} ${each.key}"
-  vpc_id      = module.standards.cdap_vpc.id
-}
-
-resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
-  for_each = aws_security_group.codebuild_project
-
-  security_group_id = aws_security_group.codebuild_project[each.key].id
-
-  cidr_ipv4   = "0.0.0.0/0"
-  ip_protocol = "-1"
-  from_port   = -1
-  to_port     = -1
-}
-
 resource "aws_codebuild_source_credential" "github" {
   auth_type   = "PERSONAL_ACCESS_TOKEN"
   server_type = "GITHUB"
@@ -106,6 +85,12 @@ resource "aws_codebuild_project" "per_repo" {
     type                        = "ARM_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
     privileged_mode             = true
+
+    environment_variable {
+      name  = "AWS_STS_REGIONAL_ENDPOINTS"
+      value = "regional"
+      type  = "PLAINTEXT"
+    }
   }
 
   vpc_config {
@@ -113,7 +98,9 @@ resource "aws_codebuild_project" "per_repo" {
     subnets = module.subnets.ids
     security_group_ids = [
       data.aws_security_group.security_tools.id,
-      aws_security_group.codebuild_project[each.key].id
+      aws_security_group.codebuild_project[each.key].id,
+      data.aws_security_group.vpce_clients_all.id,
+      data.aws_security_group.vpce_clients_platform.id
     ]
   }
 

@@ -422,7 +422,9 @@ resource "aws_ecs_service" "this" {
   network_configuration {
     subnets          = var.subnets == null ? [for s in var.platform.private_subnets : s.id] : var.subnets
     assign_public_ip = false
-    security_groups  = (length(var.security_groups) == 0) ? [aws_security_group.task[0].id] : var.security_groups
+    # FIXME Remove option for external security groups in PLT-1824
+    security_groups = (length(var.security_groups) == 0) ? concat(
+    [aws_security_group.task[0].id]) : concat(var.security_groups)
   }
 
   dynamic "load_balancer" {

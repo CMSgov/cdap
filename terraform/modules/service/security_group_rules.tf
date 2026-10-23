@@ -1,4 +1,4 @@
-
+# FIXME Remove in PLT-1824
 resource "aws_vpc_security_group_egress_rule" "https" {
   count             = (length(var.security_groups) == 0) ? 1 : 0
   security_group_id = aws_security_group.task[0].id
@@ -8,6 +8,18 @@ resource "aws_vpc_security_group_egress_rule" "https" {
   cidr_ipv4         = "0.0.0.0/0"
   description       = "Allow HTTPS outbound (ECR, CloudWatch, SSM)"
 }
+
+# -------------------------------------------------------
+# Use VPC Gateway and Interface Endpoints
+# -------------------------------------------------------
+data "aws_security_group" "vpce_clients_all" {
+  name   = "${var.platform.vpc_name}-vpce-clients-all"
+  vpc_id = var.platform.vpc_id
+}
+
+# -------------------------------------------------------
+# Allow Datadog Synthetics 
+# -------------------------------------------------------
 
 resource "aws_vpc_security_group_ingress_rule" "datadog_synthetics" {
   count                        = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0

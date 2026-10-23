@@ -1,3 +1,15 @@
+locals {
+  rds_cluster_security_group_ids = flatten([
+    aws_security_group.this.id,
+    var.platform.security_groups.cmscloud-security-tools.id,
+    #FIXME PLT-1824 remote management allows broad CDAP CIDR access, which is unnecessary. 
+    # Restrict to existing zscaler access for user-run commands and codebuild security gorup for machine.
+    var.platform.security_groups.remote-management.id,
+    var.platform.security_groups.zscaler-private.id,
+    var.needs_s3_access ? [data.aws_security_group.vpc_all_clients[0].id] : [],
+    var.vpc_security_group_ids
+  ])
+}
 resource "aws_db_subnet_group" "this" {
   description = "${local.service_prefix} database subnet group"
   name        = coalesce(var.subnet_group_override, local.service_prefix)
@@ -28,13 +40,6 @@ resource "aws_ssm_parameter" "db_security_group_id" {
   tags = {
     Name = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/nonsensitive/db-security-group-id"
   }
-}
-
-resource "aws_vpc_security_group_egress_rule" "this" {
-  cidr_ipv4         = "0.0.0.0/0"
-  description       = "Allow all egress"
-  ip_protocol       = "-1"
-  security_group_id = aws_security_group.this.id
 }
 
 resource "aws_rds_cluster_parameter_group" "this" {
@@ -82,6 +87,12 @@ data "aws_rds_engine_version" "this" {
   latest       = true
 }
 
+data "aws_security_group" "vpce_clients_all" {
+  count = var.needs_s3_access ? 1 : 0 
+  name   = "${var.platform.vpc_name}-vpce-clients-all"
+  vpc_id = var.platform.vpc_id
+}
+
 resource "aws_rds_cluster" "this" {
   cluster_identifier   = coalesce(var.cluster_identifier, local.service_prefix)
   engine               = local.aurora_engine
@@ -121,13 +132,7 @@ resource "aws_rds_cluster" "this" {
   copy_tags_to_snapshot           = true
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
-  vpc_security_group_ids = flatten([
-    aws_security_group.this.id,
-    var.platform.security_groups.cmscloud-security-tools.id,
-    var.platform.security_groups.remote-management.id,
-    var.platform.security_groups.zscaler-private.id,
-    var.vpc_security_group_ids
-  ])
+  vpc_security_group_ids = local.rds_cluster_security_group_ids
 
   depends_on = [
     aws_iam_role_policy_attachment.db_monitoring,
