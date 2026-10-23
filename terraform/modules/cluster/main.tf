@@ -30,3 +30,13 @@ resource "aws_ecs_cluster" "this" {
     }
   }
 }
+
+# Possible risk with this being dedicated per cluster is for shared endpoints
+# If any services become shared across the APIs for one backend, we 
+# will need to add a VPC per environment and consolidate all namespaces
+
+resource "aws_service_discovery_http_namespace" "this" {
+  count       = var.supports_service_connect ? 1 : 0
+  name        = "${local.cluster_name}.sc.internal.cms.gov"
+  description = "${local.cluster_name} Service Connect namespace."
+}
