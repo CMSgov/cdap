@@ -87,7 +87,7 @@ data "aws_rds_engine_version" "this" {
 
 data "aws_security_group" "vpce_clients_all" {
   count = var.needs_s3_access ? 1 : 0 
-  name   = "${var.platform.vpc_name}-vpce-all-clients"
+  name   = "${var.platform.vpc_name}-vpce-clients-all"
   vpc_id = var.platform.vpc_id
 }
 

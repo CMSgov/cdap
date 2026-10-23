@@ -13,7 +13,7 @@ resource "aws_vpc_security_group_egress_rule" "https" {
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
 data "aws_security_group" "vpce_clients_all" {
-  name   = "${var.platform.vpc_name}-vpce-all-clients"
+  name   = "${var.platform.vpc_name}-vpce-clients-all"
   vpc_id = var.platform.vpc_id
 }
 

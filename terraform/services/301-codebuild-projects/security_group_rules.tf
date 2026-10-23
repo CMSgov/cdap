@@ -24,11 +24,11 @@ resource "aws_vpc_security_group_egress_rule" "codebuild_project" {
 # Use VPC Gateway and Interface Endpoints
 # -------------------------------------------------------
 data "aws_security_group" "vpce_clients_all" {
-  name   = "${var.platform.vpc_name}-vpce-all-clients"
-  vpc_id = var.platform.vpc_id
+  name   = "cdap-east-${var.env}-vpce-clients-all"
+  vpc_id = module.standards.cdap_vpc.id
 }
 
 data "aws_security_group" "vpce_clients_platform" {
-  name   = "${var.platform.vpc_name}-vpce-platform-clients"
-  vpc_id = var.platform.vpc_id
+  name   = "cdap-east-${var.env}-vpce-clients-platform"
+  vpc_id = module.standards.cdap_vpc.id
 }

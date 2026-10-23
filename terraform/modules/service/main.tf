@@ -424,8 +424,7 @@ resource "aws_ecs_service" "this" {
     assign_public_ip = false
     # FIXME Remove option for external security groups in PLT-1824
     security_groups = (length(var.security_groups) == 0) ? concat(
-      [aws_security_group.task[0].id],
-    [data.aws_security_group.vpce_clients_all.id]) : concat(var.security_groups, [data.aws_security_group.vpce_clients_all.id])
+    [aws_security_group.task[0].id]) : concat(var.security_groups)
   }
 
   dynamic "load_balancer" {

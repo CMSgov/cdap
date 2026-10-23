@@ -33,15 +33,15 @@ resource "aws_security_group" "endpoints_build" {
 
 # Client Security Groups 
 resource "aws_security_group" "vpce_clients_all" {
-  name        = "${module.platform.vpc_name}-vpce-all-clients"
+  name        = "${module.platform.vpc_name}-vpce-clients-all"
   vpc_id      = module.platform.vpc_id
   description = "Membership SG: attach to any resource needing interface endpoint access (every provisioned resource, plus CodeBuild)"
 }
 
 resource "aws_security_group" "vpce_clients_platform" {
-  name        = "${module.platform.vpc_name}-vpce-platform-clients"
+  name        = "${module.platform.vpc_name}-vpce-clients-platform"
   vpc_id      = module.platform.vpc_id
-  description = "Membership SG: CodeBuild/CI only — additional build-time-only interface endpoint access"
+  description = "Membership SG for accessing endpoints used only for provisioning resources via AWS API"
 }
 
 # VPC Endpoints 

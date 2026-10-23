@@ -47,7 +47,7 @@ If your module's resource makes any AWS API call from inside the VPC (directly, 
       a. Add a data lookup for the shared endpoint-clients SG: 
             ```
             data "aws_security_group" "vpce_clients_all" {
-            name   = "${var.platform.vpc_name}-vpce-all-clients"
+            name   = "${var.platform.vpc_name}-vpce-clients-all"
             vpc_id = var.platform.vpc_id
             }
          ```
