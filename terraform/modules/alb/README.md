@@ -32,6 +32,7 @@ No requirements.
 | <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP platform module. | <pre>object({<br/>    app             = string<br/>    env             = string<br/>    primary_region  = object({ name = string })<br/>    private_subnets = map(object({ id = string }))<br/>    public_subnets  = map(object({ id = string }))<br/>    service         = string<br/>    vpc_id          = string<br/>    security_groups = map(object({<br/>      id   = string<br/>      arn  = string<br/>      name = string<br/>    }))<br/>  })</pre> | n/a | yes |
 | <a name="input_enable_datadog_synthetics_ingress"></a> [enable\_datadog\_synthetics\_ingress](#input\_enable\_datadog\_synthetics\_ingress) | When true, adds an ingress rule allowing the Datadog synthetics<br/>private location runner to reach the ALB on HTTPS:443.<br/>Use in dev/test environments where Datadog private location<br/>synthetic tests are configured against this ALB. | `bool` | `false` | no |
 | <a name="input_enable_http_redirect"></a> [enable\_http\_redirect](#input\_enable\_http\_redirect) | When true, adds an HTTP:80 listener that redirects all traffic to HTTPS:443. | `bool` | `true` | no |
+| <a name="input_enable_ingress_from_codebuild_repo"></a> [enable\_ingress\_from\_codebuild\_repo](#input\_enable\_ingress\_from\_codebuild\_repo) | When populated, adds an ingress rule allowing the Codebuild security group access through 443 | `string` | `null` | no |
 | <a name="input_enable_zscaler_ingress"></a> [enable\_zscaler\_ingress](#input\_enable\_zscaler\_ingress) | When true, adds an ingress rule allowing the Zscaler private App<br/>Connector to reach the ALB on HTTPS:443.<br/>Enable this when the ALB is registered in cmscloud.local DNS and<br/>accessed by developers via Zscaler.<br/>Should be set alongside enable\_zscaler\_endpoint = true on the<br/>acm\_certificate module. | `bool` | `false` | no |
 | <a name="input_extra_listeners"></a> [extra\_listeners](#input\_extra\_listeners) | Additional HTTPS listeners beyond the default 443 | <pre>map(object({<br/>    port                = number<br/>    acm_certificate_arn = optional(string)<br/>    ssl_policy          = optional(string)<br/>  }))</pre> | `{}` | no |
 | <a name="input_internal"></a> [internal](#input\_internal) | true = private (internal) ALB; false = public (internet-facing) ALB. | `bool` | `true` | no |
@@ -62,11 +63,13 @@ No modules.
 | [aws_lb_listener.http_redirect](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_listener.https](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_security_group.alb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_vpc_security_group_ingress_rule.codebuild](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.http](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.https_datadog](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.https_public](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.https_security_tools](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.https_zscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_security_group.codebuild_repo](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

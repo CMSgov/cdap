@@ -42,6 +42,26 @@ variable "enable_zscaler_ingress" {
   EOT
 }
 
+variable "enable_ingress_from_codebuild_repo" {
+  type        = string
+  default     = null
+  description = "When populated, adds an ingress rule allowing the Codebuild security group access through 443"
+  validation {
+    condition = contains([
+      "ab2d",
+      "ab2d-website",
+      "bcda-app",
+      "bcda-ssas-app",
+      "bcda-static-site",
+      "cdap",
+      "dpc-app",
+      "dpc-ops",
+      "dpc-static-site",
+    ], var.enable_ingress_from_codebuild_repo)
+    error_message = "Supports connections only from repos with codebuild runners."
+  }
+}
+
 variable "enable_datadog_synthetics_ingress" {
   type        = bool
   default     = false

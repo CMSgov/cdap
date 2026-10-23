@@ -43,7 +43,6 @@ resource "aws_vpc_security_group_ingress_rule" "https_datadog" {
   description                  = "Allow HTTPS from Datadog synthetics private location runner"
 }
 
-
 # CMS security tools ingress — always on when module manages the SG
 resource "aws_vpc_security_group_ingress_rule" "https_security_tools" {
   count                        = local.managed_sg ? 1 : 0
@@ -53,4 +52,21 @@ resource "aws_vpc_security_group_ingress_rule" "https_security_tools" {
   to_port                      = 443
   ip_protocol                  = "tcp"
   description                  = "Allow HTTPS from CMS security scanning tools"
+}
+
+# Codebuild runner ingress option
+data "aws_security_group" "codebuild_repo" {
+  count  = (local.managed_sg && var.enable_ingress_from_codebuild_repo != null) ? 0 : 1
+  vpc_id = var.platform.cdap_vpc.id
+  name   = "${var.enable_ingress_from_codebuild_repo}-${module.platform.account_env_suffix}-codebuild-project"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "codebuild" {
+  count                        = (local.managed_sg && var.enable_ingress_from_codebuild_repo != null) ? 1 : 0
+  security_group_id            = aws_security_group.alb[0].id
+  referenced_security_group_id = data.aws_security_group.codebuild_repo[0]
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+  description                  = "Allow HTTPS from Codebuild runner"
 }
