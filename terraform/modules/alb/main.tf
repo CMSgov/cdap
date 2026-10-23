@@ -37,12 +37,11 @@ resource "aws_lb" "this" {
 # their own listener rules with path/host conditions.
 # -------------------------------------------------------
 resource "aws_lb_listener" "https" {
-  count             = var.acm_certificate_arn != null ? 1 : 0
   load_balancer_arn = aws_lb.this.arn
   port              = 443
   protocol          = "HTTPS"
-  certificate_arn   = var.acm_certificate_arn
-  ssl_policy        = var.ssl_policy
+  certificate_arn   = var.listener_certificate_arn
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-3-2021-06"
 
   default_action {
     type = "fixed-response"
@@ -63,50 +62,11 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    type = var.acm_certificate_arn != null ? "redirect" : "fixed-response"
-
-    dynamic "redirect" {
-      for_each = var.acm_certificate_arn != null ? [1] : []
-      content {
-        port        = "443"
-        protocol    = "HTTPS"
-        status_code = "HTTP_301"
-      }
-    }
-
-    dynamic "fixed_response" {
-      for_each = var.acm_certificate_arn == null ? [1] : []
-      content {
-        status_code  = "404"
-        content_type = "text/plain"
-        message_body = "Not Found"
-      }
-    }
-  }
-}
-# -------------------------------------------------------
-# Custom Listeners 
-# -------------------------------------------------------
-resource "aws_lb_listener" "extra" {
-  for_each = var.listener_rules
-
-  load_balancer_arn = aws_lb.this.arn
-  port              = each.value.port
-  protocol          = each.value.protocol
-  certificate_arn   = each.value.protocol == "HTTPS" ? each.value.acm_certificate_arn : null
-  ssl_policy        = each.value.protocol == "HTTPS" ? coalesce(each.value.ssl_policy, var.ssl_policy) : null
-
-  default_action {
-    type             = each.value.default_action_type
-    target_group_arn = each.value.default_action_type == "forward" ? each.value.default_target_group_arn : null
-
-    dynamic "fixed_response" {
-      for_each = each.value.default_action_type == "fixed_response" ? [1] : []
-      content {
-        status_code  = tostring(each.value.default_fixed_response_status_code)
-        content_type = "text/plain"
-        message_body = "Not Found"
-      }
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
     }
   }
 }
