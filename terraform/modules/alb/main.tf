@@ -37,18 +37,25 @@ resource "aws_lb" "this" {
 # their own listener rules with path/host conditions.
 # -------------------------------------------------------
 resource "aws_lb_listener" "https" {
+  for_each = var.https_listeners
+
   load_balancer_arn = aws_lb.this.arn
-  port              = 443
+  port              = each.value.port
   protocol          = "HTTPS"
-  certificate_arn   = var.listener_certificate_arn
+  certificate_arn   = each.value.certificate_arn
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-3-2021-06"
 
   default_action {
-    type = "fixed-response"
-    fixed_response {
-      status_code  = "404"
-      content_type = "text/plain"
-      message_body = "Not Found"
+    type             = each.value.default_action_type
+    target_group_arn = each.value.default_action_type == "forward" ? each.value.default_target_group_arn : null
+
+    dynamic "fixed_response" {
+      for_each = each.value.default_action_type == "fixed_response" ? [1] : []
+      content {
+        status_code  = tostring(each.value.default_fixed_response_status_code)
+        content_type = "text/plain"
+        message_body = "Not Found"
+      }
     }
   }
 }
@@ -56,6 +63,7 @@ resource "aws_lb_listener" "https" {
 # -------------------------------------------------------
 # HTTP Listener (port 80) redirect
 # -------------------------------------------------------
+
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.this.arn
   port              = 80
@@ -64,7 +72,7 @@ resource "aws_lb_listener" "http" {
   default_action {
     type = "redirect"
     redirect {
-      port        = "443"
+      port        = tostring(var.http_redirect_target_port)
       protocol    = "HTTPS"
       status_code = "HTTP_301"
     }

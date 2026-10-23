@@ -136,36 +136,25 @@ variable "ssl_policy" {
 # -------------------------------------------------------
 # Listeners
 # -------------------------------------------------------
-variable "enable_http_redirect" {
-  type        = bool
-  default     = true
-  description = "When true, adds an HTTP:80 listener that redirects all traffic to HTTPS:443."
+variable "http_redirect_target_port" {
+  description = "Port the plain-HTTP listener redirects to. Must match a key's port in https_listeners."
+  type        = number
+  default     = 443
 }
 
-variable "listener_rules" {
-  description = "Listener rules for this ALB. Each entry defines one rule's match conditions and action."
-  type = list(object({
-    priority      = number
-    path_patterns = optional(list(string))
-    host_headers  = optional(list(string))
-
-    action_type = string # "forward" | "fixed_response" | "redirect"
-
-    # forward
-    target_group_arns    = optional(list(string))
-    target_group_weights = optional(list(number)) # parallel to target_group_arns, for weighted forwarding
-
-    # fixed_response
-    fixed_response_status_code  = optional(number)
-    fixed_response_content_type = optional(string)
-    fixed_response_message_body = optional(string)
-
-    # redirect
-    redirect_host        = optional(string)
-    redirect_path        = optional(string)
-    redirect_port        = optional(string)
-    redirect_protocol    = optional(string)
-    redirect_status_code = optional(string) # "HTTP_301" | "HTTP_302"
+variable "https_listeners" {
+  description = "HTTPS listeners for this ALB. Every entry enforces TLS 1.3 — there is no plain-HTTP option."
+  type = map(object({
+    port                               = optional(number, 443)
+    certificate_arn                    = string
+    default_action_type                = optional(string, "fixed_response")
+    default_target_group_arn           = optional(string)
+    default_fixed_response_status_code = optional(number, 404)
   }))
-  default = []
+  default = {}
+
+  validation {
+    condition     = length(var.https_listeners) > 0
+    error_message = "At least one entry in https_listeners is required — each must include a certificate_arn."
+  }
 }
