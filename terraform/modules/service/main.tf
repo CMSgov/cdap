@@ -10,25 +10,13 @@ locals {
   ###############
 
   enable_alb_integration = var.enable_alb_integration && var.alb_listener_arn != null
+  
+  effective_tg_protocol = coalesce(var.alb_target_group_protocol, "HTTP")
 
-  # When mTLS is enabled the target group must use HTTPS — proxy is a TLS server
-  effective_tg_protocol = coalesce(
-    local.enable_mtls_sidecar ? "HTTPS" : null,
-    var.alb_target_group_protocol,
-    "HTTP"
-  )
-
-  # ALB health check hits the plain HTTP health port — not the mTLS port
-  effective_health_check_protocol = local.enable_mtls_sidecar ? "HTTP" : coalesce(
-    var.alb_health_check.protocol,
-    "HTTP"
-  )
+  effective_health_check_protocol = coalesce(var.alb_health_check.protocol, "HTTP")
 
   # ALB health check targets the dedicated plain HTTP health port
-  effective_health_check_port = local.enable_mtls_sidecar ? tostring(var.proxy_healthcheck_port) : coalesce(
-    var.alb_health_check.port,
-    "traffic-port"
-  )
+  effective_health_check_port = coalesce(var.alb_health_check.port, "traffic-port")
 
   proxy_upstream_port = var.enable_mtls_sidecar ? try(
     [for pm in coalesce(var.port_mappings, []) : pm.containerPort
@@ -58,8 +46,24 @@ locals {
     local.proxy_port_mapping
   )
 
-  effective_alb_port_name     = local.enable_mtls_sidecar ? "proxy" : var.alb_port_name
-  alb_container_port          = local.enable_alb_integration && local.effective_alb_port_name != null ? try(local.port_map[local.effective_alb_port_name], null) : null
+    service_connect_services = [
+    for sc in var.service_connect : {
+      discovery_name = lower(join("-", compact([
+        var.platform.app,
+        var.platform.service,
+        length(var.service_connect) > 1 ? sc.port_name : ""
+      ])))
+      dns_name  = lower(join("-", compact([
+        var.platform.app,
+        var.platform.service,
+        length(var.service_connect) > 1 ? sc.port_name : ""
+      ])))
+      port      = sc.port
+      port_name = sc.port_name
+    }
+  ]
+
+  alb_container_port = local.enable_alb_integration && var.alb_port_name != null ? try(local.port_map[var.alb_port_name], null) : null
   use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
 
   ###############
@@ -429,9 +433,7 @@ resource "aws_ecs_service" "this" {
     for_each = local.enable_alb_integration ? [1] : []
     content {
       target_group_arn = aws_lb_target_group.this[0].arn
-      container_name = local.enable_mtls_sidecar ? "proxy" : (
-        var.service_name_override != null ? var.service_name_override : local.service_name
-      )
+      container_name = var.service_name_override != null ? var.service_name_override : local.service_name
       container_port = local.alb_container_port
     }
   }
@@ -465,7 +467,7 @@ resource "aws_ecs_service" "this" {
     }
 
     dynamic "service" {
-      for_each = var.service_connect
+      for_each = local.service_connect_services
 
       content {
         discovery_name = service.value.discovery_name
@@ -541,16 +543,12 @@ resource "aws_lb_target_group" "this" {
   lifecycle {
     create_before_destroy = true
     precondition {
-      condition     = local.enable_mtls_sidecar || var.alb_port_name != null
-      error_message = "alb_port_name is required when alb_listener_arn is set and enable_mtls_sidecar is false."
+      condition     = var.alb_port_name != null
+      error_message = "alb_port_name is required when alb_listener_arn is set."
     }
 
     precondition {
-      condition = (
-        local.enable_mtls_sidecar ||
-        var.alb_port_name == null ||
-        contains(keys(local.port_map), var.alb_port_name)
-      )
+      condition     = var.alb_port_name == null || contains(keys(local.port_map), var.alb_port_name)
       error_message = "alb_port_name '${coalesce(var.alb_port_name, "(null)")}' does not match any named port in port_mappings."
     }
 

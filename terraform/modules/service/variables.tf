@@ -122,13 +122,16 @@ variable "alb_security_group_id" {
 
 variable "service_connect" {
   default     = []
-  description = "List of service connect discovery names and ports."
+  description = "List of ports this service exposes via Service Connect."
   type = list(object({
-    discovery_name = string
-    dns_name       = string
-    port           = number
-    port_name      = string
+    port      = number
+    port_name = string
   }))
+
+  validation {
+    condition     = length(distinct([for sc in var.service_connect : sc.port_name])) == length(var.service_connect)
+    error_message = "port_name must be unique within a single service's service_connect list."
+  }
 }
 
 variable "service_connect_enabled" {
@@ -364,6 +367,7 @@ variable "platform" {
     account_id         = string
     vpc_id             = string
     account_env_suffix = string
+
   })
 }
 
@@ -403,6 +407,7 @@ variable "health_check" {
   default = null
 }
 
+# FIXME Remove option for external security groups in PLT-1824
 variable "security_groups" {
   description = <<-EOT
     For most use cases, leave this empty. List of additional security group IDs to attach to the ECS task alongside the
@@ -475,6 +480,7 @@ variable "additional_task_role_policies" {
     Has no effect when task_role_arn is set (external role).
   EOT
 }
+
 
 ## Monitoring
 variable "enable_datadog_agent" {
