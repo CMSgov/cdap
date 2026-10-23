@@ -2,6 +2,8 @@ locals {
   rds_cluster_security_group_ids = flatten([
     aws_security_group.this.id,
     var.platform.security_groups.cmscloud-security-tools.id,
+    #FIXME PLT-1824 remote management allows broad CDAP CIDR access, which is unnecessary. 
+    # Restrict to existing zscaler access for user-run commands and codebuild security gorup for machine.
     var.platform.security_groups.remote-management.id,
     var.platform.security_groups.zscaler-private.id,
     var.needs_s3_access ? [data.aws_security_group.vpc_all_clients[0].id] : [],
