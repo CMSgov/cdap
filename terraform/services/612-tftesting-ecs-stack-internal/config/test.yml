@@ -1,0 +1,8 @@
+ecs:
+  cluster: cdap-test-tftesting # established in 610-tftesting-cluster
+
+datadog_synthetics:
+  enabled: false # May require propagation of internal hosted zone by cms
+
+stack:
+  enabled: true # keep false by default so the scheduled daily apply doesnt turn on;
