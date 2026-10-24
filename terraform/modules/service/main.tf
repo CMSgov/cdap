@@ -9,8 +9,15 @@ locals {
   # Networking
   ###############
 
+  cluster_name = element(split("/", var.cluster_arn), length(split("/", var.cluster_arn)) - 1)
+
+  service_discovery_namespace_name = coalesce(
+    var.service_discovery_namespace_name_override,
+    "sc.${local.cluster_name}.internal.cms.gov"
+  )
+
   enable_alb_integration = var.enable_alb_integration && var.alb_listener_arn != null
-  
+
   effective_tg_protocol = coalesce(var.alb_target_group_protocol, "HTTP")
 
   effective_health_check_protocol = coalesce(var.alb_health_check.protocol, "HTTP")
@@ -46,14 +53,14 @@ locals {
     local.proxy_port_mapping
   )
 
-    service_connect_services = [
+  service_connect_services = [
     for sc in var.service_connect : {
       discovery_name = lower(join("-", compact([
         var.platform.app,
         var.platform.service,
         length(var.service_connect) > 1 ? sc.port_name : ""
       ])))
-      dns_name  = lower(join("-", compact([
+      dns_name = lower(join("-", compact([
         var.platform.app,
         var.platform.service,
         length(var.service_connect) > 1 ? sc.port_name : ""
@@ -63,7 +70,7 @@ locals {
     }
   ]
 
-  alb_container_port = local.enable_alb_integration && var.alb_port_name != null ? try(local.port_map[var.alb_port_name], null) : null
+  alb_container_port          = local.enable_alb_integration && var.alb_port_name != null ? try(local.port_map[var.alb_port_name], null) : null
   use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
 
   ###############
@@ -433,8 +440,8 @@ resource "aws_ecs_service" "this" {
     for_each = local.enable_alb_integration ? [1] : []
     content {
       target_group_arn = aws_lb_target_group.this[0].arn
-      container_name = var.service_name_override != null ? var.service_name_override : local.service_name
-      container_port = local.alb_container_port
+      container_name   = var.service_name_override != null ? var.service_name_override : local.service_name
+      container_port   = local.alb_container_port
     }
   }
 

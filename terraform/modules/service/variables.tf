@@ -140,6 +140,20 @@ variable "service_connect_enabled" {
   type        = bool
 }
 
+variable "service_discovery_namespace_name_override" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    Override the Service Connect namespace name this service looks up.
+    Defaults to the shared sc.<env>.<app>.internal.cms.gov namespace.
+    Use only for a dedicated/isolated namespace (e.g. a test stack with its
+    own cluster) that intentionally does not share the app+env namespace or a 
+    broader namespace we may move to for shared backend.
+    Misuse risk: a service pointed at the wrong namespace will silently fail
+    to resolve its Service Connect peers rather than erroring at plan time.
+  EOT
+}
+
 variable "deployment_circuit_breaker" {
   type = object({
     enable   = optional(bool, true)

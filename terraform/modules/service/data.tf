@@ -32,5 +32,5 @@ data "aws_ssm_parameter" "mtls_image_tag" {
 }
 
 data "aws_service_discovery_http_namespace" "service_discovery_namespace" {
-  name = "svc.${var.platform.env}.cdap.internal.cms.gov"
+  name = local.service_discovery_namespace_name
 }

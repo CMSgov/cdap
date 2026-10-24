@@ -48,7 +48,7 @@ resource "aws_vpc_security_group_ingress_rule" "datadog_to_app" {
 resource "aws_vpc_security_group_ingress_rule" "datadog_to_proxy" {
   count = (
     local.enable_mtls_sidecar &&
-    !local.enable_alb_integration && 
+    !local.enable_alb_integration &&
     length(var.security_groups) == 0 &&
     var.enable_datadog_synthetics_ingress
   ) ? 1 : 0
@@ -64,7 +64,7 @@ resource "aws_vpc_security_group_ingress_rule" "datadog_to_proxy" {
 resource "aws_vpc_security_group_ingress_rule" "datadog_to_health" {
   count = (
     local.enable_mtls_sidecar &&
-    !local.enable_alb_integration && 
+    !local.enable_alb_integration &&
     length(var.security_groups) == 0 &&
     var.enable_datadog_synthetics_ingress
   ) ? 1 : 0
