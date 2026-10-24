@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~>6.0"
     }
+    datadog = {
+      source  = "DataDog/datadog"
+      version = "~>4.4"
+    }
   }
 
   backend "s3" {
@@ -34,5 +38,8 @@ module "platform" {
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
   service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
+  ssm_root_map = {
+    datadog = "/cdap/${var.env}/datadog/cicd/"
+  }
 }
 
