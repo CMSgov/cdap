@@ -62,7 +62,7 @@ data "aws_vpc" "cdap" {
 }
 
 data "aws_security_group" "codebuild_repo" {
-  count = (local.managed_sg && var.enable_ingress_from_codebuild_repo != null) ? 0 : 1
+  count = (local.managed_sg && var.enable_ingress_from_codebuild_repo != null) ? 1 : 0
   name  = "${var.enable_ingress_from_codebuild_repo}-${var.platform.account_env_suffix}-codebuild-project"
 }
 

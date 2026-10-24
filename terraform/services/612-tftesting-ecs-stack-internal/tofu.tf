@@ -30,6 +30,12 @@ provider "aws" {
   }
 }
 
+provider "datadog" {
+  api_key = sensitive(module.platform.ssm.datadog.api_key.value)
+  app_key = sensitive(module.platform.ssm.datadog.application_key.value)
+  api_url = "https://api.ddog-gov.com"
+}
+
 module "platform" {
   source    = "../../modules/platform"
   providers = { aws = aws, aws.secondary = aws.secondary }

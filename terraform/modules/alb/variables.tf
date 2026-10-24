@@ -123,10 +123,9 @@ variable "create_zscaler_dns_record" {
 variable "acm_certificate_arn" {
   type        = string
   description = <<-EOT
-    ARN of the ACM certificate (public or private CA) for the HTTPS listener.
+    ARN of the ACM certificate (private CA) for the HTTPS listener.
        Pass either:
          - module.acm.private_cert_arn  for internal/Zscaler endpoints
-         - module.acm.public_cert_arn   for public *.<app>.cms.gov endpoints
        Required — this module enforces TLS on all listeners.
   EOT
 }
@@ -151,7 +150,7 @@ variable "https_listeners" {
   type = map(object({
     port                               = optional(number, 443)
     certificate_arn                    = string
-    default_action_type                = optional(string, "fixed_response")
+    default_action_type                = optional(string, "fixed-response")
     default_target_group_arn           = optional(string)
     default_fixed_response_status_code = optional(number, 404)
   }))

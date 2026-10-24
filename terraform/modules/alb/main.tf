@@ -50,7 +50,7 @@ resource "aws_lb_listener" "https" {
     target_group_arn = each.value.default_action_type == "forward" ? each.value.default_target_group_arn : null
 
     dynamic "fixed_response" {
-      for_each = each.value.default_action_type == "fixed_response" ? [1] : []
+      for_each = each.value.default_action_type == "fixed-response" ? [1] : []
       content {
         status_code  = tostring(each.value.default_fixed_response_status_code)
         content_type = "text/plain"
@@ -99,7 +99,7 @@ resource "aws_security_group" "alb" {
 
 data "aws_route53_zone" "internal" {
   count        = var.internal_record_name != null ? 1 : 0
-  name         = "${var.platform.env}.${var.platform.app}.internal.cms.gov"
+  name         = "${var.platform.env}.${var.platform.app}.internal.cms.gov."
   private_zone = true
   vpc_id       = var.platform.vpc_id
 }

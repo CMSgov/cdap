@@ -34,7 +34,7 @@ module "alb" {
   https_listeners = {
     default = {
       certificate_arn                    = module.acm_internal[0].private_cert_arn
-      default_action_type                = "fixed_response"
+      default_action_type                = "fixed-response"
       default_fixed_response_status_code = 404
     }
   }
