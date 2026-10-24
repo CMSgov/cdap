@@ -2,8 +2,6 @@ locals {
   alb_name   = var.name_override != null ? var.name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}-alb"
   managed_sg = length(var.security_group_ids) == 0
 
-  internal_fqdn = var.internal ? "${var.internal_record_name}.${data.aws_route53_zone.internal[0].name}" : null
-
   # Support explicitly provided subnets, or fall back to the platform's private subnets
   subnet_ids = var.subnet_ids != null ? var.subnet_ids : (
     var.internal
