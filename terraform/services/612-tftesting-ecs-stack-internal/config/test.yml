@@ -2,7 +2,7 @@ ecs:
   cluster: cdap-test-tftesting # established in 610-tftesting-cluster
 
 datadog_synthetics:
-  enabled: false # May require propagation of internal hosted zone by cms
+  enabled: true # May require propagation of internal hosted zone by cms
 
 stack:
   infra_enabled: true # ACM cert + ALB — no compute, can be left applied

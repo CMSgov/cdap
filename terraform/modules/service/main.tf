@@ -71,6 +71,7 @@ locals {
   ]
 
   alb_container_port          = local.enable_alb_integration && var.alb_port_name != null ? try(local.port_map[var.alb_port_name], null) : null
+  alb_ingress_port            = local.enable_mtls_sidecar ? var.proxy_listen_port : local.alb_container_port
   use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
 
   ###############

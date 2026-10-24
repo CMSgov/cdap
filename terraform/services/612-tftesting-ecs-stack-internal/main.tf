@@ -91,7 +91,6 @@ module "service_caller" {
   }
 
   container_environment = [
-    { name = "DD_SERVICE", value = "caller" },
     { name = "DOWNSTREAM_URL", value = "http://worker:8080/ping" },
   ]
 }
@@ -138,7 +137,7 @@ module "service_worker" {
   ]
 
   container_environment = [
-    { name = "DD_SERVICE", value = "worker" },
+    { name = "RANDOM_TEST", value = "env-var" },
   ]
 }
 

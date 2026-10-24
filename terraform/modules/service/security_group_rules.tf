@@ -1,4 +1,3 @@
-
 resource "aws_vpc_security_group_egress_rule" "https" {
   count             = (length(var.security_groups) == 0) ? 1 : 0
   security_group_id = aws_security_group.task[0].id
@@ -8,6 +7,24 @@ resource "aws_vpc_security_group_egress_rule" "https" {
   cidr_ipv4         = "0.0.0.0/0"
   description       = "Allow HTTPS outbound (ECR, CloudWatch, SSM)"
 }
+
+# ALB
+resource "aws_vpc_security_group_ingress_rule" "alb_to_task" {
+  count = (
+    var.enable_alb_integration &&
+    var.alb_security_group_id != null &&
+    length(var.security_groups) == 0
+  ) ? 1 : 0
+
+  security_group_id            = aws_security_group.task[0].id
+  referenced_security_group_id = var.alb_security_group_id
+  from_port                    = local.alb_ingress_port
+  to_port                      = local.alb_ingress_port
+  ip_protocol                  = "tcp"
+  description                  = "Allow ALB to reach service on port ${local.alb_ingress_port}"
+}
+
+# Datadog
 
 resource "aws_vpc_security_group_ingress_rule" "datadog_synthetics" {
   count                        = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
