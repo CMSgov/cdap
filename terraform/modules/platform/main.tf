@@ -6,6 +6,7 @@ locals {
   parent_env       = one([for x in local.established_envs : x if can(regex("${x}$$", local.env))])
   sdlc_env         = contains(["sandbox", "prod"], local.parent_env) ? "production" : "non-production"
   service          = var.service
+  region_dir       = regex("east|west", data.aws_region.primary.name)
 
   static_tags = {
     application    = local.app

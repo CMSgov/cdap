@@ -75,6 +75,9 @@ output "vpc_id" {
   sensitive   = false
   value       = data.aws_vpc.this.id
 }
+output "cdap_vpc_name" {
+  value = "cdap-${local.region_dir}-${local.env == "prod" ? "prod" : "test"}"
+}
 
 output "private_subnets" {
   description = "Map of current VPC **private** [aws_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `subnet_id`"
