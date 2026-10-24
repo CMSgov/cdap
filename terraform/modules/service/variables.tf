@@ -100,7 +100,7 @@ variable "proxy_sidecar_upstream_port" {
 }
 
 variable "alb_security_group_id" {
-  description = "Security group ID of the ALB. Required when enable_alb_integration and mtls_cert_arn are both set. Used to create security group rules allowing ALB traffic to reach the mTLS proxy."
+  description = "Security group ID of the ALB. Required for enable_alb_integration are both set. Used to create security group rules allowing ALB traffic to reach the mTLS proxy."
   type        = string
   default     = null
 
@@ -380,6 +380,7 @@ variable "platform" {
     service            = string
     account_id         = string
     vpc_id             = string
+    vpc_name           = string
     account_env_suffix = string
 
   })

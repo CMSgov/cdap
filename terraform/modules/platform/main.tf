@@ -32,6 +32,14 @@ locals {
     "zscaler-private",
     "zscaler-public",
   ]
+  
+  # us-east-1 -> east, us-west-2 -> west
+  # Assumes standard "us-<direction>-<n>" format set up by CMS Cloud
+  primary_region_short   = regex("^us-([a-z]+)-\\d+$", data.aws_region.primary.name)[0]
+  secondary_region_short = regex("^us-([a-z]+)-\\d+$", data.aws_region.secondary.name)[0]
+
+  primary_vpc_name   = "${local.app}-${local.primary_region_short}-${local.parent_env}"
+  secondary_vpc_name = "${local.app}-${local.secondary_region_short}-${local.parent_env}"
 }
 
 data "aws_ssm_parameters_by_path" "ssm" {
