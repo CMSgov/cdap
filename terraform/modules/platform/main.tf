@@ -6,6 +6,7 @@ locals {
   parent_env       = one([for x in local.established_envs : x if can(regex("${x}$$", local.env))])
   sdlc_env         = contains(["sandbox", "prod"], local.parent_env) ? "production" : "non-production"
   service          = var.service
+  region_dir       = regex("east|west", data.aws_region.primary.name)
 
   static_tags = {
     application    = local.app
@@ -25,11 +26,20 @@ locals {
 
   aws_security_group_names = [
     "cmscloud-security-tools",
+    "datadog-synthetics",
     "internet",
     "remote-management",
     "zscaler-private",
     "zscaler-public",
   ]
+  
+  # us-east-1 -> east, us-west-2 -> west
+  # Assumes standard "us-<direction>-<n>" format set up by CMS Cloud
+  primary_region_short   = regex("^us-([a-z]+)-\\d+$", data.aws_region.primary.name)[0]
+  secondary_region_short = regex("^us-([a-z]+)-\\d+$", data.aws_region.secondary.name)[0]
+
+  primary_vpc_name   = "${local.app}-${local.primary_region_short}-${local.parent_env}"
+  secondary_vpc_name = "${local.app}-${local.secondary_region_short}-${local.parent_env}"
 }
 
 data "aws_ssm_parameters_by_path" "ssm" {

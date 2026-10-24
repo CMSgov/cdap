@@ -32,5 +32,5 @@ data "aws_ssm_parameter" "mtls_image_tag" {
 }
 
 data "aws_service_discovery_http_namespace" "service_discovery_namespace" {
-  name = "${var.platform.env}.${var.platform.app}.cmscloud.local"
+  name = local.service_discovery_namespace_name
 }
