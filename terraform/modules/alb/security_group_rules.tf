@@ -57,15 +57,13 @@ resource "aws_vpc_security_group_ingress_rule" "https_security_tools" {
 # Codebuild runner ingress option
 data "aws_vpc" "cdap" {
   tags = {
-    Application = "cdap"
-    Environment = var.platform.cdap_env
+    Name = var.platform.cdap_vpc_name
   }
 }
 
 data "aws_security_group" "codebuild_repo" {
-  count  = (local.managed_sg && var.enable_ingress_from_codebuild_repo != null) ? 0 : 1
-  vpc_id = data.aws_vpc.cdap.id
-  name   = "${var.enable_ingress_from_codebuild_repo}-${var.platform.account_env_suffix}-codebuild-project"
+  count = (local.managed_sg && var.enable_ingress_from_codebuild_repo != null) ? 0 : 1
+  name  = "${var.enable_ingress_from_codebuild_repo}-${var.platform.account_env_suffix}-codebuild-project"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "codebuild" {

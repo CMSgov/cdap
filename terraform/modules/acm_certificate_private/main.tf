@@ -1,5 +1,5 @@
 locals {
-  domain_name = var.domain_name ? var.domain_name : var.platform.service
+  domain_name = coalesce(var.domain_name, var.platform.service)
 
   hosted_zone_base_internal = "${var.platform.env}.${var.platform.app}.internal.cms.gov"
   hosted_zone_base_zscaler  = "${var.platform.env}.${var.platform.app}.cmscloud.local"

@@ -109,6 +109,12 @@ output "platform_cidr" {
   value       = data.aws_ssm_parameter.platform_cidr.value
 }
 
+output "vpc_cidr" {
+  description = "The CIDR-range for the VPC."
+  sensitive   = true
+  value       = data.aws_vpc.cdap.cidr_block
+}
+
 output "kion_roles" {
   description = "Map of common kion/cloudtamer [aws_iam_role data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role#attributes-reference), keyed by `name`."
   sensitive   = true

@@ -6,12 +6,13 @@ variable "platform" {
   type = object({
     account_env_suffix = string
     app                = string
-    cdap_env           = string
+    cdap_vpc_name      = string
     env                = string
     primary_region     = object({ name = string })
     private_subnets    = map(object({ id = string }))
     public_subnets     = map(object({ id = string }))
     service            = string
+    vpc_cidr           = string
     vpc_id             = string
     security_groups = map(object({
       id   = string
