@@ -4,13 +4,15 @@
 variable "platform" {
   description = "Object representing the CDAP platform module."
   type = object({
-    app             = string
-    env             = string
-    primary_region  = object({ name = string })
-    private_subnets = map(object({ id = string }))
-    public_subnets  = map(object({ id = string }))
-    service         = string
-    vpc_id          = string
+    account_env_suffix = string
+    app                = string
+    cdap_env           = string
+    env                = string
+    primary_region     = object({ name = string })
+    private_subnets    = map(object({ id = string }))
+    public_subnets     = map(object({ id = string }))
+    service            = string
+    vpc_id             = string
     security_groups = map(object({
       id   = string
       arn  = string
@@ -43,11 +45,12 @@ variable "enable_zscaler_ingress" {
 }
 
 variable "enable_ingress_from_codebuild_repo" {
+  description = "When set, adds an ingress rule allowing that repo's CodeBuild security group access through 443. Null disables this rule entirely."
   type        = string
   default     = null
-  description = "When populated, adds an ingress rule allowing the Codebuild security group access through 443"
+
   validation {
-    condition = contains([
+    condition = var.enable_ingress_from_codebuild_repo == null || contains([
       "ab2d",
       "ab2d-website",
       "bcda-app",

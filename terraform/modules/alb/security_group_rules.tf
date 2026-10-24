@@ -11,7 +11,7 @@ resource "aws_vpc_security_group_ingress_rule" "https_public" {
 
 # HTTP ingress — only when http_redirect is enabled
 resource "aws_vpc_security_group_ingress_rule" "http" {
-  count             = (local.managed_sg && var.enable_http_redirect) ? 1 : 0
+  count             = local.managed_sg ? 1 : 0
   security_group_id = aws_security_group.alb[0].id
   from_port         = 80
   to_port           = 80
@@ -55,10 +55,21 @@ resource "aws_vpc_security_group_ingress_rule" "https_security_tools" {
 }
 
 # Codebuild runner ingress option
+data "aws_vpc" "cdap_vpc" {
+  filter {
+    name   = "tag:Application"
+    values = ["cdap"]
+  }
+  filter {
+    name   = "tag:Environment"
+    values = ["${var.platform.cdap_env}"]
+  }
+}
+
 data "aws_security_group" "codebuild_repo" {
   count  = (local.managed_sg && var.enable_ingress_from_codebuild_repo != null) ? 0 : 1
-  vpc_id = var.platform.cdap_vpc.id
-  name   = "${var.enable_ingress_from_codebuild_repo}-${module.platform.account_env_suffix}-codebuild-project"
+  vpc_id = data.aws_vpc.cdap_vpc.id
+  name   = "${var.enable_ingress_from_codebuild_repo}-${var.platform.account_env_suffix}-codebuild-project"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "codebuild" {

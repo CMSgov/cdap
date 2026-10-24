@@ -27,13 +27,13 @@ module "alb" {
   platform = merge(module.platform, { service = "sctest" })
   internal = true
 
-  acm_certificate_arn = module.acm_internal.private_cert_arn
+  acm_certificate_arn = module.acm_internal[0].private_cert_arn
 
   enable_datadog_synthetics_ingress = local.config.datadog_synthetics.enabled
 
   https_listeners = {
     default = {
-      certificate_arn                    = module.acm_internal.private_cert_arn
+      certificate_arn                    = module.acm_internal[0].private_cert_arn
       default_action_type                = "fixed_response"
       default_fixed_response_status_code = 404
     }
@@ -82,7 +82,7 @@ module "service_caller" {
   service_connect         = []
 
   enable_alb_integration = true
-  alb_listener_arn       = module.alb.https_listener_arns["default"] # TODO confirm actual output key/name
+  alb_listener_arn       = module.alb[0].https_listener_arns["default"]
   alb_port_name          = "http"
   alb_priority           = 100
   alb_path_patterns      = ["/*"]
