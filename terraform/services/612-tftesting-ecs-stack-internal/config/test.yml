@@ -5,4 +5,5 @@ datadog_synthetics:
   enabled: false # May require propagation of internal hosted zone by cms
 
 stack:
-  enabled: true # keep false by default so the scheduled daily apply doesnt turn on;
+  infra_enabled: true # ACM cert + ALB — no compute, can be left applied
+  services_enabled: false # ECS services, runs fargate tasks; turn off after testing
