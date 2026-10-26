@@ -6,6 +6,7 @@ variable "platform" {
   type = object({
     account_env_suffix = string
     app                = string
+    cdap_env           = string
     cdap_vpc_name      = string
     env                = string
     primary_region     = object({ name = string })

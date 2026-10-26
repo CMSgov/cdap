@@ -448,42 +448,46 @@ resource "aws_ecs_service" "this" {
     }
   }
 
-  service_connect_configuration {
-    enabled   = var.service_connect_enabled ? true : false
-    namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace[0].arn
+  dynamic "service_connect_configuration" {
+    for_each = var.service_connect_enabled ? [1] : []
 
-    log_configuration {
-      log_driver = "awslogs"
-      options = {
-        "awslogs-group"         = module.app_logs.this.name
-        "awslogs-stream-prefix" = "service-connect"
-        "awslogs-region"        = "us-east-1"
-      }
-    }
+    content {
+      enabled   = var.service_connect_enabled ? true : false
+      namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace[0].arn
 
-    access_log_configuration {
-      format                   = "TEXT"
-      include_query_parameters = "ENABLED"
-    }
-
-    dynamic "service" {
-      for_each = local.service_connect_services
-
-      content {
-        discovery_name = service.value.discovery_name
-        port_name      = service.value.port_name
-
-        client_alias {
-          dns_name = service.value.dns_name
-          port     = service.value.port
+      log_configuration {
+        log_driver = "awslogs"
+        options = {
+          "awslogs-group"         = module.app_logs.this.name
+          "awslogs-stream-prefix" = "service-connect"
+          "awslogs-region"        = "us-east-1"
         }
+      }
 
-        tls {
-          kms_key  = var.platform.kms_alias_primary["target_key_arn"]
-          role_arn = aws_iam_role.service_connect[0].arn
+      access_log_configuration {
+        format                   = "TEXT"
+        include_query_parameters = "ENABLED"
+      }
 
-          issuer_cert_authority {
-            aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
+      dynamic "service" {
+        for_each = local.service_connect_services
+
+        content {
+          discovery_name = service.value.discovery_name
+          port_name      = service.value.port_name
+
+          client_alias {
+            dns_name = service.value.dns_name
+            port     = service.value.port
+          }
+
+          tls {
+            kms_key  = var.platform.kms_alias_primary["target_key_arn"]
+            role_arn = aws_iam_role.service_connect[0].arn
+
+            issuer_cert_authority {
+              aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
+            }
           }
         }
       }

@@ -373,6 +373,7 @@ variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
     app                = string
+    cdap_env           = string
     env                = string
     kms_alias_primary  = object({ target_key_arn = string })
     primary_region     = object({ name = string })
