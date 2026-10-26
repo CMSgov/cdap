@@ -10,6 +10,7 @@ domain:
 
 datadog_synthetics:
   available: true
+  enabled: true
   min_failure_duration: 300
   tick_every: 300
 
@@ -17,6 +18,8 @@ services:
   caller:
     cpu: 512
     memory: 1024
+    deployment_rollback: true
   worker:
     cpu: 512
     memory: 1024
+    deployment_rollback: true

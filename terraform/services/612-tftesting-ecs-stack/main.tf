@@ -68,7 +68,7 @@ module "service_caller" {
 
   deployment_circuit_breaker = {
     enable   = true
-    rollback = false
+    rollback = local.config.services.caller.deployment_rollback
   }
 
   # consumes worker over Service Connect; exposes nothing itself
@@ -126,7 +126,7 @@ module "service_worker" {
 
   deployment_circuit_breaker = {
     enable   = true
-    rollback = false
+    rollback = local.config.services.caller.deployment_rollback
   }
 
   service_connect_enabled = true
@@ -143,7 +143,7 @@ module "service_worker" {
 # Datadog synthetic — gated on config, hits the ALB-fronted caller
 # -------------------------------------------------------
 module "datadog_synthetics" {
-  count  = (local.config.datadog_synthetics.enabled && local.services_enabled) ? 1 : 0
+  count  = (local.config.datadog_synthetics.available && local.services_enabled) ? 1 : 0
   source = "../../modules/datadog_synthetics"
 
   env    = var.env
