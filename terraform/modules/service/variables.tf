@@ -79,10 +79,10 @@ variable "proxy_listen_port" {
     Port the mTLS proxy sidecar listens on.
 
     Traffic flow when enable_mtls_sidecar = true:
-      ALB --> proxy container :proxy_listen_port (mTLS)
+      NLB --> proxy container :proxy_listen_port (mTLS)
           --> app container   :first port in port_mappings (plain HTTP, localhost)
 
-    The ALB target group is automatically pointed at this port.
+    The NLB target group is automatically pointed at this port.
     The caller does not need to set alb_port_name.
   EOT
 }

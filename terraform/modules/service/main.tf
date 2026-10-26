@@ -55,18 +55,10 @@ locals {
 
   service_connect_services = [
     for sc in var.service_connect : {
-      discovery_name = lower(join("-", compact([
-        var.platform.app,
-        var.platform.service,
-        length(var.service_connect) > 1 ? sc.port_name : ""
-      ])))
-      dns_name = lower(join("-", compact([
-        var.platform.app,
-        var.platform.service,
-        length(var.service_connect) > 1 ? sc.port_name : ""
-      ])))
-      port      = sc.port
-      port_name = sc.port_name
+      discovery_name = sc.port_name
+      dns_name       = sc.port_name
+      port           = sc.port
+      port_name      = sc.port_name
     }
   ]
 
@@ -458,7 +450,7 @@ resource "aws_ecs_service" "this" {
 
   service_connect_configuration {
     enabled   = var.service_connect_enabled ? true : false
-    namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace.arn
+    namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace[0].arn
 
     log_configuration {
       log_driver = "awslogs"
@@ -564,6 +556,11 @@ resource "aws_lb_target_group" "this" {
     precondition {
       condition     = !local.enable_mtls_sidecar || local.effective_tg_protocol == "HTTPS"
       error_message = "Target group protocol must be HTTPS when mtls_cert_arn is set."
+    }
+
+    precondition {
+      condition     = !local.enable_mtls_sidecar || var.alb_target_group_protocol == null
+      error_message = "enable_mtls_sidecar is not supported with this ALB-integration path. The mTLS sidecar requires raw TLS pass-through, which only an NLB provides — an ALB terminates TLS before the container ever sees it. Front this service with an NLB target group instead."
     }
   }
 }
