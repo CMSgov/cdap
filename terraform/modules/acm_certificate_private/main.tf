@@ -57,7 +57,6 @@ resource "aws_acm_certificate" "private" {
   }
 
   lifecycle {
-    prevent_destroy       = true
     create_before_destroy = true
   }
 }
