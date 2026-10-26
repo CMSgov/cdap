@@ -1,4 +1,4 @@
-name: code-checks (snyk code reusable)
+name: Snyk monitor
 
 on:
   workflow_call:
@@ -11,17 +11,21 @@ on:
         description: 'Git ref (branch, tag, or SHA) to scan — defaults to the calling ref'
         required: false
         type: string
+      cli_args:
+        description: 'Arguments to pass to snyk monitor'
+        required: false
+        type: string
     secrets:
       PROD_ACCOUNT:
         description: 'AWS prod account ID'
         required: true
 
 env:
-  SNYK_CLI_VERSION: 1.1306.2
+  SNYK_CLI_VERSION: 1.1306.4
 
 jobs:
   checks:
-    name: 'Snyk Code Scan (${{ inputs.app }})'
+    name: 'Snyk monitor(${{ inputs.app }})'
     timeout-minutes: 15
     permissions:
       contents: read
@@ -55,18 +59,38 @@ jobs:
         with:
           params: |
             SNYK_TOKEN=/cdap/prod/code-checks/sensitive/snyk-api-token/${{ inputs.app }}
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
 
       # Install Snyk (authenticates via the SNYK_TOKEN env var automatically)
       - name: Install Snyk
         run: |
           sudo npm install -g snyk@${SNYK_CLI_VERSION}
 
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
+      - name: Build code
+        run: |
+          FILE="./snyk-cli-build.sh"
+          if [ -x "$FILE" ]; then
+            echo "Found $FILE. Running..."
+            "$FILE"
+          else
+            echo "Error: File $FILE does not exist or is not executable."
+          fi
+
       - name: Run Snyk Code
         env:
-          PROJECT_NAME: 'Scheduled Static Code Analysis'
+          PROJECT_NAME: 'Snyk monitor'
+          CLI_ARGS: ${{ inputs.cli_args }}
         run: |
+          
           EXIT_CODE=0
-          snyk code test --report --project-name="$PROJECT_NAME" || EXIT_CODE=$?
+          snyk monitor ${CLI_ARGS} || EXIT_CODE=$?
           echo "Snyk exit code ${EXIT_CODE}"
           # Exit code 1 means vulnerabilities were found. Don't fail the workflow.
           if [ "$EXIT_CODE" -eq 1 ]; then exit 0; else exit "$EXIT_CODE"; fi
