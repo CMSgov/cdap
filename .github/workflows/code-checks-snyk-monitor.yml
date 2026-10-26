@@ -53,6 +53,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/${{ inputs.app }}-prod-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
+      # Artifactory-related parameters are related to build script parameters
       - uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -69,11 +70,13 @@ jobs:
           sudo npm install -g snyk@${SNYK_CLI_VERSION}
 
       - uses: actions/setup-java@v5
+        if: inputs.app == 'ab2d'
         with:
           distribution: 'temurin'
           java-version: '25'
-
-      - name: Build code
+      
+      # Build code (for Maven/Gradle projects, dependencies and transitives are fully resolved during the build execution)
+      - name: Run build script 
         run: |
           FILE="./snyk-cli-build.sh"
           if [ -x "$FILE" ]; then
@@ -83,7 +86,7 @@ jobs:
             echo "Error: File $FILE does not exist or is not executable."
           fi
 
-      - name: Run Snyk Code
+      - name: Run snyk monitor
         env:
           PROJECT_NAME: 'Snyk monitor'
           CLI_ARGS: ${{ inputs.cli_args }}
