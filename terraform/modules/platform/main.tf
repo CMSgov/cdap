@@ -26,13 +26,12 @@ locals {
 
   aws_security_group_names = [
     "cmscloud-security-tools",
-    "datadog-synthetics",
     "internet",
     "remote-management",
     "zscaler-private",
     "zscaler-public",
   ]
-  
+
   # us-east-1 -> east, us-west-2 -> west
   # Assumes standard "us-<direction>-<n>" format set up by CMS Cloud
   primary_region_short   = regex("^us-([a-z]+)-\\d+$", data.aws_region.primary.name)[0]
