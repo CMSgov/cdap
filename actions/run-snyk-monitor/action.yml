@@ -1,0 +1,30 @@
+name: Run snyk monitor
+description: Configure Snyk monitor
+inputs:
+  cli_args:
+    description: Snyk monitor CLI arguments
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Install Snyk
+      run: |
+        sudo npm install -g snyk@${1.1306.2}
+
+    - uses: cmsgov/cdap/actions/aws-params-env-action@main
+      env:
+        AWS_REGION: ${{ vars.AWS_REGION }}
+      with:
+        params: |
+          SNYK_TOKEN=/cdap/prod/code-checks/sensitive/snyk-api-token/${{ inputs.app }}
+
+    - name: Run Snyk Code
+      env:
+        PROJECT_NAME: 'Snyk monitor'
+        CLI_ARGS: ${{ inputs.cli_args }}
+      run: |
+        EXIT_CODE=0
+        snyk monitor ${CLI_ARGS} || EXIT_CODE=$?
+        echo "Snyk exit code ${EXIT_CODE}"
+        # Exit code 1 means vulnerabilities were found. Don't fail the workflow.
+        if [ "$EXIT_CODE" -eq 1 ]; then exit 0; else exit "$EXIT_CODE"; fi
