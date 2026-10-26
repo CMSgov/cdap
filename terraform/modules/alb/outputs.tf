@@ -39,3 +39,13 @@ output "internal" {
   description = "Whether the ALB is internal (private) or internet-facing."
   value       = var.internal
 }
+
+output "internal_record" {
+  description = "Full record for internal connections to ALB"
+  value       = var.create_internal_dns_record ? aws_route53_record.internal_alb : null
+}
+
+output "zscaler_record" {
+  description = "Full record for zscaler connections to ALB"
+  value       = var.create_zscaler_dns_record ? aws_route53_record.zscaler_alb : null
+}

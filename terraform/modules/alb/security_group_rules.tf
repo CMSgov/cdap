@@ -23,7 +23,7 @@ resource "aws_vpc_security_group_ingress_rule" "http" {
 # Zscaler private App Connector ingress
 # Use for internal ALBs registered in cmscloud.local DNS
 resource "aws_vpc_security_group_ingress_rule" "https_zscaler" {
-  count                        = (local.managed_sg && var.enable_zscaler_ingress) ? 1 : 0
+  count                        = (local.managed_sg && var.create_zscaler_dns_record) ? 1 : 0
   security_group_id            = aws_security_group.alb[0].id
   referenced_security_group_id = var.platform.security_groups["zscaler-private"].id
   from_port                    = 443

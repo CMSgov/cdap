@@ -32,19 +32,6 @@ variable "name_override" {
 # Networking
 # -------------------------------------------------------
 
-variable "enable_zscaler_ingress" {
-  type        = bool
-  default     = false
-  description = <<-EOT
-    When true, adds an ingress rule allowing the Zscaler private App
-    Connector to reach the ALB on HTTPS:443.
-    Enable this when the ALB is registered in cmscloud.local DNS and
-    accessed by developers via Zscaler.
-    Should be set alongside enable_zscaler_endpoint = true on the
-    acm_certificate module.
-  EOT
-}
-
 variable "enable_ingress_from_codebuild_repo" {
   description = "When set, adds an ingress rule allowing that repo's CodeBuild security group access through 443. Null disables this rule entirely."
   type        = string
@@ -106,15 +93,30 @@ variable "internal" {
 # Domain Management 
 #
 
-variable "internal_record_name" {
+variable "private_record_name" {
   type        = string
   default     = null
   description = "Subdomain label for this ALB's record, e.g. 'api-admin'"
 }
 
+variable "create_internal_dns_record" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Create a record reachable by other services in the AWS account.
+    Creates `$private_record_name.$env.$app.internal.cms.gov`
+  EOT
+}
+
 variable "create_zscaler_dns_record" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Create a record reachable by users in ZScaler network,
+    if the hosted zone is registered with Zscaler team.
+    Creates `$private_record_name.$env.$app.cmscloud.local`
+  EOT
+
 }
 
 # -------------------------------------------------------

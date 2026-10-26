@@ -1,7 +1,7 @@
 locals {
-  alb_name   = var.name_override != null ? var.name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}-alb"
-  managed_sg = length(var.security_group_ids) == 0
-
+  alb_name            = var.name_override != null ? var.name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}-alb"
+  managed_sg          = length(var.security_group_ids) == 0
+  private_record_name = var.private_record_name != null ? var.private_record_name : var.platform.service
   # Support explicitly provided subnets, or fall back to the platform's private subnets
   subnet_ids = var.subnet_ids != null ? var.subnet_ids : (
     var.internal
@@ -96,16 +96,16 @@ resource "aws_security_group" "alb" {
 # -------------------------------------------------------
 
 data "aws_route53_zone" "internal" {
-  count        = var.internal_record_name != null ? 1 : 0
+  count        = var.create_internal_dns_record != null ? 1 : 0
   name         = "${var.platform.env}.${var.platform.app}.internal.cms.gov."
   private_zone = true
   vpc_id       = var.platform.vpc_id
 }
 
 resource "aws_route53_record" "internal_alb" {
-  count   = var.internal_record_name != null ? 1 : 0
+  count   = var.create_internal_dns_record != null ? 1 : 0
   zone_id = data.aws_route53_zone.internal[0].zone_id
-  name    = "${var.internal_record_name}.${data.aws_route53_zone.internal[0].name}"
+  name    = "${local.private_record_name}.${data.aws_route53_zone.internal[0].name}"
   type    = "A"
 
   alias {
@@ -125,7 +125,7 @@ data "aws_route53_zone" "zscaler" {
 resource "aws_route53_record" "zscaler_alb" {
   count   = var.create_zscaler_dns_record ? 1 : 0
   zone_id = data.aws_route53_zone.zscaler[0].zone_id
-  name    = "${var.internal_record_name}.${data.aws_route53_zone.zscaler[0].name}"
+  name    = "${local.private_record_name}.${data.aws_route53_zone.zscaler[0].name}"
   type    = "A"
 
   alias {
