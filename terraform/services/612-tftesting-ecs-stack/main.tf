@@ -49,6 +49,7 @@ module "service_caller" {
   source                          = "../../modules/service"
   platform                        = merge(module.platform, { service = "ecs-stack-caller" })
   image_tag_service_name_override = "tftesting-service" # override as using image generated in different terraservice
+  enable_execute_command          = true
 
   cluster_arn = data.aws_ecs_cluster.this.arn
 
@@ -98,6 +99,8 @@ module "service_caller" {
 # ECS Service B ("worker"), no ALB, reachable only via Service Connect
 # -------------------------------------------------------
 module "service_worker" {
+  enable_execute_command = true
+
   count  = local.services_enabled ? 1 : 0
   source = "../../modules/service"
 
@@ -156,8 +159,10 @@ module "datadog_synthetics" {
 
   tests = [
     {
-      name    = module.platform.service
-      subtype = "http"
+      name           = module.platform.service
+      subtype        = "http"
+      allow_insecure = true
+
       request_definition = {
         method = "GET"
         url    = "https://${module.alb[0].internal_record}/integration-test"
