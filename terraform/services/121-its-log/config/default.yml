@@ -1,0 +1,6 @@
+image:
+  enabled: true # works with github workflow
+  test_command: >-
+    python3 /app/e2e.py --env config-container.json
+    --cov=src
+    --cov-report=xml:/app/coverage/coverage.xml
