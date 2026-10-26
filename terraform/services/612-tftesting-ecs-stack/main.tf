@@ -11,9 +11,9 @@ module "acm_internal" {
 
   # distinct platform.service so this doesn't collide with your existing
   # single-service tftesting terraservice's naming
-  platform = merge(module.platform, { service = "ecs-stack" })
+  platform = merge(module.platform, { service = "${module.platform.service}" })
 
-  domain_name              = local.config.domain.name # null, so will default to "ecs-stack"
+  domain_name              = local.config.domain.name # null, so will default to "${module.platform.service}"
   enable_internal_endpoint = true
 }
 
@@ -24,11 +24,11 @@ module "alb" {
   count  = local.infra_enabled ? 1 : 0
   source = "../../modules/alb"
 
-  platform = merge(module.platform, { service = "ecs-stack" })
+  platform = merge(module.platform, { service = "${module.platform.service}" })
   internal = true
 
-  acm_certificate_arn = module.acm_internal[0].private_cert_arn
-  create_internal_dns_record = true 
+  acm_certificate_arn        = module.acm_internal[0].private_cert_arn
+  create_internal_dns_record = true
 
   enable_datadog_synthetics_ingress = local.config.datadog_synthetics.enabled
 
@@ -52,7 +52,7 @@ module "service_caller" {
   cluster_arn = data.aws_ecs_cluster.this.arn
 
   # shared test image lives under a different service name in ECR/SSM
-  image_tag_service_name_override = "tftesting-service" # TODO confirm this matches your existing repo/SSM naming
+  image_tag_service_name_override = "tftesting-service"
 
   cpu    = local.config.services.caller.cpu
   memory = local.config.services.caller.memory
@@ -106,7 +106,7 @@ module "service_worker" {
   platform    = merge(module.platform, { service = "worker" })
   cluster_arn = data.aws_ecs_cluster.this.arn
 
-  image_tag_service_name_override = "tftesting-service" # TODO same as above
+  image_tag_service_name_override = "tftesting-service"
 
   cpu    = local.config.services.worker.cpu
   memory = local.config.services.worker.memory
@@ -158,12 +158,12 @@ module "datadog_synthetics" {
 
   tests = [
     {
-      name    = "cdap-${module.platform.env}-ecs-stack-service-connect"
+      name    = module.platform.service
       subtype = "http"
-    request_definition = {
+      request_definition = {
         method = "GET"
-        url    = "https://ecs-stack.${module.platform.env}.${module.platform.app}.internal.cms.gov/integration-test"
-    }
+        url    = "https://${module.alb[0].internal_record}/integration-test"
+      }
       assertions = [
         { type = "statusCode", operator = "is", target = "200" },
         {

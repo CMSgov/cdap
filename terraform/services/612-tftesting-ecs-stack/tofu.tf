@@ -43,7 +43,11 @@ module "platform" {
   app         = "cdap"
   env         = var.env
   root_module = "https://github.com/CMSgov/cdap/tree/main/terraform/services/${basename(abspath(path.module))}/"
-  service     = replace(basename(abspath(path.module)), "/^[0-9]+-/", "")
+  service = replace(
+    replace(basename(abspath(path.module)), "/^[0-9]+-/", ""),
+    "/-?tftesting-?/", ""
+  )
+
   ssm_root_map = {
     datadog = "/cdap/${var.env}/datadog/cicd/"
   }

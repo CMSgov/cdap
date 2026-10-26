@@ -2,14 +2,14 @@ ecs:
   cluster: null
 
 stack:
-  infra_enabled: true # ACM cert + ALB — no compute, can be left applied
+  infra_enabled: true # ACM cert and ALB, no compute; can be left applied
   services_enabled: false # ECS services, runs fargate tasks; turn off after testing
 
 domain:
   name: null
 
 datadog_synthetics:
-  enabled: false
+  available: true
   min_failure_duration: 300
   tick_every: 300
 

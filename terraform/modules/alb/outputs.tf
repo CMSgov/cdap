@@ -42,10 +42,10 @@ output "internal" {
 
 output "internal_record" {
   description = "Full record for internal connections to ALB"
-  value       = var.create_internal_dns_record ? aws_route53_record.internal_alb : null
+  value       = var.create_internal_dns_record ? aws_route53_record.internal_alb[0].name : null
 }
 
 output "zscaler_record" {
   description = "Full record for zscaler connections to ALB"
-  value       = var.create_zscaler_dns_record ? aws_route53_record.zscaler_alb : null
+  value       = var.create_zscaler_dns_record ? aws_route53_record.zscaler_alb[0].name : null
 }
