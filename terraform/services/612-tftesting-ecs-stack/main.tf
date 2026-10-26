@@ -126,7 +126,7 @@ module "service_worker" {
 
   deployment_circuit_breaker = {
     enable   = true
-    rollback = local.config.services.caller.deployment_rollback
+    rollback = local.config.services.worker.deployment_rollback
   }
 
   service_connect_enabled = true
