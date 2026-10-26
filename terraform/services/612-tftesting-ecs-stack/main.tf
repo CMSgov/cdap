@@ -81,6 +81,7 @@ module "service_caller" {
 
   enable_alb_integration = true
   alb_listener_arn       = module.alb[0].https_listener_arns["default"]
+  alb_security_group_id  = module.alb[0].security_group_id
   alb_port_name          = "http"
   alb_priority           = 100
   alb_path_patterns      = ["/*"]
