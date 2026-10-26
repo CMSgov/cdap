@@ -11,7 +11,7 @@ module "acm_internal" {
 
   # distinct platform.service so this doesn't collide with your existing
   # single-service tftesting terraservice's naming
-  platform = merge(module.platform, { service = "${module.platform.service}" })
+  platform = module.platform
 
   domain_name              = local.config.domain.name # null, so will default to "${module.platform.service}"
   enable_internal_endpoint = true
@@ -24,7 +24,7 @@ module "alb" {
   count  = local.infra_enabled ? 1 : 0
   source = "../../modules/alb"
 
-  platform = merge(module.platform, { service = "${module.platform.service}" })
+  platform = module.platform
   internal = true
 
   acm_certificate_arn        = module.acm_internal[0].private_cert_arn
@@ -48,7 +48,7 @@ module "service_caller" {
   count  = local.services_enabled ? 1 : 0
   source = "../../modules/service"
 
-  platform    = merge(module.platform, { service = "caller" })
+  platform    = merge(module.platform, { service = "ecs-stack-caller" })
   cluster_arn = data.aws_ecs_cluster.this.arn
 
   # shared test image lives under a different service name in ECR/SSM
@@ -103,7 +103,7 @@ module "service_worker" {
   count  = local.services_enabled ? 1 : 0
   source = "../../modules/service"
 
-  platform    = merge(module.platform, { service = "worker" })
+  platform    = merge(module.platform, { service = "ecs-stack-worker" })
   cluster_arn = data.aws_ecs_cluster.this.arn
 
   image_tag_service_name_override = "tftesting-service"

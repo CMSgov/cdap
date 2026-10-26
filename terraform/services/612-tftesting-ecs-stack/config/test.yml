@@ -6,4 +6,4 @@ datadog_synthetics:
 
 stack:
   infra_enabled: true # ACM cert + ALB — no compute, can be left applied
-  services_enabled: false # ECS services, runs fargate tasks; turn off after testing
+  services_enabled: true # ECS services, runs fargate tasks; turn off after testing
