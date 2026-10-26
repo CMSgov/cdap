@@ -11,9 +11,9 @@ module "acm_internal" {
 
   # distinct platform.service so this doesn't collide with your existing
   # single-service tftesting terraservice's naming
-  platform = merge(module.platform, { service = "sctest" })
+  platform = merge(module.platform, { service = "ecs-stack" })
 
-  domain_name              = local.config.domain.name # null, so will default to "sctest"
+  domain_name              = local.config.domain.name # null, so will default to "ecs-stack"
   enable_internal_endpoint = true
 }
 
@@ -24,10 +24,11 @@ module "alb" {
   count  = local.infra_enabled ? 1 : 0
   source = "../../modules/alb"
 
-  platform = merge(module.platform, { service = "sctest" })
+  platform = merge(module.platform, { service = "ecs-stack" })
   internal = true
 
   acm_certificate_arn = module.acm_internal[0].private_cert_arn
+  create_internal_dns_record = true 
 
   enable_datadog_synthetics_ingress = local.config.datadog_synthetics.enabled
 
@@ -157,12 +158,12 @@ module "datadog_synthetics" {
 
   tests = [
     {
-      name    = "cdap-${var.env}-sctest-service-connect"
+      name    = "cdap-${module.platform.env}-ecs-stack-service-connect"
       subtype = "http"
-      request_definition = {
+    request_definition = {
         method = "GET"
-        url    = "https://${module.alb[0].alb_dns_name}/integration-test"
-      }
+        url    = "https://ecs-stack.${module.platform.env}.${module.platform.app}.internal.cms.gov/integration-test"
+    }
       assertions = [
         { type = "statusCode", operator = "is", target = "200" },
         {
