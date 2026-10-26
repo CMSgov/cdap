@@ -45,22 +45,15 @@ module "alb" {
 # ECS Service A ("caller"), behind the ALB, calls worker via Service Connect
 # -------------------------------------------------------
 module "service_caller" {
-  count  = local.services_enabled ? 1 : 0
-  source = "../../modules/service"
+  count                           = local.services_enabled ? 1 : 0
+  source                          = "../../modules/service"
+  platform                        = merge(module.platform, { service = "ecs-stack-caller" })
+  image_tag_service_name_override = "tftesting-service" # override as using image generated in different terraservice
 
-  platform    = merge(module.platform, { service = "ecs-stack-caller" })
   cluster_arn = data.aws_ecs_cluster.this.arn
-
-  # shared test image lives under a different service name in ECR/SSM
-  image_tag_service_name_override = "tftesting-service"
 
   cpu    = local.config.services.caller.cpu
   memory = local.config.services.caller.memory
-
-  port_mappings = [
-    { name = "http", containerPort = 8080, protocol = "tcp" }
-  ]
-
   health_check = {
     command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
     interval    = 30
@@ -81,6 +74,10 @@ module "service_caller" {
   # consumes worker over Service Connect; exposes nothing itself
   service_connect_enabled = true
   service_connect         = []
+
+  port_mappings = [
+    { name = "http", containerPort = 8080, protocol = "tcp" }
+  ]
 
   enable_alb_integration = true
   alb_listener_arn       = module.alb[0].https_listener_arns["default"]
