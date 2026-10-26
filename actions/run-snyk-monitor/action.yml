@@ -4,21 +4,27 @@ inputs:
   cli_args:
     description: Snyk monitor CLI arguments
     required: true
+  aws_region:
+    description: AWS Region
+    required: false
+    default: 'us-east-1'
 runs:
   using: composite
   steps:
     - name: Install Snyk
+      shell: bash
       run: |
         sudo npm install -g snyk@${1.1306.2}
 
     - uses: cmsgov/cdap/actions/aws-params-env-action@main
       env:
-        AWS_REGION: ${{ vars.AWS_REGION }}
+        AWS_REGION: ${{ inputs.aws_region }}
       with:
         params: |
           SNYK_TOKEN=/cdap/prod/code-checks/sensitive/snyk-api-token/${{ inputs.app }}
 
     - name: Run Snyk Code
+      shell: bash
       env:
         PROJECT_NAME: 'Snyk monitor'
         CLI_ARGS: ${{ inputs.cli_args }}
