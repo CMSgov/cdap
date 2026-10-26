@@ -498,7 +498,6 @@ resource "aws_ecs_service" "this" {
     module.app_logs,
     module.datadog_logs,
     aws_lb_listener_rule.this,
-    aws_iam_role_policy_attachment.service_connect,
     aws_iam_role.service_connect
   ]
 
