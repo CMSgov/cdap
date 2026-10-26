@@ -1,6 +1,3 @@
 image:
   enabled: true # works with github workflow
-  test_command: >-
-    python3 /app/src/ops/containers/e2e/e2e.py --env config-container.json
-    --cov=src
-    --cov-report=xml:/app/coverage/coverage.xml
+  test_command: make e2e
