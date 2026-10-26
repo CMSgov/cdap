@@ -14,7 +14,7 @@ runs:
     - name: Install Snyk
       shell: bash
       run: |
-        sudo npm install -g snyk@${1.1306.2}
+        sudo npm install -g snyk@1.1306.2
 
     - uses: cmsgov/cdap/actions/aws-params-env-action@main
       env:
