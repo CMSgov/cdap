@@ -12,9 +12,7 @@ module "cdap_cluster" {
 # Service
 ###
 module "ecs_datadog_synthetics" {
-  # TODO set commit hash for version
   source = "../../modules/service"
-  #source                   = "github.com/CMSgov/cdap//terraform/modules/service?ref=49d3147bdcfd0cb3847bfccc6a883d33d017be3d"
   cluster_arn              = module.cdap_cluster.this.arn
   readonly_root_filesystem = false # Write permission required by Datadog private location worker
 
