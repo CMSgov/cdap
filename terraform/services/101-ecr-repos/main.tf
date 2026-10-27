@@ -21,7 +21,7 @@ locals {
 
           tag_rules            = try(svc.tag_rules, [])
           untagged_expiry_days = try(svc.untagged_expiry_days, null)
-          account_id_paths     = try(svc.external_account_share.account_id_paths, [])
+          account_id_paths     = try(svc.account_id_paths, [])
         }
       ]
     ]) : pair.key => pair
