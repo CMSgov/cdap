@@ -15,3 +15,9 @@ variable "env" {
     error_message = "Valid value for env is dev, test, sbx, sandbox, or prod."
   }
 }
+
+variable "rate_limit" {
+  description = "IP rate limit for every 5 minutes"
+  type        = number
+  default     = null
+}
