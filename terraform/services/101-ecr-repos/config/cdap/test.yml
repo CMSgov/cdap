@@ -4,3 +4,7 @@ services:
     untagged_expiry_days: 2
   - name: "mtls-sidecar"
     untagged_expiry_days: 20
+  - name: "its-log"
+    untagged_expiry_days: 20
+    account_id_paths:
+      - "/cdap/test/external/bb/sensitive/aws_account_id"
