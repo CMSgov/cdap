@@ -11,15 +11,15 @@ on:
         description: 'Git ref (branch, tag, or SHA) to scan — defaults to the calling ref'
         required: false
         type: string
+      cli_args:
+        description: 'Arguments for the snyk monitor CLI'
+        required: false
+        type: string
     secrets:
       PROD_ACCOUNT:
         description: 'AWS prod account ID'
         required: true
-    cli_args:
-      description: 'Arguments for the snyk monitor CLI'
-      required: false
-      type: string
-
+        
 env:
   SNYK_CLI_VERSION: 1.1306.4
 
