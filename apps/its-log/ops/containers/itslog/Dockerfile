@@ -1,5 +1,5 @@
 # The build stage
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS builder
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023.12.20261026.1 AS builder
 ENV GOPROXY=direct
 
 RUN dnf update -y && \
@@ -23,8 +23,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go build -o its-log
 
 # The run stage
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal as prod
-# COPY --from=builder /usr/bin/jq /usr/bin/jq
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023.12.20261026.1-minimal as prod
 RUN dnf install -y jq
 
 WORKDIR /app
