@@ -17,7 +17,7 @@ services:
         condition: service_healthy
 
   ministack:
-    image: nahuelnucera/ministack:latest
+    image: ministackorg/ministack:latest
     ports:
       - "4566:4566"
     environment:
