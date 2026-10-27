@@ -11,6 +11,15 @@ locals {
     bcda = "bcda-api-${var.env}-01"
     dpc  = "dpc-${var.env}-1"
   }
+  default_rate_limit = {
+    bcda = {
+      sbx     = 150
+      sandbox = 150
+      dev     = 1000
+      test    = 1000
+      prod    = 1000
+    }
+  }
 }
 
 data "aws_lb" "api" {
@@ -69,7 +78,7 @@ module "aws_waf" {
   content_type = "APPLICATION_JSON"
 
   associated_resource_arn = data.aws_lb.api.arn
-  rate_limit              = var.rate_limit
+  rate_limit              = var.rate_limit != null ? var.rate_limit : try(local.default_rate_limit[var.app][var.env], 3000)
   ip_sets = local.is_sandbox ? [] : [
     one(data.aws_wafv2_ip_set.external_services).arn,
     one(aws_wafv2_ip_set.api_customers).arn,
