@@ -3,8 +3,8 @@ FROM golang:1.26.0-trixie AS builder
 ENV GOPROXY=direct
 
 WORKDIR /app
-COPY api /app/api
-COPY ops /app/ops
+COPY src/api /app/api
+COPY src/ops /app/ops
 
 WORKDIR /app/api
 RUN --mount=type=cache,target=/go/pkg/mod \
