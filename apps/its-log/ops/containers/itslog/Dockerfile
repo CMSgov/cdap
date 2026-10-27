@@ -1,6 +1,15 @@
 # The build stage
-FROM golang:1.26.0-trixie AS builder
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023.12.20261026.1 AS builder
 ENV GOPROXY=direct
+
+RUN dnf update -y && \
+    dnf install -y \
+        ca-certificates \
+        gcc-c++ \
+        golang \
+        libstdc++-devel \
+        && \
+    dnf clean all
 
 WORKDIR /app
 COPY api /app/api
@@ -14,8 +23,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go build -o its-log
 
 # The run stage
-FROM golang:1.26.0-trixie AS prod
-RUN apt update ; apt install -y jq
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023.12.20261026.1-minimal as prod
+RUN dnf install -y jq
 
 WORKDIR /app
 COPY --from=builder /app/api/its-log .
