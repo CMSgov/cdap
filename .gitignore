@@ -20,3 +20,6 @@ terraform.tfvars
 coverage/
 .coverage
 *.xml
+
+# Static
+.DS_Store
