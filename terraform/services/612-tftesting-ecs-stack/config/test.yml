@@ -1,0 +1,20 @@
+ecs:
+  cluster: cdap-test-tftesting # established in 610-tftesting-cluster
+
+datadog_synthetics:
+  enabled: true # May require propagation of internal hosted zone by cms
+  available: true
+
+stack:
+  infra_enabled: true # ACM cert + ALB — no compute, can be left applied
+  services_enabled: true # ECS services, runs fargate tasks; turn off after testing
+
+services:
+  caller:
+    cpu: 512
+    memory: 1024
+    deployment_rollback: false
+  worker:
+    cpu: 512
+    memory: 1024
+    deployment_rollback: false

@@ -50,27 +50,25 @@ from ddtrace import tracer
 from ddtrace.propagation.http import HTTPPropagator
 
 class HealthHandler(BaseHTTPRequestHandler):
+    def _respond(self, status: int, body: bytes, content_type: str = "text/plain"):
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self):
         if self.path == "/health":
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"OK")
+            self._respond(200, b"OK")
 
         elif self.path == "/ping":
-            # Service B responds here — confirms Service Connect is working
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(
-                f"pong from {DD_SERVICE} env={DD_ENV} version={DD_VERSION}".encode()
-            )
-        elif self.path == "/integration-test":
-            # a live Service Connect call and return the result
-            result = {"status": "unknown", "response": None, "error": None}
+            body = f"pong from {DD_SERVICE} env={DD_ENV} version={DD_VERSION}".encode()
+            self._respond(200, body)
 
+        elif self.path == "/integration-test":
             if not DOWNSTREAM_URL:
-                self.send_response(503)
-                self.end_headers()
-                self.wfile.write(b'{"error": "DOWNSTREAM_URL not configured"}')
+                body = b'{"error": "DOWNSTREAM_URL not configured"}'
+                self._respond(503, body, "application/json")
                 return
 
             with tracer.trace("integration-test.call", service=DD_SERVICE, resource=DOWNSTREAM_URL) as span:
@@ -83,29 +81,23 @@ class HealthHandler(BaseHTTPRequestHandler):
                         req.add_header(key, value)
 
                     with urllib.request.urlopen(req, timeout=5) as resp:
-                        body = resp.read().decode()
+                        resp_body = resp.read().decode()
                         span.set_tag("downstream.status", resp.status)
-                        result = {"status": "ok", "response": body}
-                        self.send_response(200)
-                        self.send_header("Content-Type", "application/json")
-                        self.end_headers()
-                        self.wfile.write(json.dumps(result).encode())
+                        result = {"status": "ok", "response": resp_body}
+                        self._respond(200, json.dumps(result).encode(), "application/json")
 
                 except Exception as e:
                     span.set_tag("error", True)
                     span.set_tag("error.message", str(e))
                     result = {"status": "error", "error": str(e)}
-                    self.send_response(502)
-                    self.send_header("Content-Type", "application/json")
-                    self.end_headers()
-                    self.wfile.write(json.dumps(result).encode())
+                    self._respond(502, json.dumps(result).encode(), "application/json")
         else:
             self.send_response(404)
+            self.send_header("Content-Length", "0")
             self.end_headers()
 
     def log_message(self, format, *args):
         pass
-
 
 def start_health_server(port: int = 8080):
     server = HTTPServer(("0.0.0.0", port), HealthHandler)
