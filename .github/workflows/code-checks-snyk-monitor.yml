@@ -11,14 +11,14 @@ on:
         description: 'Git ref (branch, tag, or SHA) to scan — defaults to the calling ref'
         required: false
         type: string
-      cli_args:
-        description: 'Arguments to pass to snyk monitor'
-        required: false
-        type: string
     secrets:
       PROD_ACCOUNT:
         description: 'AWS prod account ID'
         required: true
+    cli_args:
+      description: 'Arguments for the snyk monitor CLI'
+      required: false
+      type: string
 
 env:
   SNYK_CLI_VERSION: 1.1306.4
@@ -58,14 +58,14 @@ jobs:
         run: |
           sudo npm install -g snyk@${SNYK_CLI_VERSION}
 
-      # Install java for ab2d (and maybe other teams?)
+      # Prerequisite for AB2D build script
       - uses: actions/setup-java@v5
         if: inputs.app == 'ab2d'
         with:
           distribution: 'temurin'
           java-version: '25'
 
-      # Artifactory-related parameters are required for ab2d's build script
+      # Prerequisite for AB2D build script to resolve dependencies in Artifactory
       - uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -76,9 +76,9 @@ jobs:
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
 
-      # Build code (for Maven/Gradle projects, dependencies and transitives are fully resolved during the build execution)
-      # Teams provide a build script to be executed before calling `snyk monitor`
-      - name: Run build script 
+      # Run build script before calling Snyk CLI per Snyk documentation. For maven/gradle projects, dependencies and
+      # transitives are fully resolved during the build execution, and skipping this step yields inaccurate results
+      - name: Run build script
         run: |
           FILE="./snyk-cli-build.sh"
           if [ -x "$FILE" ]; then
