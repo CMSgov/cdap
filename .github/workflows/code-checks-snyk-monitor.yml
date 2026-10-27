@@ -65,7 +65,7 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
 
-      # Prerequisite for AB2D build script to resolve dependencies in Artifactory
+      # Prerequisite for AB2D build script (Artifactory parameters)
       - uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
