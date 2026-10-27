@@ -19,5 +19,5 @@ variable "env" {
 variable "rate_limit" {
   description = "IP rate limit for every 5 minutes"
   type        = number
-  default     = null
+  default     = 3000
 }
