@@ -10,8 +10,10 @@ resource "datadog_monitor" "custom" {
   query = each.value.query
 
   monitor_thresholds {
-    critical = each.value.thresholds.critical
-    warning  = each.value.thresholds.warning # null = omitted by Datadog provider
+    critical          = each.value.thresholds.critical
+    critical_recovery = each.value.thresholds.critical_recovery
+    warning           = each.value.thresholds.warning # null = omitted by Datadog provider
+    warning_recovery  = each.value.thresholds.warning_recovery
   }
 
   on_missing_data = each.value.on_missing_data
