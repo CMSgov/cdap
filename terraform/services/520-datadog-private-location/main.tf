@@ -12,7 +12,7 @@ module "cdap_cluster" {
 # Service
 ###
 module "ecs_datadog_synthetics" {
-  source = "../../modules/service"
+  source                   = "../../modules/service"
   cluster_arn              = module.cdap_cluster.this.arn
   readonly_root_filesystem = false # Write permission required by Datadog private location worker
 
