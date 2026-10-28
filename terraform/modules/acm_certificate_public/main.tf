@@ -1,46 +1,5 @@
-locals {
-  internal_domain = (var.enable_internal_endpoint || var.enable_mtls_sidecar) ? (
-    "${var.platform.service}.${trimsuffix(data.aws_route53_zone.internal[0].name, ".")}"
-  ) : null
-  zscaler_domain = var.enable_zscaler_endpoint ? "${var.platform.service}.${trimsuffix(data.aws_route53_zone.zscaler[0].name, ".")}" : null
-
-  private_primary_domain = try(coalesce(local.internal_domain, local.zscaler_domain), null)
-
-  private_subject_alternative_names = compact([
-    (var.enable_internal_endpoint && var.enable_zscaler_endpoint) ? local.zscaler_domain : null,
-  ])
-
-  needs_private_cert = (
-    var.enable_internal_endpoint ||
-    var.enable_zscaler_endpoint ||
-    var.enable_mtls_sidecar
-  )
-}
-
 # -------------------------------------------------------
-# PRIVATE: Issue from AWS Private CA
-# -------------------------------------------------------
-resource "aws_acm_certificate" "private" {
-  count = local.needs_private_cert ? 1 : 0
-
-  certificate_authority_arn = one(data.aws_ram_resource_share.pace_ca[0].resource_arns)
-  domain_name               = local.private_primary_domain
-  subject_alternative_names = local.private_subject_alternative_names
-
-  tags = {
-    Name    = "${local.private_primary_domain}-private-cert"
-    MtLS    = tostring(var.enable_mtls_sidecar)
-    Zscaler = tostring(var.enable_zscaler_endpoint)
-  }
-
-  lifecycle {
-    prevent_destroy       = true
-    create_before_destroy = true
-  }
-}
-
-# -------------------------------------------------------
-# PUBLIC PATH: Import CMS-signed cert (developer note: use SOPS encrypted values)
+# Import CMS-signed cert (developer note: use SOPS encrypted values)
 # -------------------------------------------------------
 
 resource "tls_private_key" "this" {
@@ -105,20 +64,21 @@ resource "aws_ssm_parameter" "csr" {
 
 # Once cert information is provided via SOPS path, this will be set
 resource "aws_acm_certificate" "public" {
-  count = (
-    var.public_domain_name != null &&
-    var.public_certificate != null &&
-    var.public_private_key != null
-  ) ? 1 : 0
+  for_each = var.public_domain_name != null ? {
+    for v in var.public_certificate_versions : tostring(v) => v
+    if lookup(var.public_certificate, tostring(v), null) != null
+    && lookup(var.public_private_key, tostring(v), null) != null
+  } : {}
 
-  certificate_body  = var.public_certificate
-  private_key       = var.public_private_key
-  certificate_chain = var.public_certificate_chain
+  certificate_body  = var.public_certificate[each.key]
+  private_key       = var.public_private_key[each.key]
+  certificate_chain = try(var.public_certificate_chain[each.key], null)
 
-  tags = { Name = var.public_domain_name }
+  tags = { Name = "${var.public_domain_name}-v${each.key}" }
 
   lifecycle {
     prevent_destroy       = true
     create_before_destroy = true
   }
 }
+
