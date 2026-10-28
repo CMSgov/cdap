@@ -93,8 +93,3 @@ resource "aws_vpc_security_group_ingress_rule" "datadog_to_health" {
   ip_protocol                  = "tcp"
   description                  = "Allow Datadog synthetics to reach proxy health port ${var.proxy_healthcheck_port}"
 }
-
-data "aws_security_group" "vpce_clients_all" {
-  name   = "${var.platform.vpc_name}-vpce-clients-all"
-  vpc_id = var.platform.vpc_id
-}
