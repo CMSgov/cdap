@@ -1,4 +1,3 @@
-# FIXME Remove in PLT-1824
 resource "aws_vpc_security_group_egress_rule" "https" {
   count             = (length(var.security_groups) == 0) ? 1 : 0
   security_group_id = aws_security_group.task[0].id
@@ -34,67 +33,27 @@ resource "aws_vpc_security_group_ingress_rule" "datadog_synthetics" {
 # -------------------------------------------------------
 resource "aws_vpc_security_group_ingress_rule" "alb_to_proxy" {
   count = (
-    local.enable_mtls_sidecar &&
-    local.enable_alb_integration &&
-    length(var.security_groups) == 0 &&
-    var.alb_security_group_id != null
+    var.enable_alb_integration &&
+    var.alb_security_group_id != null &&
+    length(var.security_groups) == 0
   ) ? 1 : 0
 
   security_group_id            = aws_security_group.task[0].id
   referenced_security_group_id = var.alb_security_group_id
-  from_port                    = var.proxy_listen_port
-  to_port                      = var.proxy_listen_port
+  from_port                    = local.alb_ingress_port
+  to_port                      = local.alb_ingress_port
   ip_protocol                  = "tcp"
-  description                  = "Allow ALB to reach mTLS proxy on port ${var.proxy_listen_port}"
+  description                  = "Allow ALB to reach service on port ${local.alb_ingress_port}"
 }
 
-resource "aws_vpc_security_group_ingress_rule" "alb_to_health" {
-  count = (
-    local.enable_mtls_sidecar &&
-    local.enable_alb_integration &&
-    length(var.security_groups) == 0 &&
-    var.alb_security_group_id != null
-  ) ? 1 : 0
+# Datadog
 
+resource "aws_vpc_security_group_ingress_rule" "datadog_synthetics" {
+  count                        = (var.enable_datadog_synthetics_ingress && length(var.security_groups) == 0) ? 1 : 0
   security_group_id            = aws_security_group.task[0].id
-  referenced_security_group_id = var.alb_security_group_id
-  from_port                    = var.proxy_healthcheck_port
-  to_port                      = var.proxy_healthcheck_port
-  ip_protocol                  = "tcp"
-  description                  = "Allow ALB health check to reach proxy health port ${var.proxy_healthcheck_port}"
-}
-
-# -------------------------------------------------------
-# ALB SG egress to task
-# -------------------------------------------------------
-resource "aws_vpc_security_group_egress_rule" "alb_to_task_proxy" {
-  count = (
-    local.enable_mtls_sidecar &&
-    local.enable_alb_integration &&
-    var.alb_security_group_id != null
-  ) ? 1 : 0
-
-  security_group_id            = var.alb_security_group_id
-  referenced_security_group_id = aws_security_group.task[0].id
-  from_port                    = var.proxy_listen_port
-  to_port                      = var.proxy_listen_port
-  ip_protocol                  = "tcp"
-  description                  = "Allow ALB to reach mTLS proxy on port ${var.proxy_listen_port}"
-}
-
-resource "aws_vpc_security_group_egress_rule" "alb_to_task_health" {
-  count = (
-    local.enable_mtls_sidecar &&
-    local.enable_alb_integration &&
-    var.alb_security_group_id != null
-  ) ? 1 : 0
-
-  security_group_id            = var.alb_security_group_id
-  referenced_security_group_id = aws_security_group.task[0].id
-  from_port                    = var.proxy_healthcheck_port
-  to_port                      = var.proxy_healthcheck_port
-  ip_protocol                  = "tcp"
-  description                  = "Allow ALB health check to reach proxy health port ${var.proxy_healthcheck_port}"
+  referenced_security_group_id = data.aws_ssm_parameter.datadog_private_location_sg[0].value
+  ip_protocol                  = "-1"
+  description                  = "Allow all traffic from Datadog private location synthetic test runner"
 }
 
 # -------------------------------------------------------
@@ -108,6 +67,7 @@ resource "aws_vpc_security_group_ingress_rule" "datadog_to_app" {
   for_each = (
     var.enable_datadog_synthetics_ingress &&
     length(var.security_groups) == 0 &&
+    !local.enable_alb_integration &&
     !nonsensitive(local.enable_mtls_sidecar)
     ) ? {
     for pm in coalesce(var.port_mappings, []) :
@@ -127,6 +87,7 @@ resource "aws_vpc_security_group_ingress_rule" "datadog_to_app" {
 resource "aws_vpc_security_group_ingress_rule" "datadog_to_proxy" {
   count = (
     local.enable_mtls_sidecar &&
+    !local.enable_alb_integration &&
     length(var.security_groups) == 0 &&
     var.enable_datadog_synthetics_ingress
   ) ? 1 : 0
@@ -142,6 +103,7 @@ resource "aws_vpc_security_group_ingress_rule" "datadog_to_proxy" {
 resource "aws_vpc_security_group_ingress_rule" "datadog_to_health" {
   count = (
     local.enable_mtls_sidecar &&
+    !local.enable_alb_integration &&
     length(var.security_groups) == 0 &&
     var.enable_datadog_synthetics_ingress
   ) ? 1 : 0

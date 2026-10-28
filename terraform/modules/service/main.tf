@@ -9,26 +9,21 @@ locals {
   # Networking
   ###############
 
+  cluster_name = element(split("/", var.cluster_arn), length(split("/", var.cluster_arn)) - 1)
+
+  service_discovery_namespace_name = coalesce(
+    var.service_discovery_namespace_name_override,
+    "sc.${local.cluster_name}.internal.cms.gov"
+  )
+
   enable_alb_integration = var.enable_alb_integration && var.alb_listener_arn != null
 
-  # When mTLS is enabled the target group must use HTTPS — proxy is a TLS server
-  effective_tg_protocol = coalesce(
-    local.enable_mtls_sidecar ? "HTTPS" : null,
-    var.alb_target_group_protocol,
-    "HTTP"
-  )
+  effective_tg_protocol = coalesce(var.alb_target_group_protocol, "HTTP")
 
-  # ALB health check hits the plain HTTP health port — not the mTLS port
-  effective_health_check_protocol = local.enable_mtls_sidecar ? "HTTP" : coalesce(
-    var.alb_health_check.protocol,
-    "HTTP"
-  )
+  effective_health_check_protocol = coalesce(var.alb_health_check.protocol, "HTTP")
 
   # ALB health check targets the dedicated plain HTTP health port
-  effective_health_check_port = local.enable_mtls_sidecar ? tostring(var.proxy_healthcheck_port) : coalesce(
-    var.alb_health_check.port,
-    "traffic-port"
-  )
+  effective_health_check_port = coalesce(var.alb_health_check.port, "traffic-port")
 
   proxy_upstream_port = var.enable_mtls_sidecar ? try(
     [for pm in coalesce(var.port_mappings, []) : pm.containerPort
@@ -58,8 +53,17 @@ locals {
     local.proxy_port_mapping
   )
 
-  effective_alb_port_name     = local.enable_mtls_sidecar ? "proxy" : var.alb_port_name
-  alb_container_port          = local.enable_alb_integration && local.effective_alb_port_name != null ? try(local.port_map[local.effective_alb_port_name], null) : null
+  service_connect_services = [
+    for sc in var.service_connect : {
+      discovery_name = sc.port_name
+      dns_name       = sc.port_name
+      port           = sc.port
+      port_name      = sc.port_name
+    }
+  ]
+
+  alb_container_port          = local.enable_alb_integration && var.alb_port_name != null ? try(local.port_map[var.alb_port_name], null) : null
+  alb_ingress_port            = local.enable_mtls_sidecar ? var.proxy_listen_port : local.alb_container_port
   use_external_load_balancers = var.load_balancers != null && !local.enable_alb_integration
 
   ###############
@@ -431,10 +435,8 @@ resource "aws_ecs_service" "this" {
     for_each = local.enable_alb_integration ? [1] : []
     content {
       target_group_arn = aws_lb_target_group.this[0].arn
-      container_name = local.enable_mtls_sidecar ? "proxy" : (
-        var.service_name_override != null ? var.service_name_override : local.service_name
-      )
-      container_port = local.alb_container_port
+      container_name   = var.service_name_override != null ? var.service_name_override : local.service_name
+      container_port   = local.alb_container_port
     }
   }
 
@@ -448,42 +450,46 @@ resource "aws_ecs_service" "this" {
     }
   }
 
-  service_connect_configuration {
-    enabled   = var.service_connect_enabled ? true : false
-    namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace.arn
+  dynamic "service_connect_configuration" {
+    for_each = var.service_connect_enabled ? [1] : []
 
-    log_configuration {
-      log_driver = "awslogs"
-      options = {
-        "awslogs-group"         = module.app_logs.this.name
-        "awslogs-stream-prefix" = "service-connect"
-        "awslogs-region"        = "us-east-1"
-      }
-    }
+    content {
+      enabled   = var.service_connect_enabled ? true : false
+      namespace = data.aws_service_discovery_http_namespace.service_discovery_namespace[0].arn
 
-    access_log_configuration {
-      format                   = "TEXT"
-      include_query_parameters = "ENABLED"
-    }
-
-    dynamic "service" {
-      for_each = var.service_connect
-
-      content {
-        discovery_name = service.value.discovery_name
-        port_name      = service.value.port_name
-
-        client_alias {
-          dns_name = service.value.dns_name
-          port     = service.value.port
+      log_configuration {
+        log_driver = "awslogs"
+        options = {
+          "awslogs-group"         = module.app_logs.this.name
+          "awslogs-stream-prefix" = "service-connect"
+          "awslogs-region"        = "us-east-1"
         }
+      }
 
-        tls {
-          kms_key  = var.platform.kms_alias_primary["target_key_arn"]
-          role_arn = aws_iam_role.service_connect[0].arn
+      access_log_configuration {
+        format                   = "TEXT"
+        include_query_parameters = "ENABLED"
+      }
 
-          issuer_cert_authority {
-            aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
+      dynamic "service" {
+        for_each = local.service_connect_services
+
+        content {
+          discovery_name = service.value.discovery_name
+          port_name      = service.value.port_name
+
+          client_alias {
+            dns_name = service.value.dns_name
+            port     = service.value.port
+          }
+
+          tls {
+            kms_key  = var.platform.kms_alias_primary["target_key_arn"]
+            role_arn = aws_iam_role.service_connect[0].arn
+
+            issuer_cert_authority {
+              aws_pca_authority_arn = one(data.aws_ram_resource_share.pace_ca.resource_arns)
+            }
           }
         }
       }
@@ -498,7 +504,6 @@ resource "aws_ecs_service" "this" {
     module.app_logs,
     module.datadog_logs,
     aws_lb_listener_rule.this,
-    aws_iam_role_policy_attachment.service_connect,
     aws_iam_role.service_connect
   ]
 
@@ -543,16 +548,12 @@ resource "aws_lb_target_group" "this" {
   lifecycle {
     create_before_destroy = true
     precondition {
-      condition     = local.enable_mtls_sidecar || var.alb_port_name != null
-      error_message = "alb_port_name is required when alb_listener_arn is set and enable_mtls_sidecar is false."
+      condition     = var.alb_port_name != null
+      error_message = "alb_port_name is required when alb_listener_arn is set."
     }
 
     precondition {
-      condition = (
-        local.enable_mtls_sidecar ||
-        var.alb_port_name == null ||
-        contains(keys(local.port_map), var.alb_port_name)
-      )
+      condition     = var.alb_port_name == null || contains(keys(local.port_map), var.alb_port_name)
       error_message = "alb_port_name '${coalesce(var.alb_port_name, "(null)")}' does not match any named port in port_mappings."
     }
 
@@ -560,6 +561,11 @@ resource "aws_lb_target_group" "this" {
     precondition {
       condition     = !local.enable_mtls_sidecar || local.effective_tg_protocol == "HTTPS"
       error_message = "Target group protocol must be HTTPS when mtls_cert_arn is set."
+    }
+
+    precondition {
+      condition     = !local.enable_mtls_sidecar || var.alb_target_group_protocol == null
+      error_message = "enable_mtls_sidecar is not supported with this ALB-integration path. The mTLS sidecar requires raw TLS pass-through, which only an NLB provides — an ALB terminates TLS before the container ever sees it. Front this service with an NLB target group instead."
     }
   }
 }

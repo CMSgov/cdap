@@ -1,8 +1,3 @@
-locals {
-  config       = yamldecode(file("${path.module}/config/${var.env}.yml"))
-  cluster_name = try(local.config.ecs.cluster, "cdap-${var.env}")
-}
-
 data "aws_ecs_cluster" "tftesting" {
   cluster_name = local.cluster_name
 }
@@ -18,6 +13,7 @@ resource "aws_ssm_parameter" "test_ssm_parameter" {
 }
 
 module "tftesting_service" {
+  count                  = local.services_enabled ? 1 : 0
   enable_execute_command = false
   source                 = "../../modules/service/"
   enable_datadog_agent   = true

@@ -7,3 +7,5 @@ image:
 
 ecs:
   cluster: cdap-test-tftesting
+
+services_enabled: false

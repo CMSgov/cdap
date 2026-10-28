@@ -79,3 +79,13 @@ variable "untagged_expiry_days" {
   type        = number
   default     = 14
 }
+
+variable "external_account_share" {
+  description = <<-EOT
+    Optional AWS account IDs to share this repository with for
+    cross-account pull access. When non-empty, a repository policy is
+    attached granting those accounts permission to pull images.
+  EOT
+  type        = list(string)
+  default     = []
+}
