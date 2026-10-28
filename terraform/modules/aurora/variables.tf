@@ -61,10 +61,14 @@ variable "enable_iam_database_authentication" {
   default     = true
 }
 
-variable "needs_s3_access" {
-  description = "Whether this database calls S3 directly and will do so through VPC endpoint"
+variable "needs_interface_access" {
+  description = <<-EOT
+    Whether this database calls S3 directly and will do so through VPC endpoint.
+    Also supports network access to KMS. Currently required for AWS Quick Exports, 
+    they use calls like `aws_s3.query_export_to_s3`. 
+  EOT
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "platform" {

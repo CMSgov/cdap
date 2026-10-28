@@ -39,7 +39,7 @@ sonar_extra_args: "..."      # rarely needed — prefer sonar-project.properties
 
 # Adding a module that calls AWS APIs or other AWS services
 
-If your module's resource makes any AWS API call from inside the VPC (directly, through the AWS provider itself, through a local-exec/data lookup, or through application code at runtime), it needs explicit security group membership to reach our interface/gateway endpoints. There is no default path anymore; egress is intentionally not open by default.
+If your module's resource makes any AWS API call from inside the VPC (directly, through the AWS provider itself, through a local-exec/data lookup, or through application code at runtime), it needs explicit security group membership to reach our interface/gateway endpoints as egress may become increasingly restricted.
 
 1. Does your resource have its own security group?
 
