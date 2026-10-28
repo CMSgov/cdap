@@ -107,6 +107,7 @@ def test_health_handler_returns_200():
     handler = HealthHandler.__new__(HealthHandler)
     handler.path = "/health"
     handler.send_response = MagicMock()
+    handler.send_header   = MagicMock()
     handler.end_headers   = MagicMock()
     handler.wfile         = MagicMock()
 
@@ -115,11 +116,13 @@ def test_health_handler_returns_200():
     handler.send_response.assert_called_once_with(200)
     handler.wfile.write.assert_called_once_with(b"OK")
 
+
 def test_health_handler_returns_200_for_ping():
     """HealthHandler should return 200 for /ping with pong body."""
     handler = HealthHandler.__new__(HealthHandler)
     handler.path = "/ping"
     handler.send_response = MagicMock()
+    handler.send_header   = MagicMock()
     handler.end_headers   = MagicMock()
     handler.wfile         = MagicMock()
 
@@ -135,6 +138,7 @@ def test_health_handler_returns_404():
     handler = HealthHandler.__new__(HealthHandler)
     handler.path = "/unknown"
     handler.send_response = MagicMock()
+    handler.send_header   = MagicMock()
     handler.end_headers   = MagicMock()
     handler.wfile         = MagicMock()
 
@@ -148,13 +152,14 @@ def test_health_handler_returns_404_for_root():
     handler = HealthHandler.__new__(HealthHandler)
     handler.path = "/"
     handler.send_response = MagicMock()
+    handler.send_header   = MagicMock()
     handler.end_headers   = MagicMock()
     handler.wfile         = MagicMock()
 
     handler.do_GET()
 
     handler.send_response.assert_called_once_with(404)
-
+    
 # -------------------------------------------------------
 # call_downstream tests
 # -------------------------------------------------------
