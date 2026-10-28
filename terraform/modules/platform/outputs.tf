@@ -186,11 +186,3 @@ output "cdap_public_ips" {
   sensitive   = true
   value       = [for gw in data.aws_nat_gateway.cdap : "${gw.public_ip}/32"]
 }
-
-output "vpc_name" {
-  value = local.primary_vpc_name
-}
-
-output "secondary_vpc_name" {
-  value = local.secondary_vpc_name
-}
