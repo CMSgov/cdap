@@ -79,6 +79,14 @@ output "cdap_vpc_name" {
   value = "cdap-${local.region_dir}-${local.env == "prod" ? "prod" : "test"}"
 }
 
+output "vpc_name" {
+  value = local.primary_vpc_name
+}
+
+output "secondary_vpc_name" {
+  value = local.secondary_vpc_name
+}
+
 output "private_subnets" {
   description = "Map of current VPC **private** [aws_subnet data sources](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnet), keyed by `subnet_id`"
   sensitive   = true
@@ -177,12 +185,4 @@ output "cdap_public_ips" {
   description = "NAT Gateway IP that is used by CDAP to run core services, such as Datadog Private Location."
   sensitive   = true
   value       = [for gw in data.aws_nat_gateway.cdap : "${gw.public_ip}/32"]
-}
-
-output "vpc_name" {
-  value = local.primary_vpc_name
-}
-
-output "secondary_vpc_name" {
-  value = local.secondary_vpc_name
 }

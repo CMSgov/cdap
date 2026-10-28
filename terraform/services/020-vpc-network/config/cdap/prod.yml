@@ -1,0 +1,2 @@
+enable_interface_endpoints: false
+# allow cdap-test to run smoothly for a day before turning on prod
