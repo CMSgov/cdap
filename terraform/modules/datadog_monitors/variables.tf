@@ -20,6 +20,7 @@ variable "monitor_config" {
     }), {})
 
     enabled = optional(object({
+      acm        = optional(bool, true)
       ecs        = optional(bool, true)
       sqs        = optional(bool, true)
       sns        = optional(bool, true)
@@ -27,6 +28,14 @@ variable "monitor_config" {
       s3         = optional(bool, true)
       rds        = optional(bool, true)
       synthetics = optional(bool, true)
+    }), {})
+
+    acm = optional(object({
+      timeframe                 = string
+      critical_days_threshold   = number
+      warning_days_threshold    = number
+      notify_no_data            = bool
+      no_data_timeframe_minutes = number
     }), {})
 
     ecs = optional(object({
