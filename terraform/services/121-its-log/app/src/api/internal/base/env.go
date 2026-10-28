@@ -76,6 +76,7 @@ func GetApiKeys() error {
 	LiveKeys = make([]types.ApiKey, 0)
 
 	allvars := os.Environ()
+
 	for _, e := range allvars {
 		key := types.ApiKey{}
 		pair := strings.SplitN(e, "=", 2)
@@ -100,6 +101,10 @@ func GetApiKeys() error {
 			key.ConfigurePermissions()
 			LiveKeys = append(LiveKeys, key)
 		}
+	}
+
+	if len(LiveKeys) < 1 {
+		return fmt.Errorf("no API keys configured")
 	}
 
 	return nil

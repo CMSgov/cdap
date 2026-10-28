@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -29,12 +30,9 @@ func Serve(params types.ServeParams) {
 	// saving events that come in via the API
 	ch_eb := make(chan types.EventBuffer)
 	ch_evt := make(chan *types.Event)
-	//ch_funs := make(chan func())
 
-	// FIXME: add these constants to the configuration
-	go csp.Enqueue(ch_evt, ch_eb, buffer_length, buffer_flushwaitsec)
+	go csp.Enqueue(context.Background(), ch_evt, ch_eb, buffer_length, buffer_flushwaitsec)
 	go csp.FlushBuffers(ch_eb)
-	// This updates *yesterdays* database on minute one of the day
 
 	engine := PourGin(ch_evt)
 	if params.Mode == "debug" {

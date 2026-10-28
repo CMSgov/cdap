@@ -20,12 +20,13 @@
 package csp
 
 import (
+	"context"
 	"time"
 
 	"github.com/navapbc/its-log/internal/types"
 )
 
-func Enqueue(ch_evt_in <-chan *types.Event, ch_flush_out chan<- types.EventBuffer, bufferLength int, timeout int) {
+func Enqueue(ctx context.Context, ch_evt_in <-chan *types.Event, ch_flush_out chan<- types.EventBuffer, bufferLength int, timeout int) {
 	event_buffers := types.NewEventBuffer(bufferLength)
 	timeoutDuration := time.Duration(timeout) * time.Second
 	timer := time.NewTimer(timeoutDuration)
@@ -33,6 +34,10 @@ func Enqueue(ch_evt_in <-chan *types.Event, ch_flush_out chan<- types.EventBuffe
 
 	for {
 		select {
+		case <-ctx.Done():
+			// We will typically run forever; in the case of unit tests, we may want to terminate the
+			// infinite loop early. A context lets us do that.
+			return
 		case e := <-ch_evt_in:
 			is_full := event_buffers.AddEvent(e)
 			// We reset the timer here because we're "live" and getting
