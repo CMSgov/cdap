@@ -18,7 +18,7 @@ DD_VERSION = os.environ.get("DD_VERSION", "unknown")
 
 DOWNSTREAM_URL = os.environ.get("DOWNSTREAM_URL", "")
 EMIT_INTERVAL  = int(os.environ.get("EMIT_INTERVAL_SECONDS", 30))
-
+CONTENT_TYPE_JSON = "application/json"
 
 def wait_for_datadog_agent(host="localhost", port=8126, timeout=60, interval=2):
     start = time.time()
@@ -68,7 +68,7 @@ class HealthHandler(BaseHTTPRequestHandler):
         elif self.path == "/integration-test":
             if not DOWNSTREAM_URL:
                 body = b'{"error": "DOWNSTREAM_URL not configured"}'
-                self._respond(503, body, "application/json")
+                self._respond(503, body, CONTENT_TYPE_JSON)
                 return
 
             with tracer.trace("integration-test.call", service=DD_SERVICE, resource=DOWNSTREAM_URL) as span:
@@ -84,13 +84,13 @@ class HealthHandler(BaseHTTPRequestHandler):
                         resp_body = resp.read().decode()
                         span.set_tag("downstream.status", resp.status)
                         result = {"status": "ok", "response": resp_body}
-                        self._respond(200, json.dumps(result).encode(), "application/json")
+                        self._respond(200, json.dumps(result).encode(), CONTENT_TYPE_JSON)
 
                 except Exception as e:
                     span.set_tag("error", True)
                     span.set_tag("error.message", str(e))
                     result = {"status": "error", "error": str(e)}
-                    self._respond(502, json.dumps(result).encode(), "application/json")
+                    self._respond(502, json.dumps(result).encode(), CONTENT_TYPE_JSON)
         else:
             self.send_response(404)
             self.send_header("Content-Length", "0")
