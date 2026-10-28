@@ -13,9 +13,8 @@ output "alb_zone_id" {
   value       = aws_lb.this.zone_id
 }
 
-output "https_listener_arn" {
-  description = "ARN of the HTTPS:443 listener. Listener can be used in downstream modules."
-  value       = aws_lb_listener.https.arn
+output "https_listener_arns" {
+  value = { for k, l in aws_lb_listener.https : k => l.arn }
 }
 
 output "security_group_id" {
@@ -39,4 +38,14 @@ output "security_group_id" {
 output "internal" {
   description = "Whether the ALB is internal (private) or internet-facing."
   value       = var.internal
+}
+
+output "internal_record" {
+  description = "Full record for internal connections to ALB"
+  value       = var.create_internal_dns_record ? aws_route53_record.internal_alb[0].fqdn : null
+}
+
+output "zscaler_record" {
+  description = "Full record for zscaler connections to ALB"
+  value       = var.create_zscaler_dns_record ? aws_route53_record.zscaler_alb[0].fqdn : null
 }
