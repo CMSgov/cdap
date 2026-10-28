@@ -88,6 +88,7 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     actions = [
       "ecr:BatchCheckLayerAvailability",
       "ecr:BatchGetImage",
+      "ecr:Describe*",
       "ecr:GetLifecyclePolicy",
       "ecr:GetRepositoryPolicy",
       "ecr:SetRepositoryPolicy",
