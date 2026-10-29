@@ -46,8 +46,11 @@ variable "log_retention_days" {
   }
 
   validation {
-    # 0 means never-expire, which satisfies the minimum.
-    condition     = !endswith(var.env, "prod") || var.log_retention_days == 0 || var.log_retention_days >= 180
+    # In prod environments, retention must be never-expire (0) or at least 180 days.
+    # Non-prod environments may use any supported value.
+    condition = strcontains(var.env, "prod") ? (
+      var.log_retention_days == 0 || var.log_retention_days >= 180
+    ) : true
     error_message = "log_retention_days must be at least 180 (or 0 for never-expire) in production environments."
   }
 }
