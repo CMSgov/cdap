@@ -40,13 +40,13 @@ The end-to-end tests are in `api/e2e`. These will stand up the server and execut
 
 `its-log` encapsulates an entire extract/transform/load service. This allows users of `its-log` to write transforms in SQL, Golang, and [Starlark](https://starlark-lang.org/), a Python-like scripting language. These transforms can be added dynamically via API (think as part of "infrastructure as code"), executed, and the results downloaded from the `summary` table.
 
-How to write ETLs in each of these langauges is covered further in the [ETL HOWTO](etl-howto.md).
+How to write ETLs in each of these languages is covered further in the [ETL HOWTO](etl-howto.md).
 
 ## adding database queries
 
 We use [sqlc](https://sqlc.dev/) wherever possible for interacting with the database. This is **not** an ORM. Instead, sqlc analyzes SQL code, and then *generates* a Golang wrapper from that SQL. Models for tables are generated, as well as functions for querying and inserting values (as appropriate).
 
-The schema for the `its-log` database is stored in `api/internal/schema/schema.sql`, and the queries we use to search and insert into the datbase are in `api/internal/schema/query.sql`. 
+The schema for the `its-log` database is stored in `api/internal/schema/schema.sql`, and the queries we use to search and insert into the database are in `api/internal/schema/query.sql`. 
 
 By way of example, here is the query that inserts events into the log table:
 
@@ -88,7 +88,7 @@ func (q *Queries) LogEvent(ctx context.Context, arg LogEventParams) (int64, erro
 Wherever and whenever possible, sqlc should be used for interaction with the database.
 
 > [!NOTE]
-> There are currently **no** migrations built into `its-log`. Becasue `its-log` creates a new table each day, we assume (perhaps incorrectly) that we can introduce new models cleanly. However, if versioning is required, adding a key/value `itslog_metadata` table (where we can determine what version of the database is present) may be useful. 
+> There are currently **no** migrations built into `its-log`. Because `its-log` creates a new table each day, we assume (perhaps incorrectly) that we can introduce new models cleanly. However, if versioning is required, adding a key/value `itslog_metadata` table (where we can determine what version of the database is present) may be useful. 
 >
-> Versioning/migrating the daily databases would likely be a challenge, and may require more substantial architectural thoguht if that day comes to pass.
+> Versioning/migrating the daily databases would likely be a challenge, and may require more substantial architectural thought if that day comes to pass.
 

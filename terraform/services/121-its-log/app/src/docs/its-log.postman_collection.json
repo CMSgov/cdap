@@ -638,7 +638,7 @@
             }
           ]
         },
-        "description": "This is actually an ETL action. But, it is interesting, so it is broken out.\n\nThis calls the `backup` ETL, which locks the database, closes it, and copies it to S3.\n\nTo run this, you need a local S3 clone running.\n\n``` bash\nmake storage\n\n ```\n\nshould work in this repository.\n\nThen, invoke this ETL. Note that it requries parameters; the key `dates-to-backup` must be passed as an array of YYYY-MM-DD dates (or `today`), which will copy each database listed to S3.\n\nIf the DB cannot be found or backed up, it is skipped, and we go on to the next database."
+        "description": "This is actually an ETL action. But, it is interesting, so it is broken out.\n\nThis calls the `backup` ETL, which locks the database, closes it, and copies it to S3.\n\nTo run this, you need a local S3 clone running.\n\n``` bash\nmake storage\n\n ```\n\nshould work in this repository.\n\nThen, invoke this ETL. Note that it requires parameters; the key `dates-to-backup` must be passed as an array of YYYY-MM-DD dates (or `today`), which will copy each database listed to S3.\n\nIf the DB cannot be found or backed up, it is skipped, and we go on to the next database."
       },
       "response": []
     }

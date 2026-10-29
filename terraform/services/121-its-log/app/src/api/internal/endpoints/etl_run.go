@@ -100,7 +100,7 @@ func RunEtl(c *gin.Context) {
 }
 
 func runEtl(etlP *etl.RunEtlParams) error {
-	// There is a lock burried down the call tree...
+	// There is a lock buried down the call tree...
 	// etlP.Storage.Lock("runEtl")
 	etlRow, err := etlP.Storage.GetEtlFromDb(etlP.EtlName)
 	// etlP.Storage.Unlock("runEtl")
