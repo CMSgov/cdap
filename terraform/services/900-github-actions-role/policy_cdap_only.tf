@@ -90,8 +90,6 @@ data "aws_iam_policy_document" "github_actions_cdap" {
       "ecr:BatchGetImage",
       "ecr:Describe*",
       "ecr:GetLifecyclePolicy",
-      "ecr:GetRepositoryPolicy",
-      "ecr:SetRepositoryPolicy",
       "ecr:List*",
     ]
     resources = ["*"]
@@ -112,6 +110,15 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     ]
     resources = ["*"]
   }
+
+  # Service work ; not limiting deletion supports safety for teams 
+  statement {
+    actions = [
+      "servicediscovery:DeleteNamespace",
+    ]
+    resources = ["*"]
+  }
+
   statement {
     sid = "S3SharedBucketTagging"
     actions = [
