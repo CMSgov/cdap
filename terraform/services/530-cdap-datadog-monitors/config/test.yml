@@ -5,6 +5,7 @@ notifications:
   victorops: false
 
 enabled:
+  acm: true
   ecs: true
   sqs: true
   sns: false

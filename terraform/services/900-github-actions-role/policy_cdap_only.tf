@@ -90,6 +90,8 @@ data "aws_iam_policy_document" "github_actions_cdap" {
       "ecr:BatchGetImage",
       "ecr:Describe*",
       "ecr:GetLifecyclePolicy",
+      "ecr:GetRepositoryPolicy",
+      "ecr:SetRepositoryPolicy",
       "ecr:List*",
     ]
     resources = ["*"]
