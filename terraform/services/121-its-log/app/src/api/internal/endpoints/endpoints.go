@@ -14,3 +14,6 @@ const METADATA_STATUS = "/status"
 
 const SUMMARY_READ = "/summary/read"
 const SUMMARY_CREATE = "/summary/create"
+
+const ARCHIVE = "/archive"
+const ARCHIVE_SUMMARY_READ = "/archive/summary/read"

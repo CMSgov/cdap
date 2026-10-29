@@ -29,20 +29,26 @@ func callWithParams(etlP *etl.RunEtlParams, theSql string) *sql.Row {
 	return etlRow
 }
 
-func insertDefaultParams(etlP *etl.RunEtlParams) *etl.RunEtlParams {
+func insertDefaultParams(etlP *etl.RunEtlParams) (*etl.RunEtlParams, error) {
 	payload := etlP.Payload
 	payload["key_id"] = etlP.KeyId
 	payload["app_id"] = etlP.AppId
-	// If the date is in the payload, and it is today, convert it.
+	// If the date is in the payload, and it is today or yesterday, convert it.
 	if v, ok := payload["date"]; ok {
-		if v == "today" {
-			payload["date"] = types.NewILTimeToday().AsYYYYMMDD()
+		date, err := types.SanitizeDate(v.(string))
+		if err != nil {
+			msg := "default parameter for date failed to parse"
+			zap.L().Error(msg,
+				zap.String("date", v.(string)))
+			return nil, errors.New(msg)
 		}
+		payload["date"] = date
 	} else {
+		// If it was not in the payload, assume it is today.
 		payload["date"] = types.NewILTimeToday().AsYYYYMMDD()
 	}
 	etlP.Payload = payload
-	return etlP
+	return etlP, nil
 }
 
 func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow, tx *sql.Tx) error {

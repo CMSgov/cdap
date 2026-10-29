@@ -2,7 +2,8 @@
 CONTAINER_CMD ?= $(shell command -v podman 2> /dev/null || echo docker)
 
 prep-local:
-	mkdir -p ~/.its-log/data
+	mkdir -p ${HOME}/.its-log/data
+	mkdir -p ${HOME{/.its-log/archive
 
 build: prep-local
 	cd src/api ; go build -o its-log .

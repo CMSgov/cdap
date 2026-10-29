@@ -6,6 +6,7 @@ services:
       - "8888:8888"
     volumes:
       - ${HOME}/.its-log/data:/data
+      - ${HOME}/.its-log/archive:/archive
     healthcheck:
       test: ["CMD", "curl", "-f", "http://itslog:8888/v1/health"]
       interval: 300s

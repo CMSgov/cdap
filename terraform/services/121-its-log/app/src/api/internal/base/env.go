@@ -25,6 +25,7 @@ var minimum = []string{
 	"ITSLOG_SERVE_HOST",
 	"ITSLOG_SERVE_PORT",
 	"ITSLOG_STORAGE_PATH",
+	"ITSLOG_ARCHIVE_PATH",
 }
 
 func ConfirmEnvVars() error {

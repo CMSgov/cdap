@@ -8,6 +8,7 @@ import (
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/types"
+	"go.uber.org/zap"
 )
 
 // its-log is intended to be used by a single application.
@@ -30,10 +31,21 @@ func AuthMiddleWare(permissions []types.PermissionType) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		api_key := c.GetHeader("x-api-key")
 		for _, key := range base.LiveKeys {
-			keylen := len(api_key)
-			doesContain := slices.Contains(permissions, key.Permission)
-			if doesContain && keylen >= constants.MINIMUM_API_KEY_LENGTH {
-				if api_key == key.Key {
+			// If this is a valid API key, do more checks.
+			if api_key == key.Key {
+				keylen := len(api_key)
+				doesContain := slices.Contains(permissions, key.Permission)
+				// Log if (somehow) a valid API key fails to meet these constraints.
+				if !doesContain {
+					zap.L().Error("key lacks permissions",
+						zap.String("app_id", key.AppId),
+						zap.String("key_id", key.KeyId))
+				} else if keylen < constants.MINIMUM_API_KEY_LENGTH {
+					zap.L().Error("key too short",
+						zap.String("app_id", key.AppId),
+						zap.String("key_id", key.KeyId))
+				} else {
+					zap.L().Debug("Found key", zap.String("key_id", key.KeyId))
 					c.Set(constants.ITSLOG_KEYID, key.KeyId)
 					c.Set(constants.ITSLOG_APPID, key.AppId)
 					return

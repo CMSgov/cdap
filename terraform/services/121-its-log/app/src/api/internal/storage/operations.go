@@ -30,8 +30,8 @@ const SQL_NAMED_PARAM_SYMBOL = "$"
 
 var activeStorageConnections StorageMap = make(StorageMap, 0)
 
-func (s *Storage) DoesDBExist() bool {
-	dbPath := path.Join(path.Join(s.Path...))
+func DoesDBExist(pathArr []string) bool {
+	dbPath := path.Join(pathArr...)
 
 	_, err := os.Stat(dbPath)
 	// If we don't get an error, the file exists.
@@ -40,7 +40,7 @@ func (s *Storage) DoesDBExist() bool {
 	}
 	// If there is an error, we'll log and return.
 	if errors.Is(err, os.ErrNotExist) {
-		zap.L().Error("file does not exist",
+		zap.L().Info("file does not exist",
 			zap.String("filename", dbPath))
 		return false
 	}
@@ -48,7 +48,7 @@ func (s *Storage) DoesDBExist() bool {
 	// Other errors could have occurred; for example,
 	// there could be a disk error. Instead of handling everything,
 	// we'll log the error, and indicate we cannot find the file.
-	zap.L().Error("unknown error; file effectively does not exist",
+	zap.L().Info("unknown error; file effectively does not exist",
 		zap.Error(err))
 	return false
 }
@@ -56,9 +56,13 @@ func (s *Storage) DoesDBExist() bool {
 func ReuseStorage(appId string, date string) (*Storage, error) {
 	// Did we store it in the map?
 	// If so, return it. We want these to be persistent for the session
-	if date == "today" {
-		currentDate := types.NewILTimeToday()
-		date = currentDate.AsYYYYMMDD()
+
+	// FIXME: This does not show up often, but if this pattern starts to appear
+	// in multiple places, we should abstract it away. Some kind of "date sanitization"
+	// that handles the special cases of "today" and "yesterday".
+	date, err := types.SanitizeDate(date)
+	if err != nil {
+		return nil, err
 	}
 
 	if s, ok := activeStorageConnections[appId+date]; ok {
@@ -72,7 +76,7 @@ func ReuseStorage(appId string, date string) (*Storage, error) {
 		// in production; we can force it locally in a containerized env.
 		// We're going to panic if it happens.
 		// https://stackoverflow.com/questions/78586256/how-to-force-duckdb-to-reconnect-to-a-file-and-prevent-it-from-remembering-conte
-		if !s.DoesDBExist() {
+		if !DoesDBExist(s.Path) {
 			panic("database file does not exist!")
 		}
 		return s, nil
@@ -80,10 +84,6 @@ func ReuseStorage(appId string, date string) (*Storage, error) {
 
 	return nil, fmt.Errorf("storage not found for %s", date)
 }
-
-// func RemoveStorage(appId string, date string) {
-// 	delete(activeStorageConnections, appId+date)
-// }
 
 // Helper for the endpoints and other uses across the codebase
 // This is the preferred entrypoint to the Storage API.
@@ -131,27 +131,10 @@ func NewStorage(appId string) (*Storage, error) {
 	return s, nil
 }
 
-func (s *Storage) InitDB() error {
-	// Compute filename based on date and app ID
-	s.Filename = fmt.Sprintf("%s_%s.duckdb", s.AppId, s.YYYYMMDD())
-	s.Path = []string{viper.GetString("storage.path"), s.Filename}
-
-	// Don't re-initialize a database
-	if s.db != nil {
-		return nil
-	}
-
-	dbPath := path.Join(path.Join(s.Path...))
-	// Create tables
-	// DEBUG LOG
-	// log.Printf("Storage.Init: opening %s\n", s.Filename)
+func getDuckDBConnector(dbPath string, bootQueries []string) (*duckdb.Connector, error) {
 	c, err := duckdb.NewConnector(dbPath, func(execer driver.ExecerContext) error {
 		// https://duckdb.org/docs/current/configuration/overview
-		bootQueries := []string{
-			`SET threads TO 20`,
-			// `SET schema=main`,
-			// `SET search_path=main`,
-		}
+
 		for _, query := range bootQueries {
 			_, err := execer.ExecContext(context.Background(), query, nil)
 			if err != nil {
@@ -160,19 +143,47 @@ func (s *Storage) InitDB() error {
 		}
 		return nil
 	})
+	return c, err
+}
 
+func ConstructDBFilenameAndPath(appId string, date string) (string, []string) {
+	// Compute filename based on date and app ID
+	fname := fmt.Sprintf("%s_%s.duckdb", appId, date)
+	path := []string{viper.GetString("storage.path"), fname}
+	return fname, path
+}
+
+func OpenDatabase(path string) (*sql.DB, *duckdb.Connector, error) {
+	c, err := getDuckDBConnector(path, make([]string, 0))
+	if err != nil {
+		return nil, nil, err
+	}
+	db := sql.OpenDB(c)
+	return db, c, nil
+
+}
+
+func (s *Storage) InitDB() error {
+	s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, s.YYYYMMDD())
+	// Don't re-initialize a database
+	if s.db != nil {
+		return nil
+	}
+
+	dbPath := path.Join(s.Path...)
+	c, err := getDuckDBConnector(dbPath, []string{`SET threads TO 20`})
 	if err != nil {
 		return err
 	}
 	db := sql.OpenDB(c)
 
-	// We might need the raw context connector for appenders.
+	// We need the raw context connector for appenders.
 	s.connector = c
 	s.db = db
 
+	// We do not PREPARE schema.
 	s.Schema = NewEmbedSql("schema")
 	s.Schema.Init(db)
-	// We do not PREPARE schema.
 
 	// Tables must exist in order to prepare statements.
 	// Create the tables next.
@@ -180,12 +191,21 @@ func (s *Storage) InitDB() error {
 	if err != nil {
 		return err
 	}
-
+	// We do PREPARE the SQL for endpoints.
 	s.Endpoints = NewEmbedSql("endpoints")
 	s.Endpoints.Init(db)
 	s.Endpoints.Prepare()
 
 	activeStorageConnections[s.AppId+s.YYYYMMDD()] = s
+
+	// This forces the creation of an empty file.
+	db.Close()
+	c, err = getDuckDBConnector(dbPath, make([]string, 0))
+	db = sql.OpenDB(c)
+	s.db, s.connector, err = OpenDatabase(dbPath)
+	if err != nil {
+		panic("could not open the database")
+	}
 
 	return nil
 }
@@ -244,7 +264,9 @@ func (s *Storage) Query(kind StoredSql, name string, params EmbedParamMap) (*sql
 	s.Lock("Query")
 	switch kind {
 	case Schema:
-		zap.L().Error("cannot query a schema")
+		msg := "cannot query a schema"
+		zap.L().Error(msg)
+		err = errors.New(msg)
 	case Endpoint:
 		args, err := s.PrepareNamedArgs(name, params)
 		if err != nil {
@@ -300,10 +322,29 @@ func (s *Storage) Close() {
 }
 
 func (s *Storage) Flush() {
-
+	// This flushes any outstanding actions/transactions on the DuckDB.
+	// Good to do before closing the file or doing any operations on the DB file itself.
 	_, err := s.db.Exec("CHECKPOINT;")
 	if err != nil {
-		panic("could not checkpoint the DB")
+		// Try once more, after trying to open the database.
+		if DoesDBExist(s.Path) {
+			// It exists. Lets try to open it. For some reason, we were closed.
+			s.db, s.connector, err = OpenDatabase(path.Join(s.Path...))
+			if err != nil {
+				msg := "tried to reopen the database, could not"
+				zap.L().Error(msg, zap.Error(err))
+				panic(msg)
+			}
+			zap.L().Info("had to reopen the datbase",
+				zap.String("app_id", s.AppId),
+				zap.String("filename", s.Filename),
+				zap.String("date", s.YYYYMMDD()))
+		} else {
+			msg := "could not checkpoint the db"
+			zap.L().Error(msg, zap.Error(err))
+			panic(msg)
+
+		}
 	}
 
 }
@@ -331,6 +372,7 @@ func (s *Storage) Unlock(location string) {
 }
 
 func (s *Storage) Delete() {
+	s.Flush()
 	s.db.Close()
 	path := path.Join(viper.GetString("storage.path"), s.Filename)
 	log.Printf("Deleting database: %s", path)
@@ -413,6 +455,11 @@ func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, er
 	} else {
 		theSql = s.Endpoints.Files[name]
 	}
+
+	// We now are going to figure out which named params are present in the SQL.
+	// That way, we only create named args for things that are present.
+	// The SQL engine does not like when you pass named paramters that do not exist in the SQL.
+	// E.g. we cannot provide more names than exist.
 	re := regexp.MustCompile(`\` + SQL_NAMED_PARAM_SYMBOL + `([a-zA-Z0-9_]+)`)
 	matches := re.FindAllString(theSql, -1)
 
@@ -440,6 +487,10 @@ func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, er
 
 func (s *Storage) GetMaxId(etl string, params EmbedParamMap) (int64, error) {
 	// The appender must supply all columns.
+	// Therefore, we need to provide the PK, which is an incrementing integer.
+	// Flushes are strictly sequential, because of the architecture of its-log.
+	// Therefore, it should be safe to get the id and then do the inserts. Two buffer
+	// flushes cannot collide; the channel semantics protect this.
 	var max_id int64
 	args, err := s.PrepareNamedArgs(etl, params)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
 	"go.uber.org/zap"
@@ -100,34 +101,34 @@ func RunEtl(c *gin.Context) {
 }
 
 func runEtl(etlP *etl.RunEtlParams) error {
-	// There is a lock burried down the call tree...
-	// etlP.Storage.Lock("runEtl")
 	etlRow, err := etlP.Storage.GetEtlFromDb(etlP.EtlName)
-	// etlP.Storage.Unlock("runEtl")
 	if err != nil {
 		return err
 	}
 
-	etlP = insertDefaultParams(etlP)
+	etlP, err = insertDefaultParams(etlP)
+	if err != nil {
+		return err
+	}
 
 	switch etlRow.Kind {
-	case "sql":
+	case constants.SQL:
 		err := etlRunSql(etlP, etlRow, nil)
 		if err != nil {
 			return err
 		}
-	case "golang":
+	case constants.GOLANG:
 		err := etlRunGolang(etlP, etlRow, nil)
 		if err != nil {
 			return err
 		}
-	case "starlark":
+	case constants.STARLARK:
 		err := etlRunStarlark(etlP, etlRow, nil)
 		if err != nil {
 			return err
 		}
 
-	case "sequence":
+	case constants.SEQUENCE:
 		// The name of the step will have been loaded into the context.
 
 	default:

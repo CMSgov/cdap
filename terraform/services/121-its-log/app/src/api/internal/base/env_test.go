@@ -4,6 +4,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"go.uber.org/zap/zapcore"
 )
 
 func TestConfirmEnvVars(t *testing.T) {
@@ -118,6 +120,17 @@ func TestGetKeyBundleFailure(t *testing.T) {
 		if !strings.Contains("not find", err.Error()) {
 			t.Error("did not throw error with bad app id")
 		}
+	}
+}
+
+func TestConfigureLoggers(t *testing.T) {
+	debugLogger := ConfigureLoggers("debug")
+	if debugLogger.Level() != zapcore.DebugLevel {
+		t.Error("logger not configured for debug")
+	}
+	prodLogger := ConfigureLoggers("production")
+	if prodLogger.Level() != zapcore.InfoLevel {
+		t.Error("logger not configured for production")
 	}
 
 }

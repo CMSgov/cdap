@@ -82,6 +82,7 @@ func PourGin(ch_evt_out chan<- *types.Event) *gin.Engine {
 	addEtlEndpoints(apiV1)
 	addSequenceEndpoints(apiV1)
 	addSummaryEndpoints(apiV1)
+	addArchiveEndpoints(apiV1)
 
 	return router
 }
@@ -156,5 +157,19 @@ func addSummaryEndpoints(rG *gin.RouterGroup) {
 
 	auth_adminV1ReadOnly.POST(SUMMARY_READ, SummaryRead)
 	auth_adminV1ReadWrite.POST(SUMMARY_CREATE, SummaryCreate)
+}
+
+// ARCHIVE ENDPOINTS
+func addArchiveEndpoints(rG *gin.RouterGroup) {
+	auth_adminV1ReadOnly := rG.Group("/")
+	auth_adminV1ReadWrite := rG.Group("/")
+
+	permsRO := []types.PermissionType{constants.Admin, constants.ReadOnly, constants.Test}
+	permsRW := []types.PermissionType{constants.Admin, constants.Test}
+	auth_adminV1ReadOnly.Use(AuthMiddleWare(permsRO))
+	auth_adminV1ReadWrite.Use(AuthMiddleWare(permsRW))
+
+	// auth_adminV1ReadOnly.POST(SUMMARY_READ, SummaryRead)
+	auth_adminV1ReadWrite.POST(ARCHIVE, Archive)
 
 }
