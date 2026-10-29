@@ -1,6 +1,6 @@
 locals {
-  # Suffix match so ephemeral envs (e.g. mybranch-dev) resolve to their parent env's SSM params
-  cdap_env = (endswith(var.env, "prod") || endswith(var.env, "sandbox")) ? "prod" : "test"
+  # Substring match so ephemeral envs (e.g. mybranch-dev) resolve to their parent env's SSM params
+  cdap_env = (strcontains(var.env, "prod") || strcontains(var.env, "sandbox")) ? "prod" : "test"
 }
 
 resource "aws_cloudwatch_log_group" "this" {
