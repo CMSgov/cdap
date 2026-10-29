@@ -79,10 +79,10 @@ variable "proxy_listen_port" {
     Port the mTLS proxy sidecar listens on.
 
     Traffic flow when enable_mtls_sidecar = true:
-      ALB --> proxy container :proxy_listen_port (mTLS)
+      NLB --> proxy container :proxy_listen_port (mTLS)
           --> app container   :first port in port_mappings (plain HTTP, localhost)
 
-    The ALB target group is automatically pointed at this port.
+    The NLB target group is automatically pointed at this port.
     The caller does not need to set alb_port_name.
   EOT
 }
@@ -100,7 +100,7 @@ variable "proxy_sidecar_upstream_port" {
 }
 
 variable "alb_security_group_id" {
-  description = "Security group ID of the ALB. Required when enable_alb_integration and mtls_cert_arn are both set. Used to create security group rules allowing ALB traffic to reach the mTLS proxy."
+  description = "Security group ID of the ALB. Required for enable_alb_integration are both set. Used to create security group rules allowing ALB traffic to reach the mTLS proxy."
   type        = string
   default     = null
 
@@ -122,19 +122,36 @@ variable "alb_security_group_id" {
 
 variable "service_connect" {
   default     = []
-  description = "List of service connect discovery names and ports."
+  description = "List of ports this service exposes via Service Connect."
   type = list(object({
-    discovery_name = string
-    dns_name       = string
-    port           = number
-    port_name      = string
+    port      = number
+    port_name = string
   }))
+
+  validation {
+    condition     = length(distinct([for sc in var.service_connect : sc.port_name])) == length(var.service_connect)
+    error_message = "port_name must be unique within a single service's service_connect list."
+  }
 }
 
 variable "service_connect_enabled" {
   default     = false
   description = "Boolean value determining whether service connect is enabled"
   type        = bool
+}
+
+variable "service_discovery_namespace_name_override" {
+  type        = string
+  default     = null
+  description = <<-EOT
+    Override the Service Connect namespace name this service looks up.
+    Defaults to the shared sc.<env>.<app>.internal.cms.gov namespace.
+    Use only for a dedicated/isolated namespace (e.g. a test stack with its
+    own cluster) that intentionally does not share the app+env namespace or a 
+    broader namespace we may move to for shared backend.
+    Misuse risk: a service pointed at the wrong namespace will silently fail
+    to resolve its Service Connect peers rather than erroring at plan time.
+  EOT
 }
 
 variable "deployment_circuit_breaker" {
@@ -356,6 +373,7 @@ variable "platform" {
   description = "Object representing the CDAP plaform module."
   type = object({
     app                = string
+    cdap_env           = string
     env                = string
     kms_alias_primary  = object({ target_key_arn = string })
     primary_region     = object({ name = string })
@@ -403,6 +421,7 @@ variable "health_check" {
   default = null
 }
 
+# FIXME Remove option for external security groups in PLT-1824
 variable "security_groups" {
   description = <<-EOT
     For most use cases, leave this empty. List of additional security group IDs to attach to the ECS task alongside the
@@ -475,6 +494,7 @@ variable "additional_task_role_policies" {
     Has no effect when task_role_arn is set (external role).
   EOT
 }
+
 
 ## Monitoring
 variable "enable_datadog_agent" {

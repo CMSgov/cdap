@@ -1,13 +1,9 @@
-locals {
-  config       = yamldecode(file("${path.module}/config/${var.env}.yml"))
-  cluster_name = try(local.config.ecs.cluster, "cdap-${var.env}")
-}
-
 data "aws_ecs_cluster" "tftesting" {
   cluster_name = local.cluster_name
 }
 
 module "tftesting_service" {
+  count                  = local.services_enabled ? 1 : 0
   enable_execute_command = false
   source                 = "../../modules/service/"
   enable_datadog_agent   = true
@@ -27,8 +23,6 @@ module "tftesting_service" {
   }
 
   force_new_deployment = true
-
-  enable_ecs_service_connect = false
 
   deployment_circuit_breaker = {
     enable   = true
