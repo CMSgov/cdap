@@ -166,7 +166,7 @@ resource "aws_lb" "network" {
   internal           = true
   load_balancer_type = "network"
   subnets            = local.subnet_ids
-  security_groups    = local.managed_nlb_sg ? [aws_security_group.nlb[0].id] : var.nlb_security_group_ids
+  security_groups    = [aws_security_group.nlb[0].id]
 
   tags = { Name = local.nlb_name }
 
@@ -184,7 +184,7 @@ resource "aws_lb" "network" {
 }
 
 resource "aws_security_group" "nlb" {
-  count = (var.create_nlb && local.managed_nlb_sg) ? 1 : 0
+  count = var.create_nlb ? 1 : 0
 
   name        = "${local.nlb_name}-sg"
   description = "Security group for ${local.nlb_name}"
