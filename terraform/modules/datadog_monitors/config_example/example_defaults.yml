@@ -47,6 +47,16 @@ enabled:
   s3: true
   rds: false
   synthetics: true
+  acm: true
+
+# ACM Monitors
+#
+acm:
+  timeframe: "1h"
+  critical_days_threshold: 7
+  warning_days_threshold: 30
+  notify_no_data: true
+  no_data_timeframe_minutes: 1440
 
 # -----------------------------------------------------------------------------
 # ECS Monitors
@@ -82,8 +92,8 @@ ecs:
 #   Warning threshold is automatically set to 75% of the critical value.
 # -----------------------------------------------------------------------------
 sqs:
-  dlq_message_threshold: 1       # any DLQ message is actionable
-  max_message_age_seconds: 300   # 5 minutes — lower for real-time consumers
+  dlq_message_threshold: 1 # any DLQ message is actionable
+  max_message_age_seconds: 300 # 5 minutes — lower for real-time consumers
   notify_no_data: false
   no_data_timeframe_minutes: 10
   timeframe: "last_10m"
@@ -177,12 +187,12 @@ s3:
 # -----------------------------------------------------------------------------
 rds:
   cpu_threshold: 85
-  freeable_memory_threshold_mb: 256   # alert when less than 256MB free
-  db_connections_threshold: 200       # tune to your instance's max_connections
+  freeable_memory_threshold_mb: 256 # alert when less than 256MB free
+  db_connections_threshold: 200 # tune to your instance's max_connections
   replica_lag_seconds: 30
   replica_lag_enabled: true
-  deadlock_threshold: 1               # any deadlock is worth investigating
-  deadlocks_enabled: true             # set false without Enhanced Monitoring / Performance Insights
+  deadlock_threshold: 1 # any deadlock is worth investigating
+  deadlocks_enabled: true # set false without Enhanced Monitoring / Performance Insights
   notify_no_data: false
   no_data_timeframe_minutes: 10
   timeframe: "last_10m"
