@@ -17,7 +17,7 @@
 
 ## Usage
 A demo example is available in `services/611-tftesting-service`. 
-A demo with use of ALB and ACM is in `services/612-tftesting-ecs-stack-internal` and `services/612-tftesting-ecs-stack-public`
+A demo with use of ALB and ACM is in `services/612-tftesting-ecs-stack`
 
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
