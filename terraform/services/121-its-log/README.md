@@ -25,7 +25,7 @@ After running, the test container should report `SUCCESS`, and both containers w
 
 ## debugging its-log
 
-A VS Code debugging bundle is prepared and part of this repository, with all of the envrionment variables required to run. Press `F5` to launch `its-log` under the debugger, and `SHIFT-F5` to halt the debugger (on a Mac).
+A VS Code debugging bundle is prepared and part of this repository, with all of the environment variables required to run. Press `F5` to launch `its-log` under the debugger, and `SHIFT-F5` to halt the debugger (on a Mac).
 
 ## testing with Postman
 
