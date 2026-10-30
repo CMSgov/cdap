@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"sync"
 
@@ -15,6 +16,7 @@ type Storage struct {
 	Filename  string
 	firstUse  bool
 	lock      sync.Mutex
+	Context   context.Context
 	db        *sql.DB
 	connector *duckdb.Connector
 	appender  *duckdb.Appender

@@ -51,18 +51,15 @@ func RunEtl(c *gin.Context) {
 
 	payload, err := checkRunEtlBody(c)
 	if err != nil {
-		bogoStorage, _ := storage.NewStorage(appId)
-		ser := etl.NewStandardErrorResponse(&etl.RunEtlParams{
-			AppId:   appId,
-			KeyId:   keyId,
-			GinCtx:  c,
-			Storage: bogoStorage,
-			EtlName: "unknown",
-			Payload: payload,
-		}, err)
-		ser.SetStatus(http.StatusBadRequest).Send("ETL run must have a name and date")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"method":  c.Request.Method,
+			"message": fmt.Sprintf("ETL run must have a name and date: %s", err.Error()),
+			"date":    "?",
+		})
 		return
 	}
+
 	date := payload["date"].(string)
 	name := payload["name"].(string)
 
@@ -70,8 +67,8 @@ func RunEtl(c *gin.Context) {
 	if err != nil {
 		zap.L().Fatal("could not setup DB for RunEtl")
 	}
+	defer s.Close()
 
-	dateErr := s.SetDateYMD(date)
 	etlP := &etl.RunEtlParams{
 		AppId:   appId,
 		KeyId:   keyId,
@@ -80,15 +77,6 @@ func RunEtl(c *gin.Context) {
 		EtlName: name,
 		Payload: payload,
 	}
-
-	// FUTURE IMPROVEMENT: Could this pattern be used in etl_create?
-	if dateErr != nil {
-		ser := etl.NewStandardErrorResponse(etlP, dateErr)
-		ser.SetStatus(http.StatusBadRequest).Send("could not parse date; must be YYYY-MM-DD")
-		return
-	}
-
-	s.InitDB()
 
 	etlErr := runEtl(etlP)
 

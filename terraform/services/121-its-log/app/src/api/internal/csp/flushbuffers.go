@@ -85,12 +85,12 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 				zap.Int("len(events)", len(events)))
 
 			s, err := storage.SetupDB(appId, formattedDate)
-
 			if err != nil {
 				zap.L().Fatal("could not setup DB in flushbuffers",
 					zap.String("appId", appId), zap.String("date", formattedDate),
 					zap.Error(err))
 			}
+			defer s.Close()
 
 			s.Lock("FlushBuffersOnce")
 			s.GetAppender("itslog_events")

@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
@@ -20,13 +21,17 @@ type EtlCreateSql struct {
 }
 
 func SetupGinDB(c *gin.Context, appId string, date string) (*storage.Storage, error) {
-	s, err := storage.SetupDB(appId, date)
+	sanitized, err := types.SanitizeDate(date)
+	if err != nil {
+		return nil, err
+	}
+	s, err := storage.SetupDB(appId, sanitized)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"method":  c.Request.Method,
 			"message": "could not initialize storage backend",
-			"date":    date,
+			"date":    sanitized,
 		})
 		return nil, err
 	}
@@ -47,6 +52,24 @@ func CreateEtl(c *gin.Context) {
 	appId := base.GetOrPanic(c, "AppId")
 	keyId := base.GetOrPanic(c, "KeyId")
 
+	// Lets try and Base64 decode the string, to make sure it is good.
+	decodedSQL, err := base64.StdEncoding.DecodeString(body.Body)
+	if err != nil {
+		zap.L().Info("failed to decode base64 string", zap.String("body", body.Body))
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "could not decode Base64"})
+		return
+	}
+	theSql := strings.ToLower(string(decodedSQL))
+	// And, for fun: let's make sure the words "delete" or "update"
+	// do not appear anywhere in this ETL. We don't want ETLs to be able to
+	// delete data.
+	for _, notAllowed := range []string{"delete", "update"} {
+		if strings.Contains(theSql, notAllowed) {
+			c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "ETLs cannot contain DELETE or UPDATE"})
+			return
+		}
+	}
+
 	// DuckDB wants Base64 values padded to mod(len, 4).
 	// We'll make sure the padding is right, even though the client
 	// should do this work.
@@ -62,6 +85,7 @@ func CreateEtl(c *gin.Context) {
 	if err != nil {
 		zap.L().Fatal("could not setup DB for CreateEtl")
 	}
+	defer s.Close()
 
 	_, err = s.Exec(storage.Endpoint, "insert_etl", storage.EmbedParamMap{
 		"key_id": keyId,

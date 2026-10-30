@@ -1,2 +1,1 @@
--- WHAT
 SELECT 0;
