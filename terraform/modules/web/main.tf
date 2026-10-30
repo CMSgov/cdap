@@ -243,6 +243,6 @@ resource "aws_cloudwatch_log_delivery" "log_retention" {
   s3_delivery_configuration {
     suffix_path = "/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
   }
-  
+
   depends_on = [aws_cloudwatch_log_delivery.this]
 }
