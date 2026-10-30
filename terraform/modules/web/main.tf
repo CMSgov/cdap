@@ -4,6 +4,9 @@ locals {
     CachingDisabled  = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     CachingOptimized = "658327ea-f89d-4fab-a63d-7e88639e58f6"
   }
+  # Substring match so variants (prod, production, mybranch-prod) and ephemeral
+  # envs (e.g. mybranch-dev) resolve to their parent env's SSM params
+  cdap_env = (strcontains(var.platform.env, "prod") || strcontains(var.platform.env, "sandbox")) ? "prod" : "test"
 }
 
 data "aws_acm_certificate" "issued" {
@@ -217,4 +220,29 @@ resource "aws_cloudwatch_log_delivery" "this" {
   s3_delivery_configuration {
     suffix_path = "/AWSLogs/${var.platform.aws_caller_identity.account_id}/Cloudfront/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
   }
+}
+
+# Long-term retention bucket managed by the log-retention service
+data "aws_ssm_parameter" "log_retention_bucket" {
+  name = "/cdap/${local.cdap_env}/common/nonsensitive/log-retention/bucket"
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "log_retention" {
+  name          = "${local.naming_prefix}-log-retention"
+  output_format = "json"
+
+  delivery_destination_configuration {
+    destination_resource_arn = "arn:aws:s3:::${data.aws_ssm_parameter.log_retention_bucket.value}/cloudfront"
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "log_retention" {
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.this.name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.log_retention.arn
+
+  s3_delivery_configuration {
+    suffix_path = "/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
+  }
+  
+  depends_on = [aws_cloudwatch_log_delivery.this]
 }
