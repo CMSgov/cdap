@@ -16,17 +16,6 @@ import (
 
 func LogCreate(ch_evt_out chan<- *types.Event, permission types.PermissionType) func(c *gin.Context) {
 	return func(c *gin.Context) {
-		// type Event struct {
-		// 	Timestamp time.Time
-		// 	AppId     string
-		// 	KeyId     string
-		// 	Cluster   string   `json:"cluster"`
-		// 	Tags      []string `json:"tags"`
-		// 	TagString string
-		// 	Value     string `json:"value"`
-		// 	Date      string `json:"date"`
-		// }
-
 		var evt types.Event
 		if err := c.ShouldBindJSON(&evt); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON: " + err.Error()})

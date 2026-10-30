@@ -1,11 +1,13 @@
 package endpoints
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	gotime "time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
@@ -151,6 +153,37 @@ func runEtl(etlP *etl.RunEtlParams) error {
 			ser.SetStatus(http.StatusInternalServerError).Send(msg)
 		}
 		return fmt.Errorf("%s: %s", msg, err.Error())
+	}
+
+	return nil
+}
+
+func InsertSummaryRows(source string, etlP *etl.RunEtlParams, summaries []etl.ItslogSummary) error {
+
+	// Now, write them to the summary table.
+	for _, e := range summaries {
+		seconds := gotime.Now().Unix()
+		etlP.Payload["key_id"] = etlP.KeyId
+		etlP.Payload["date"] = seconds
+		etlP.Payload["operation"] = e.Operation
+		etlP.Payload["tags"] = e.Tags
+		etlP.Payload["value"] = e.Value
+		etlP.Payload["count"] = float64(e.Count)
+		etlP.Payload["hash"] = sql.NullString{String: e.ReturnHash(), Valid: true}
+
+		args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
+		if err != nil {
+			return err
+		}
+
+		_, err = etlP.Storage.Endpoints.Exec("insert_full_summary", args)
+		if err != nil {
+			zap.L().Error("InsertSummaryRow Exec",
+				zap.String("source", source),
+				zap.Any("payload", etlP.Payload),
+				zap.Error(err))
+			return err
+		}
 	}
 
 	return nil

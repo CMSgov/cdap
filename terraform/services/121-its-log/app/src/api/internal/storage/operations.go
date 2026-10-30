@@ -53,53 +53,9 @@ func DoesDBExist(pathArr []string) bool {
 	}
 }
 
-// func ReuseStorage(appId string, date string) (*Storage, error) {
-// 	// Did we store it in the map?
-// 	// If so, return it. We want these to be persistent for the session
-
-// 	// FIXME: This does not show up often, but if this pattern starts to appear
-// 	// in multiple places, we should abstract it away. Some kind of "date sanitization"
-// 	// that handles the special cases of "today" and "yesterday".
-// 	// date, err := types.SanitizeDate(date)
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	if s, ok := activeStorageConnections[appId+date]; ok {
-// 		zap.L().Debug("ReuseStorage",
-// 			zap.String("app_id", appId),
-// 			zap.String("formatted_date", date))
-// 		// Before returning, let's make sure that the
-// 		// database file is still there. DuckDB can have some
-// 		// confusing tmp behaviors in situations where the connection
-// 		// is open but the file "disappears." This should not be possible
-// 		// in production; we can force it locally in a containerized env.
-// 		// We're going to panic if it happens.
-// 		// https://stackoverflow.com/questions/78586256/how-to-force-duckdb-to-reconnect-to-a-file-and-prevent-it-from-remembering-conte
-// 		if !DoesDBExist(s.Path) {
-// 			panic("database file does not exist!")
-// 		}
-// 		if err := s.db.PingContext(s.Context); err != nil {
-// 			panic("database is closed!")
-// 		}
-// 		return s, nil
-// 	}
-
-// 	return nil, fmt.Errorf("storage not found for %s", date)
-// }
-
 // Helper for the endpoints and other uses across the codebase
 // This is the preferred entrypoint to the Storage API.
 func SetupDB(appId string, date string) (*Storage, error) {
-
-	// // s, err := ReuseStorage(appId, date)
-	// if err == nil {
-	// 	zap.L().Debug("SetupDB reusing storage",
-	// 		zap.String("app_id", appId), zap.String("date", date))
-	// 	return s, nil
-	// }
-
-	// Otherwise, set it up
 	s, err := NewStorage(appId)
 	if err != nil {
 		return nil, err
@@ -115,12 +71,6 @@ func SetupDB(appId string, date string) (*Storage, error) {
 		panic(err)
 	}
 
-	// activeStorageConnections[appId+date] = s
-	// zap.L().Debug("active storage connections", zap.Int("count", len(activeStorageConnections)))
-	// for k, _ := range activeStorageConnections {
-	// 	zap.L().Debug("active connection",
-	// 		zap.String("name", k))
-	// }
 	zap.L().Debug("SetupDB new storage created",
 		zap.String("app_id", appId), zap.String("date", date))
 	return s, nil

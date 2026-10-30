@@ -63,8 +63,11 @@ func CreateEtl(c *gin.Context) {
 	// And, for fun: let's make sure the words "delete" or "update"
 	// do not appear anywhere in this ETL. We don't want ETLs to be able to
 	// delete data.
-	for _, notAllowed := range []string{"delete", "update"} {
+	for _, notAllowed := range []string{"insert", "delete", "update"} {
 		if strings.Contains(theSql, notAllowed) {
+			zap.L().Info("naughty things in sql",
+				zap.String("sql", theSql),
+				zap.String("not_allowed", notAllowed))
 			c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "ETLs cannot contain DELETE or UPDATE"})
 			return
 		}

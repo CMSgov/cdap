@@ -57,6 +57,7 @@ func SequenceRun(c *gin.Context) {
 		})
 		return
 	}
+	defer s.Close()
 
 	dateErr := s.SetDateYMD(sequenceDate)
 	if dateErr != nil {
@@ -99,16 +100,11 @@ func SequenceRun(c *gin.Context) {
 		for k, v := range payload {
 			merged[k] = v
 		}
-		// DEBUG LOG
-		// log.Printf("step params: %v\n", step.Params)
 		if step.Params != nil {
 			for k, v := range step.Params {
 				merged[k] = v
 			}
 		}
-
-		// DEBUG LOG
-		// log.Printf("date[%s] sequence[%s] step[%s]\n", s.YYYYMMDD(), sequenceName, step.Name)
 
 		sequenceError := runEtl(&etl.RunEtlParams{
 			AppId:   appId,

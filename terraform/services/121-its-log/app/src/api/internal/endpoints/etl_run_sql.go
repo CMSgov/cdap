@@ -4,29 +4,29 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
-	"github.com/navapbc/its-log/internal/constants"
 	etl "github.com/navapbc/its-log/internal/etl"
-	etlgo "github.com/navapbc/its-log/internal/etl/golang"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
 
-func callWithParams(etlP *etl.RunEtlParams, theSql string) *sql.Row {
+func callWithParams(etlP *etl.RunEtlParams, theSql string) (*sql.Rows, error) {
 	args, err := etlP.Storage.PrepareNamedArgs(etlP.EtlName, etlP.Payload)
 	if err != nil {
 		zap.L().Error("error in PrepareNamedArgs", zap.Error(err))
-		return nil
+		return nil, err
 	}
 
 	etlP.Storage.Lock("callWithParams")
-	etlRow := etlP.Storage.GetDB().QueryRow(theSql, args...)
+	etlRows, err := etlP.Storage.GetDB().Query(theSql, args...)
 	etlP.Storage.Unlock("callWithParams")
-
-	return etlRow
+	if err != nil {
+		zap.L().Error("etl call failed", zap.Error(err))
+		return nil, err
+	}
+	return etlRows, nil
 }
 
 func insertDefaultParams(etlP *etl.RunEtlParams) (*etl.RunEtlParams, error) {
@@ -71,54 +71,33 @@ func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow, tx *sql.Tx) error 
 	}
 	etlP.Payload["etl_id"] = max_id
 
-	// Expect all ETLs to return 0 or 1.
-	sqlRow := callWithParams(etlP, etlRow.Body.String)
-	if sqlRow.Err() != nil {
-		zap.L().Error("callWithParams failed",
-			zap.Error(sqlRow.Err()))
-		return sqlRow.Err()
+	// Expect all ETLs to return rows that are shaped to the summary table.
+	// operation, tags, value, count
+	sqlRows, err := callWithParams(etlP, etlRow.Body.String)
+	if err != nil {
+		return err
 	}
+	defer sqlRows.Close()
 
-	var success int64 = -1
-	err = sqlRow.Scan(&success)
-	switch err {
-	case sql.ErrNoRows:
-		log.Println("No rows were returned!")
-	case nil:
-		if success == constants.ETL_SUCCESS_VALUE {
-			return nil
-		} else {
-			return fmt.Errorf("expected %d; %s returned %v", constants.ETL_SUCCESS_VALUE, etlRow.Name, success)
-		}
-	default:
-		msg := err.Error()
-		if etlP.GinCtx != nil {
-			ser := etl.NewStandardErrorResponse(etlP, err)
-			ser.SetStatus(http.StatusInternalServerError).Send(msg)
-		}
-		//log.Println(msg)
-		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
-	}
+	summaries := make([]etl.ItslogSummary, 0)
+	row_count := 0
+	for sqlRows.Next() {
+		summary := etl.ItslogSummary{}
+		err := sqlRows.Scan(&summary.Operation, &summary.Tags, &summary.Value, &summary.Count)
 
-	return nil
-}
-
-func etlRunGolang(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) error {
-	functionName := row.Name
-	if function, ok := etlgo.GolangETLMap[functionName]; ok {
-		// Like the SQL actions, lock/unlock around what we do.
-		// This saves the Golang ETLs from having to manage locks internal
-		// to each individual action.
-		etlP.Storage.Lock("etlRunGolang")
-		err := function(etlP)
-		etlP.Storage.Unlock("etlRunGolang")
 		if err != nil {
+			zap.L().Info("error scanning row", zap.Int("row_count", row_count))
 			return err
 		}
-	} else {
-		// FIXME: we need to pass an error back.
-		fmt.Printf("Function %s not found\n", functionName)
+		zap.L().Info("sqlRow",
+			zap.String("op", summary.Operation),
+			zap.String("tags", summary.Tags),
+			zap.String("value", summary.Value),
+			zap.Float64("count", summary.Count))
+		row_count += 1
+		summaries = append(summaries, summary)
 	}
 
-	return nil
+	return InsertSummaryRows("sql", etlP, summaries)
+
 }

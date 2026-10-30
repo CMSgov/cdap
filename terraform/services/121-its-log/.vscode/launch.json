@@ -33,6 +33,7 @@
                 "ITSLOG_BACKUP_AWS_KEYID": "000000000000",
                 "ITSLOG_BACKUP_AWS_ACCESSKEY": "anything",
                 "ITSLOG_BACKUP_AWS_REGION": "us-east-1",
+                "ITSLOG_EVENTUAL_CONSISTENCY_SECONDS": "5"
             }
 
         }

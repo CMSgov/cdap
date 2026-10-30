@@ -39,6 +39,7 @@ func SummaryCreate(c *gin.Context) {
 		})
 		return
 	}
+	defer s.Close()
 
 	err = s.SetDateYMD(body.Date)
 	if err != nil {

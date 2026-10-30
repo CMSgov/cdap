@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	gotime "time"
-
 	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
@@ -157,7 +155,7 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 	// contain starlark dictionaries. These need to be turned into Golang structs.
 	// FIXME: what if someone wants `summary` rows? This does not work.
 	// consider using map[string]any instead.
-	arr := make([]etl.ItslogSummary, 0)
+	summaries := make([]etl.ItslogSummary, 0)
 	for elem := range v.(*starlark.List).Elements() {
 		srjs := etl.ItslogSummary{}
 		for _, k := range elem.(*starlark.Dict).Keys() {
@@ -184,37 +182,37 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 					var f float64
 					f, _ = starlark.AsFloat(v)
 					srjs.Count = float64(f)
-
 				}
 			}
 		}
-		arr = append(arr, srjs)
+		summaries = append(summaries, srjs)
 	}
 
-	// Now, write them to the summary table.
-	for _, e := range arr {
-		seconds := gotime.Now().Unix()
-		etlP.Payload["key_id"] = etlP.KeyId
-		etlP.Payload["date"] = seconds
-		etlP.Payload["operation"] = e.Operation
-		etlP.Payload["tags"] = e.Tags
-		etlP.Payload["value"] = e.Value
-		etlP.Payload["count"] = float64(e.Count)
-		etlP.Payload["hash"] = sql.NullString{String: e.ReturnHash(), Valid: true}
+	// // Now, write them to the summary table.
+	return InsertSummaryRows("starlark", etlP, summaries)
 
-		args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
-		if err != nil {
-			return err
-		}
+	// for _, e := range arr {
+	// 	seconds := gotime.Now().Unix()
+	// 	etlP.Payload["key_id"] = etlP.KeyId
+	// 	etlP.Payload["date"] = seconds
+	// 	etlP.Payload["operation"] = e.Operation
+	// 	etlP.Payload["tags"] = e.Tags
+	// 	etlP.Payload["value"] = e.Value
+	// 	etlP.Payload["count"] = float64(e.Count)
+	// 	etlP.Payload["hash"] = sql.NullString{String: e.ReturnHash(), Valid: true}
 
-		_, err = etlP.Storage.Endpoints.Exec("insert_full_summary", args)
-		if err != nil {
-			zap.L().Error("etlRunStarlark Exec",
-				zap.Any("payload", etlP.Payload),
-				zap.Error(err))
-			return err
-		}
-	}
+	// 	args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-	return nil
+	// 	_, err = etlP.Storage.Endpoints.Exec("insert_full_summary", args)
+	// 	if err != nil {
+	// 		zap.L().Error("etlRunStarlark Exec",
+	// 			zap.Any("payload", etlP.Payload),
+	// 			zap.Error(err))
+	// 		return err
+	// 	}
+	// }
+
 }

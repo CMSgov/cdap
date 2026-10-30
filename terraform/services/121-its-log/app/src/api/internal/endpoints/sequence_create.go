@@ -31,6 +31,7 @@ func SequenceCreate(c *gin.Context) {
 	if err != nil {
 		zap.L().Fatal("could not setup DB for CreateEtl")
 	}
+	defer s.Close()
 
 	// Convert the sequence into a string.
 	seqBytes, err := json.Marshal(body.Body)

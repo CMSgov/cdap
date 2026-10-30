@@ -1,9 +1,7 @@
 package endpoints
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -34,33 +32,24 @@ func SummaryRead(c *gin.Context) {
 
 	appId := base.GetOrPanic(c, "AppId")
 
-	s, err := storage.NewStorage(appId)
+	s, err := SetupGinDB(c, appId, body.Date)
+	if err != nil {
+		msg := "could not initialize storage backend"
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":    "error",
+			"method":    c.Request.Method,
+			"message":   msg,
+			"date":      body.Date,
+			"operation": body.Operation,
+		})
+		return
+	}
+	defer s.Close()
 
 	etlP := etl.RunEtlParams{
 		EtlName: "SummaryRead",
 		GinCtx:  c,
 		Storage: s,
-	}
-
-	if err != nil {
-		msg := "could not initialize storage backend"
-		ser := etl.NewStandardErrorResponse(&etlP, errors.New(msg))
-		ser.SetStatus(http.StatusInternalServerError).Send(msg)
-		return
-	}
-
-	err = s.SetDateYMD(body.Date)
-	if err != nil {
-		msg := "could not parse date; must be YYYY-MM-DD"
-		ser := etl.NewStandardErrorResponse(&etlP, err)
-		ser.SetStatus(http.StatusInternalServerError).Send(msg)
-		return
-	}
-
-	err = s.InitDB()
-	if err != nil {
-		log.Println("storage init error: " + err.Error())
-		panic(err)
 	}
 
 	args, err := s.PrepareNamedArgs("read_summary", storage.EmbedParamMap{
