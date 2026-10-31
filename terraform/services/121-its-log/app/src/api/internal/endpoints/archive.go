@@ -150,65 +150,68 @@ func streamingCopy(src, dst string) error {
 }
 
 // From https://stackoverflow.com/questions/29505089/how-can-i-compare-two-files-in-golang
-func deepCompare(file1, file2 string) (bool, error) {
-	f1, err := os.Open(file1)
+func deepCompare(src, dst string) (bool, error) {
+	srcFile, err := os.Open(src)
 	if err != nil {
-		zap.L().Info("cannot open source file for comparison", zap.String("filename", file1))
+		zap.L().Info("cannot open source file for comparison", zap.String("filename", src))
 		return false, err
 	}
-	defer f1.Close()
+	defer srcFile.Close()
 
-	f2, err := os.Open(file2)
+	dstFile, err := os.Open(dst)
 	if err != nil {
-		zap.L().Info("cannot open destination file for comparison", zap.String("filename", file2))
+		zap.L().Info("cannot open destination file for comparison", zap.String("filename", dst))
 		return false, err
 	}
-	defer f2.Close()
+	defer dstFile.Close()
 
 	// Fast check: If sizes don't match, files aren't identical
-	stat1, err := f1.Stat()
+	srcStat, err := srcFile.Stat()
 	if err != nil {
 		zap.L().Info("failed to stat source")
 		return false, err
 	}
-	stat2, err := f2.Stat()
+	dstStat, err := dstFile.Stat()
 	if err != nil {
 		zap.L().Info("failed to stat dest")
 		return false, err
 	}
-	if stat1.Size() != stat2.Size() {
+
+	srcSize := srcStat.Size()
+	dstSize := dstStat.Size()
+	if srcSize != dstSize {
 		zap.L().Info("file sizes differ",
-			zap.Int64("source_stat", stat1.Size()),
-			zap.Int64("dest_stat", stat2.Size()))
+			zap.Int64("source_stat", srcSize),
+			zap.Int64("dest_stat", dstSize))
 		return false, nil
 	}
 
 	// Compare chunks of 64KB
 	const chunkSize = 64 * 1024
-	b1 := make([]byte, chunkSize)
-	b2 := make([]byte, chunkSize)
+	srcBytes := make([]byte, chunkSize)
+	dstBytes := make([]byte, chunkSize)
 	chunkCount := 0
 	for {
-		n1, err1 := f1.Read(b1)
-		n2, err2 := f2.Read(b2)
+		srcBytesRead, srcErr := srcFile.Read(srcBytes)
+		dstBytesRead, dstErr := dstFile.Read(dstBytes)
 
-		if err1 != nil && err1 != io.EOF {
+		if srcErr != nil && srcErr != io.EOF {
 			zap.L().Info("end of source", zap.Int("chunk", chunkCount))
-			return false, err1
+			return false, srcErr
 		}
-		if err2 != nil && err2 != io.EOF {
+		if dstErr != nil && dstErr != io.EOF {
 			zap.L().Info("end of dest", zap.Int("chunk", chunkCount))
-			return false, err2
+			return false, dstErr
 		}
 
 		// Check if bytes read or content differs
-		if n1 != n2 || !bytes.Equal(b1[:n1], b2[:n2]) {
+		if srcBytesRead != dstBytesRead || !bytes.Equal(srcBytes[:srcBytesRead], dstBytes[:dstBytesRead]) {
 			zap.L().Info("differ on chunk", zap.Int("chunk", chunkCount))
 			return false, nil
 		}
 
 		// End of both files reached
-		if err1 == io.EOF && err2 == io.EOF {
+		if srcErr == io.EOF && dstErr == io.EOF {
 			break
 		}
 		chunkCount += 1

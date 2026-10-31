@@ -59,8 +59,8 @@ func SequenceRun(c *gin.Context) {
 	}
 	defer s.Close()
 
-	dateErr := s.SetDateYMD(sequenceDate)
-	if dateErr != nil {
+	s.ILTime, err = types.StringToYMD(sequenceDate)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"method":  c.Request.Method,

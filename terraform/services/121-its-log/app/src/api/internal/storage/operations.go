@@ -57,7 +57,7 @@ func SetupDB(appId string, date string) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = s.SetDateYMD(date)
+	s.ILTime, err = types.StringToYMD(date)
 	if err != nil {
 		return nil, err
 	}

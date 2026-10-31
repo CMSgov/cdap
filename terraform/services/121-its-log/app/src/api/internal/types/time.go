@@ -10,6 +10,18 @@ type ILTime struct {
 	theTime time.Time
 }
 
+func StringToYMD(ymd string) (*ILTime, error) {
+	switch ymd {
+	case constants.TODAY:
+		return NewILTimeToday(), nil
+	case constants.YESTERDAY:
+		return NewILTimeYesterday(), nil
+	default:
+		d, e := NewILTimeFromYMD(ymd)
+		return d, e
+	}
+}
+
 func NewILTimeNow() *ILTime {
 	return &ILTime{theTime: time.Now()}
 }

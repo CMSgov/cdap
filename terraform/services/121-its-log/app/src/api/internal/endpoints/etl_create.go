@@ -1,10 +1,8 @@
 package endpoints
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
@@ -20,24 +18,6 @@ type EtlCreateSql struct {
 	Date string `json:"date"`
 }
 
-func SetupGinDB(c *gin.Context, appId string, date string) (*storage.Storage, error) {
-	sanitized, err := types.SanitizeDate(date)
-	if err != nil {
-		return nil, err
-	}
-	s, err := storage.SetupDB(appId, sanitized)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not initialize storage backend",
-			"date":    sanitized,
-		})
-		return nil, err
-	}
-	return s, nil
-}
-
 func CreateEtl(c *gin.Context) {
 
 	var body types.ETLPostBody
@@ -49,47 +29,29 @@ func CreateEtl(c *gin.Context) {
 		return
 	}
 
+	// We need the AppId and KeyId, which the middleware attached
 	appId := base.GetOrPanic(c, "AppId")
 	keyId := base.GetOrPanic(c, "KeyId")
 
-	// Lets try and Base64 decode the string, to make sure it is good.
-	decodedSQL, err := base64.StdEncoding.DecodeString(body.Body)
+	// We want to check the Base64 work that the client did.
+	err := checkBase64Encoding(body.Body)
 	if err != nil {
-		zap.L().Info("failed to decode base64 string", zap.String("body", body.Body))
-		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "could not decode Base64"})
+		zap.L().Info("failed base64 encoding check", zap.String("body", body.Body))
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
 		return
 	}
-	theSql := strings.ToLower(string(decodedSQL))
-	// And, for fun: let's make sure the words "delete" or "update"
-	// do not appear anywhere in this ETL. We don't want ETLs to be able to
-	// delete data.
-	for _, notAllowed := range []string{"insert", "delete", "update"} {
-		if strings.Contains(theSql, notAllowed) {
-			zap.L().Info("naughty things in sql",
-				zap.String("sql", theSql),
-				zap.String("not_allowed", notAllowed))
-			c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "ETLs cannot contain INSERT, DELETE, or UPDATE"})
-			return
-		}
-	}
+	// And, pad it. DuckDB is very particular about its Base64 values.
+	etl := padToMod4(body.Body)
 
-	// DuckDB wants Base64 values padded to mod(len, 4).
-	// We'll make sure the padding is right, even though the client
-	// should do this work.
-	etl := strings.ReplaceAll(body.Body, "=", "")
-	offset := len(etl) % 4
-	if offset != 0 {
-		for range 4 - offset {
-			etl += "="
-		}
-	}
-
+	// Set up the database
 	s, err := SetupGinDB(c, appId, body.Date)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
 		return
 	}
 	defer s.Close()
 
+	// Run the code to insert the ETL into the database
 	_, err = s.Exec(storage.Endpoint, "insert_etl", storage.EmbedParamMap{
 		"key_id": keyId,
 		"name":   body.Name,
@@ -99,7 +61,6 @@ func CreateEtl(c *gin.Context) {
 
 	if err != nil {
 		zap.L().Error("etl save error", zap.Error(err))
-
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"method":  c.Request.Method,

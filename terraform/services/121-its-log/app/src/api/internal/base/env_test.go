@@ -36,7 +36,7 @@ func TestConfirmApiKeyMapKeys(t *testing.T) {
 	sampleApp["app_id"] = "test_id"
 	sampleApp["key_id"] = "abcd"
 	sampleApp["permission"] = "admin"
-	sampleApp["key"] = "xyz123"
+	sampleApp["key"] = "0123456789012345678901234567890123456789012345678901234567890123456789"
 
 	if ConfirmApiKeyMapKeys("raw_json", sampleApp) != nil {
 		t.Error("good sample app incorrectly denied")
@@ -72,25 +72,36 @@ func TestGetApiKeysNoKeys(t *testing.T) {
 func TestGetApiKeys(t *testing.T) {
 	os.Clearenv()
 
-	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string32-byte-string32-byte-string32-byte-string"}`)
+	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "0123456789012345678901234567890123456789012345678901234567890123456789"}`)
 	if GetApiKeys() != nil {
 		t.Error("could not find a key")
+	}
+}
+
+func TestShortKey(t *testing.T) {
+	os.Clearenv()
+
+	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "xyza"}`)
+	err := GetApiKeys()
+	if err != nil && !strings.Contains(err.Error(), "short") {
+		t.Error("key too short")
 	}
 }
 
 func TestGetApiKeysBadJson(t *testing.T) {
 	os.Clearenv()
 
-	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string32-byte-string32-byte-string32-byte-string"}`)
-	if GetApiKeys() != nil {
-		t.Error("JSON failed to parse")
+	t.Setenv("ITSLOG_APIKEY_TESTING", `{ "app_id": the_app", "key_id": "uniq", "permission": "log", "key": "0123456789012345678901234567890123456789012345678901234567890123456789" }`)
+	err := GetApiKeys()
+	if err == nil {
+		t.Error("JSON parsed?")
 	}
 }
 
 func TestGetKeyBundle(t *testing.T) {
 	os.Clearenv()
 
-	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string32-byte-string32-byte-string32-byte-string"}`)
+	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "0123456789012345678901234567890123456789012345678901234567890123456789"}`)
 	if GetApiKeys() != nil {
 		t.Error("could not find a key")
 	}
@@ -109,7 +120,7 @@ func TestGetKeyBundle(t *testing.T) {
 func TestGetKeyBundleFailure(t *testing.T) {
 	os.Clearenv()
 
-	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string"}`)
+	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "0123456789012345678901234567890123456789012345678901234567890123456789"}`)
 	if GetApiKeys() != nil {
 		t.Error("could not find a key")
 	}
@@ -117,7 +128,8 @@ func TestGetKeyBundleFailure(t *testing.T) {
 	// Now, the stateful variable LiveKeys is loaded with one key.
 	_, err := GetKeyBundle("bogo_id", "uniq")
 	if err != nil {
-		if !strings.Contains("not find", err.Error()) {
+		msg := err.Error()
+		if !strings.Contains(msg, "not find") {
 			t.Error("did not throw error with bad app id")
 		}
 	}

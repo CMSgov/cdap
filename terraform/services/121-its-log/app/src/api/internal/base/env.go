@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"maps"
 	"os"
 	"slices"
 	"strings"
 
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
@@ -68,7 +68,10 @@ func ConfirmApiKeyMapKeys(envvar string, m map[string]string) error {
 			return fmt.Errorf("%s missing JSON key %s", envvar, must_have)
 		}
 	}
-
+	// Make the key is long enough.
+	if len(m["key"]) < constants.MINIMUM_API_KEY_LENGTH {
+		return fmt.Errorf("key too short, ending %s", m["key"][len(m["key"])-3:])
+	}
 	return nil
 }
 
@@ -84,12 +87,11 @@ func GetApiKeys() error {
 		pair := strings.SplitN(e, "=", 2)
 
 		if strings.HasPrefix(pair[0], "ITSLOG_APIKEY_") {
-			log.Println("unmarshalling " + pair[0])
 			// key.AppId = pieces[2]
 			keymap := make(map[string]string)
 			err := json.Unmarshal([]byte(pair[1]), &keymap)
 			if err != nil {
-				return fmt.Errorf("could not parse JSON for %s", pair[0])
+				return fmt.Errorf("could not parse JSON for %s", pair[1])
 			}
 			err = ConfirmApiKeyMapKeys(pair[0], keymap)
 			if err != nil {
