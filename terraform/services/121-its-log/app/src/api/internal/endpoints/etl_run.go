@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	gotime "time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
@@ -67,7 +66,7 @@ func RunEtl(c *gin.Context) {
 
 	s, err := SetupGinDB(c, appId, date)
 	if err != nil {
-		zap.L().Fatal("could not setup DB for RunEtl")
+		return
 	}
 	defer s.Close()
 
@@ -161,21 +160,25 @@ func runEtl(etlP *etl.RunEtlParams) error {
 func InsertSummaryRows(source string, etlP *etl.RunEtlParams, summaries []etl.ItslogSummary) error {
 
 	// Now, write them to the summary table.
-	for _, e := range summaries {
-		seconds := gotime.Now().Unix()
+	for _, summary := range summaries {
+
 		etlP.Payload["key_id"] = etlP.KeyId
-		etlP.Payload["date"] = seconds
-		etlP.Payload["operation"] = e.Operation
-		etlP.Payload["tags"] = e.Tags
-		etlP.Payload["value"] = e.Value
-		etlP.Payload["count"] = float64(e.Count)
-		etlP.Payload["hash"] = sql.NullString{String: e.ReturnHash(), Valid: true}
+		// What date should this be?
+		etlP.Payload["date"] = etlP.Storage.YYYYMMDD()
+		etlP.Payload["operation"] = summary.Operation
+		etlP.Payload["tags"] = summary.Tags
+		etlP.Payload["value"] = summary.Value
+		etlP.Payload["count"] = float64(summary.Count)
+		etlP.Payload["hash"] = sql.NullString{String: summary.ReturnHash(), Valid: true}
 
 		args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
 		if err != nil {
 			return err
 		}
 
+		zap.L().Debug("insert summary rows",
+			zap.String("args", fmt.Sprintf("%v", args)),
+		)
 		_, err = etlP.Storage.Endpoints.Exec("insert_full_summary", args)
 		if err != nil {
 			zap.L().Error("InsertSummaryRow Exec",

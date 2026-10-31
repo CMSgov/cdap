@@ -3,8 +3,6 @@ package endpoints
 import (
 	"database/sql"
 	"errors"
-	"fmt"
-	"net/http"
 
 	etl "github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
@@ -52,28 +50,10 @@ func insertDefaultParams(etlP *etl.RunEtlParams) (*etl.RunEtlParams, error) {
 }
 
 func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow, tx *sql.Tx) error {
-	// Run the query
-	if !etlRow.Body.Valid {
-		msg := "sql is null for ETL step"
-		zap.L().Error(msg)
-		if etlP.GinCtx != nil {
-			ser := etl.NewStandardErrorResponse(etlP, errors.New(msg))
-			ser.SetStatus(http.StatusInternalServerError).Send(msg)
-		}
-		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
-	}
-
-	max_id, err := etlP.Storage.GetMaxId("get_max_etl_id", storage.EmbedParamMap{
-		"name": etlP.EtlName,
-	})
-	if err != nil {
-		return err
-	}
-	etlP.Payload["etl_id"] = max_id
 
 	// Expect all ETLs to return rows that are shaped to the summary table.
 	// operation, tags, value, count
-	sqlRows, err := callWithParams(etlP, etlRow.Body.String)
+	sqlRows, err := callWithParams(etlP, etlRow.Body)
 	if err != nil {
 		return err
 	}
@@ -84,12 +64,11 @@ func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow, tx *sql.Tx) error 
 	for sqlRows.Next() {
 		summary := etl.ItslogSummary{}
 		err := sqlRows.Scan(&summary.Operation, &summary.Tags, &summary.Value, &summary.Count)
-
 		if err != nil {
 			zap.L().Info("error scanning row", zap.Int("row_count", row_count))
 			return err
 		}
-		zap.L().Info("sqlRow",
+		zap.L().Info("etl run sql",
 			zap.String("op", summary.Operation),
 			zap.String("tags", summary.Tags),
 			zap.String("value", summary.Value),

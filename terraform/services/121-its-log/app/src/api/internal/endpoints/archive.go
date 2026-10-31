@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
@@ -35,6 +34,8 @@ func Archive(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": fmt.Sprintf("should bind: %s", err.Error())})
 		return
 	}
+
+	// First, sanitize the date.
 	sanitizedDate, err := types.SanitizeDate(body.Date)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -47,6 +48,9 @@ func Archive(c *gin.Context) {
 	}
 
 	appId := base.GetOrPanic(c, "AppId")
+
+	// Construct a path to the database, and make sure it exists.
+	// We cannot archive a database that does not exist.
 	_, dbpath := storage.ConstructDBFilenameAndPath(appId, sanitizedDate)
 	if !storage.DoesDBExist(dbpath) {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -58,25 +62,23 @@ func Archive(c *gin.Context) {
 		return
 	}
 
-	s, err := storage.SetupDB(appId, sanitizedDate)
+	// Open up the database, becuase it exists.
+	s, err := SetupGinDB(c, appId, sanitizedDate)
 	if err != nil {
-		zap.L().Error("archive setup error", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not set up archive db",
-			"date":    sanitizedDate,
-		})
 		return
 	}
 
+	// The reason we opened it was to flush and close it.
+	// This makes sure the WAL is written to the DB.
 	s.Lock("Archive")
 	defer s.Unlock("Archive")
-
 	s.Flush()
 	s.Close()
+
+	// Now, set up paths to the local DB and the archive we're about to create.
 	localPath := path.Join(s.Path...)
 	archiveFullPath := path.Join(viper.GetString("archive.path"), s.Filename)
+	// Do a streaming copy.
 	err = streamingCopy(localPath, archiveFullPath)
 	if err != nil {
 		zap.L().Error("archive copy error", zap.Error(err))
@@ -89,32 +91,30 @@ func Archive(c *gin.Context) {
 		return
 	}
 
-	// If it is not *today's* database, go ahead and delete it.
+	// If we're trying to remove the database from *today*, then don't.
+	if sanitizedDate == constants.TODAY || sanitizedDate == types.NewILTimeToday().AsYYYYMMDD() {
+		return
+	}
 
-	// We cannot archive "today". Or, the current date.
-	// This will break logging. So, we'll prevent it.
+	// S3 Files has "eventual consistency". However, this does not apply to the process
+	// doing the writing. So, our copy to an S3 Files mount will be available for comparison
+	// *immediately*, because it is in *our* EFS caching layer.
+	// consistencyTime := viper.GetInt("eventual.consistency.seconds")
+	// zap.L().Info("waiting before attempting event db removal",
+	// 	zap.Int("consistency_wait", consistencyTime))
+	// time.Sleep(time.Duration(consistencyTime) * time.Second)
 
-	go func() {
-		// If we're trying to remove the database from *today*, then don't.
-		if sanitizedDate == constants.TODAY || sanitizedDate == types.NewILTimeToday().AsYYYYMMDD() {
-			return
-		}
-
-		consistencyTime := viper.GetInt("eventual.consistency.seconds")
-		// On S3 Files, there is *eventual consistency*. We want to wait for that to settle, and
-		// then we want to do a byte-by-byte comparison. If they match, we'll delete the local file.
-		zap.L().Info("waiting before attempting event db removal",
-			zap.Int("consistency_wait", consistencyTime))
-		time.Sleep(time.Duration(consistencyTime) * time.Second)
-		b, e := deepCompare(localPath, archiveFullPath)
-		if b && e == nil {
-			zap.L().Info("local and archive match; removing")
-			os.Remove(localPath)
-		} else {
-			zap.L().Error("local and archive differ; not removing",
-				zap.Bool("same", b), zap.Error(e))
-		}
-	}()
+	// Do a deep compare, byte-by-byte, of the two files.
+	// They should os.Stat() the same and have the exact same bytes in the same order.
+	b, e := deepCompare(localPath, archiveFullPath)
+	if b && e == nil {
+		// If they match, remove the local file.
+		zap.L().Info("local and archive match; removing")
+		os.Remove(localPath)
+	} else {
+		zap.L().Error("local and archive differ; not removing",
+			zap.Bool("same", b), zap.Error(e))
+	}
 
 	c.JSON(http.StatusCreated, gin.H{
 		"status": "ok",

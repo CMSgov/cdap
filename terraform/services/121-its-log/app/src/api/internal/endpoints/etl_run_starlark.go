@@ -4,16 +4,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
 	"strconv"
-	"strings"
+	"time"
 
 	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
-	"go.starlark.net/lib/json"
-	"go.starlark.net/lib/math"
-	"go.starlark.net/lib/time"
+	starjson "go.starlark.net/lib/json"
+	starmath "go.starlark.net/lib/math"
+	startime "go.starlark.net/lib/time"
+
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
 	"go.uber.org/zap"
@@ -33,21 +33,22 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 			return starlark.None, fmt.Errorf("config: %s", err)
 		}
 
-		paramMap := map[string]string{
+		paramMap := storage.EmbedParamMap{
 			"key_id": etlP.KeyId,
 			"app_id": etlP.AppId,
 			"date":   etlP.Storage.YYYYMMDD(),
 		}
+		sqlArgs, err := storage.GenerateNamedArgs(queryString, paramMap)
 
-		sqlArgs := make([]any, 0)
-		for param, val := range paramMap {
-			if strings.Contains(queryString, "$"+param) {
-				zap.L().Debug("StarLark query prep",
-					zap.String("table", queryTable),
-					zap.Any("params", paramMap))
-				sqlArgs = append(sqlArgs, sql.Named(param, val))
-			}
-		}
+		// sqlArgs := make([]any, 0)
+		// for param, val := range paramMap {
+		// 	if strings.Contains(queryString, "$"+param) {
+		// 		zap.L().Debug("StarLark query prep",
+		// 			zap.String("table", queryTable),
+		// 			zap.Any("params", paramMap))
+		// 		sqlArgs = append(sqlArgs, sql.Named(param, val))
+		// 	}
+		// }
 
 		// An SQL step will read from and write to the DB.
 		// Lock and release around this action.
@@ -61,20 +62,17 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 			return starlark.None, rows.Err()
 		}
 
-		// DEBUG LOG
-		// log.Println("golang", queryString)
-
 		resultList := starlark.NewList([]starlark.Value{})
 		for rows.Next() {
 			switch queryTable {
 			case "events":
 				var row types.EventRow
-				if err := rows.Scan(&row.ID, &row.Timestamp, &row.KeyId, &row.Cluster, &row.Tags, &row.Value); err != nil {
+				if err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Cluster, &row.Tags, &row.Value); err != nil {
 					return starlark.None, err
 				} else {
 					d := starlark.NewDict(10)
 					d.SetKey(starlark.String("id"), starlark.String(row.ID))
-					d.SetKey(starlark.String("timestamp"), starlark.String(row.Timestamp))
+					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
 					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
 					d.SetKey(starlark.String("cluster"), starlark.String(row.Cluster.String))
 					d.SetKey(starlark.String("tags"), starlark.String(row.Tags))
@@ -89,7 +87,8 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 					d := starlark.NewDict(10)
 					id := strconv.FormatInt(row.ID, 10)
 					d.SetKey(starlark.String("id"), starlark.String(id))
-					d.SetKey(starlark.String("date"), starlark.String(row.KeyId))
+					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
+					d.SetKey(starlark.String("date"), starlark.String(row.Date))
 					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
 					d.SetKey(starlark.String("operation"), starlark.String(row.Operation))
 					d.SetKey(starlark.String("tags"), starlark.String(row.Tags.String))
@@ -107,23 +106,15 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 }
 
 func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) error {
-	// Run the query
-	if !row.Body.Valid {
-		msg := "sql is null for ETL step"
-		err := fmt.Errorf("etl body is not valid")
-		ser := etl.NewStandardErrorResponse(etlP, err)
-		ser.SetStatus(http.StatusInternalServerError).Send(msg)
-		return err
-	}
 
 	// The thread we'll execute the code in.
 	thread := &starlark.Thread{Name: row.Name + "-starlark-thread"}
 	// This loads standard modules, including JSON manipulation.
 	// See
 	// https://github.com/google/starlark-go/blob/fadfc96def35ea95e7f2bd9952256d4db1d80d91/cmd/starlark/starlark.go#L98
-	starlark.Universe["json"] = json.Module
-	starlark.Universe["time"] = time.Module
-	starlark.Universe["math"] = math.Module
+	starlark.Universe["json"] = starjson.Module
+	starlark.Universe["time"] = startime.Module
+	starlark.Universe["math"] = starmath.Module
 
 	// Register a query function
 	// This lets Starlark code call out and query the itslog_events table
@@ -131,7 +122,7 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 
 	// This evals the file, which does not *yet* execute the code.
 	// Note we register "query" as a function in the interpreted namespace.
-	globals, err := starlark.ExecFileOptions(&syntax.FileOptions{Recursion: false}, thread, "", row.Body.String, registrar)
+	globals, err := starlark.ExecFileOptions(&syntax.FileOptions{Recursion: false}, thread, "", row.Body, registrar)
 	if err != nil {
 		return err
 	}
@@ -185,6 +176,10 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 				}
 			}
 		}
+
+		zap.L().Debug("starlark summary",
+			zap.String("summary", fmt.Sprintf("%v", srjs)))
+
 		summaries = append(summaries, srjs)
 	}
 

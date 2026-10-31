@@ -3,11 +3,8 @@
 -- This is a direct-to-db write from memory. It is 
 -- faster for large number of sequential inserts, which we 
 -- do whenever we are logging events.
--- INSERT INTO itslog_events (
---   timestamp, key_id, cluster, tags, value
--- ) VALUES (
---   $_timestamp, $_key_id, $_cluster, $_tags, $_value
--- )
--- RETURNING id
--- ;
-SELECT 0;
+INSERT INTO itslog_events (
+  inserted, key_id, cluster, tags, value
+) VALUES (
+  $inserted, $key_id, $cluster, $tags, $value
+)

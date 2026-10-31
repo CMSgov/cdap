@@ -29,7 +29,7 @@ func SequenceCreate(c *gin.Context) {
 
 	s, err := SetupGinDB(c, appId, body.Date)
 	if err != nil {
-		zap.L().Fatal("could not setup DB for CreateEtl")
+		return
 	}
 	defer s.Close()
 

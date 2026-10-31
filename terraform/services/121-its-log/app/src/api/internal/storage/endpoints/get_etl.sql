@@ -1,4 +1,4 @@
-SELECT inserted, name, kind, body
+SELECT name, kind, body
 FROM itslog_etl
 WHERE
   name = $name

@@ -85,22 +85,23 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 				zap.Int("len(events)", len(events)))
 
 			s, err := storage.SetupDB(appId, formattedDate)
+			zap.L().Debug("FlushBuffersOnce setup db")
+
 			if err != nil {
 				zap.L().Fatal("could not setup DB in flushbuffers",
 					zap.String("appId", appId), zap.String("date", formattedDate),
 					zap.Error(err))
 			}
-			defer s.Close()
 
 			s.Lock("FlushBuffersOnce")
-			s.GetAppender("itslog_events")
 			start := time.Now() // Record the start time
 			inserted, err := ManyEvents(s, events)
 			if err != nil {
 				zap.L().Error("error in event insertion", zap.Error(err))
+				s.Close()
+				s.Unlock("FlushBuffersOnce")
+				break
 			}
-			s.FlushAppender()
-			s.CloseAppender()
 			s.Unlock("FlushBuffersOnce")
 
 			duration := time.Since(start)
@@ -113,18 +114,15 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 				zap.L().Error("failed to write event buffer; lost events",
 					zap.Int("events_lost", len(events)),
 					zap.Error(err))
+				s.Close()
+				s.Unlock("FlushBuffersOnce")
+				break
 			} else {
 				zap.L().Info("appended events",
 					zap.Int64("count", inserted),
 					zap.Int64("milliseconds", duration.Milliseconds()))
+				s.Close()
 			}
-
-			// Should we close here?
-			// NO. We leave sessions open, and cache them in a map.
-			// We assume we will only have so many apps open.
-			// This *might* be an issue as we roll day-to-day.
-			// That could be handled down in the Storage abstraction.
-			s.Flush()
 		}
 	}
 
@@ -133,10 +131,10 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 	counter := int64(0)
 
-	max_id, err := s.GetMaxId("get_max_event_id", storage.EmbedParamMap{})
-	if err != nil {
-		return -1, err
-	}
+	// max_id, err := s.GetMaxId("get_max_event_id", storage.EmbedParamMap{})
+	// if err != nil {
+	// 	return -1, err
+	// }
 
 	// This could/should become an appender in DuckDB.
 	// https://duckdb.org/docs/current/data/appender
@@ -145,14 +143,23 @@ func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 	// performance and safety.
 	for _, e := range evt_buff {
 		if e != nil {
-			max_id += 1
-			err := s.AppendRow(max_id, e.Timestamp.Unix(), e.KeyId, e.Cluster, e.TagString, e.Value)
+			s.GetDB().Prepare(s.Endpoints.Files["log_event"])
+			_, err := s.ExecNoLock(storage.Endpoint,
+				"log_event",
+				storage.EmbedParamMap{
+					"inserted": e.Timestamp,
+					"key_id":   e.KeyId,
+					"cluster":  e.Cluster,
+					"tags":     e.TagString,
+					"value":    e.Value,
+				},
+			)
 			if err != nil {
 				zap.L().Error("error storing event", zap.Error(err))
 				return -1, err
 			}
+
 			zap.L().Debug("ManyEvents",
-				zap.Int64("id", max_id),
 				zap.String("key_id", e.KeyId),
 				zap.String("tags", e.TagString))
 			counter += 1

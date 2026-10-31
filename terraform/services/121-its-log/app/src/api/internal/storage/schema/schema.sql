@@ -2,10 +2,8 @@ CREATE SEQUENCE IF NOT EXISTS itslog_events_id_seq START 1;
 
 CREATE TABLE IF NOT EXISTS itslog_events (
     -- automatically provided by the SQLite engine
-    id INTEGER PRIMARY KEY default nextval('itslog_events_id_seq'),
-    -- duckdb handles dates better than sqlite. 
-    -- timestamps might be able to become TIMESTAMP
-    timestamp INTEGER DEFAULT (epoch(now())), 
+    id BIGINT PRIMARY KEY DEFAULT nextval('itslog_events_id_seq') NOT NULL,
+    inserted DATETIME DEFAULT now() NOT NULL, 
     -- so we know what key performed the operation
     key_id TEXT NOT NULL,
     -- cluster is useful for a related set of events
@@ -20,12 +18,13 @@ CREATE TABLE IF NOT EXISTS itslog_events (
 CREATE SEQUENCE IF NOT EXISTS itslog_summary_id_seq START 1;
 
 CREATE TABLE IF NOT EXISTS itslog_summary (
-    id INTEGER PRIMARY KEY default nextval('itslog_summary_id_seq'),
-    -- again, TIMESTAMP?
-    last_run INTEGER DEFAULT (epoch(now())) NOT NULL, -- DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    id INTEGER PRIMARY KEY default nextval('itslog_summary_id_seq') NOT NULL,
+    inserted DATETIME DEFAULT now() NOT NULL,
     date TEXT NOT NULL,
     key_id TEXT NOT NULL,
     operation TEXT NOT NULL,
+    -- FIXME: These may want to be null.
+    -- Need to walk the code and allow sql.NullString()
     tags TEXT NOT NULL,
     value TEXT NOT NULL,
     count REAL NOT NULL,
@@ -41,19 +40,19 @@ CREATE TABLE IF NOT EXISTS itslog_summary (
 CREATE SEQUENCE IF NOT EXISTS itslog_etl_id_seq START 1;
 
 CREATE TABLE IF NOT EXISTS itslog_etl (
-    id INTEGER PRIMARY KEY default nextval('itslog_etl_id_seq'),
-    inserted INTEGER DEFAULT (epoch(now())) NOT NULL,
+    id INTEGER PRIMARY KEY DEFAULT nextval('itslog_etl_id_seq') NOT NULL,
+    inserted DATETIME DEFAULT now() NOT NULL,
     key_id TEXT NOT NULL,
     name TEXT NOT NULL,
     kind TEXT NOT NULL,
-    body TEXT
+    body TEXT NOT NULL
 );
 
 CREATE SEQUENCE IF NOT EXISTS itslog_activity_id_seq START 1;
 
 CREATE TABLE IF NOT EXISTS itslog_activity (
-    id INTEGER PRIMARY KEY default nextval('itslog_activity_id_seq'),
-    timestamp INTEGER DEFAULT (epoch(now())) NOT NULL,
+    id INTEGER PRIMARY KEY default nextval('itslog_activity_id_seq') NOT NULL,
+    inserted DATETIME DEFAULT now() NOT NULL,
     key_id TEXT NOT NULL,
     etl_id INTEGER REFERENCES itslog_etl(id),
     etl_name TEXT NOT NULL,

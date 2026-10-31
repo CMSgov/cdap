@@ -17,10 +17,10 @@ type Event struct {
 }
 
 type EventRow struct {
-	ID        string
-	Timestamp string
-	KeyId     string
-	Cluster   sql.NullString
-	Tags      string
-	Value     sql.NullString
+	ID       string
+	Inserted time.Time
+	KeyId    string
+	Cluster  sql.NullString
+	Tags     string
+	Value    sql.NullString
 }

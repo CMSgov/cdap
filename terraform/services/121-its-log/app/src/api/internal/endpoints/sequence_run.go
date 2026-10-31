@@ -80,9 +80,9 @@ func SequenceRun(c *gin.Context) {
 	// Sequences are JSON.
 	// [ { name: "count-total" }, { name: "consolidate", params: { ... } } ]
 	var seqEntries []types.SequenceEntry
-	jsonErr2 := json.Unmarshal([]byte(seq.Body.String), &seqEntries)
+	jsonErr2 := json.Unmarshal([]byte(seq.Body), &seqEntries)
 	if jsonErr2 != nil {
-		msg := fmt.Sprintf("malformed sequence spec: %s", seq.Body.String)
+		msg := fmt.Sprintf("malformed sequence spec: %s", seq.Body)
 		log.Println(msg)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",

@@ -1,9 +1,7 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
-	"database/sql/driver"
 	"errors"
 	"fmt"
 	"log"
@@ -12,7 +10,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/duckdb/duckdb-go/v2"
 	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
@@ -88,21 +85,23 @@ func NewStorage(appId string) (*Storage, error) {
 	return s, nil
 }
 
-func getDuckDBConnector(dbPath string, bootQueries []string) (*duckdb.Connector, context.Context, error) {
-	ctx := context.Background()
+// func getDuckDBConnector(dbPath string, bootQueries []string) (*duckdb.Connector, context.Context, error) {
+// 	ctx := context.Background()
 
-	c, err := duckdb.NewConnector(dbPath, func(execer driver.ExecerContext) error {
-		// https://duckdb.org/docs/current/configuration/overview
-		for _, query := range bootQueries {
-			_, err := execer.ExecContext(ctx, query, nil)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	return c, ctx, err
-}
+// 	c, err := duckdb.NewConnector(dbPath, func(execer driver.ExecerContext) error {
+// 		// https://duckdb.org/docs/current/configuration/overview
+// 		for _, query := range bootQueries {
+// 			zap.L().Debug("connector query", zap.String("query", query))
+// 			_, err := execer.ExecContext(ctx, query, nil)
+// 			if err != nil {
+// 				zap.L().Error("new connector error", zap.Error(err))
+// 				return err
+// 			}
+// 		}
+// 		return nil
+// 	})
+// 	return c, ctx, err
+// }
 
 func ConstructDBFilenameAndPath(appId string, date string) (string, []string) {
 	// Compute filename based on date and app ID
@@ -111,66 +110,48 @@ func ConstructDBFilenameAndPath(appId string, date string) (string, []string) {
 	return fname, path
 }
 
-func openDatabase(path string) (*sql.DB, *duckdb.Connector, context.Context, error) {
-	c, ctx, err := getDuckDBConnector(path, make([]string, 0))
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	db := sql.OpenDB(c)
-	return db, c, ctx, nil
-
-}
-
 func (s *Storage) InitDB() error {
 	s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, s.YYYYMMDD())
 	// Don't re-initialize a database
 	if s.db != nil {
+		zap.L().Debug("choosing not to re-initialize the database")
 		return nil
 	}
 
 	dbPath := path.Join(s.Path...)
-	c, ctx, err := getDuckDBConnector(dbPath, []string{`SET threads TO 20`})
-	if err != nil {
-		return err
-	}
-	db := sql.OpenDB(c)
-
+	var err error
 	// We need the raw context connector for appenders.
-	s.connector = c
-	s.db = db
-	s.Context = ctx
-
-	// We do not PREPARE schema.
-	s.Schema = NewEmbedSql("schema")
-	s.Schema.Init(db)
-
-	// Tables must exist in order to prepare statements.
-	// Create the tables next.
-	err = s.InitTables()
+	// s.db, s.connector, s.Context, err = openDatabase(dbPath)
+	db, err := sql.Open("duckdb", dbPath)
 	if err != nil {
 		return err
 	}
-	// We do PREPARE the SQL for endpoints.
+	s.db = db
+
+	s.Schema = NewEmbedSql("schema")
+	s.Schema.Init(s.db)
 	s.Endpoints = NewEmbedSql("endpoints")
-	s.Endpoints.Init(db)
-	s.Endpoints.Prepare()
+	s.Endpoints.Init(s.db)
+
+	err = s.InitTables()
 
 	// If the DB file exists, return now.
 	if DoesDBExist(s.Path) {
+		zap.L().Debug("file exists, initialized")
 		return nil
 	}
 
 	// This forces the creation of an empty file.
-	db.Close()
+	s.Close()
+
 	zap.L().Debug("database is closed")
-	c, ctx, err = getDuckDBConnector(dbPath, make([]string, 0))
-	db = sql.OpenDB(c)
-	s.db, s.connector, s.Context, err = openDatabase(dbPath)
+	//s.db, s.connector, s.Context, err = openDatabase(dbPath)
+	db, err = sql.Open("duckdb", dbPath)
 	if err != nil {
-		panic("could not open the database")
+		panic(err)
 	}
+	s.db = db
 	zap.L().Debug("database is open")
-	//activeStorageConnections[s.AppId+s.YYYYMMDD()] = s
 
 	return nil
 }
@@ -182,7 +163,7 @@ func (s *Storage) ExecNoLock(kind StoredSql, name string, params EmbedParamMap) 
 		res, err := s.Schema.Exec(name, make([]any, 0))
 		return res, err
 	case Endpoint:
-		if _, ok := s.Endpoints.Statements[name]; ok {
+		if _, ok := s.Endpoints.Files[name]; ok {
 			args, err := s.PrepareNamedArgs(name, params)
 			if err != nil {
 				zap.L().Error("error in PrepareNamedArgs", zap.Error(err))
@@ -261,9 +242,9 @@ func (s *Storage) QueryRow(kind StoredSql, name string, params EmbedParamMap) *s
 			s.Unlock("QueryRow")
 			return nil
 		}
-		row = s.Endpoints.QueryRow(name, args)
+		row = s.db.QueryRow(s.Endpoints.Files[name], args...)
 	default:
-		zap.L().Error("Query: unknown kind of stored SQL",
+		zap.L().Error("Query: unknown kind of stored sql",
 			zap.Int("kind", int(kind)),
 			zap.String("name", name))
 	}
@@ -292,12 +273,16 @@ func (s *Storage) Close() {
 		s.appender.Close()
 		s.appender = nil
 	}
+	if s.Context != nil {
+		s.Context.Done()
+		s.Context = nil
+	}
 	if s.db != nil {
 		s.db.Close()
 		s.db = nil
 	}
 	// If the DB is closed, kill the entire storage pointer.
-	s = nil
+	// s = nil
 }
 
 func (s *Storage) Flush() {
@@ -309,17 +294,19 @@ func (s *Storage) Flush() {
 		zap.L().Info("failed to checkpoint; retrying")
 		if DoesDBExist(s.Path) {
 			// It exists. Lets try to open it. For some reason, we were closed.
-			s.db, s.connector, s.Context, err = openDatabase(path.Join(s.Path...))
+			// s.db, s.connector, s.Context, err = openDatabase(path.Join(s.Path...))
+			db, err := sql.Open("duckdb", path.Join(s.Path...))
 			if err != nil {
 				msg := "tried to reopen the database, could not"
 				zap.L().Error(msg, zap.Error(err))
 				panic(msg)
 			}
+			s.db = db
 			zap.L().Info("had to reopen the datbase",
 				zap.String("app_id", s.AppId),
 				zap.String("filename", s.Filename),
 				zap.String("date", s.YYYYMMDD()))
-			_, err := s.db.Exec("CHECKPOINT;")
+			_, err = s.db.Exec("CHECKPOINT;")
 			if err != nil {
 				msg := "failed to checkpoint twice"
 				zap.L().Error(msg, zap.Error(err))
@@ -329,7 +316,6 @@ func (s *Storage) Flush() {
 			msg := "could not checkpoint the db"
 			zap.L().Error(msg, zap.Error(err))
 			panic(msg)
-
 		}
 	}
 
@@ -365,45 +351,6 @@ func (s *Storage) Delete() {
 	os.Remove(path)
 }
 
-func (s *Storage) GetAppender(table string) {
-	if s.appender != nil {
-		panic("only one appender can be open at a time.")
-	}
-
-	conn, err := s.connector.Connect(context.Background())
-	if err != nil {
-		zap.L().Error("couild not get raw connector",
-			zap.Error(err))
-		panic("could not get raw connector")
-	}
-	appender, err := duckdb.NewAppenderFromConn(conn, "", table)
-	if err != nil {
-		panic("could not build appender")
-	}
-	s.appender = appender
-}
-
-func (s *Storage) FlushAppender() {
-	err := s.appender.Flush()
-	if err != nil {
-		zap.L().Error("could not flush appender", zap.Error(err))
-	}
-}
-
-func (s *Storage) CloseAppender() {
-	err := s.appender.Close()
-	if err != nil {
-		zap.L().Fatal("could not close appender", zap.Error(err))
-	}
-	s.appender = nil
-	s.Flush()
-}
-
-func (s *Storage) AppendRow(row ...driver.Value) error {
-	err := s.appender.AppendRow(row...)
-	return err
-}
-
 func (s *Storage) GetEtlFromDb(name string) (EtlRow, error) {
 	raw := s.QueryRow(Endpoint,
 		"get_etl",
@@ -412,36 +359,20 @@ func (s *Storage) GetEtlFromDb(name string) (EtlRow, error) {
 	// var name, kind, body, lastRun string
 	//err := row.Scan(&name, &kind, &body, &lastRun)
 	var etlRow EtlRow
-	err := raw.Scan(&etlRow.Inserted, &etlRow.Name, &etlRow.Kind, &etlRow.Body)
+	err := raw.Scan(&etlRow.Name, &etlRow.Kind, &etlRow.Body)
 
 	if err != nil {
-		msg := "could not get ETL from DB"
+		msg := "could not get etl from db"
 		zap.L().Error(msg,
 			zap.String("etl_name", name),
+			zap.Error(err),
 		)
-		return EtlRow{}, fmt.Errorf("%s: %s", msg, err.Error())
+		return EtlRow{}, errors.New(msg)
 	}
 	return etlRow, nil
 }
 
-// Consumes the name of embedded SQL and a parameter map.
-// Finds the named params in the SQL (which must begin with $_)
-// and looks up the name in the map, returning a list of sql.NamedArgs
-// matching the variables needed to execute the SQL
-func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, error) {
-
-	// Look for the named params expected in the SQL
-	var theSql string
-	if _, ok := s.Endpoints.Files[name]; !ok {
-		etlRow, err := s.GetEtlFromDb(name)
-		if err != nil {
-			return nil, fmt.Errorf("could not prepare args for %s; not found", name)
-		}
-		theSql = etlRow.Body.String
-	} else {
-		theSql = s.Endpoints.Files[name]
-	}
-
+func GenerateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 	// We now are going to figure out which named params are present in the SQL.
 	// That way, we only create named args for things that are present.
 	// The SQL engine does not like when you pass named paramters that do not exist in the SQL.
@@ -460,8 +391,30 @@ func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, er
 			return nil, fmt.Errorf("%s found in SQL but not in params", trimmed)
 		} else {
 			named = append(named, sql.Named(trimmed, params[trimmed]))
-
 		}
+	}
+	return named, nil
+}
+
+// Consumes the name of embedded SQL and a parameter map.
+// Finds the named params in the SQL (which must begin with $_)
+// and looks up the name in the map, returning a list of sql.NamedArgs
+// matching the variables needed to execute the SQL
+func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, error) {
+	// Look for the named params expected in the SQL
+	var theSql string
+	if _, ok := s.Endpoints.Files[name]; !ok {
+		etlRow, err := s.GetEtlFromDb(name)
+		if err != nil {
+			return nil, fmt.Errorf("could not prepare args for %s; not found", name)
+		}
+		theSql = etlRow.Body
+	} else {
+		theSql = s.Endpoints.Files[name]
+	}
+	named, err := GenerateNamedArgs(theSql, params)
+	if err != nil {
+		return nil, err
 	}
 	return named, nil
 }
@@ -477,7 +430,11 @@ func (s *Storage) GetMaxId(etl string, params EmbedParamMap) (int64, error) {
 	if err != nil {
 		zap.L().Error("could not prepare args for GetMaxId", zap.Error(err))
 	}
-	row := s.Endpoints.Statements[etl].QueryRow(args...)
+	stmt, err := s.db.Prepare(s.Endpoints.Files[etl])
+	if err != nil {
+		panic("cannot prepare GetMaxId")
+	}
+	row := stmt.QueryRow(args...)
 	err = row.Scan(&max_id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

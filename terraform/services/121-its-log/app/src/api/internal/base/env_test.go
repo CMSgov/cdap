@@ -72,7 +72,7 @@ func TestGetApiKeysNoKeys(t *testing.T) {
 func TestGetApiKeys(t *testing.T) {
 	os.Clearenv()
 
-	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string"}`)
+	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string32-byte-string32-byte-string32-byte-string"}`)
 	if GetApiKeys() != nil {
 		t.Error("could not find a key")
 	}
@@ -81,7 +81,7 @@ func TestGetApiKeys(t *testing.T) {
 func TestGetApiKeysBadJson(t *testing.T) {
 	os.Clearenv()
 
-	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string"}`)
+	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string32-byte-string32-byte-string32-byte-string"}`)
 	if GetApiKeys() != nil {
 		t.Error("JSON failed to parse")
 	}
@@ -90,7 +90,7 @@ func TestGetApiKeysBadJson(t *testing.T) {
 func TestGetKeyBundle(t *testing.T) {
 	os.Clearenv()
 
-	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string"}`)
+	t.Setenv("ITSLOG_APIKEY_TESTING", `{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string32-byte-string32-byte-string32-byte-string"}`)
 	if GetApiKeys() != nil {
 		t.Error("could not find a key")
 	}

@@ -2,6 +2,7 @@ package types
 
 import (
 	"database/sql"
+	"time"
 )
 
 type ETLPostBody struct {
@@ -19,7 +20,7 @@ type SequencePostBody struct {
 }
 type SummaryRow struct {
 	ID        int64          `json:"id"`
-	Inserted  int64          `json:"last_run"`
+	Inserted  time.Time      `json:"inserted"`
 	Date      string         `json:"date"`
 	KeyId     string         `json:"key_id"`
 	Operation string         `json:"operation"`

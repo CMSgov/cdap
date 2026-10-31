@@ -68,7 +68,7 @@ func CreateEtl(c *gin.Context) {
 			zap.L().Info("naughty things in sql",
 				zap.String("sql", theSql),
 				zap.String("not_allowed", notAllowed))
-			c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "ETLs cannot contain DELETE or UPDATE"})
+			c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": "ETLs cannot contain INSERT, DELETE, or UPDATE"})
 			return
 		}
 	}
@@ -86,7 +86,7 @@ func CreateEtl(c *gin.Context) {
 
 	s, err := SetupGinDB(c, appId, body.Date)
 	if err != nil {
-		zap.L().Fatal("could not setup DB for CreateEtl")
+		return
 	}
 	defer s.Close()
 

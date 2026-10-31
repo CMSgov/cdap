@@ -2,7 +2,6 @@ package endpoints
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -28,41 +27,18 @@ func SummaryCreate(c *gin.Context) {
 	appId := base.GetOrPanic(c, "AppId")
 	keyId := base.GetOrPanic(c, "KeyId")
 
-	s, err := storage.NewStorage(appId)
+	s, err := SetupGinDB(c, appId, body.Date)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not initialize storage backend",
-			"date":    body.Date,
-			"name":    appId,
-		})
 		return
 	}
 	defer s.Close()
-
-	err = s.SetDateYMD(body.Date)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not parse date; must be YYYY-MM-DD",
-			"date":    body.Date,
-			"name":    body.Operation,
-		})
-		return
-	}
-
-	err = s.InitDB()
-	if err != nil {
-		log.Println("storage init error: " + err.Error())
-		panic(err)
-	}
 
 	// The tags field comes in as a JSON array. It needs to become
 	// a sorted, dot-separated string.
 	sort.Strings(body.Tags)
 	theTags := strings.Join(body.Tags, ".")
+
+	// args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
 
 	_, err = s.Exec(storage.Endpoint, "insert_full_summary", storage.EmbedParamMap{
 		"key_id":    keyId,
@@ -79,7 +55,7 @@ func SummaryCreate(c *gin.Context) {
 		c.JSON(http.StatusNotImplemented, gin.H{
 			"status":    "error",
 			"method":    c.Request.Method,
-			"message":   "could not save ETL step",
+			"message":   "could not save etl step",
 			"date":      body.Date,
 			"operation": body.Operation,
 		})

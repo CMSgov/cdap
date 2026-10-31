@@ -34,14 +34,6 @@ func SummaryRead(c *gin.Context) {
 
 	s, err := SetupGinDB(c, appId, body.Date)
 	if err != nil {
-		msg := "could not initialize storage backend"
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":    "error",
-			"method":    c.Request.Method,
-			"message":   msg,
-			"date":      body.Date,
-			"operation": body.Operation,
-		})
 		return
 	}
 	defer s.Close()
@@ -59,7 +51,7 @@ func SummaryRead(c *gin.Context) {
 	if err != nil {
 		zap.L().Error("read_summary arg prep error", zap.Error(err))
 	}
-	row := s.Endpoints.Statements["read_summary"].QueryRow(args...)
+	row := s.Endpoints.QueryRow("read_summary", args)
 	if err != nil {
 		zap.L().Error("read_summary exec error", zap.Error(err))
 		msg := "could not parse date; must be YYYY-MM-DD"
