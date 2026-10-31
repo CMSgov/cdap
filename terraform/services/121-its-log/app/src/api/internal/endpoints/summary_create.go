@@ -38,15 +38,12 @@ func SummaryCreate(c *gin.Context) {
 	sort.Strings(body.Tags)
 	theTags := strings.Join(body.Tags, ".")
 
-	// args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
-
 	_, err = s.Exec(storage.Endpoint, "insert_full_summary", storage.EmbedParamMap{
 		"key_id":    keyId,
 		"date":      body.Date,
 		"operation": body.Operation,
 		"tags":      theTags,
-		"value":     body.Value,
-		"count":     body.Count,
+		"data":      body.Data,
 	})
 
 	if err != nil {
@@ -68,8 +65,7 @@ func SummaryCreate(c *gin.Context) {
 		"date":      body.Date,
 		"operation": body.Operation,
 		"tags":      theTags,
-		"value":     body.Value,
-		"count":     body.Count,
+		"data":      body.Data,
 	})
 
 }

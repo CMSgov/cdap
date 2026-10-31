@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS itslog_events (
     tags TEXT NOT NULL,
     -- value is useful for when you want a unique value 
     -- associated with this event
-    value TEXT
+    data JSON DEFAULT json_object() NOT NULL
 );
 
 CREATE SEQUENCE IF NOT EXISTS itslog_summary_id_seq START 1;
@@ -23,12 +23,8 @@ CREATE TABLE IF NOT EXISTS itslog_summary (
     date TEXT NOT NULL,
     key_id TEXT NOT NULL,
     operation TEXT NOT NULL,
-    -- FIXME: These may want to be null.
-    -- Need to walk the code and allow sql.NullString()
     tags TEXT NOT NULL,
-    value TEXT NOT NULL,
-    count REAL NOT NULL,
-    hash TEXT
+    data JSON DEFAULT json_object() NOT NULL
 );
 
 -- See https://stackoverflow.com/questions/22699409/sqlite-null-and-unique
@@ -54,7 +50,6 @@ CREATE TABLE IF NOT EXISTS itslog_activity (
     id INTEGER PRIMARY KEY default nextval('itslog_activity_id_seq') NOT NULL,
     inserted DATETIME DEFAULT now() NOT NULL,
     key_id TEXT NOT NULL,
-    etl_id INTEGER REFERENCES itslog_etl(id),
     etl_name TEXT NOT NULL,
     activity TEXT NOT NULL
 );

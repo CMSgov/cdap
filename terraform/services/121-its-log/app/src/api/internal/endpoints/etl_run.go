@@ -1,7 +1,6 @@
 package endpoints
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -102,7 +101,7 @@ func runEtl(etlP *etl.RunEtlParams) error {
 
 	switch etlRow.Kind {
 	case constants.SQL:
-		err := etlRunSql(etlP, etlRow, nil)
+		err := etlRunSql(etlP, etlRow)
 		if err != nil {
 			return err
 		}
@@ -130,16 +129,8 @@ func runEtl(etlP *etl.RunEtlParams) error {
 		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
 	}
 
-	max_id, err := etlP.Storage.GetMaxId("get_max_etl_id", storage.EmbedParamMap{
-		"name": etlP.EtlName,
-	})
-	if err != nil {
-		return err
-	}
-
 	_, err = etlP.Storage.Exec(storage.Endpoint, "update_last_run", storage.EmbedParamMap{
 		"key_id":   etlP.KeyId,
-		"etl_id":   max_id,
 		"etl_name": etlP.EtlName,
 		"activity": "run etl via API",
 	})
@@ -158,30 +149,42 @@ func runEtl(etlP *etl.RunEtlParams) error {
 }
 
 func InsertSummaryRows(source string, etlP *etl.RunEtlParams, summaries []etl.ItslogSummary) error {
-
-	// Now, write them to the summary table.
+	//
+	// Now, write the new summar(y|ies) to the summary table.
 	for _, summary := range summaries {
+		var deleted bool = false
 
 		etlP.Payload["key_id"] = etlP.KeyId
 		// What date should this be?
 		etlP.Payload["date"] = etlP.Storage.YYYYMMDD()
 		etlP.Payload["operation"] = summary.Operation
 		etlP.Payload["tags"] = summary.Tags
-		etlP.Payload["value"] = summary.Value
-		etlP.Payload["count"] = float64(summary.Count)
-		etlP.Payload["hash"] = sql.NullString{String: summary.ReturnHash(), Valid: true}
+		etlP.Payload["data"] = summary.Data
+
+		if !deleted {
+			zap.L().Debug("deleting existing summaries", zap.String("etl", etlP.EtlName))
+			// Delete existing rows that match the key_id/date/operation
+			delArgs, err := etlP.Storage.PrepareNamedArgs("delete_existing_summaries", etlP.Payload)
+			if err != nil {
+				return err
+			}
+			_, err = etlP.Storage.Endpoints.Exec("delete_existing_summaries", delArgs)
+			if err != nil {
+				zap.L().Error("possible error delete_existing_summaries",
+					zap.String("source", source),
+					zap.Any("payload", etlP.Payload),
+					zap.Error(err))
+			}
+			deleted = true
+		}
 
 		args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
 		if err != nil {
 			return err
 		}
-
-		zap.L().Debug("insert summary rows",
-			zap.String("args", fmt.Sprintf("%v", args)),
-		)
 		_, err = etlP.Storage.Endpoints.Exec("insert_full_summary", args)
 		if err != nil {
-			zap.L().Error("InsertSummaryRow Exec",
+			zap.L().Error("insertsummaryrows:insert_full_summary",
 				zap.String("source", source),
 				zap.Any("payload", etlP.Payload),
 				zap.Error(err))

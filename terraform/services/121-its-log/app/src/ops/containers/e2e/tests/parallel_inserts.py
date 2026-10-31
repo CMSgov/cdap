@@ -40,8 +40,8 @@ def test_parallel_inserts(PARAMS, N):
     run_etl(PARAMS, "count-total")
     js = summary_read(PARAMS, "count.total")
     final_events = -1
-    if js and "count" in js:
-        final_events = js["count"]
+    if js and "data" in js and "count" in js["data"]:
+        final_events = js["data"]["count"]
         print(f"🔵 {final_events} found")
     total = final_events - initial_events
     print(f"parallel initial {initial_events} {final_events} {total}")

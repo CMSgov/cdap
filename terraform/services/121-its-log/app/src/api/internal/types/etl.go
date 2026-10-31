@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+type JsonMap map[string]any
+
 type ETLPostBody struct {
 	Name string `json:"name" binding:"required"`
 	Kind string `json:"kind" binding:"required"`
@@ -25,7 +27,5 @@ type SummaryRow struct {
 	KeyId     string         `json:"key_id"`
 	Operation string         `json:"operation"`
 	Tags      sql.NullString `json:"tags"`
-	Value     sql.NullString `json:"value"`
-	Count     float64        `json:"count"`
-	Hash      sql.NullString `json:"hash"`
+	Data      JsonMap        `json:"data"`
 }

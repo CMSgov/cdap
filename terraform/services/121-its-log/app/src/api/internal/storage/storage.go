@@ -7,108 +7,10 @@ import (
 	"log"
 	"os"
 	"path"
-	"regexp"
-	"strings"
 
-	_ "github.com/duckdb/duckdb-go/v2"
-	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
-
-type StoredSql int
-
-const (
-	Schema StoredSql = iota
-	Endpoint
-)
-
-const SQL_NAMED_PARAM_SYMBOL = "$"
-
-// var activeStorageConnections StorageMap = make(StorageMap, 0)
-
-func DoesDBExist(pathArr []string) bool {
-	dbPath := path.Join(pathArr...)
-
-	_, err := os.Stat(dbPath)
-	// If we don't get an error, the file exists.
-	if err == nil {
-		return true
-	} else if errors.Is(err, os.ErrNotExist) {
-		// If there is an error, we'll log and return.
-		zap.L().Info("file does not exist",
-			zap.String("filename", dbPath))
-		return false
-	} else {
-		// Other errors could have occurred; for example,
-		// there could be a disk error. Instead of handling everything,
-		// we'll log the error, and indicate we cannot find the file.
-		zap.L().Info("unknown error; file effectively does not exist",
-			zap.Error(err))
-		return false
-
-	}
-}
-
-// Helper for the endpoints and other uses across the codebase
-// This is the preferred entrypoint to the Storage API.
-func SetupDB(appId string, date string) (*Storage, error) {
-	s, err := NewStorage(appId)
-	if err != nil {
-		return nil, err
-	}
-	s.ILTime, err = types.StringToYMD(date)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.InitDB()
-	if err != nil {
-		log.Println("storage init error: " + err.Error())
-		panic(err)
-	}
-
-	zap.L().Debug("SetupDB new storage created",
-		zap.String("app_id", appId), zap.String("date", date))
-	return s, nil
-}
-
-func NewStorage(appId string) (*Storage, error) {
-
-	// Create DB
-	s := &Storage{
-		AppId: appId,
-	}
-	s.ILTime = types.NewILTimeToday()
-	s.db = nil
-
-	return s, nil
-}
-
-// func getDuckDBConnector(dbPath string, bootQueries []string) (*duckdb.Connector, context.Context, error) {
-// 	ctx := context.Background()
-
-// 	c, err := duckdb.NewConnector(dbPath, func(execer driver.ExecerContext) error {
-// 		// https://duckdb.org/docs/current/configuration/overview
-// 		for _, query := range bootQueries {
-// 			zap.L().Debug("connector query", zap.String("query", query))
-// 			_, err := execer.ExecContext(ctx, query, nil)
-// 			if err != nil {
-// 				zap.L().Error("new connector error", zap.Error(err))
-// 				return err
-// 			}
-// 		}
-// 		return nil
-// 	})
-// 	return c, ctx, err
-// }
-
-func ConstructDBFilenameAndPath(appId string, date string) (string, []string) {
-	// Compute filename based on date and app ID
-	fname := fmt.Sprintf("%s_%s.duckdb", appId, date)
-	path := []string{viper.GetString("storage.path"), fname}
-	return fname, path
-}
 
 func (s *Storage) InitDB() error {
 	s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, s.YYYYMMDD())
@@ -281,6 +183,15 @@ func (s *Storage) Close() {
 		s.db.Close()
 		s.db = nil
 	}
+	// Give it the old college try...
+	if s.lock.TryLock() {
+		// This means the lock was acquired...
+		defer s.lock.Unlock()
+	} else {
+		// It is locked. Unlock it.
+		defer s.lock.Unlock()
+	}
+
 	// If the DB is closed, kill the entire storage pointer.
 	// s = nil
 }
@@ -372,30 +283,6 @@ func (s *Storage) GetEtlFromDb(name string) (EtlRow, error) {
 	return etlRow, nil
 }
 
-func GenerateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
-	// We now are going to figure out which named params are present in the SQL.
-	// That way, we only create named args for things that are present.
-	// The SQL engine does not like when you pass named paramters that do not exist in the SQL.
-	// E.g. we cannot provide more names than exist.
-	re := regexp.MustCompile(`\` + SQL_NAMED_PARAM_SYMBOL + `([a-zA-Z0-9_]+)`)
-	matches := re.FindAllString(theSql, -1)
-
-	// And, check everything we found in the SQL is in the params
-	named := make([]any, 0)
-
-	for _, arg := range matches {
-		trimmed := strings.Replace(arg, "$", "", 1)
-		if _, ok := params[trimmed]; !ok {
-			zap.L().Error("found in SQL but not in params",
-				zap.String("trimmed", trimmed))
-			return nil, fmt.Errorf("%s found in SQL but not in params", trimmed)
-		} else {
-			named = append(named, sql.Named(trimmed, params[trimmed]))
-		}
-	}
-	return named, nil
-}
-
 // Consumes the name of embedded SQL and a parameter map.
 // Finds the named params in the SQL (which must begin with $_)
 // and looks up the name in the map, returning a list of sql.NamedArgs
@@ -417,35 +304,4 @@ func (s *Storage) PrepareNamedArgs(name string, params EmbedParamMap) ([]any, er
 		return nil, err
 	}
 	return named, nil
-}
-
-func (s *Storage) GetMaxId(etl string, params EmbedParamMap) (int64, error) {
-	// The appender must supply all columns.
-	// Therefore, we need to provide the PK, which is an incrementing integer.
-	// Flushes are strictly sequential, because of the architecture of its-log.
-	// Therefore, it should be safe to get the id and then do the inserts. Two buffer
-	// flushes cannot collide; the channel semantics protect this.
-	var max_id int64
-	args, err := s.PrepareNamedArgs(etl, params)
-	if err != nil {
-		zap.L().Error("could not prepare args for GetMaxId", zap.Error(err))
-	}
-	stmt, err := s.db.Prepare(s.Endpoints.Files[etl])
-	if err != nil {
-		panic("cannot prepare GetMaxId")
-	}
-	row := stmt.QueryRow(args...)
-	err = row.Scan(&max_id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			zap.L().Debug("GetMaxId nothing in result set; returning 0")
-			return 0, nil
-		} else {
-			zap.L().Error("could not get max for id",
-				zap.String("etl", etl), zap.Any("params", params), zap.Error(err))
-			return -1, fmt.Errorf("could not get max id")
-		}
-	}
-
-	return max_id, nil
 }

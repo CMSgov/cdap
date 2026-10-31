@@ -143,6 +143,8 @@ func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 	// performance and safety.
 	for _, e := range evt_buff {
 		if e != nil {
+			// zap.L().Debug("preparing event", zap.Any("event", e))
+
 			s.GetDB().Prepare(s.Endpoints.Files["log_event"])
 			_, err := s.ExecNoLock(storage.Endpoint,
 				"log_event",
@@ -151,17 +153,13 @@ func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 					"key_id":   e.KeyId,
 					"cluster":  e.Cluster,
 					"tags":     e.TagString,
-					"value":    e.Value,
+					"data":     e.Data,
 				},
 			)
 			if err != nil {
 				zap.L().Error("error storing event", zap.Error(err))
 				return -1, err
 			}
-
-			zap.L().Debug("ManyEvents",
-				zap.String("key_id", e.KeyId),
-				zap.String("tags", e.TagString))
 			counter += 1
 		}
 	}

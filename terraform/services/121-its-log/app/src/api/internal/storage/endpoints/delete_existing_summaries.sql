@@ -4,4 +4,5 @@ WHERE
     AND
     date = $date
     AND
-    operation = $operation;
+    operation = $operation
+;

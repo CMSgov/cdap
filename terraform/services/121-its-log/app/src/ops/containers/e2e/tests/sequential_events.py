@@ -8,11 +8,11 @@ import sys
 import time
 
 
-def create_N_events(PARAMS, N, cluster, tags, value):
+def create_N_events(PARAMS, N, cluster, tags, data):
     # Create one event
     created = 0
     for _ in range(N):
-        res = log_create(PARAMS, cluster, tags, value)
+        res = log_create(PARAMS, cluster, tags, data)
         if res.status_code == HTTPStatus.OK:
             created += 1
         else:
@@ -31,19 +31,20 @@ def test_sequential_event_logging(PARAMS, id):
 
     js = summary_read(PARAMS, "count.total")
     initial_events = -1
-    if js and "count" in js:
-        initial_events = js["count"]
+    print(js)
+    if js and "data" in js and "count" in js["data"]:
+        initial_events = js["data"]["count"]
         print(f"🔵 {initial_events} found")
     else:
         print(js)
-    create_N_events(PARAMS, 1, "", ["v1"], "")
+    create_N_events(PARAMS, 1, "", ["v1"], {"count": 1})
     print(f"🟢 created 1 event")
 
     time.sleep(PARAMS.get("TIMEOUT"))
 
     # Create 100 events, pass values
     N = PARAMS.get("LESS_THAN_BUFFER")
-    inserted = create_N_events(PARAMS, N, "", ["v2", "centi"], "")
+    inserted = create_N_events(PARAMS, N, "", ["v2", "centi"], {"count": 1})
     if N == inserted:
         print(f"🟢 created {N} events")
     else:
@@ -53,7 +54,7 @@ def test_sequential_event_logging(PARAMS, id):
     # Create 5000 events, which will require 3 buffer flushes
     # Pass values and clusters
     N = PARAMS.get("MORE_THAN_BUFFER")
-    inserted = create_N_events(PARAMS, N, "", ["v2", "centi"], "")
+    inserted = create_N_events(PARAMS, N, "", ["v2", "centi"], {"count": 1})
     if N == inserted:
         print(f"🟢 created {N} events")
     else:
@@ -65,8 +66,8 @@ def test_sequential_event_logging(PARAMS, id):
     run_etl(PARAMS, "count-total")
     js = summary_read(PARAMS, "count.total")
     final_events = -1
-    if js and "count" in js:
-        final_events = js["count"]
+    if js and "data" in js and "count" in js["data"]:
+        final_events = js["data"]["count"]
         print(f"🔵 {final_events} found")
     final_events = final_events - initial_events
     inserted = PARAMS.get("LESS_THAN_BUFFER") + \

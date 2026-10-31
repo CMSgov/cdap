@@ -4,7 +4,7 @@
 -- faster for large number of sequential inserts, which we 
 -- do whenever we are logging events.
 INSERT INTO itslog_events (
-  inserted, key_id, cluster, tags, value
+  inserted, key_id, cluster, tags, data
 ) VALUES (
-  $inserted, $key_id, $cluster, $tags, $value
+  $inserted, $key_id, $cluster, $tags, $data
 )

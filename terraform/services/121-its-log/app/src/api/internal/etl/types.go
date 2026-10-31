@@ -1,12 +1,8 @@
 package etl
 
 import (
-	"crypto/sha1"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/storage"
@@ -119,50 +115,35 @@ type ItslogEtl struct {
 	Body     sql.NullString
 }
 
-type ItslogEvent struct {
-	ID        int64
-	Timestamp sql.NullInt64
-	KeyID     string
-	Cluster   sql.NullString
-	Tags      string
-	Value     sql.NullString
-}
+// type ItslogEvent struct {
+// 	ID       int64
+// 	Inserted sql.NullInt64
+// 	KeyID    string
+// 	Cluster  sql.NullString
+// 	Tags     string
+// 	Value    sql.NullString
+// }
+
+// type ItslogSummary struct {
+// 	ID        int64
+// 	LastRun   int64
+// 	Date      string
+// 	KeyID     string
+// 	Operation string
+// 	Tags      string
+// 	Value     string
+// 	Count     float64
+// 	Hash      sql.NullString
+// }
 
 type ItslogSummary struct {
 	ID        int64
-	LastRun   int64
+	Inserted  int64
 	Date      string
 	KeyID     string
 	Operation string
 	Tags      string
-	Value     string
-	Count     float64
-	Hash      sql.NullString
-}
-
-func (ils *ItslogSummary) ReturnHash() string {
-	fields := []string{
-		ils.Date,
-		ils.KeyID,
-		ils.Operation,
-		ils.Tags,
-		ils.Value,
-		strconv.FormatFloat(ils.Count, 'f', 3, 64),
-	}
-	joined := strings.Join(fields, "-")
-	h := sha1.New()
-	h.Write([]byte(joined))
-	hashed := hex.EncodeToString(h.Sum(nil))
-	return hashed
-}
-
-func (ils *ItslogSummary) UpdateHash() {
-	hashed := ils.ReturnHash()
-	ils.Hash = sql.NullString{String: hashed, Valid: true}
-}
-
-func (ils ItslogSummary) IsHashSameAs(other ItslogSummary) bool {
-	return ils.ReturnHash() == other.ReturnHash()
+	Data      types.JsonMap
 }
 
 type InsertSummaryParams struct {

@@ -3,6 +3,7 @@ package endpoints
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	etl "github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
@@ -17,9 +18,10 @@ func callWithParams(etlP *etl.RunEtlParams, theSql string) (*sql.Rows, error) {
 		return nil, err
 	}
 
-	etlP.Storage.Lock("callWithParams")
+	lockString := fmt.Sprintf("callWithParams:%s", etlP.EtlName)
+	etlP.Storage.Lock(lockString)
 	etlRows, err := etlP.Storage.GetDB().Query(theSql, args...)
-	etlP.Storage.Unlock("callWithParams")
+	etlP.Storage.Unlock(lockString)
 	if err != nil {
 		zap.L().Error("etl call failed", zap.Error(err))
 		return nil, err
@@ -49,7 +51,7 @@ func insertDefaultParams(etlP *etl.RunEtlParams) (*etl.RunEtlParams, error) {
 	return etlP, nil
 }
 
-func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow, tx *sql.Tx) error {
+func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow) error {
 
 	// Expect all ETLs to return rows that are shaped to the summary table.
 	// operation, tags, value, count
@@ -63,16 +65,21 @@ func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow, tx *sql.Tx) error 
 	row_count := 0
 	for sqlRows.Next() {
 		summary := etl.ItslogSummary{}
-		err := sqlRows.Scan(&summary.Operation, &summary.Tags, &summary.Value, &summary.Count)
+		err := sqlRows.Scan(&summary.Operation, &summary.Tags, &summary.Data) // &summary.Value, &summary.Count)
 		if err != nil {
-			zap.L().Info("error scanning row", zap.Int("row_count", row_count))
-			return err
+			if errors.Is(err, sql.ErrNoRows) {
+				zap.L().Info("etl returned zero rows", zap.String("name", etlP.EtlName))
+				return nil
+			} else {
+				zap.L().Info("error scanning row", zap.Int("row_count", row_count))
+				return err
+			}
 		}
 		zap.L().Info("etl run sql",
-			zap.String("op", summary.Operation),
+			zap.String("operation", summary.Operation),
 			zap.String("tags", summary.Tags),
-			zap.String("value", summary.Value),
-			zap.Float64("count", summary.Count))
+			zap.String("data", fmt.Sprintf("%v", summary.Data)),
+		)
 		row_count += 1
 		summaries = append(summaries, summary)
 	}

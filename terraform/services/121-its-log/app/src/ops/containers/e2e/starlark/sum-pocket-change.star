@@ -16,15 +16,15 @@ def summarize():
     }
     for row in query_rows:
         # Convert the value field from JSON to a dictionary
-        d = json.decode(row["value"])
+        d = row["data"]
         # Sum up what we find
         for coin in ["pennies", "nickels", "dimes", "quarters"]:
             if coin in d:
                 sums[coin] = sums[coin] + d[coin]
     total = sums["pennies"] + (sums["nickels"] * 5) + (sums["dimes"] * 10) + (sums["quarters"] * 25)
     result = [
-        {"operation": "total.pocketchange", "count": total},
-        {"operation": "total.pocketchange.json", "value": json.encode(sums), "count": 0}
+        {"operation": "total.pocketchange", "data": {"count": total}},
+        {"operation": "total.pocketchange.json", "data": sums}
     ]
     print(result)
     return result

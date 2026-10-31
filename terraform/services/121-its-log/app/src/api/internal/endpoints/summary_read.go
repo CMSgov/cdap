@@ -61,7 +61,7 @@ func SummaryRead(c *gin.Context) {
 	}
 
 	var summaryRow types.SummaryRow
-	row.Scan(&summaryRow.Date, &summaryRow.Operation, &summaryRow.Tags, &summaryRow.Value, &summaryRow.Count)
+	row.Scan(&summaryRow.Date, &summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
 	if row.Err() != nil {
 		zap.L().Error("read_summary row scan", zap.Error(err))
 		msg := fmt.Sprintf("no summary found for %s", body.Operation)
@@ -72,17 +72,16 @@ func SummaryRead(c *gin.Context) {
 		"status":    constants.OK,
 		"date":      summaryRow.Date,
 		"operation": summaryRow.Operation,
-		"value":     summaryRow.Value,
 		"tags":      summaryRow.Tags,
-		"count":     summaryRow.Count,
+		"data":      summaryRow.Data,
 	}
 
 	// Cleanup the sql.NullString values
-	if summaryRow.Value.Valid {
-		response["value"] = summaryRow.Value.String
-	} else {
-		response["value"] = nil
-	}
+	// if summaryRow.Value.Valid {
+	// 	response["value"] = summaryRow.Value.String
+	// } else {
+	// 	response["value"] = nil
+	// }
 	if summaryRow.Tags.Valid {
 		response["tags"] = summaryRow.Tags.String
 	} else {

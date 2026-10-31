@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/navapbc/its-log/internal/etl"
@@ -40,21 +39,12 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 		}
 		sqlArgs, err := storage.GenerateNamedArgs(queryString, paramMap)
 
-		// sqlArgs := make([]any, 0)
-		// for param, val := range paramMap {
-		// 	if strings.Contains(queryString, "$"+param) {
-		// 		zap.L().Debug("StarLark query prep",
-		// 			zap.String("table", queryTable),
-		// 			zap.Any("params", paramMap))
-		// 		sqlArgs = append(sqlArgs, sql.Named(param, val))
-		// 	}
-		// }
-
 		// An SQL step will read from and write to the DB.
 		// Lock and release around this action.
-		etlP.Storage.Lock("Starlark queryFun")
+		lockMsg := "starlark:queryfun:" + etlP.EtlName
+		etlP.Storage.Lock(lockMsg)
 		rows, err := etlP.Storage.GetDB().Query(queryString, sqlArgs...)
-		etlP.Storage.Unlock("Starlark queryFun")
+		etlP.Storage.Unlock(lockMsg)
 		if err != nil {
 			return starlark.None, err
 		}
@@ -66,35 +56,37 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 		for rows.Next() {
 			switch queryTable {
 			case "events":
+				zap.L().Debug("starlark scanning events row")
 				var row types.EventRow
-				if err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Cluster, &row.Tags, &row.Value); err != nil {
+				err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Cluster, &row.Tags, &row.Data)
+				if err != nil {
 					return starlark.None, err
 				} else {
-					d := starlark.NewDict(10)
-					d.SetKey(starlark.String("id"), starlark.String(row.ID))
+					d := starlark.NewDict(8)
+					dataDict := GolangToStarlark(row.Data)
+					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
 					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
 					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
 					d.SetKey(starlark.String("cluster"), starlark.String(row.Cluster.String))
 					d.SetKey(starlark.String("tags"), starlark.String(row.Tags))
-					d.SetKey(starlark.String("value"), starlark.String(row.Value.String))
+					d.SetKey(starlark.String("data"), dataDict)
 					resultList.Append(d)
 				}
 			case "summary":
+				zap.L().Debug("starlark scanning summary row")
 				var row types.SummaryRow
-				if err := rows.Scan(&row.ID, &row.Inserted, &row.Date, &row.KeyId, &row.Operation, &row.Tags, &row.Value, &row.Count, &row.Hash); err != nil {
+				if err := rows.Scan(&row.ID, &row.Inserted, &row.Date, &row.KeyId, &row.Operation, &row.Tags, &row.Data); err != nil {
 					return starlark.None, err
 				} else {
 					d := starlark.NewDict(10)
-					id := strconv.FormatInt(row.ID, 10)
-					d.SetKey(starlark.String("id"), starlark.String(id))
+					dataDict := GolangToStarlark(row.Data)
+					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
 					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
 					d.SetKey(starlark.String("date"), starlark.String(row.Date))
 					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
 					d.SetKey(starlark.String("operation"), starlark.String(row.Operation))
 					d.SetKey(starlark.String("tags"), starlark.String(row.Tags.String))
-					d.SetKey(starlark.String("value"), starlark.String(row.Value.String))
-					d.SetKey(starlark.String("count"), starlark.Float(row.Count))
-					d.SetKey(starlark.String("hash"), starlark.String(row.Hash.String))
+					d.SetKey(starlark.String("data"), dataDict)
 					resultList.Append(d)
 				}
 			}
@@ -103,6 +95,78 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 		return resultList, nil
 
 	}
+}
+
+func GolangToStarlark(data types.JsonMap) *starlark.Dict {
+	dataDict := starlark.NewDict(64)
+
+	zap.L().Debug("GolangToStarlark", zap.Any("data", data))
+
+	for k, v := range data {
+		switch v.(type) {
+		case int:
+			dataDict.SetKey(starlark.String(k), starlark.MakeInt64(int64(v.(int64))))
+		case float64:
+			dataDict.SetKey(starlark.String(k), starlark.Float(v.(float64)))
+		case string:
+			dataDict.SetKey(starlark.String(k), starlark.String(v.(string)))
+		case map[string]any:
+			newM := make(types.JsonMap, 0)
+			for k, v := range v.(map[string]any) {
+				newM[k] = v.(map[string]any)
+			}
+			dataDict.SetKey(starlark.String(k), GolangToStarlark(newM))
+		default:
+			zap.L().Debug("could not map value to starlark.Dict",
+				zap.String("key", k),
+				zap.Any("value", v),
+				zap.String("value type", fmt.Sprintf("%T", v)))
+		}
+	}
+
+	zap.L().Debug("G2S", zap.Any("starlark.Dict", dataDict))
+
+	return dataDict
+}
+
+func StarlarkToGolang(data starlark.Value) types.JsonMap {
+	zap.L().Debug("StarlarkToGolang", zap.Any("data", data))
+
+	m := make(types.JsonMap, 0)
+	for _, dk := range data.(*starlark.Dict).Keys() {
+		mapk, _ := starlark.AsString(dk)
+		val, _, _ := data.(*starlark.Dict).Get(dk)
+		switch val.Type() {
+		case "int":
+			zap.L().Debug("S2G->int", zap.Any("value", val))
+			num := 42
+			err := starlark.AsInt(val, &num)
+			if err != nil {
+				zap.L().Info("S2G->int conversion error", zap.Any("value", val))
+			}
+			m[mapk] = num
+		case "string":
+			zap.L().Debug("S2G->string", zap.Any("value", val))
+			m[mapk] = starlark.String(val.(starlark.String))
+		case "float":
+			zap.L().Debug("S2G->float", zap.Any("value", val))
+			num, ok := starlark.AsFloat(val)
+			if !ok {
+				zap.L().Info("S2G->float conversion error", zap.Any("value", val))
+			}
+			m[mapk] = num
+		default:
+			zap.L().Debug("could not determine starlark type",
+				zap.String("key", mapk),
+				zap.String("starlark_type", val.Type()),
+				zap.String("golang_type", fmt.Sprintf("%T", data)))
+			m[mapk] = starlark.String("nope")
+		}
+	}
+
+	zap.L().Debug("S2G", zap.Any("map", m))
+
+	return m
 }
 
 func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) error {
@@ -138,6 +202,8 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 	// Here is the call.
 	v, err := starlark.Call(thread, fn, nil, nil)
 	if err != nil {
+		zap.L().Error("starlark Call() error",
+			zap.Error(err))
 		return err
 	}
 
@@ -162,17 +228,10 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 				if found {
 					srjs.Tags, _ = starlark.AsString(v)
 				}
-			case "value":
-				v, found, _ := elem.(*starlark.Dict).Get(k)
+			case "data":
+				data, found, _ := elem.(*starlark.Dict).Get(k)
 				if found {
-					srjs.Value, _ = starlark.AsString(v)
-				}
-			case "count":
-				v, found, _ := elem.(*starlark.Dict).Get(k)
-				if found {
-					var f float64
-					f, _ = starlark.AsFloat(v)
-					srjs.Count = float64(f)
+					srjs.Data = StarlarkToGolang(data)
 				}
 			}
 		}
@@ -185,29 +244,5 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 
 	// // Now, write them to the summary table.
 	return InsertSummaryRows("starlark", etlP, summaries)
-
-	// for _, e := range arr {
-	// 	seconds := gotime.Now().Unix()
-	// 	etlP.Payload["key_id"] = etlP.KeyId
-	// 	etlP.Payload["date"] = seconds
-	// 	etlP.Payload["operation"] = e.Operation
-	// 	etlP.Payload["tags"] = e.Tags
-	// 	etlP.Payload["value"] = e.Value
-	// 	etlP.Payload["count"] = float64(e.Count)
-	// 	etlP.Payload["hash"] = sql.NullString{String: e.ReturnHash(), Valid: true}
-
-	// 	args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	_, err = etlP.Storage.Endpoints.Exec("insert_full_summary", args)
-	// 	if err != nil {
-	// 		zap.L().Error("etlRunStarlark Exec",
-	// 			zap.Any("payload", etlP.Payload),
-	// 			zap.Error(err))
-	// 		return err
-	// 	}
-	// }
 
 }
