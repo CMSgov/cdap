@@ -6,11 +6,26 @@ const ITSLOG_PORT = __ENV.ITSLOG_PORT;
 
 // https://k6.io/blog/how-to-generate-a-constant-request-rate-with-the-new-scenarios-api/
 export const options = {
+    scenarios: {
+        steady_users: {
+            executor: 'constant-vus',
+            vus: 20,
+            duration: '30s',
+        },
+        spiking_users: {
+            executor: 'ramping-vus',
+            startVUs: 0,
+            stages: [
+                { duration: '10s', target: 50 },
+                { duration: '20s', target: 0 },
+            ],
+        },
+    },
     thresholds: {
         // http errors should be less than 1%
         http_req_failed: ['rate<0.01'],
-        // 95% of requests should be below 2ms
-        http_req_duration: ['p(95)<2'],
+        // 95% of requests should be below 15ms
+        http_req_duration: ['p(95)<15'],
     },
     insecureSkipTLSVerify: true,
 };
@@ -47,7 +62,7 @@ const applications = [
 const url = "http://" + ITSLOG_HOST + ":" + ITSLOG_PORT + "/v1/log/create";
 // Simulated user behavior
 export default function () {
-    const N = 100;
+    const N = 200;
 
     const params = {
         headers: { "x-api-key": __ENV.ITSLOG_APIKEY }

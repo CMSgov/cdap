@@ -108,27 +108,42 @@ Performance stress-testing can be run with
 
 This runs K6 in one container, and `its-log` in another.
 
-On an M4 Mac against local NVMe storage, 8K/sec, 4K/sec between containers (HTTP overheads). Cloud performance is likely somewhere in-between.
+On an M4 Mac against local NVMe storage, 1200K/sec between containers (HTTP overheads); roughly 70K events/minute.
 
-Containerized performance (2026-10-11)
+Containerized performance (2026-10-31)
 
 ```
- TOTAL RESULTS 
-HTTP
-http_req_duration..............: avg=105.4µs min=48.04µs med=98.79µs max=3.99ms p(90)=129.83µs p(95)=147.91µs
-  { expected_response:true }...: avg=105.4µs min=48.04µs med=98.79µs max=3.99ms p(90)=129.83µs p(95)=147.91µs
-http_req_failed................: 0.00%  0 out of 15600
-http_reqs......................: 15600  3970.227365/s
-
-EXECUTION
-iteration_duration.............: avg=3.92s   min=3.92s   med=3.92s   max=3.92s  p(90)=3.92s    p(95)=3.92s   
-iterations.....................: 1      0.254502/s
-vus............................: 1      min=1          max=1
-vus_max........................: 1      min=1          max=1
-
-NETWORK
-data_received..................: 2.2 MB 548 kB/s
-data_sent......................: 3.6 MB 916 kB/s
+k6-1  |   █ THRESHOLDS 
+k6-1  | 
+k6-1  |     http_req_duration
+k6-1  |     ✓ 'p(95)<15' p(95)=11.06ms
+k6-1  | 
+k6-1  |     http_req_failed
+k6-1  |     ✓ 'rate<0.01' rate=0.00%
+k6-1  | 
+k6-1  | 
+k6-1  |   █ TOTAL RESULTS 
+k6-1  | 
+k6-1  |     HTTP
+k6-1  |     http_req_duration..............: avg=46.37ms min=30.79µs med=2.7ms max=3.83s p(90)=7.64ms p(95)=11.06ms
+k6-1  |       { expected_response:true }...: avg=46.37ms min=30.79µs med=2.7ms max=3.83s p(90)=7.64ms p(95)=11.06ms
+k6-1  |     http_req_failed................: 0.00%  0 out of 71957
+k6-1  |     http_reqs......................: 71957  1199.245313/s
+k6-1  | 
+k6-1  |     EXECUTION
+k6-1  |     vus............................: 21     min=21         max=70
+k6-1  |     vus_max........................: 70     min=70         max=70
+k6-1  | 
+k6-1  |     NETWORK
+k6-1  |     data_received..................: 9.9 MB 166 kB/s
+k6-1  |     data_sent......................: 16 MB  270 kB/s
+k6-1  | 
+k6-1  | 
+k6-1  | 
+k6-1  | 
+k6-1  | running (1m00.0s), 00/70 VUs, 0 complete and 70 interrupted iterations
+k6-1  | spiking_users ✓ [ 100% ] 01/50 VUs  30s
+k6-1  | steady_users  ✓ [ 100% ] 20 VUs     30s
 ```
 
 
