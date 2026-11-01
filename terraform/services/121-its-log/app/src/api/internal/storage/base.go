@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"sync"
 
-	"github.com/duckdb/duckdb-go/v2"
 	"github.com/navapbc/its-log/internal/types"
 )
 
@@ -18,8 +17,6 @@ type Storage struct {
 	lock      sync.Mutex
 	Context   context.Context
 	db        *sql.DB
-	connector *duckdb.Connector
-	appender  *duckdb.Appender
 	Schema    *EmbedSql
 	Endpoints *EmbedSql
 }

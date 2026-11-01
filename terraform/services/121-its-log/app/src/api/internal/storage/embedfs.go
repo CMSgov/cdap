@@ -72,7 +72,6 @@ func (e *EmbedSql) ReadContents() {
 func (e *EmbedSql) Exec(name string, args []any) (sql.Result, error) {
 	var res sql.Result = nil
 	var err error
-	// zap.L().Debug("embedsql exec", zap.Any("args", args))
 
 	res, err = e.db.Exec(e.Files[name], args...)
 	if err != nil {

@@ -116,15 +116,15 @@ func GenerateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 				zap.String("trimmed", trimmed))
 			return nil, fmt.Errorf("%s found in SQL but not in params", trimmed)
 		} else {
-			// If we are dealing with a JSON map in the values, it needs to be marshalled to a byte array.
+			// If we are dealing with a JSON map in the values,
+			// it needs to be marshalled to a byte array.
 			switch params[trimmed].(type) {
 			case types.JsonMap:
 				b, err := json.Marshal(params[trimmed])
-				orig := fmt.Sprintf("%v", params[trimmed])
 				if err != nil {
+					orig := fmt.Sprintf("%v", params[trimmed])
 					return nil, fmt.Errorf("could not marshall JSON: %s", orig)
 				}
-				// zap.L().Debug("json to string", zap.String("orig", orig), zap.String("json", string(b)))
 				params[trimmed] = string(b)
 			default:
 				// Do nothing
