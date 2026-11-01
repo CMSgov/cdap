@@ -31,7 +31,6 @@ def test_sequential_event_logging(PARAMS, id):
 
     js = summary_read(PARAMS, "count.total")
     initial_events = -1
-    print(js)
     if js and "data" in js and "count" in js["data"]:
         initial_events = js["data"]["count"]
         print(f"🔵 {initial_events} found")
