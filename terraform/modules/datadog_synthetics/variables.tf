@@ -69,6 +69,11 @@ variable "tests" {
     tags                 = optional(list(string), [])
 
     use_private_location = optional(bool, true)
+
+    # Disabling validation means this test will no longer catch an expired cert,
+    # only whether the endpoint itself is reachable and responding 
+    allow_insecure     = optional(bool, false) # http subtype: skip TLS validation
+    accept_self_signed = optional(bool, false) # ssl subtype: accept self-signed/private-CA chain
   }))
   default = []
 }
