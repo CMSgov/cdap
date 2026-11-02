@@ -111,7 +111,7 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     resources = ["*"]
   }
 
-  # Service work ; limiting deletion to CDAP only supports safety for API teams maintaining namespaces in deployments ; deletion can be done manually  
+  # We limit deletion of namespaces, used for service connect, to CDAP to ensure API teams don't accidentally delete namespaces used in active deployments ; admin can still apply / delete locally  
   statement {
     actions = [
       "servicediscovery:DeleteNamespace",
