@@ -5,7 +5,10 @@ import (
 	"time"
 )
 
-type JsonMap map[string]any
+// This is a type alias.
+// Everywhere this is used, it is the same
+// as saying map[string]any.
+type M = map[string]any
 
 type ETLPostBody struct {
 	Name string `json:"name" binding:"required"`
@@ -27,7 +30,7 @@ type SummaryRow struct {
 	KeyId     string         `json:"key_id"`
 	Operation string         `json:"operation"`
 	Tags      sql.NullString `json:"tags"`
-	Data      JsonMap        `json:"data"`
+	Data      M              `json:"data"`
 }
 
 type SummaryReadBody struct {

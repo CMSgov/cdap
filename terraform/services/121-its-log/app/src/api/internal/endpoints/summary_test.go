@@ -60,6 +60,7 @@ func TestSummary(t *testing.T) {
 			},
 		},
 		// Cannot find value
+		// Returns a 200.
 		{
 			"admin",
 			"/v1/summary/read",

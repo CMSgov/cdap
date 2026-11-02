@@ -119,7 +119,7 @@ func GenerateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 			// If we are dealing with a JSON map in the values,
 			// it needs to be marshalled to a byte array.
 			switch params[trimmed].(type) {
-			case types.JsonMap:
+			case types.M:
 				b, err := json.Marshal(params[trimmed])
 				if err != nil {
 					orig := fmt.Sprintf("%v", params[trimmed])

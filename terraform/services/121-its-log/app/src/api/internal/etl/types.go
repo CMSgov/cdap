@@ -143,7 +143,7 @@ type ItslogSummary struct {
 	KeyID     string
 	Operation string
 	Tags      string
-	Data      types.JsonMap
+	Data      types.M
 }
 
 type InsertSummaryParams struct {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/navapbc/its-log/internal/etl"
@@ -38,8 +39,18 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 			"date":   etlP.Storage.YYYYMMDD(),
 		}
 		sqlArgs, err := storage.GenerateNamedArgs(queryString, paramMap)
+		if err != nil {
+			return nil, err
+		}
 
-		// An SQL step will read from and write to the DB.
+		// Make sure we don't have INSERT, DELETE, or UPDATE queries from starlark.
+		for _, naughty := range []string{"insert", "delete", "update"} {
+			if strings.Contains(strings.ToLower(queryString), naughty) {
+				return nil, fmt.Errorf("starlark query cannot contain %s", naughty)
+			}
+		}
+
+		// An SQL step will read from the DB.
 		// Lock and release around this action.
 		lockMsg := "starlark:queryfun:" + etlP.EtlName
 		etlP.Storage.Lock(lockMsg)
@@ -63,7 +74,10 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 					return starlark.None, err
 				} else {
 					d := starlark.NewDict(8)
-					dataDict := GolangToStarlark(row.Data)
+					dataDict, err := GolangToStarlark(row.Data)
+					if err != nil {
+						return nil, err
+					}
 					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
 					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
 					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
@@ -79,7 +93,10 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 					return starlark.None, err
 				} else {
 					d := starlark.NewDict(10)
-					dataDict := GolangToStarlark(row.Data)
+					dataDict, err := GolangToStarlark(row.Data)
+					if err != nil {
+						return nil, err
+					}
 					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
 					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
 					d.SetKey(starlark.String("date"), starlark.String(row.Date))
@@ -95,78 +112,6 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 		return resultList, nil
 
 	}
-}
-
-func GolangToStarlark(data types.JsonMap) *starlark.Dict {
-	dataDict := starlark.NewDict(64)
-
-	zap.L().Debug("GolangToStarlark", zap.Any("data", data))
-
-	for k, v := range data {
-		switch v.(type) {
-		case int:
-			dataDict.SetKey(starlark.String(k), starlark.MakeInt64(int64(v.(int64))))
-		case float64:
-			dataDict.SetKey(starlark.String(k), starlark.Float(v.(float64)))
-		case string:
-			dataDict.SetKey(starlark.String(k), starlark.String(v.(string)))
-		case map[string]any:
-			newM := make(types.JsonMap, 0)
-			for k, v := range v.(map[string]any) {
-				newM[k] = v.(map[string]any)
-			}
-			dataDict.SetKey(starlark.String(k), GolangToStarlark(newM))
-		default:
-			zap.L().Debug("could not map value to starlark.Dict",
-				zap.String("key", k),
-				zap.Any("value", v),
-				zap.String("value type", fmt.Sprintf("%T", v)))
-		}
-	}
-
-	zap.L().Debug("G2S", zap.Any("starlark.Dict", dataDict))
-
-	return dataDict
-}
-
-func StarlarkToGolang(data starlark.Value) types.JsonMap {
-	zap.L().Debug("StarlarkToGolang", zap.Any("data", data))
-
-	m := make(types.JsonMap, 0)
-	for _, dk := range data.(*starlark.Dict).Keys() {
-		mapk, _ := starlark.AsString(dk)
-		val, _, _ := data.(*starlark.Dict).Get(dk)
-		switch val.Type() {
-		case "int":
-			zap.L().Debug("S2G->int", zap.Any("value", val))
-			num := 42
-			err := starlark.AsInt(val, &num)
-			if err != nil {
-				zap.L().Info("S2G->int conversion error", zap.Any("value", val))
-			}
-			m[mapk] = num
-		case "string":
-			zap.L().Debug("S2G->string", zap.Any("value", val))
-			m[mapk] = starlark.String(val.(starlark.String))
-		case "float":
-			zap.L().Debug("S2G->float", zap.Any("value", val))
-			num, ok := starlark.AsFloat(val)
-			if !ok {
-				zap.L().Info("S2G->float conversion error", zap.Any("value", val))
-			}
-			m[mapk] = num
-		default:
-			zap.L().Debug("could not determine starlark type",
-				zap.String("key", mapk),
-				zap.String("starlark_type", val.Type()),
-				zap.String("golang_type", fmt.Sprintf("%T", data)))
-			m[mapk] = starlark.String("nope")
-		}
-	}
-
-	zap.L().Debug("S2G", zap.Any("map", m))
-
-	return m
 }
 
 func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) error {
@@ -231,7 +176,11 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 			case "data":
 				data, found, _ := elem.(*starlark.Dict).Get(k)
 				if found {
-					srjs.Data = StarlarkToGolang(data)
+					data, err := StarlarkToGolang(data)
+					if err != nil {
+						return err
+					}
+					srjs.Data = data.(map[string]any)
 				}
 			}
 		}

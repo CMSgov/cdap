@@ -125,7 +125,7 @@ var nat = []struct {
 	{"SELECT * FROM table where x = $y AND z = $a",
 		EmbedParamMap{"y": "v", "a": "v"}, true, 2},
 	{"SELECT * FROM table where x = $y AND z = $a",
-		EmbedParamMap{"y": "v", "a": types.JsonMap{"1": "2"}}, true, 2},
+		EmbedParamMap{"y": "v", "a": types.M{"1": "2"}}, true, 2},
 }
 
 func TestGenerateNamedArgs(t *testing.T) {
