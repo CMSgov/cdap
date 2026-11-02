@@ -46,4 +46,4 @@ On successful calls, `its-log` will return the minimal response of
 
 keeping the number of bytes shipped low. In the case of warnings and errors, a richer JSON response will be provided as described above.
 
-In following this format, documenting the API will be simpler (because results are consisten), and we follow the practices of a widely-used, open source system that is similar in kind and character.
+In following this format, documenting the API will be simpler (because results are consistent), and we follow the practices of a widely-used, open source system that is similar in kind and character.

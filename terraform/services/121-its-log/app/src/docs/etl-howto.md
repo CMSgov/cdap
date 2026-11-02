@@ -6,7 +6,7 @@ So, you want to transform some data. Great! There are three ways.
 
 First, what is an ETL step?
 
-The purpose of an ETL is to drive upstream vizualizations, dashboards, or reports. Therefore, we want to take a large number of `events`, and produce a small number of `summary` rows.
+The purpose of an ETL is to drive upstream visualizations, dashboards, or reports. Therefore, we want to take a large number of `events`, and produce a small number of `summary` rows.
 
 `its-log` expects ETL steps to do one of two things, mostly.
 
@@ -17,7 +17,7 @@ The purpose of an ETL is to drive upstream vizualizations, dashboards, or report
 
 ## using SQL
 
-Imagine we want to know how many events occured on a given day. (Every `its-log` database represents a single day. A new database is automatically created by `its-log` based on the date of an event.) This typically looks like:
+Imagine we want to know how many events occurred on a given day. (Every `its-log` database represents a single day. A new database is automatically created by `its-log` based on the date of an event.) This typically looks like:
 
 ```sql
 SELECT count(*) from itslog_events
@@ -143,7 +143,7 @@ def summarize():
 
 The above example demonstrates a query that returns all of t he rows in `events`, counts the vowels and consonants in the `tags` in those rows, and returns two summary rows.
 
-You can install the `starlark` interpeter and test Starlark programs locally. You will need to mock results from query, and call the function directly, but it is possible. In time, it may be that `summarize()` will take parameters, including a parameter that allows you to know whether it is being called in a test or production context. For now, see examples in the codebase for how a developer can comment/uncomment code to make the ETL actions "testable."
+You can install the `starlark` interpreter and test Starlark programs locally. You will need to mock results from query, and call the function directly, but it is possible. In time, it may be that `summarize()` will take parameters, including a parameter that allows you to know whether it is being called in a test or production context. For now, see examples in the codebase for how a developer can comment/uncomment code to make the ETL actions "testable."
 
 ## ETL steps in Golang
 
