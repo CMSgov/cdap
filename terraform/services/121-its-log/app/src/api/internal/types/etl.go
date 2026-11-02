@@ -30,7 +30,7 @@ type SummaryRow struct {
 	KeyId     string         `json:"key_id"`
 	Operation string         `json:"operation"`
 	Tags      sql.NullString `json:"tags"`
-	Data      M              `json:"data"`
+	Data      any            `json:"data"`
 }
 
 type SummaryReadBody struct {

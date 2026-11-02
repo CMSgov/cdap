@@ -12,6 +12,16 @@ func TestSummary(t *testing.T) {
 		status int
 		data   map[string]any
 	}{
+		{
+			"admin",
+			"/v1/summary/create",
+			http.StatusCreated,
+			map[string]any{
+				"date":      "today",
+				"tags":      []string{"%"},
+				"operation": "test",
+				"data":      42},
+		},
 		// Good call, creates DB
 		{
 			"admin",

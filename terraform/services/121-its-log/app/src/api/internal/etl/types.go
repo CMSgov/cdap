@@ -115,27 +115,6 @@ type ItslogEtl struct {
 	Body     sql.NullString
 }
 
-// type ItslogEvent struct {
-// 	ID       int64
-// 	Inserted sql.NullInt64
-// 	KeyID    string
-// 	Cluster  sql.NullString
-// 	Tags     string
-// 	Value    sql.NullString
-// }
-
-// type ItslogSummary struct {
-// 	ID        int64
-// 	LastRun   int64
-// 	Date      string
-// 	KeyID     string
-// 	Operation string
-// 	Tags      string
-// 	Value     string
-// 	Count     float64
-// 	Hash      sql.NullString
-// }
-
 type ItslogSummary struct {
 	ID        int64
 	Inserted  int64
@@ -143,15 +122,5 @@ type ItslogSummary struct {
 	KeyID     string
 	Operation string
 	Tags      string
-	Data      types.M
-}
-
-type InsertSummaryParams struct {
-	KeyID     string
-	Date      string
-	Operation string
-	Tags      string
-	Value     string
-	Count     float64
-	Hash      sql.NullString
+	Data      any
 }

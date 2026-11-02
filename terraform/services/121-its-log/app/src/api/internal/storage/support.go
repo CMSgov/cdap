@@ -10,6 +10,7 @@ import (
 	"path"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 
 	_ "github.com/duckdb/duckdb-go/v2"
@@ -119,6 +120,14 @@ func GenerateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 			// If we are dealing with a JSON map in the values,
 			// it needs to be marshalled to a byte array.
 			switch params[trimmed].(type) {
+			case int:
+				params[trimmed] = strconv.Itoa(params[trimmed].(int))
+			case int64:
+				params[trimmed] = strconv.FormatInt(params[trimmed].(int64), 10)
+			case float64:
+				params[trimmed] = strconv.FormatFloat(params[trimmed].(float64), 'f', -1, 64)
+			case string:
+				params[trimmed] = params[trimmed]
 			case types.M:
 				b, err := json.Marshal(params[trimmed])
 				if err != nil {
@@ -127,7 +136,10 @@ func GenerateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 				}
 				params[trimmed] = string(b)
 			default:
-				// Do nothing
+				zap.L().Error("unable to generate named arg",
+					zap.String("key", trimmed),
+					zap.Any("value", params[trimmed]),
+					zap.String("type", fmt.Sprintf("%T", params[trimmed])))
 			}
 			named = append(named, sql.Named(trimmed, params[trimmed]))
 		}
