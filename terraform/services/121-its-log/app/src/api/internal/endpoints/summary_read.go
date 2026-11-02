@@ -26,8 +26,19 @@ func SummaryRead(c *gin.Context) {
 	}
 
 	appId := base.GetOrPanic(c, "AppId")
+	keyId := base.GetOrPanic(c, "KeyId")
+	sanitized, err := types.SanitizeDate(body.Date)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"method":  c.Request.Method,
+			"message": "bad date",
+			"date":    sanitized,
+		})
+		return
+	}
 
-	s, err := SetupGinDB(c, appId, body.Date)
+	s, err := SetupGinDB(c, appId, sanitized)
 	if err != nil {
 		return
 	}
@@ -37,6 +48,7 @@ func SummaryRead(c *gin.Context) {
 		EtlName: "SummaryRead",
 		GinCtx:  c,
 		Storage: s,
+		KeyId:   keyId,
 	}
 
 	args, err := s.PrepareNamedArgs("read_summary", storage.EmbedParamMap{
@@ -49,19 +61,23 @@ func SummaryRead(c *gin.Context) {
 	row := s.Endpoints.QueryRow("read_summary", args)
 	if err != nil {
 		zap.L().Error("read_summary exec error", zap.Error(err))
-		msg := "could not parse date; must be YYYY-MM-DD"
 		ser := etl.NewStandardErrorResponse(&etlP, err)
-		ser.SetStatus(http.StatusNotFound).Send(msg)
+		ser.SetStatus(http.StatusInternalServerError).Send("could not read summary")
 		return
 	}
 
 	var summaryRow types.SummaryRow
-	row.Scan(&summaryRow.Date, &summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
-	if row.Err() != nil {
-		zap.L().Error("read_summary row scan", zap.Error(err))
+	scanErr := row.Scan(&summaryRow.Date, &summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
+	if scanErr != nil {
 		msg := fmt.Sprintf("no summary found for %s", body.Operation)
-		ser := etl.NewStandardErrorResponse(&etlP, err)
-		ser.SetStatus(http.StatusNotFound).Send(msg)
+		zap.L().Info(msg)
+		response := gin.H{
+			"status":  constants.OK,
+			"date":    sanitized,
+			"message": msg,
+		}
+		c.JSON(http.StatusNoContent, response)
+		return
 	}
 
 	// Clean up the response; don't send back NULL/nil/None values.

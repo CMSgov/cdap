@@ -3,6 +3,7 @@ package endpoints
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -77,7 +78,7 @@ func setupEnv(t *testing.T) *gin.Engine {
 	return engine
 }
 
-func toReader(data map[string]any) *strings.Reader {
+func toReader(data any) *strings.Reader {
 	body, _ := json.Marshal(data)
 	content := strings.NewReader(string(body))
 	return content
@@ -89,11 +90,18 @@ func toReader(data map[string]any) *strings.Reader {
 // 	os.Exit(m.Run())
 // }
 
-func testPost(t *testing.T, key string, path string, data map[string]any, expected int) {
-	engine := setupEnv(t)
+func testPost(engine *gin.Engine, t *testing.T, key string, path string, data any, expected int) []byte {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", path, toReader(data))
 	req.Header.Set("x-api-key", os.Getenv(fmt.Sprintf("x-api-key-%s", key)))
 	engine.ServeHTTP(w, req)
+	if w.Code != expected {
+		t.Logf("mismatch: %s %v", path, data)
+	}
+	b, err := io.ReadAll(w.Result().Body)
+	if err != nil {
+		t.Error("could not read response body")
+	}
 	testify.Equal(t, expected, w.Code)
+	return b
 }

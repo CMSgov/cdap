@@ -34,6 +34,7 @@ func SummaryCreate(c *gin.Context) {
 			"message": "bad date",
 			"date":    sanitized,
 		})
+		return
 	}
 	s, err := SetupGinDB(c, appId, sanitized)
 	if err != nil {

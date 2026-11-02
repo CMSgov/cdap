@@ -1,89 +1,168 @@
 package endpoints
 
 import (
+	"encoding/json"
 	"net/http"
+	"reflect"
+	"slices"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestSummary(t *testing.T) {
-	var tests = []struct {
-		key    string
-		path   string
-		status int
-		data   map[string]any
-	}{
-		{
-			"admin",
-			"/v1/summary/create",
-			http.StatusCreated,
-			map[string]any{
-				"date":      "today",
-				"tags":      []string{"%"},
-				"operation": "test",
-				"data":      42},
+// SummaryCreate
+var scts = []struct {
+	key    string
+	path   string
+	status int
+	data   any
+}{
+	{
+		"admin",
+		"/v1/summary/create",
+		http.StatusCreated,
+		map[string]any{
+			"date":      "today",
+			"tags":      []string{"a"},
+			"operation": "just.42",
+			"data":      42},
+	},
+	// Good call, creates DB
+	{
+		"admin",
+		"/v1/summary/create",
+		http.StatusCreated,
+		map[string]any{
+			"date":      "today",
+			"tags":      []string{"a", "b"},
+			"operation": "map.42",
+			"data": map[string]any{
+				"count": 42,
+			}},
+	},
+	// Empty object is OK
+	{
+		"admin",
+		"/v1/summary/create",
+		http.StatusCreated,
+		map[string]any{
+			"date":      "today",
+			"tags":      []string{"x", "y", "z"},
+			"operation": "empty.object",
+			"data":      map[string]any{}},
+	},
+}
+
+func TestSummaryCreate(t *testing.T) {
+	engine := setupEnv(t)
+	for _, tt := range scts {
+		testPost(engine, t, tt.key, tt.path, tt.data, tt.status)
+	}
+}
+
+// SummaryRead
+// https://pkg.go.dev/encoding/json#Unmarshal
+// Note that all numbers come back from JSON unmarshaling as
+// float64 values. Therefore, for testing, we need to check that
+// we are getting values as floats.
+var srts = []struct {
+	key      string
+	path     string
+	status   int
+	data     any
+	expected any
+}{
+	// Good call, reads value
+	{
+		"admin",
+		"/v1/summary/read",
+		http.StatusOK,
+		map[string]any{
+			"date":      "today",
+			"tags":      "%",
+			"operation": "just.42",
 		},
-		// Good call, creates DB
-		{
-			"admin",
-			"/v1/summary/create",
-			http.StatusCreated,
-			map[string]any{
-				"date":      "today",
-				"tags":      []string{"%"},
-				"operation": "test",
-				"data": map[string]any{
-					"count": 42,
-				}},
+		float64(42),
+	},
+	// Returns a 200.
+	{
+		"admin",
+		"/v1/summary/read",
+		http.StatusOK,
+		map[string]any{
+			"date":      "today",
+			"tags":      "%",
+			"operation": "map.42",
 		},
-		// Empty object is OK
-		{
-			"admin",
-			"/v1/summary/create",
-			http.StatusCreated,
-			map[string]any{
-				"date":      "today",
-				"tags":      []string{"%"},
-				"operation": "test",
-				"data":      map[string]any{}},
+		map[string]any{
+			"count": float64(42),
 		},
-		// Bad call, malformed binding
-		{
-			"admin",
-			"/v1/summary/create",
-			http.StatusBadRequest,
-			map[string]any{
-				"date":      "today",
-				"tags":      []string{"%"},
-				"operation": "test",
-				"data":      42,
-			},
+	},
+	{
+		"admin",
+		"/v1/summary/read",
+		http.StatusNoContent,
+		map[string]any{
+			"date":      "today",
+			"tags":      "bad-tags",
+			"operation": "map.42",
 		},
-		// Good call, reads value
-		{
-			"admin",
-			"/v1/summary/read",
-			http.StatusOK,
-			map[string]any{
-				"date":      "today",
-				"tags":      "%",
-				"operation": "test",
-			},
+		nil,
+	},
+	{
+		"admin",
+		"/v1/summary/read",
+		http.StatusOK,
+		map[string]any{
+			"date":      "today",
+			"tags":      "a%",
+			"operation": "map.42",
 		},
-		// Cannot find value
-		// Returns a 200.
-		{
-			"admin",
-			"/v1/summary/read",
-			http.StatusOK,
-			map[string]any{
-				"date":      "today",
-				"tags":      "none",
-				"operation": "does-not-exist",
-			},
+		map[string]any{
+			"count": float64(42),
 		},
+	},
+	{
+		"admin",
+		"/v1/summary/read",
+		http.StatusOK,
+		map[string]any{
+			"date":      "today",
+			"tags":      "x.y.z",
+			"operation": "empty.object",
+		},
+		map[string]any{},
+	},
+}
+
+func TestSummaryRead(t *testing.T) {
+	engine := setupEnv(t)
+
+	// We need to create things first.
+	for _, tt := range scts {
+		testPost(engine, t, tt.key, tt.path, tt.data, tt.status)
 	}
 
-	for _, tt := range tests {
-		testPost(t, tt.key, tt.path, tt.data, tt.status)
+	for _, tt := range srts {
+		res := testPost(engine, t, tt.key, tt.path, tt.data, tt.status)
+		if slices.Contains([]int{http.StatusOK}, tt.status) {
+			var ret map[string]any
+			err := json.Unmarshal(res, &ret)
+			if err != nil {
+				t.Errorf("could not unmarshal response: %s", res)
+			}
+
+			b := reflect.DeepEqual(ret["data"], tt.expected)
+			assert.True(t, b, "round trip failed")
+		} else if slices.Contains([]int{http.StatusNoContent}, tt.status) {
+			if tt.expected == nil {
+				// StatusNoContent does not include a message body.
+				// This is good
+			} else {
+				t.Errorf("got no content, but expected a value")
+			}
+		} else {
+			t.Errorf("should not get here")
+		}
 	}
 }

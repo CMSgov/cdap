@@ -55,6 +55,10 @@ func StarlarkToGolang(data starlark.Value) (any, error) {
 		var i int64
 		starlark.AsInt(data, &i)
 		return i, nil
+	case "int64":
+		var i int64
+		starlark.AsInt(data, &i)
+		return i, nil
 	case "float":
 		f64, _ := starlark.AsFloat(data)
 		return f64, nil

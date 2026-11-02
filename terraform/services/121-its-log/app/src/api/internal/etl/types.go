@@ -44,7 +44,7 @@ func (ser *StandardErrorResponseParams) SetStatus(status int) *StandardErrorResp
 }
 
 func (ser *StandardErrorResponseParams) Send(msg string) {
-	zap.L().Error("ERR",
+	zap.L().Info("StandardErrorResponse",
 		zap.Int("status", ser.Status),
 		zap.String("msg", msg),
 		zap.String("error", ser.err.Error()),
