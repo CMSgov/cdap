@@ -101,6 +101,9 @@ var srts = []struct {
 	{
 		"admin",
 		"/v1/summary/read",
+		// When we expect no content, the comparison to the
+		// expected value will not happen. We check to see that
+		// it is specified as `nil`.
 		http.StatusNoContent,
 		map[string]any{
 			"date":      "today",
@@ -157,7 +160,8 @@ func TestSummaryRead(t *testing.T) {
 		} else if slices.Contains([]int{http.StatusNoContent}, tt.status) {
 			if tt.expected == nil {
 				// StatusNoContent does not include a message body.
-				// This is good
+				// This is good. We expect the expected value to
+				// come through as `nil` in this case.
 			} else {
 				t.Errorf("got no content, but expected a value")
 			}
