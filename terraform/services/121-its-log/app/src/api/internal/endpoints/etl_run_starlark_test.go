@@ -19,6 +19,7 @@ func TestValueRoundTrip(t *testing.T) {
 		{42.42},
 		{map[string]any{"life": int64(64)}},
 		{types.M{"hello": "goodbye"}},
+		{types.M{"hello": "\"goodbye\""}},
 		{types.M{"hello": "goodbye", "one": "two"}},
 		{types.M{"hello": "goodbye", "one": 42.42}},
 		{types.M{"hello": types.M{"deeper": int64(42)}}},
