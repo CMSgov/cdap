@@ -5,34 +5,52 @@ import (
 	"testing"
 )
 
-// summary
-func TestSummaryCreate(t *testing.T) {
-	data := map[string]any{
-		"date":      "today",
-		"tags":      []string{"%"},
-		"operation": "test",
-		"data": map[string]any{
-			"count": 42,
+func TestSummary(t *testing.T) {
+	var tests = []struct {
+		key    string
+		path   string
+		status int
+		data   map[string]any
+	}{
+		// Good call, creates DB
+		{
+			"admin",
+			"/v1/summary/create",
+			http.StatusCreated,
+			map[string]any{
+				"date":      "today",
+				"tags":      []string{"%"},
+				"operation": "test",
+				"data": map[string]any{
+					"count": 42,
+				}},
+		},
+		// Bad call, malformed binding
+		{
+			"admin",
+			"/v1/summary/create",
+			http.StatusBadRequest,
+			map[string]any{
+				"date":      "today",
+				"tags":      []string{"%"},
+				"operation": "test",
+				"data":      42,
+			},
+		},
+		// Good call, reads value
+		{
+			"admin",
+			"/v1/summary/read",
+			http.StatusOK,
+			map[string]any{
+				"date":      "today",
+				"tags":      "%",
+				"operation": "test",
+			},
 		},
 	}
-	testPost(t, "/v1/summary/create", data, http.StatusCreated)
-}
 
-func TestSummaryCreateNoBind(t *testing.T) {
-	data := map[string]any{
-		"date":      "today",
-		"tags":      []string{"%"},
-		"operation": "test",
-		"data":      42, // Must be a map
+	for _, tt := range tests {
+		testPost(t, tt.key, tt.path, tt.data, tt.status)
 	}
-	testPost(t, "/v1/summary/create", data, http.StatusBadRequest)
-}
-
-func TestSummaryRead(t *testing.T) {
-	data := map[string]any{
-		"date":      "today",
-		"tags":      "%",
-		"operation": "test",
-	}
-	testPost(t, "/v1/summary/read", data, http.StatusOK)
 }

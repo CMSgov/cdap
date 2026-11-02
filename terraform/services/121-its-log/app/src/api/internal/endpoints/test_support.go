@@ -34,7 +34,7 @@ func setupEnv(t *testing.T) *gin.Engine {
 		{"ITSLOG_SERVE_HOST", "localhost"},
 		{"ITSLOG_SERVE_PORT", "8888"},
 		{"ITSLOG_APIKEY_PUPPERLOG", fmt.Sprintf(`{"app_id": "pupper", "key_id": "pup_logging", "permission": "log", "key": "%s"}`, os.Getenv("x-api-key-log"))},
-		{"ITSLOG_APIKEY_PUPPERADMIN", fmt.Sprintf(`{"app_id": "pupper", "key_id": "pup_admin", "permission": "admin", "key": "%s"}`, os.Getenv("x-api-key-log"))},
+		{"ITSLOG_APIKEY_PUPPERADMIN", fmt.Sprintf(`{"app_id": "pupper", "key_id": "pup_admin", "permission": "admin", "key": "%s"}`, os.Getenv("x-api-key-admin"))},
 		{"ITSLOG_BUFFER_FLUSHWAITSEC", "1"},
 		{"ITSLOG_BUFFER_LENGTH", "2000"},
 		{"ITSLOG_GINMODE", "debug"},
@@ -89,11 +89,11 @@ func toReader(data map[string]any) *strings.Reader {
 // 	os.Exit(m.Run())
 // }
 
-func testPost(t *testing.T, path string, data map[string]any, expected int) {
+func testPost(t *testing.T, key string, path string, data map[string]any, expected int) {
 	engine := setupEnv(t)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", path, toReader(data))
-	req.Header.Set("x-api-key", os.Getenv("x-api-key-log"))
+	req.Header.Set("x-api-key", os.Getenv(fmt.Sprintf("x-api-key-%s", key)))
 	engine.ServeHTTP(w, req)
 	testify.Equal(t, expected, w.Code)
 }
