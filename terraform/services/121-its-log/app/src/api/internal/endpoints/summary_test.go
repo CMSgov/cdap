@@ -25,6 +25,17 @@ func TestSummary(t *testing.T) {
 					"count": 42,
 				}},
 		},
+		// Empty object is OK
+		{
+			"admin",
+			"/v1/summary/create",
+			http.StatusCreated,
+			map[string]any{
+				"date":      "today",
+				"tags":      []string{"%"},
+				"operation": "test",
+				"data":      map[string]any{}},
+		},
 		// Bad call, malformed binding
 		{
 			"admin",
@@ -46,6 +57,17 @@ func TestSummary(t *testing.T) {
 				"date":      "today",
 				"tags":      "%",
 				"operation": "test",
+			},
+		},
+		// Cannot find value
+		{
+			"admin",
+			"/v1/summary/read",
+			http.StatusOK,
+			map[string]any{
+				"date":      "today",
+				"tags":      "none",
+				"operation": "does-not-exist",
 			},
 		},
 	}

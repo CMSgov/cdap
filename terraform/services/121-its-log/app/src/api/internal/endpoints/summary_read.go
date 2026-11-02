@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -13,14 +14,8 @@ import (
 	"go.uber.org/zap"
 )
 
-type SummaryReadBody struct {
-	Date      string `json:"date" binding:"required"`
-	Tags      string `json:"tags" binding:"required"`
-	Operation string `json:"operation" binding:"required"`
-}
-
 func SummaryRead(c *gin.Context) {
-	var body SummaryReadBody
+	var body types.SummaryReadBody
 	// Call ShouldBindJSON to bind the incoming JSON to the newItem struct
 	if err := c.ShouldBindJSON(&body); err != nil {
 		// If an error occurs (e.g., invalid JSON, missing required fields),
@@ -68,25 +63,23 @@ func SummaryRead(c *gin.Context) {
 		ser := etl.NewStandardErrorResponse(&etlP, err)
 		ser.SetStatus(http.StatusNotFound).Send(msg)
 	}
+
+	// Clean up the response; don't send back NULL/nil/None values.
+	if summaryRow.Data == nil {
+		summaryRow.Data = make(map[string]any, 0)
+	}
+	if summaryRow.Tags.Valid == false {
+		summaryRow.Tags = sql.NullString{Valid: true, String: ""}
+	}
+
 	response := gin.H{
 		"status":    constants.OK,
 		"date":      summaryRow.Date,
 		"operation": summaryRow.Operation,
-		"tags":      summaryRow.Tags,
+		"tags":      summaryRow.Tags.String,
 		"data":      summaryRow.Data,
 	}
 
-	// Cleanup the sql.NullString values
-	// if summaryRow.Value.Valid {
-	// 	response["value"] = summaryRow.Value.String
-	// } else {
-	// 	response["value"] = nil
-	// }
-	if summaryRow.Tags.Valid {
-		response["tags"] = summaryRow.Tags.String
-	} else {
-		response["tags"] = nil
-	}
 	c.JSON(http.StatusOK, response)
 
 }

@@ -29,3 +29,9 @@ type SummaryRow struct {
 	Tags      sql.NullString `json:"tags"`
 	Data      JsonMap        `json:"data"`
 }
+
+type SummaryReadBody struct {
+	Date      string `json:"date" binding:"required"`
+	Tags      string `json:"tags" binding:"required"`
+	Operation string `json:"operation" binding:"required"`
+}
