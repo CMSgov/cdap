@@ -47,6 +47,7 @@ resource "datadog_synthetics_test" "this" {
     monitor_name         = "[${upper(var.env)}] [${var.app}] Synthetics — ${each.value.name}"
     min_failure_duration = try(coalesce(each.value.min_failure_duration, var.min_failure_duration), null)
 
+
     allow_insecure     = each.value.allow_insecure
     accept_self_signed = each.value.accept_self_signed
   }

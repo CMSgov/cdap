@@ -31,11 +31,11 @@ variable "monitor_config" {
     }), {})
 
     acm = optional(object({
-      timeframe                 = string
-      critical_days_threshold   = number
-      warning_days_threshold    = number
-      notify_no_data            = bool
-      no_data_timeframe_minutes = number
+      timeframe                 = optional(string, "last_1h")
+      critical_days_threshold   = optional(number, 14)
+      warning_days_threshold    = optional(number, 30)
+      notify_no_data            = optional(bool, false)
+      no_data_timeframe_minutes = optional(number, 10)
     }), {})
 
     ecs = optional(object({

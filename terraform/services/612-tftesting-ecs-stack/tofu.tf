@@ -11,7 +11,7 @@ terraform {
   }
 
   backend "s3" {
-    key = "tftesting-ecs-stack-internal/terraform.tfstate"
+    key = "tftesting-ecs-stack/terraform.tfstate"
   }
 }
 
