@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Serve(params types.ServeParams) {
+func SetupRouter(params types.ServeParams) *gin.Engine {
 	buffer_length := viper.GetInt("buffer.length")
 	buffer_flushwaitsec := viper.GetInt("buffer.flushwaitsec")
 	log.Printf("buffer length: %d flushwaitsec: %d\n", buffer_length, buffer_flushwaitsec)
@@ -39,8 +39,14 @@ func Serve(params types.ServeParams) {
 		pprof.Register(engine, "dev/pprof")
 	}
 
+	return engine
+}
+
+func Serve(params types.ServeParams) {
+	engine := SetupRouter(params)
 	host := viper.GetString("serve.host")
 	port := viper.GetString("serve.port")
+
 	_ = engine.Run(fmt.Sprintf("%s:%s", host, port))
 }
 

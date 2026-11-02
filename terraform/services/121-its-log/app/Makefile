@@ -8,6 +8,12 @@ prep-local:
 build: prep-local
 	cd src/api ; go build -o its-log .
 
+test:
+	cd src/api ; go test -cover -coverprofile=coverage.out ./...
+
+coverage: test
+	cd src/api ; go tool cover -html=coverage.out
+
 container-api: prep-local
 	$(CONTAINER_CMD) build -t itslog-api:latest -f Dockerfile --load .
 

@@ -26,7 +26,7 @@ var sdbt = []struct {
 	{"app", "yesterday"},
 }
 
-func SetupEnv() {
+func setupEnv() {
 	// Env vars
 	os.Setenv("ITSLOG_STORAGE_PATH", "/tmp")
 
@@ -40,7 +40,7 @@ func SetupEnv() {
 // *  *  *  *
 // DoesDbExist
 func TestDoesDBExist(t *testing.T) {
-	SetupEnv()
+	setupEnv()
 	for _, tt := range sdbt {
 		s, err := SetupDB(tt.appId, tt.date)
 		if err != nil {
@@ -57,7 +57,7 @@ func TestDoesDBExist(t *testing.T) {
 // *  *  *  *
 // SetupDB
 func TestSetupDb(t *testing.T) {
-	SetupEnv()
+	setupEnv()
 	for _, tt := range sdbt {
 		s, err := SetupDB(tt.appId, tt.date)
 		if err != nil {
@@ -99,7 +99,7 @@ func TestNewStorage(t *testing.T) {
 // *  *  *  *
 //  ConstructDBFilenameAndPath
 func TestConstructDBFilenameAndPath(t *testing.T) {
-	SetupEnv()
+	setupEnv()
 	filename, path := ConstructDBFilenameAndPath("a", "b")
 	if filename != "a_b.duckdb" {
 		t.Error("filename constructed incorrectly")

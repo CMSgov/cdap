@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var LiveKeys types.ApiKeys
+var LiveKeys []types.ApiKey = make([]types.ApiKey, 0)
 
 var minimum = []string{
 	"ITSLOG_BUFFER_FLUSHWAITSEC",
@@ -78,7 +78,6 @@ func ConfirmApiKeyMapKeys(envvar string, m map[string]string) error {
 // API keys take the form
 // ITSLOG_APIKEY_<appId>='{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string"}'
 func GetApiKeys() error {
-	LiveKeys = make([]types.ApiKey, 0)
 
 	allvars := os.Environ()
 

@@ -13,3 +13,4 @@ _base/*
 **.prof
 **.test
 __debug**
+**.out
