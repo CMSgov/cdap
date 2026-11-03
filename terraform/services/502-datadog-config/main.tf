@@ -89,3 +89,52 @@ resource "datadog_sensitive_data_scanner_rule" "selected_standard_rules" {
 
   tags = "managed-by:tofu"
 }
+
+resource "datadog_sensitive_data_scanner_rule" "dot_client_id" {
+  lifecycle {
+    // This meta-argument avoids disabling the group when modifying the
+    // `included_keyword_configuration` field
+    create_before_destroy = true
+  }
+
+  name = "Django OAuth Toolkit Client IDs"
+  description = "Client IDs generated for OAuth applications in the Django OAuth Toolkit"
+
+  pattern = "\\b\\w{40}\\b"
+
+  included_keyword_configuration {
+    keywords = ["client", "id"]
+    character_count = 50
+  }
+
+  group_id   = datadog_sensitive_data_scanner_group.main.id
+  is_enabled = true
+
+  tags = "managed-by:tofu"
+}
+
+resource "datadog_sensitive_data_scanner_rule" "dot_client_secret" {
+  lifecycle {
+    // This meta-argument avoids disabling the group when modifying the
+    // `included_keyword_configuration` field
+    create_before_destroy = true
+  }
+
+  name = "Django OAuth Toolkit Client Secrets"
+  description = "Client secrets generated for OAuth applications in the Django OAuth Toolkit"
+
+  pattern = "\\b\\w{128}\\b"
+
+  included_keyword_configuration {
+    keywords = ["client", "secret"]
+    character_count = 50
+  }
+
+  group_id   = datadog_sensitive_data_scanner_group.main.id
+  is_enabled = true
+
+  tags = "managed-by:tofu"
+}
+
+// also possible: MBI
+
