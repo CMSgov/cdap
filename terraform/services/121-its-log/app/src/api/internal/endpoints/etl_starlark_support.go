@@ -2,16 +2,11 @@ package endpoints
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"go.starlark.net/starlark"
 	"go.uber.org/zap"
 )
-
-func isSlice(v any) bool {
-	return reflect.TypeOf(v).Kind() == reflect.Slice
-}
 
 func golangSliceToStarlark[T any](data []T) (*starlark.List, error) {
 	// First, convert the array to Starlark values.
