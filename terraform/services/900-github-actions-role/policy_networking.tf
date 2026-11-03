@@ -124,6 +124,7 @@ data "aws_iam_policy_document" "github_actions_networking" {
     sid = "WafRead"
     actions = [
       "wafv2:GetIPSet",
+      "wafv2:GetLoggingConfiguration",
       "wafv2:GetWebACL",
       "wafv2:GetWebACLForResource",
       "wafv2:List*",
@@ -139,8 +140,10 @@ data "aws_iam_policy_document" "github_actions_networking" {
       "wafv2:CreateIPSet",
       "wafv2:CreateWebACL",
       "wafv2:DeleteIPSet",
+      "wafv2:DeleteLoggingConfiguration",
       "wafv2:DeleteWebACL",
       "wafv2:DisassociateWebACL",
+      "wafv2:PutLoggingConfiguration",
       "wafv2:TagResource",
       "wafv2:UntagResource",
       "wafv2:UpdateIPSet",
