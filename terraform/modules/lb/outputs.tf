@@ -39,12 +39,12 @@ output "http_listener_arn" {
 # -------------------------------------------------------
 output "internal_dns_record_fqdn" {
   description = "FQDN of the internal.cms.gov alias record, if created."
-  value       = var.create_internal_dns_record != null ? aws_route53_record.internal_alb[0].fqdn : null
+  value       = (var.create_alb && var.create_internal_dns_record) ? aws_route53_record.internal_alb[0].fqdn : null
 }
 
 output "zscaler_dns_record_fqdn" {
   description = "FQDN of the cmscloud.local alias record, if created."
-  value       = var.create_zscaler_dns_record ? aws_route53_record.zscaler_alb[0].fqdn : null
+  value       = (var.create_alb && var.create_internal_dns_record) ? aws_route53_record.zscaler_alb[0].fqdn : null
 }
 
 # -------------------------------------------------------
@@ -70,4 +70,9 @@ output "nlb_security_group_id" {
 output "privatelink_service_name" {
   description = "Service name consumers reference in their aws_vpc_endpoint. Null unless enable_privatelink is true."
   value       = var.enable_privatelink ? aws_vpc_endpoint_service.this[0].service_name : null
+}
+
+output "privatelink_ssm_parameter_name" {
+  value       = var.enable_privatelink ? aws_ssm_parameter.privatelink_service_name[0].name : null
+  description = "SSM path where this service's PrivateLink service_name is published, for cross-repo consumers."
 }

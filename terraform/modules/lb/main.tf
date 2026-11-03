@@ -6,8 +6,7 @@ locals {
   managed_sg          = length(var.security_group_ids) == 0
   private_record_name = var.private_record_name != null ? var.private_record_name : var.platform.service
 
-  privatelink_requires_alb = var.enable_privatelink && var.nlb_mode == "front_alb"
-  privatelink_owner_arn    = sensitive("arn:aws:iam::${var.platform.account_id}:root")
+  privatelink_owner_arn = sensitive("arn:aws:iam::${var.platform.account_id}:root")
 
   enable_alb_deletion_protection = coalesce(var.enable_deletion_protection, !var.internal)
 
@@ -23,6 +22,7 @@ locals {
 # Application Load Balancer
 # -------------------------------------------------------
 resource "aws_lb" "this" {
+  count              = var.create_alb ? 1 : 0
   name               = local.alb_name
   internal           = var.internal
   load_balancer_type = "application"
@@ -53,11 +53,11 @@ resource "aws_lb" "this" {
 resource "aws_lb_listener" "https" {
   for_each = var.create_alb ? var.https_listeners : {}
 
-  load_balancer_arn = aws_lb.this.arn
+  load_balancer_arn = aws_lb.this[0].arn
   port              = each.value.port
   protocol          = "HTTPS"
   certificate_arn   = each.value.certificate_arn
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-3-2021-06"
+  ssl_policy        = var.ssl_policy
 
   default_action {
     type             = each.value.default_action_type
@@ -115,7 +115,7 @@ resource "aws_security_group" "alb" {
 # -------------------------------------------------------
 
 data "aws_route53_zone" "internal" {
-  count = (var.create_alb && var.create_internal_dns_record != null) ? 1 : 0
+  count = (var.create_alb && (var.create_internal_dns_record || var.enable_privatelink)) ? 1 : 0
 
   name         = "${var.platform.env}.${var.platform.app}.internal.cms.gov."
   private_zone = true
@@ -123,7 +123,7 @@ data "aws_route53_zone" "internal" {
 }
 
 resource "aws_route53_record" "internal_alb" {
-  count = (var.create_alb && var.create_internal_dns_record != null) ? 1 : 0
+  count = (var.create_alb && var.create_internal_dns_record) ? 1 : 0
 
   zone_id = data.aws_route53_zone.internal[0].zone_id
   name    = "${local.private_record_name}.${data.aws_route53_zone.internal[0].name}"
@@ -177,7 +177,7 @@ resource "aws_lb" "network" {
       error_message = "PrivateLink requires this module's internal setting to be true (var.internal = true)."
     }
     precondition {
-      condition     = !local.privatelink_requires_alb || var.create_alb
+      condition     = !(var.enable_privatelink && var.nlb_mode == "front_alb") || var.create_alb
       error_message = "enable_privatelink with nlb_mode = \"front_alb\" requires create_alb = true."
     }
   }
@@ -268,5 +268,17 @@ resource "aws_vpc_endpoint_service_private_dns_verification" "this" {
   count = (var.enable_privatelink && var.privatelink_private_dns_name != null) ? 1 : 0
 
   service_id = aws_vpc_endpoint_service.this[0].id
+}
+
+
+resource "aws_ssm_parameter" "privatelink_service_name" {
+  count = var.enable_privatelink ? 1 : 0
+
+  name        = "/${var.platform.app}/${var.platform.env}/${var.platform.service}/privatelink"
+  type        = "String"
+  value       = aws_vpc_endpoint_service.this[0].service_name
+  description = "PrivateLink endpoint service_name for ${local.base_name}. Published for other VPCs/accounts to create a VPC endpoint against."
+
+  tags = { Name = "${local.base_name}-privatelink-service-name" }
 }
 

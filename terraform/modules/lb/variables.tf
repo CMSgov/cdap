@@ -5,6 +5,7 @@ variable "platform" {
   description = "Object representing the CDAP platform module."
   type = object({
     account_env_suffix = string
+    account_id         = string
     app                = string
     cdap_env           = string
     cdap_vpc_name      = string
@@ -222,12 +223,6 @@ variable "privatelink_private_dns_name" {
   description = "Verified domain name for this PrivateLink service. Leave null unless public-DNS verification is confirmed possible for this domain."
   type        = string
   default     = null
-}
-
-variable "nlb_security_group_ids" {
-  description = "Existing security group IDs for the NLB. Leave empty to let the module manage one."
-  type        = list(string)
-  default     = []
 }
 
 variable "enable_deletion_protection" {
