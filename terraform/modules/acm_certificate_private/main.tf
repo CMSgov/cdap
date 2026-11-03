@@ -11,10 +11,12 @@ locals {
 
   private_primary_domain = try(coalesce(local.internal_domain, local.zscaler_domain), null)
 
-  private_subject_alternative_names = compact([
+  private_subject_alternative_names = compact(flatten([
     (var.enable_internal_endpoint && var.enable_zscaler_endpoint) ? local.zscaler_domain : null,
-  ])
+    [for app in var.enrolled_upstream_apps : "${app}.${local.internal_domain}"]
+  ]))
 
+  enable_internal_endpoint = var.enable_internal_endpoint || length(var.enrolled_upstream_apps) > 0
   needs_private_cert = (
     var.enable_internal_endpoint ||
     var.enable_zscaler_endpoint ||
