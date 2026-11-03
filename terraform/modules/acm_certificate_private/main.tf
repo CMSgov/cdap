@@ -18,7 +18,7 @@ locals {
 
   enable_internal_endpoint = var.enable_internal_endpoint || length(var.enrolled_upstream_apps) > 0
   needs_private_cert = (
-    var.enable_internal_endpoint ||
+    local.enable_internal_endpoint ||
     var.enable_zscaler_endpoint ||
     var.enable_mtls_sidecar
   )
