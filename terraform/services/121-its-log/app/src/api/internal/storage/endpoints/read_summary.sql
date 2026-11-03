@@ -1,5 +1,4 @@
 SELECT 
-    date, 
     operation, 
     tags,
     data

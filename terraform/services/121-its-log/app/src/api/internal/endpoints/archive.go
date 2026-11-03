@@ -47,7 +47,7 @@ func Archive(c *gin.Context) {
 		return
 	}
 
-	appId := base.GetOrPanic(c, "AppId")
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
 
 	// Construct a path to the database, and make sure it exists.
 	// We cannot archive a database that does not exist.

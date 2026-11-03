@@ -46,8 +46,8 @@ func checkRunEtlBody(c *gin.Context) (map[string]any, error) {
 // This is the handler if we call it directly from the API.
 // We only get the gin context.
 func RunEtl(c *gin.Context) {
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
 
 	payload, err := checkRunEtlBody(c)
 	if err != nil {

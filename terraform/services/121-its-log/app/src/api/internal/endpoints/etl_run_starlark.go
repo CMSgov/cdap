@@ -89,7 +89,7 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 			case "summary":
 				zap.L().Debug("starlark scanning summary row")
 				var row types.SummaryRow
-				if err := rows.Scan(&row.ID, &row.Inserted, &row.Date, &row.KeyId, &row.Operation, &row.Tags, &row.Data); err != nil {
+				if err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Operation, &row.Tags, &row.Data); err != nil {
 					return starlark.None, err
 				} else {
 					d := starlark.NewDict(10)
@@ -99,7 +99,7 @@ func queryFun(etlP *etl.RunEtlParams) func(_ *starlark.Thread, _ *starlark.Built
 					}
 					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
 					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
-					d.SetKey(starlark.String("date"), starlark.String(row.Date))
+					// d.SetKey(starlark.String("date"), starlark.String(row.Date))
 					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
 					d.SetKey(starlark.String("operation"), starlark.String(row.Operation))
 					d.SetKey(starlark.String("tags"), starlark.String(row.Tags.String))

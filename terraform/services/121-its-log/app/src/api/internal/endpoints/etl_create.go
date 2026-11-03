@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
@@ -30,8 +31,9 @@ func CreateEtl(c *gin.Context) {
 	}
 
 	// We need the AppId and KeyId, which the middleware attached
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
+	sanitized, _ := types.SanitizeDate(constants.TODAY)
 
 	// We want to check the Base64 work that the client did.
 	err := checkBase64Encoding(body.Body)
@@ -44,7 +46,7 @@ func CreateEtl(c *gin.Context) {
 	etl := padToMod4(body.Body)
 
 	// Set up the database
-	s, err := SetupGinDB(c, appId, body.Date)
+	s, err := SetupGinDB(c, appId, sanitized)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
 		return
@@ -65,7 +67,7 @@ func CreateEtl(c *gin.Context) {
 			"status":  "error",
 			"method":  c.Request.Method,
 			"message": "could not save ETL step",
-			"date":    body.Date,
+			"date":    sanitized,
 			"name":    body.Name,
 		})
 		return
@@ -74,7 +76,7 @@ func CreateEtl(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status": "ok",
 		"method": c.Request.Method,
-		"date":   body.Date,
+		"date":   sanitized,
 		"name":   body.Name,
 	})
 }

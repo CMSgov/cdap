@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
@@ -17,12 +18,10 @@ import (
 
 // Run a sequence immediately, synchronously.
 func SequenceRun(c *gin.Context) {
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
-	// sequenceName := c.Param("name")
-	// sequenceDate := c.Param("date")
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
 
-	// // ETL steps can have an arbitrary POST body?
+	// // ETL steps can have an arbitrary POST body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		body = []byte("{}")

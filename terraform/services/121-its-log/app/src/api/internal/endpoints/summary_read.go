@@ -1,7 +1,6 @@
 package endpoints
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -25,9 +24,9 @@ func SummaryRead(c *gin.Context) {
 		return
 	}
 
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
-	sanitized, err := types.SanitizeDate(body.Date)
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
+	sanitized, err := types.SanitizeDate(constants.TODAY)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -67,7 +66,7 @@ func SummaryRead(c *gin.Context) {
 	}
 
 	var summaryRow types.SummaryRow
-	scanErr := row.Scan(&summaryRow.Date, &summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
+	scanErr := row.Scan(&summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
 	if scanErr != nil {
 		msg := fmt.Sprintf("no summary found for %s", body.Operation)
 		zap.L().Info(msg)
@@ -80,17 +79,9 @@ func SummaryRead(c *gin.Context) {
 		return
 	}
 
-	// Clean up the response; don't send back NULL/nil/None values.
-	if summaryRow.Data == nil {
-		summaryRow.Data = make(map[string]any, 0)
-	}
-	if summaryRow.Tags.Valid == false {
-		summaryRow.Tags = sql.NullString{Valid: true, String: ""}
-	}
-
 	response := gin.H{
 		"status":    constants.OK,
-		"date":      summaryRow.Date,
+		"date":      sanitized,
 		"operation": summaryRow.Operation,
 		"tags":      summaryRow.Tags.String,
 		"data":      summaryRow.Data,
