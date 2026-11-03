@@ -12,7 +12,7 @@ type Event struct {
 	Cluster   string   `json:"cluster"`
 	Tags      []string `json:"tags" binding:"required"`
 	TagString string
-	Data      M      `json:"data" binding:"required"`
+	Data      any    `json:"data" binding:"required"`
 	Date      string `json:"date"`
 }
 
@@ -22,5 +22,5 @@ type EventRow struct {
 	KeyId    string
 	Cluster  sql.NullString
 	Tags     string
-	Data     M
+	Data     any
 }

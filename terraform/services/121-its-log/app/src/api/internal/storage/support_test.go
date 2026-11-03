@@ -120,6 +120,8 @@ var nat = []struct {
 	{"SELECT * FROM table", EmbedParamMap{}, true, 0},
 	{"SELECT * FROM table", EmbedParamMap{"arg": "v"}, false, 0},
 	{"SELECT * FROM table where x = $y", EmbedParamMap{"y": "v"}, true, 1},
+	{"SELECT * FROM table where x = $y", EmbedParamMap{"y": []string{"hi"}}, true, 1},
+	{"SELECT * FROM table where x = $y", EmbedParamMap{"y": []any{"hi"}}, true, 1},
 	{"SELECT * FROM table where x = $y", EmbedParamMap{"x": "v"}, false, 1},
 	{"SELECT * FROM table where x = $y", EmbedParamMap{}, false, 1},
 	{"SELECT * FROM table where x = $y AND z = $a",

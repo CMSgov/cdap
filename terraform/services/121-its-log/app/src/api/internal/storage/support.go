@@ -96,6 +96,15 @@ func ConstructDBFilenameAndPath(appId string, date string) (string, []string) {
 	return fname, path
 }
 
+func asJson(params EmbedParamMap, trimmed string) ([]byte, error) {
+	b, err := json.Marshal(params[trimmed])
+	if err != nil {
+		orig := fmt.Sprintf("%v", params[trimmed])
+		return nil, fmt.Errorf("could not marshall JSON: %s", orig)
+	}
+	return b, nil
+}
+
 func GenerateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 	// We now are going to figure out which named params are present in the SQL.
 	// That way, we only create named args for things that are present.
@@ -130,10 +139,15 @@ func GenerateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 			case string:
 				params[trimmed] = params[trimmed]
 			case types.M:
-				b, err := json.Marshal(params[trimmed])
+				b, err := asJson(params, trimmed)
 				if err != nil {
-					orig := fmt.Sprintf("%v", params[trimmed])
-					return nil, fmt.Errorf("could not marshall JSON: %s", orig)
+					return nil, err
+				}
+				params[trimmed] = string(b)
+			case []any:
+				b, err := asJson(params, trimmed)
+				if err != nil {
+					return nil, err
 				}
 				params[trimmed] = string(b)
 			case time.Time:
