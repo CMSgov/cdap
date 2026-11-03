@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/navapbc/its-log/internal/types"
@@ -135,6 +136,8 @@ func GenerateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 					return nil, fmt.Errorf("could not marshall JSON: %s", orig)
 				}
 				params[trimmed] = string(b)
+			case time.Time:
+				params[trimmed] = params[trimmed].(time.Time)
 			default:
 				zap.L().Error("unable to generate named arg",
 					zap.String("key", trimmed),

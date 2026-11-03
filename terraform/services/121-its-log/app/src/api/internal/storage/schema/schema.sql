@@ -1,5 +1,12 @@
-CREATE SEQUENCE IF NOT EXISTS itslog_events_id_seq START 1;
+-- its-log version / schema version
+-- date
+-- current github hash?
+CREATE TABLE IF NOT EXISTS itslog_metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT
+);
 
+CREATE SEQUENCE IF NOT EXISTS itslog_events_id_seq START 1;
 CREATE TABLE IF NOT EXISTS itslog_events (
     -- automatically provided by the SQLite engine
     id BIGINT PRIMARY KEY DEFAULT nextval('itslog_events_id_seq') NOT NULL,
@@ -10,9 +17,7 @@ CREATE TABLE IF NOT EXISTS itslog_events (
     cluster TEXT,
     -- some apps have multiple internal sources
     tags TEXT NOT NULL,
-    -- value is useful for when you want a unique value 
-    -- associated with this event
-    data JSON DEFAULT json_object() NOT NULL
+    data JSON
 );
 
 CREATE SEQUENCE IF NOT EXISTS itslog_summary_id_seq START 1;
@@ -20,12 +25,14 @@ CREATE SEQUENCE IF NOT EXISTS itslog_summary_id_seq START 1;
 CREATE TABLE IF NOT EXISTS itslog_summary (
     id INTEGER PRIMARY KEY default nextval('itslog_summary_id_seq') NOT NULL,
     inserted DATETIME DEFAULT now() NOT NULL,
-    date TEXT NOT NULL,
     key_id TEXT NOT NULL,
     operation TEXT NOT NULL,
-    tags TEXT NOT NULL,
-    data JSON DEFAULT json_object() NOT NULL
+    tags TEXT,
+    data JSON NOT NULL
 );
+
+-- CREATE TABLE IF NOT EXISTS itslog_summary_summary (
+-- );
 
 -- See https://stackoverflow.com/questions/22699409/sqlite-null-and-unique
 -- We want NULL values to count towards uniqueness here.

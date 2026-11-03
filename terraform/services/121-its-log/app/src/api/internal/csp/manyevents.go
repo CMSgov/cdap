@@ -14,10 +14,9 @@ func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
 	// Doing individual commits without a transaction is the slowest
 	// way to do this in DuckDB. Appenders are much better, both for
 	// performance and safety.
+
 	for _, e := range evt_buff {
 		if e != nil {
-
-			s.GetDB().Prepare(s.Endpoints.Files["log_event"])
 			_, err := s.ExecNoLock(storage.Endpoint,
 				"log_event",
 				storage.EmbedParamMap{

@@ -59,6 +59,10 @@ func (s *Storage) InitTables() error {
 	if err != nil {
 		return err
 	}
+	_, err = s.Exec(Schema, "metadata", nil)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

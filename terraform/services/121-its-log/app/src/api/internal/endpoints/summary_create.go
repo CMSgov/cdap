@@ -46,6 +46,8 @@ func SummaryCreate(c *gin.Context) {
 	// a sorted, dot-separated string.
 	sort.Strings(body.Tags)
 	theTags := strings.Join(body.Tags, ".")
+
+	// Prep params for running the insert many operation
 	etlP := &etl.RunEtlParams{
 		AppId:   appId,
 		GinCtx:  c,
@@ -54,6 +56,8 @@ func SummaryCreate(c *gin.Context) {
 		Storage: s,
 		Payload: make(types.M, 0),
 	}
+
+	// We're only inserting one event, but it is about code reuse.
 	summary := etl.ItslogSummary{
 		KeyID:     keyId,
 		Date:      sanitized,
@@ -62,18 +66,10 @@ func SummaryCreate(c *gin.Context) {
 		Data:      body.Data,
 	}
 
-	InsertSummaryRows("summarycreate", etlP, []etl.ItslogSummary{summary})
+	ierr := InsertSummaryRows("summarycreate", etlP, []etl.ItslogSummary{summary})
 
-	// _, err = s.Exec(storage.Endpoint, "insert_full_summary", storage.EmbedParamMap{
-	// 	"key_id":    keyId,
-	// 	"date":      body.Date,
-	// 	"operation": body.Operation,
-	// 	"tags":      theTags,
-	// 	"data":      body.Data,
-	// })
-
-	if err != nil {
-		zap.L().Error("summary save error", zap.Error(err))
+	if ierr != nil {
+		zap.L().Error("summary save error", zap.Error(ierr))
 
 		c.JSON(http.StatusNotImplemented, gin.H{
 			"status":    "error",
