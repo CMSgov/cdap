@@ -1,5 +1,6 @@
 module "cdap_cluster" {
   source                   = "../../modules/cluster"
-  platform                 = merge(module.platform, { service = "tftesting" })
+  platform                 = module.platform
+  cluster_name_override    = "cdap-test-tftesting"
   supports_service_connect = true
 }
