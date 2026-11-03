@@ -182,15 +182,10 @@ variable "create_nlb" {
 variable "nlb_mode" {
   description = <<-EOT
     What the NLB forwards to, when create_nlb is true:
-      "front_alb" - module owns the NLB listener + a target_type=alb target
-                    group pointed at this module's own ALB. Today's only
-                    supported mode; used for PrivateLink in front of an
+      "front_alb" - used for PrivateLink in front of an
                     existing ALB.
-      "direct"    - module creates only the bare NLB + its security group.
-                    No listener, no target group. Reserved for a future
-                    ecs-service "enable_nlb_integration" that creates its
-                    own listener(s)/target group(s) against this NLB's
-                    ARN, for direct-to-Fargate / mTLS-passthrough traffic.
+      "direct"    - module creates only the bare NLB and its security group.
+                    Can be used for direct to Fargate / mTLS-passthrough traffic.
   EOT
   type        = string
   default     = "front_alb"
