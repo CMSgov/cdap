@@ -8,6 +8,7 @@ const ERROR = "error"
 
 const TODAY = "today"
 const YESTERDAY = "yesterday"
+const CONSOLIDATED = "consolidated"
 
 const ()
 const SQL = "sql"

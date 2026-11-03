@@ -27,7 +27,7 @@ func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 				zap.String("formatted_date", formattedDate),
 				zap.Int("len(events)", len(events)))
 
-			s, err := storage.SetupDB(appId, formattedDate)
+			s, err := storage.SetupDB(appId, formattedDate, storage.LiveStorage)
 
 			if err != nil {
 				zap.L().Fatal("could not setup DB in flushbuffers",

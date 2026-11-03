@@ -16,6 +16,8 @@ func StringToYMD(ymd string) (*ILTime, error) {
 		return NewILTimeToday(), nil
 	case constants.YESTERDAY:
 		return NewILTimeYesterday(), nil
+	case constants.CONSOLIDATED:
+		return NewILTimeToday(), nil
 	default:
 		d, e := NewILTimeFromYMD(ymd)
 		return d, e

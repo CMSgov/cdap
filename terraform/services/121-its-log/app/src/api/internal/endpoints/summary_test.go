@@ -22,7 +22,7 @@ var scts = []struct {
 		"/v1/summary/create",
 		http.StatusCreated,
 		map[string]any{
-			"date":      "today",
+			"date":      "yesterday",
 			"tags":      []string{"a"},
 			"operation": "just.42",
 			"data":      42},
@@ -33,7 +33,7 @@ var scts = []struct {
 		"/v1/summary/create",
 		http.StatusCreated,
 		map[string]any{
-			"date":      "today",
+			"date":      "yesterday",
 			"tags":      []string{"a", "b"},
 			"operation": "map.42",
 			"data": map[string]any{
@@ -46,7 +46,7 @@ var scts = []struct {
 		"/v1/summary/create",
 		http.StatusCreated,
 		map[string]any{
-			"date":      "today",
+			"date":      "yesterday",
 			"tags":      []string{"x", "y", "z"},
 			"operation": "empty.object",
 			"data":      map[string]any{}},
@@ -78,7 +78,7 @@ var srts = []struct {
 		"/v1/summary/read",
 		http.StatusOK,
 		map[string]any{
-			"date":      "today",
+			"date":      "yesterday",
 			"tags":      "%",
 			"operation": "just.42",
 		},
@@ -90,7 +90,7 @@ var srts = []struct {
 		"/v1/summary/read",
 		http.StatusOK,
 		map[string]any{
-			"date":      "today",
+			"date":      "yesterday",
 			"tags":      "%",
 			"operation": "map.42",
 		},
@@ -106,7 +106,7 @@ var srts = []struct {
 		// it is specified as `nil`.
 		http.StatusNoContent,
 		map[string]any{
-			"date":      "today",
+			"date":      "yesterday",
 			"tags":      "bad-tags",
 			"operation": "map.42",
 		},
@@ -117,7 +117,7 @@ var srts = []struct {
 		"/v1/summary/read",
 		http.StatusOK,
 		map[string]any{
-			"date":      "today",
+			"date":      "yesterday",
 			"tags":      "a%",
 			"operation": "map.42",
 		},
@@ -130,7 +130,7 @@ var srts = []struct {
 		"/v1/summary/read",
 		http.StatusOK,
 		map[string]any{
-			"date":      "today",
+			"date":      "yesterday",
 			"tags":      "x.y.z",
 			"operation": "empty.object",
 		},

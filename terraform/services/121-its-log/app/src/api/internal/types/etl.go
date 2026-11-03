@@ -34,7 +34,7 @@ type SummaryRow struct {
 }
 
 type SummaryReadBody struct {
-	// Date      string `json:"date" binding:"required"`
+	Date      string `json:"date" binding:"required"`
 	Tags      string `json:"tags" binding:"required"`
 	Operation string `json:"operation" binding:"required"`
 }

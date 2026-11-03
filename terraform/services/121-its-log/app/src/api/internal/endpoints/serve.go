@@ -172,7 +172,7 @@ func addArchiveEndpoints(rG *gin.RouterGroup) {
 	auth_adminV1ReadOnly.Use(AuthMiddleWare(permsRO))
 	auth_adminV1ReadWrite.Use(AuthMiddleWare(permsRW))
 
-	// auth_adminV1ReadOnly.POST(SUMMARY_READ, SummaryRead)
 	auth_adminV1ReadWrite.POST(ARCHIVE, Archive)
-
+	auth_adminV1ReadOnly.POST(ARCHIVE_LIST, ArchiveList)
+	auth_adminV1ReadWrite.POST(ARCHIVE_CONSOLIDATE, ArchiveConsolidate)
 }

@@ -9,10 +9,7 @@ def summarize():
     query_rows = query("summary", "SELECT * from itslog_summary")
     total = 0
     for row in query_rows:
-        print("data:", row["data"])
         if "count" in row["data"]:
-            print("count is in data")
-            print(row["data"])
             total += row["data"]["count"]
         else:
             print("did not find count")

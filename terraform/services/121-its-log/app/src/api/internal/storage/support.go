@@ -56,7 +56,7 @@ func DoesDBExist(pathArr []string) bool {
 
 // Helper for the endpoints and other uses across the codebase
 // This is the preferred entrypoint to the Storage API.
-func SetupDB(appId string, date string) (*Storage, error) {
+func SetupDB(appId string, date string, kind StorageType) (*Storage, error) {
 	s, err := NewStorage(appId)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func SetupDB(appId string, date string) (*Storage, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	s.Kind = kind
 	err = s.InitDB()
 	if err != nil {
 		log.Println("storage init error: " + err.Error())

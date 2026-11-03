@@ -8,7 +8,9 @@ prep-local:
 # Changes to go.mod should always happen locally, and undergo review.
 # Never run `go mod tidy` as part of a build process.
 build: prep-local
-	cd src/api ; go build -o its-log .
+	cd src/api ; \
+		go build \
+		-o its-log .
 
 test:
 	cd src/api ; go test -cover -coverprofile=coverage.out ./...

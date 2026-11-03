@@ -4,11 +4,21 @@ import (
 	"database/sql"
 	"path"
 
+	"github.com/navapbc/its-log/internal/constants"
 	"go.uber.org/zap"
 )
 
 func (s *Storage) InitDB() error {
-	s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, s.YYYYMMDD())
+	if s.Kind == ConsolidatedStorage {
+		s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, constants.CONSOLIDATED)
+	} else {
+		s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, s.YYYYMMDD())
+	}
+	zap.L().Debug("creating db file",
+		zap.Any("kind", s.Kind),
+		zap.String("filename", s.Filename),
+		zap.Any("path", s.Path))
+
 	// Don't re-initialize a database
 	if s.db != nil {
 		zap.L().Debug("choosing not to re-initialize the database")

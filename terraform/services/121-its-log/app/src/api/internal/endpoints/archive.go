@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
@@ -24,7 +26,8 @@ import (
 // Move
 
 type ETLArchive struct {
-	Date string `json:"date"`
+	Date   string `json:"date"`
+	Delete bool   `json:"delete"`
 }
 
 func Archive(c *gin.Context) {
@@ -79,7 +82,6 @@ func Archive(c *gin.Context) {
 	// The reason we opened it was to flush and close it.
 	// This makes sure the WAL is written to the DB.
 	s.Lock("Archive")
-	defer s.Unlock("Archive")
 	s.Flush()
 	s.Close()
 
@@ -96,11 +98,20 @@ func Archive(c *gin.Context) {
 			"message": "could not copy archive",
 			"date":    sanitizedDate,
 		})
+		// We closed the database
+		// s.Unlock("Archive")
 		return
 	}
 
 	// If we're trying to remove the database from *today*, then don't.
 	if sanitizedDate == constants.TODAY || sanitizedDate == types.NewILTimeToday().AsYYYYMMDD() {
+		s.Unlock("Archive")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"method":  c.Request.Method,
+			"message": "cannot remove today's database",
+			"date":    sanitizedDate,
+		})
 		return
 	}
 
@@ -116,14 +127,18 @@ func Archive(c *gin.Context) {
 	// They should os.Stat() the same and have the exact same bytes in the same order.
 	b, e := deepCompare(localPath, archiveFullPath)
 	if b && e == nil {
-		// If they match, remove the local file.
-		zap.L().Info("local and archive match; removing")
-		os.Remove(localPath)
+		if body.Delete {
+			// If they match, and the user told us to delete, remove the local file.
+			zap.L().Info("local and archive match; removing")
+			os.Remove(localPath)
+		}
 	} else {
-		zap.L().Error("local and archive differ; not removing",
+		zap.L().Info("local and archive differ; not removing",
 			zap.Bool("same", b), zap.Error(e))
 	}
 
+	// We closed the database
+	// s.Unlock("Archive")
 	c.JSON(http.StatusCreated, gin.H{
 		"status": "ok",
 		"method": c.Request.Method,
@@ -226,4 +241,73 @@ func deepCompare(src, dst string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func GetArchiveDates(appId string) ([]string, error) {
+	entries, err := os.ReadDir(viper.GetString("archive.path"))
+	if err != nil {
+		return nil, err
+	}
+
+	dates := make([]string, 0)
+	re := regexp.MustCompile(`(\d{4}-\d{2}-\d{2})`)
+	for _, entry := range entries {
+		if strings.Contains(entry.Name(), appId) {
+			name := entry.Name()
+			if re.MatchString(name) {
+				matches := re.FindStringSubmatch(name)
+				dates = append(dates, matches[0])
+			}
+		}
+	}
+	return dates, nil
+}
+
+// ArchiveList
+func ArchiveList(c *gin.Context) {
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	dates, err := GetArchiveDates(appId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"method":  c.Request.Method,
+			"message": "error filtering archives",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "ok",
+		"method":  c.Request.Method,
+		"entries": dates,
+	})
+}
+
+func ArchiveConsolidate(c *gin.Context) {
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	// Get a list of archives
+	dates, err := GetArchiveDates(appId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"method":  c.Request.Method,
+			"message": "error filtering archives",
+		})
+		return
+	}
+
+	arch, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Kind:  storage.ConsolidatedStorage,
+	})
+
+	// Open an "archive" file
+	// Copy the summary tables one-by-one
+	for _, d := range dates {
+		zap.L().Debug("dates",
+			zap.Any("arch", arch.Filename),
+			zap.String("d", d),
+		)
+	}
+
+	// Return... something
 }

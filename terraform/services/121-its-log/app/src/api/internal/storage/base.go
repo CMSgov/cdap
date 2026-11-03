@@ -26,6 +26,7 @@ type Storage struct {
 	Path      []string
 	ILTime    *types.ILTime
 	Filename  string
+	Kind      StorageType
 	firstUse  bool
 	lock      sync.Mutex
 	Context   context.Context

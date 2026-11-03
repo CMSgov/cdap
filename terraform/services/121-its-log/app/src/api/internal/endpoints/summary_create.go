@@ -31,9 +31,18 @@ func SummaryCreate(c *gin.Context) {
 
 	s, err := SetupGinDB(c, storage.StorageConfig{
 		AppId: appId,
-		Kind:  storage.LiveStorage,
+		// We have to be able to create summaries in previous days.
+		Date: body.Date,
+		Kind: storage.LiveStorage,
 	})
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":    "error",
+			"method":    c.Request.Method,
+			"message":   "could not set up database",
+			"error":     err.Error(),
+			"operation": body.Operation,
+		})
 		return
 	}
 	defer s.Close()

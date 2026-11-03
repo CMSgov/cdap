@@ -18,5 +18,6 @@ const SUMMARY_CLEAR = "/summary/wipe"
 
 const ARCHIVE = "/archive"
 const ARCHIVE_LIST = "/archive/list"
+const ARCHIVE_CONSOLIDATE = "/archive/consolidate"
 const ARCHIVE_READ = "/archive/summary/read"
 const ARCHIVE_ALL = "/archive/summary/all"

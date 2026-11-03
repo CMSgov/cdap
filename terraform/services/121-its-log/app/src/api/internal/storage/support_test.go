@@ -42,7 +42,7 @@ func setupEnv() {
 func TestDoesDBExist(t *testing.T) {
 	setupEnv()
 	for _, tt := range sdbt {
-		s, err := SetupDB(tt.appId, tt.date)
+		s, err := SetupDB(tt.appId, tt.date, LiveStorage)
 		if err != nil {
 			t.Errorf("SetupDB failed with %s, %s", tt.appId, tt.date)
 		}
@@ -59,7 +59,7 @@ func TestDoesDBExist(t *testing.T) {
 func TestSetupDb(t *testing.T) {
 	setupEnv()
 	for _, tt := range sdbt {
-		s, err := SetupDB(tt.appId, tt.date)
+		s, err := SetupDB(tt.appId, tt.date, LiveStorage)
 		if err != nil {
 			t.Errorf("SetupDB failed with %s, %s", tt.appId, tt.date)
 		}

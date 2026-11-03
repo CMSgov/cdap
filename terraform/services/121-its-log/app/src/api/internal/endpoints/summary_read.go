@@ -29,9 +29,17 @@ func SummaryRead(c *gin.Context) {
 
 	s, err := SetupGinDB(c, storage.StorageConfig{
 		AppId: appId,
+		Date:  body.Date,
 		Kind:  storage.LiveStorage,
 	})
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":    "error",
+			"method":    c.Request.Method,
+			"message":   "could not set up database",
+			"error":     err.Error(),
+			"operation": body.Operation,
+		})
 		return
 	}
 	defer s.Close()
@@ -71,13 +79,11 @@ func SummaryRead(c *gin.Context) {
 		return
 	}
 
-	response := gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"status":    constants.OK,
 		"operation": summaryRow.Operation,
 		"tags":      summaryRow.Tags.String,
 		"data":      summaryRow.Data,
-	}
-
-	c.JSON(http.StatusOK, response)
+	})
 
 }
