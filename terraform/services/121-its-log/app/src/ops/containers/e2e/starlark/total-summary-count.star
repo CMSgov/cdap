@@ -19,5 +19,3 @@ def summarize():
         {"operation": "total.summary", "data": {"count": total}},
     ]
     return result
-
-# print(summarize())
