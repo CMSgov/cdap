@@ -84,7 +84,6 @@ func PourGin(ch_evt_out chan<- *types.Event) *gin.Engine {
 
 	addLoggingEndpoints(apiV1, ch_evt_out)
 	addMetadataEndpoints(apiV1)
-	//addTestingEndpoints(apiV1, ch_evt_out)
 	addEtlEndpoints(apiV1)
 	addSequenceEndpoints(apiV1)
 	addSummaryEndpoints(apiV1)
@@ -109,9 +108,7 @@ func addEtlEndpoints(rG *gin.RouterGroup) {
 	permissions := []types.PermissionType{constants.Admin, constants.Test}
 	auth_adminV1.Use(AuthMiddleWare(permissions))
 
-	// Insert a new ETL step
 	auth_adminV1.POST(ETL_CREATE, CreateEtl)
-	// Run an ETL step
 	auth_adminV1.POST(ETL_RUN, RunEtl)
 }
 
