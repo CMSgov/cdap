@@ -55,6 +55,11 @@ No inputs.
 | ---- | ---- |
 | [datadog_monitor_config_policy.env_tag](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/monitor_config_policy) | resource |
 | [datadog_sensitive_data_scanner_group.main](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/sensitive_data_scanner_group) | resource |
+| [datadog_sensitive_data_scanner_rule.bb_encrypted_client_secrets](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/sensitive_data_scanner_rule) | resource |
+| [datadog_sensitive_data_scanner_rule.bb_encrypted_passwords](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/sensitive_data_scanner_rule) | resource |
+| [datadog_sensitive_data_scanner_rule.dot_access_token](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/sensitive_data_scanner_rule) | resource |
+| [datadog_sensitive_data_scanner_rule.dot_client_id](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/sensitive_data_scanner_rule) | resource |
+| [datadog_sensitive_data_scanner_rule.dot_client_secret](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/sensitive_data_scanner_rule) | resource |
 | [datadog_sensitive_data_scanner_rule.selected_standard_rules](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/resources/sensitive_data_scanner_rule) | resource |
 | [datadog_sensitive_data_scanner_standard_pattern.selected_standard_rules](https://registry.terraform.io/providers/DataDog/datadog/latest/docs/data-sources/sensitive_data_scanner_standard_pattern) | data source |
 

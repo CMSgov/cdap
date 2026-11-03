@@ -97,13 +97,13 @@ resource "datadog_sensitive_data_scanner_rule" "dot_client_id" {
     create_before_destroy = true
   }
 
-  name = "Django OAuth Toolkit Client IDs"
+  name        = "Django OAuth Toolkit Client IDs"
   description = "Client IDs generated for OAuth applications in the Django OAuth Toolkit"
 
   pattern = "\\b\\w{40}\\b"
 
   included_keyword_configuration {
-    keywords = ["client", "id"]
+    keywords        = ["client", "id"]
     character_count = 50
   }
 
@@ -120,13 +120,13 @@ resource "datadog_sensitive_data_scanner_rule" "dot_client_secret" {
     create_before_destroy = true
   }
 
-  name = "Django OAuth Toolkit Client Secrets"
+  name        = "Django OAuth Toolkit Client Secrets"
   description = "Client secrets generated for OAuth applications in the Django OAuth Toolkit"
 
   pattern = "\\b\\w{128}\\b"
 
   included_keyword_configuration {
-    keywords = ["client", "secret"]
+    keywords        = ["client", "secret"]
     character_count = 50
   }
 
@@ -143,13 +143,13 @@ resource "datadog_sensitive_data_scanner_rule" "dot_access_token" {
     create_before_destroy = true
   }
 
-  name = "Django OAuth Toolkit Access Tokens"
+  name        = "Django OAuth Toolkit Access Tokens"
   description = "Access tokens generated for OAuth applications in the Django OAuth Toolkit"
 
   pattern = "\\b\\w{30}\\b"
 
   included_keyword_configuration {
-    keywords = ["access", "token"]
+    keywords        = ["access", "token"]
     character_count = 50
   }
 
