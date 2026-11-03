@@ -118,7 +118,6 @@ type ItslogEtl struct {
 type ItslogSummary struct {
 	ID        int64
 	Inserted  int64
-	Date      string
 	KeyID     string
 	Operation string
 	Tags      string

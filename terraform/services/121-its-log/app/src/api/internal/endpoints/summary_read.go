@@ -26,18 +26,11 @@ func SummaryRead(c *gin.Context) {
 
 	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
 	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
-	sanitized, err := types.SanitizeDate(constants.TODAY)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "bad date",
-			"date":    sanitized,
-		})
-		return
-	}
 
-	s, err := SetupGinDB(c, appId, sanitized)
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Kind:  storage.LiveStorage,
+	})
 	if err != nil {
 		return
 	}
@@ -72,7 +65,6 @@ func SummaryRead(c *gin.Context) {
 		zap.L().Info(msg)
 		response := gin.H{
 			"status":  constants.OK,
-			"date":    sanitized,
 			"message": msg,
 		}
 		c.JSON(http.StatusNoContent, response)
@@ -81,7 +73,6 @@ func SummaryRead(c *gin.Context) {
 
 	response := gin.H{
 		"status":    constants.OK,
-		"date":      sanitized,
 		"operation": summaryRow.Operation,
 		"tags":      summaryRow.Tags.String,
 		"data":      summaryRow.Data,

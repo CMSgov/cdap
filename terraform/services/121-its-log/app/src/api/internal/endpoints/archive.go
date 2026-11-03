@@ -63,7 +63,15 @@ func Archive(c *gin.Context) {
 	}
 
 	// Open up the database, becuase it exists.
-	s, err := SetupGinDB(c, appId, sanitizedDate)
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		// We rarely use this parameter; only when we need to reach back
+		// into the past. Here, we (mostly) want to archive databases that are
+		// not *today*. Hence, we break the "model" that we only open
+		// today's database to do work. Because this is not a typical DB operation.
+		Date: sanitizedDate,
+		Kind: storage.LiveStorage,
+	})
 	if err != nil {
 		return
 	}

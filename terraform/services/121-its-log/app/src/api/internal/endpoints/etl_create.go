@@ -46,7 +46,10 @@ func CreateEtl(c *gin.Context) {
 	etl := padToMod4(body.Body)
 
 	// Set up the database
-	s, err := SetupGinDB(c, appId, sanitized)
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Kind:  storage.LiveStorage,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
 		return

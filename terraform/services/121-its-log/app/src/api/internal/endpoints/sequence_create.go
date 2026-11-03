@@ -28,7 +28,10 @@ func SequenceCreate(c *gin.Context) {
 	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
 	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
 	sanitized, _ := types.SanitizeDate(constants.TODAY)
-	s, err := SetupGinDB(c, appId, sanitized)
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Kind:  storage.LiveStorage,
+	})
 	if err != nil {
 		return
 	}

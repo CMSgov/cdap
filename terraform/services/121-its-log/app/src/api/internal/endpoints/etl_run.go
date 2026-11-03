@@ -29,7 +29,7 @@ func checkRunEtlBody(c *gin.Context) (map[string]any, error) {
 	}
 
 	zap.L().Debug("payload", zap.Any("payload", payload))
-	for _, k := range []string{"date", "name"} {
+	for _, k := range []string{"name"} {
 		if _, ok := payload[k]; !ok {
 			return nil, fmt.Errorf("missing in body: %s", k)
 		}
@@ -60,10 +60,12 @@ func RunEtl(c *gin.Context) {
 		return
 	}
 
-	date := payload["date"].(string)
 	name := payload["name"].(string)
 
-	s, err := SetupGinDB(c, appId, date)
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Kind:  storage.LiveStorage,
+	})
 	if err != nil {
 		return
 	}

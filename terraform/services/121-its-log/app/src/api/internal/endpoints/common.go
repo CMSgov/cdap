@@ -2,32 +2,55 @@ package endpoints
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
 
-func SetupGinDB(c *gin.Context, appId string, date string) (*storage.Storage, error) {
-	sanitized, err := types.SanitizeDate(date)
-	if err != nil {
-		return nil, err
+func SetupGinDB(c *gin.Context, sc storage.StorageConfig) (*storage.Storage, error) {
+	switch sc.Kind {
+	case storage.LiveStorage:
+		var sanitized string
+		var err error
+		if sc.Date != "" {
+			// This should be the *exception*
+			sanitized, err = types.SanitizeDate(sc.Date)
+			if err != nil {
+				zap.L().Info("creating storage from date",
+					zap.String("date", sc.Date),
+					zap.String("sanitized", sanitized))
+			}
+		} else {
+			sanitized, err = types.SanitizeDate(constants.TODAY)
+		}
+		if err != nil {
+			return nil, err
+		}
+		s, err := storage.SetupDB(sc.AppId, sanitized)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"method":  c.Request.Method,
+				"message": "could not initialize storage backend",
+				"date":    sanitized,
+			})
+			return nil, err
+		}
+		return s, nil
+	case storage.ArchiveStorage:
+		return nil, errors.New("unhandled archive storage")
+	case storage.ConsolidatedStorage:
+		return nil, errors.New("unhandled consolidated storage")
+	default:
+		return nil, fmt.Errorf("cannot setup db; unknown kind: %d", sc.Kind)
 	}
-	s, err := storage.SetupDB(appId, sanitized)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not initialize storage backend",
-			"date":    sanitized,
-		})
-		return nil, err
-	}
-	return s, nil
 }
 
 func padToMod4(toPad string) string {

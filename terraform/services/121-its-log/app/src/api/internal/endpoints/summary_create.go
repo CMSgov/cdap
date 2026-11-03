@@ -10,6 +10,7 @@ import (
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/etl"
+	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
@@ -27,17 +28,11 @@ func SummaryCreate(c *gin.Context) {
 
 	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
 	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
-	sanitized, err := types.SanitizeDate(constants.TODAY)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "bad date",
-			"date":    sanitized,
-		})
-		return
-	}
-	s, err := SetupGinDB(c, appId, sanitized)
+
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Kind:  storage.LiveStorage,
+	})
 	if err != nil {
 		return
 	}
@@ -61,7 +56,6 @@ func SummaryCreate(c *gin.Context) {
 	// We're only inserting one event, but it is about code reuse.
 	summary := etl.ItslogSummary{
 		KeyID:     keyId,
-		Date:      sanitized,
 		Operation: body.Operation,
 		Tags:      theTags,
 		Data:      body.Data,
@@ -76,7 +70,6 @@ func SummaryCreate(c *gin.Context) {
 			"status":    "error",
 			"method":    c.Request.Method,
 			"message":   "could not save etl step",
-			"date":      sanitized,
 			"operation": body.Operation,
 		})
 		return
@@ -85,7 +78,6 @@ func SummaryCreate(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":    "ok",
 		"method":    c.Request.Method,
-		"date":      sanitized,
 		"operation": body.Operation,
 		"tags":      theTags,
 		"data":      body.Data,
