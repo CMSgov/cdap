@@ -12,7 +12,6 @@ resource "aws_vpc_security_group_egress_rule" "https" {
 resource "aws_vpc_security_group_ingress_rule" "alb_to_task" {
   count = (
     var.enable_alb_integration &&
-    var.alb_security_group_id != null &&
     length(var.security_groups) == 0
   ) ? 1 : 0
 
