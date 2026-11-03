@@ -4,9 +4,6 @@ locals {
     CachingDisabled  = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     CachingOptimized = "658327ea-f89d-4fab-a63d-7e88639e58f6"
   }
-  # Substring match so variants (prod, production, mybranch-prod) and ephemeral
-  # envs (e.g. mybranch-dev) resolve to their parent env's SSM params
-  cdap_env = (strcontains(var.platform.env, "prod") || strcontains(var.platform.env, "sandbox")) ? "prod" : "test"
 }
 
 data "aws_acm_certificate" "issued" {
@@ -224,7 +221,7 @@ resource "aws_cloudwatch_log_delivery" "this" {
 
 # Long-term retention bucket managed by the log-retention service
 data "aws_ssm_parameter" "log_retention_bucket" {
-  name = "/cdap/${local.cdap_env}/common/nonsensitive/log-retention/bucket"
+  name = "/cdap/${var.platform.cdap_env}/common/nonsensitive/log-retention/bucket"
 }
 
 resource "aws_cloudwatch_log_delivery_destination" "log_retention" {
