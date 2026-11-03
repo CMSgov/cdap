@@ -23,6 +23,7 @@ type StorageConfig struct {
 }
 type Storage struct {
 	AppId     string
+	KeyId     string
 	Path      []string
 	ILTime    *types.ILTime
 	Filename  string

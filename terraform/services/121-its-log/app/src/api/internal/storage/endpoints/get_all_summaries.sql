@@ -1,3 +1,5 @@
--- name: GetAllSummaries :many
-PREPARE get_all_summaries AS
-  SELECT * FROM itslog_summary;
+SELECT 
+    operation, 
+    tags,
+    data
+  FROM itslog_summary;

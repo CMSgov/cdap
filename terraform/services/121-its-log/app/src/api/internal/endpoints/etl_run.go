@@ -163,7 +163,7 @@ func InsertSummaryRows(source string, etlP *etl.RunEtlParams, summaries []etl.It
 		etlP.Payload["tags"] = summary.Tags
 		etlP.Payload["data"] = summary.Data
 
-		if !deleted {
+		if !deleted && etlP.DeleteBeforeInsert {
 			zap.L().Debug("deleting existing summaries", zap.String("etl", etlP.EtlName))
 			// Delete existing rows that match the key_id/date/operation
 			delArgs, err := etlP.Storage.PrepareNamedArgs("delete_existing_summaries", etlP.Payload)
@@ -184,14 +184,18 @@ func InsertSummaryRows(source string, etlP *etl.RunEtlParams, summaries []etl.It
 		if err != nil {
 			return err
 		}
+
+		etlP.Storage.Lock("InsertSummaryRows")
 		_, err = etlP.Storage.Endpoints.Exec("insert_full_summary", args)
 		if err != nil {
 			zap.L().Error("insertsummaryrows:insert_full_summary",
 				zap.String("source", source),
 				zap.Any("payload", etlP.Payload),
 				zap.Error(err))
+			etlP.Storage.Unlock("InsertSummaryRows")
 			return err
 		}
+		etlP.Storage.Unlock("InsertSummaryRows")
 	}
 
 	return nil

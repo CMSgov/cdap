@@ -8,33 +8,33 @@ import (
 )
 
 func (s *Storage) Query(kind StoredSql, name string, params EmbedParamMap) (*sql.Rows, error) {
-	var err error
-	var res *sql.Rows
 
-	err = errors.New("unknown kind of stored SQL")
-
-	s.Lock("Query")
 	switch kind {
 	case Schema:
 		msg := "cannot query a schema"
 		zap.L().Error(msg)
-		err = errors.New(msg)
+		return nil, errors.New(msg)
 	case Endpoint:
 		args, err := s.PrepareNamedArgs(name, params)
 		if err != nil {
 			zap.L().Error("error in PrepareNamedArgs", zap.Error(err))
-			s.Unlock("Query")
 			return nil, err
 		}
-		res, err = s.Endpoints.Query(name, args)
+		s.Lock("Query")
+		res, err := s.Endpoints.Query(name, args)
+		s.Unlock("Query")
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
 	default:
-		zap.L().Error("Query: unknown kind of stored SQL",
+		msg := "query: unknown kind of stored SQL"
+		zap.L().Error(msg,
 			zap.Int("kind", int(kind)),
 			zap.String("name", name))
+		return nil, errors.New(msg)
 	}
-	s.Unlock("Query")
 
-	return res, err
 }
 
 func (s *Storage) QueryRow(kind StoredSql, name string, params EmbedParamMap) *sql.Row {

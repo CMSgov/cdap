@@ -2,6 +2,8 @@ package endpoints
 
 import (
 	"bytes"
+	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/constants"
+	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
@@ -54,7 +57,7 @@ func Archive(c *gin.Context) {
 
 	// Construct a path to the database, and make sure it exists.
 	// We cannot archive a database that does not exist.
-	_, dbpath := storage.ConstructDBFilenameAndPath(appId, sanitizedDate)
+	_, dbpath := storage.ConstructDBFilenameAndPath(appId, sanitizedDate, storage.LiveStorage)
 	if !storage.DoesDBExist(dbpath) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status":  "error",
@@ -284,6 +287,8 @@ func ArchiveList(c *gin.Context) {
 
 func ArchiveConsolidate(c *gin.Context) {
 	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
+
 	// Get a list of archives
 	dates, err := GetArchiveDates(appId)
 	if err != nil {
@@ -295,7 +300,7 @@ func ArchiveConsolidate(c *gin.Context) {
 		return
 	}
 
-	arch, err := SetupGinDB(c, storage.StorageConfig{
+	to, err := SetupGinDB(c, storage.StorageConfig{
 		AppId: appId,
 		Kind:  storage.ConsolidatedStorage,
 	})
@@ -304,10 +309,104 @@ func ArchiveConsolidate(c *gin.Context) {
 	// Copy the summary tables one-by-one
 	for _, d := range dates {
 		zap.L().Debug("dates",
-			zap.Any("arch", arch.Filename),
+			zap.Any("arch", to.Filename),
 			zap.String("d", d),
 		)
+		from, err := SetupGinDB(c, storage.StorageConfig{
+			AppId: appId,
+			Date:  d,
+			Kind:  storage.ArchiveStorage,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"method":  c.Request.Method,
+				"message": "could not access archive file",
+			})
+			return
+		}
+
+		from.KeyId = keyId
+		err = consolidateFromTo(from, to)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"method":  c.Request.Method,
+				"message": "could not consolidate archives",
+				"error":   err.Error(),
+			})
+			to.Close()
+			return
+		}
+	}
+	to.Close()
+}
+
+func consolidateFromTo(from *storage.Storage, to *storage.Storage) error {
+	zap.L().Debug("consolidating",
+		zap.String("file", from.Filename),
+		zap.Any("path", from.Path))
+	rows, err := from.Query(storage.Endpoint, "get_all_summaries", storage.EmbedParamMap{})
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	summaries := make([]etl.ItslogSummary, 0)
+	row_count := 0
+	for rows.Next() {
+		summary := etl.ItslogSummary{}
+		err := rows.Scan(&summary.Operation, &summary.Tags, &summary.Data)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				zap.L().Info("consolidateFromTo returned zero rows")
+				return nil
+			} else {
+				zap.L().Info("error scanning row", zap.Int("row_count", row_count))
+				return err
+			}
+		}
+		row_count += 1
+		summaries = append(summaries, summary)
 	}
 
-	// Return... something
+	zap.L().Debug("read rows to consolidate", zap.Int("rows", row_count))
+
+	err = InsertConsolidationRows(from, to, summaries)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func InsertConsolidationRows(from *storage.Storage, to *storage.Storage, summaries []etl.ItslogSummary) error {
+	//
+	// Now, write the new summar(y|ies) to the summary table.
+	for _, summary := range summaries {
+		payload := make(types.M, 0)
+		payload["date"] = from.YYYYMMDD()
+		payload["key_id"] = from.KeyId
+		payload["operation"] = summary.Operation
+		payload["tags"] = summary.Tags
+		payload["data"] = summary.Data
+
+		args, err := to.PrepareNamedArgs("insert_consolidated_row", payload)
+		if err != nil {
+			return err
+		}
+
+		to.Lock("InsertConsolidationRows")
+		_, err = to.Endpoints.Exec("insert_consolidated_row", args)
+		if err != nil {
+			zap.L().Error("insertsummaryrows:insert_consolidated_row",
+				zap.Any("payload", payload),
+				zap.Error(err))
+			to.Unlock("InsertConsolidationRows")
+			return err
+		}
+		to.Unlock("InsertConsolidationRows")
+	}
+
+	return nil
 }

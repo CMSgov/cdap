@@ -191,6 +191,7 @@ func etlRunStarlark(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) erro
 		summaries = append(summaries, srjs)
 	}
 
+	etlP.DeleteBeforeInsert = true
 	// // Now, write them to the summary table.
 	return InsertSummaryRows("starlark", etlP, summaries)
 

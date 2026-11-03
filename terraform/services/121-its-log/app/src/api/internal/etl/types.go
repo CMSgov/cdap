@@ -12,12 +12,13 @@ import (
 
 // FIXME: These need to be at the ETL level, not the type level.
 type RunEtlParams struct {
-	AppId   string
-	GinCtx  *gin.Context
-	EtlName string
-	KeyId   string
-	Storage *storage.Storage
-	Payload map[string]any
+	AppId              string
+	GinCtx             *gin.Context
+	EtlName            string
+	KeyId              string
+	Storage            *storage.Storage
+	Payload            map[string]any
+	DeleteBeforeInsert bool
 }
 
 type StandardErrorResponseParams struct {

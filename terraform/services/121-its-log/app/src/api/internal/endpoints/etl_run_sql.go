@@ -84,6 +84,7 @@ func etlRunSql(etlP *etl.RunEtlParams, etlRow storage.EtlRow) error {
 		summaries = append(summaries, summary)
 	}
 
+	etlP.DeleteBeforeInsert = true
 	return InsertSummaryRows("sql", etlP, summaries)
 
 }

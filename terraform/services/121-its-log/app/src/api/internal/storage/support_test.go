@@ -100,7 +100,7 @@ func TestNewStorage(t *testing.T) {
 //  ConstructDBFilenameAndPath
 func TestConstructDBFilenameAndPath(t *testing.T) {
 	setupEnv()
-	filename, path := ConstructDBFilenameAndPath("a", "b")
+	filename, path := ConstructDBFilenameAndPath("a", "b", LiveStorage)
 	if filename != "a_b.duckdb" {
 		t.Error("filename constructed incorrectly")
 	}

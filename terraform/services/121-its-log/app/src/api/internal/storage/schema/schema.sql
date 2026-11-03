@@ -31,8 +31,16 @@ CREATE TABLE IF NOT EXISTS itslog_summary (
     data JSON NOT NULL
 );
 
--- CREATE TABLE IF NOT EXISTS itslog_summary_summary (
--- );
+CREATE SEQUENCE IF NOT EXISTS itslog_consolidated_id_seq START 1;
+CREATE TABLE IF NOT EXISTS itslog_consolidated (
+    id INTEGER PRIMARY KEY default nextval('itslog_consolidated_id_seq') NOT NULL,
+    inserted DATETIME DEFAULT now() NOT NULL,
+    key_id TEXT NOT NULL,
+    date DATE NOT NULL,
+    operation TEXT NOT NULL,
+    tags TEXT,
+    data JSON NOT NULL
+);
 
 -- See https://stackoverflow.com/questions/22699409/sqlite-null-and-unique
 -- We want NULL values to count towards uniqueness here.

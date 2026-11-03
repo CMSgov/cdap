@@ -9,15 +9,14 @@ import (
 )
 
 func (s *Storage) InitDB() error {
-	if s.Kind == ConsolidatedStorage {
-		s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, constants.CONSOLIDATED)
-	} else {
-		s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, s.YYYYMMDD())
+	switch s.Kind {
+	case ConsolidatedStorage:
+		s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, constants.CONSOLIDATED, s.Kind)
+	case ArchiveStorage:
+		s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, s.YYYYMMDD(), s.Kind)
+	default:
+		s.Filename, s.Path = ConstructDBFilenameAndPath(s.AppId, s.YYYYMMDD(), s.Kind)
 	}
-	zap.L().Debug("creating db file",
-		zap.Any("kind", s.Kind),
-		zap.String("filename", s.Filename),
-		zap.Any("path", s.Path))
 
 	// Don't re-initialize a database
 	if s.db != nil {

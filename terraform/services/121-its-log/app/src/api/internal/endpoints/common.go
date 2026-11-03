@@ -2,7 +2,6 @@ package endpoints
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -38,7 +37,13 @@ func SetupGinDB(c *gin.Context, sc storage.StorageConfig) (*storage.Storage, err
 		s.Kind = sc.Kind
 		return s, nil
 	case storage.ArchiveStorage:
-		return nil, errors.New("unhandled archive storage")
+		zap.L().Debug("setting up archive storage")
+		s, err := storage.SetupDB(sc.AppId, sc.Date, storage.ArchiveStorage)
+		if err != nil {
+			return nil, err
+		}
+		s.Kind = sc.Kind
+		return s, nil
 	case storage.ConsolidatedStorage:
 		zap.L().Debug("setting up consolidated storage")
 		s, err := storage.SetupDB(sc.AppId, constants.CONSOLIDATED, storage.ConsolidatedStorage)

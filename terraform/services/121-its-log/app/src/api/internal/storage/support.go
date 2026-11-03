@@ -89,10 +89,20 @@ func NewStorage(appId string) (*Storage, error) {
 	return s, nil
 }
 
-func ConstructDBFilenameAndPath(appId string, date string) (string, []string) {
+// FIXME: Just pass `s` into this thing...
+func ConstructDBFilenameAndPath(appId string, date string, kind StorageType) (string, []string) {
 	// Compute filename based on date and app ID
 	fname := fmt.Sprintf("%s_%s.duckdb", appId, date)
-	path := []string{viper.GetString("storage.path"), fname}
+	var base string
+	switch kind {
+	case ArchiveStorage:
+		base = viper.GetString("archive.path")
+	case ConsolidatedStorage:
+		base = viper.GetString("storage.path")
+	case LiveStorage:
+		viper.GetString("storage.path")
+	}
+	path := []string{base, fname}
 	return fname, path
 }
 
