@@ -44,7 +44,7 @@ output "internal_dns_record_fqdn" {
 
 output "zscaler_dns_record_fqdn" {
   description = "FQDN of the cmscloud.local alias record, if created."
-  value       = (var.create_alb && var.create_internal_dns_record) ? aws_route53_record.zscaler_alb[0].fqdn : null
+  value       = (var.create_alb && var.create_zscaler_dns_record) ? aws_route53_record.zscaler_alb[0].fqdn : null
 }
 
 # -------------------------------------------------------
