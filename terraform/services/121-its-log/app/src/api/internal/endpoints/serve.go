@@ -55,7 +55,7 @@ func PourGin(ch_evt_out chan<- *types.Event) *gin.Engine {
 	// gin.DefaultWriter = io.Discard
 
 	// We may want production mode.
-	// This is configured via the envrionment
+	// This is configured via the environment
 	if viper.GetString("ginmode") == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}

@@ -17,7 +17,7 @@ There are currently two classes of ETL action that can be taken in `its-log`.
 
 The SQL ETL actions are either defaulted in, or can be loaded via API. Either way, they're only able to execute within the context of the single SQLite database they are part of. This means they are most appropriate for analyses of (say) the events table, and the generation of summary information in the summary table. The only external context that can be passed into an SQL ETL action (at this time) is the `key_id`, the `app_id`, and the `date`. 
 
-For example: an SQL ETL action might be to count the total number of events in the `events` table, and insert that count in the `summary` table with an opertaion called `count.total`. 
+For example: an SQL ETL action might be to count the total number of events in the `events` table, and insert that count in the `summary` table with an operation called `count.total`. 
 
 ### Golang ETL actions
 
