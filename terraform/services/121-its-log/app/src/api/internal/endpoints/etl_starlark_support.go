@@ -41,18 +41,18 @@ func GolangToStarlark(data any) (starlark.Value, error) {
 	// Otherwise, branch on the type. We'll convert Golang values
 	// into the appropriate Starlark values here, for passing to the
 	// interpreter for use.
-	switch data.(type) {
+	switch data := data.(type) {
 	case float64:
-		return starlark.Float(data.(float64)), nil
+		return starlark.Float(data), nil
 	case int:
 		// Starlark only knows int64s. So, when testing round trips,
 		// expect that an `int` will turn into an `int64`.
-		return starlark.MakeInt64(int64(data.(int))), nil
+		return starlark.MakeInt64(int64(data)), nil
 	case int64:
-		return starlark.MakeInt64(int64(data.(int64))), nil
+		return starlark.MakeInt64(int64(data)), nil
 	case map[string]any:
 		sd := starlark.NewDict(32)
-		for k, v := range data.(map[string]any) {
+		for k, v := range data {
 			conv, err := GolangToStarlark(v)
 			if err != nil {
 				return nil, fmt.Errorf("could not convert v in dict: %v", v)
@@ -61,40 +61,40 @@ func GolangToStarlark(data any) (starlark.Value, error) {
 		}
 		return sd, nil
 	case string:
-		return starlark.String(data.(string)), nil
+		return starlark.String(data), nil
 	case []any:
-		sl, err := golangSliceToStarlark(data.([]any))
+		sl, err := golangSliceToStarlark(data)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert array of type %T", data)
 		}
 		return sl, nil
 
 	case []float64:
-		sl, err := golangSliceToStarlark(data.([]float64))
+		sl, err := golangSliceToStarlark(data)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert array of type %T", data)
 		}
 		return sl, nil
 	case []int:
-		sl, err := golangSliceToStarlark(data.([]int))
+		sl, err := golangSliceToStarlark(data)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert array of type %T", data)
 		}
 		return sl, nil
 	case []int64:
-		sl, err := golangSliceToStarlark(data.([]int64))
+		sl, err := golangSliceToStarlark(data)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert array of type %T", data)
 		}
 		return sl, nil
 	case []map[string]any:
-		sl, err := golangSliceToStarlark(data.([]map[string]any))
+		sl, err := golangSliceToStarlark(data)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert array of type %T", data)
 		}
 		return sl, nil
 	case []string:
-		sl, err := golangSliceToStarlark(data.([]string))
+		sl, err := golangSliceToStarlark(data)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert array of type %T", data)
 		}
