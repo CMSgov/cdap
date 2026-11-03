@@ -14,12 +14,13 @@ datadog_synthetics:
   min_failure_duration: 300
   tick_every: 300
 
+# SRE guidance: provide these options for developers to easily change
 services:
   caller:
-    cpu: 512
-    memory: 1024
-    deployment_rollback: true
+    cpu: 128
+    memory: 256
+    deployment_rollback: false
   worker:
-    cpu: 512
-    memory: 1024
-    deployment_rollback: true
+    cpu: 128
+    memory: 256
+    deployment_rollback: false

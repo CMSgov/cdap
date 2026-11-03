@@ -22,7 +22,7 @@ module "acm_internal" {
 # -------------------------------------------------------
 module "alb" {
   count  = local.infra_enabled ? 1 : 0
-  source = "../../modules/alb"
+  source = "../../modules/lb"
 
   platform = module.platform
   internal = true
