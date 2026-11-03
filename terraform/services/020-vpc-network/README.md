@@ -2,6 +2,12 @@
 Establishes network configuration for our VPCs to support in-network traffic. 
 CMS Cloud generates our VPCs, though we set this configuration. 
 
+# General notes:
+The list in config AWS service control-plane/API access only. It does not cover:
+    - Non-AWS/third-party destinations (Datadog, etc.), they need their own scoped CIDR/prefix-list egress exception.
+    - Services with no PrivateLink support, or requiring Transit Gateway for cross-region access.
+    - Membership in the `endpoint_clients` security group is what actually grants a resource access to the defined endpoints.
+    Being on this list only means the endpoint exists in the VPC, it does not grant anything by itself.
 
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -13,7 +19,7 @@ CMS Cloud generates our VPCs, though we set this configuration.
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.67.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.70.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -58,7 +64,23 @@ CMS Cloud generates our VPCs, though we set this configuration.
 
 | Name | Type |
 |------|------|
+| [aws_security_group.endpoints_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.endpoints_build](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.vpce_clients_all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group.vpce_clients_platform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_vpc_endpoint.all](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
+| [aws_vpc_endpoint.all_global](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
+| [aws_vpc_endpoint.build](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
+| [aws_vpc_endpoint.build_global](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
 | [aws_vpc_endpoint.s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint) | resource |
+| [aws_vpc_security_group_egress_rule.all_clients_to_endpoints](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.all_clients_to_s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_egress_rule.build_clients_to_endpoints](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_egress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.endpoints_all_from_clients](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.endpoints_all_from_zscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.endpoints_build_from_clients](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_vpc_security_group_ingress_rule.endpoints_build_from_zscaler](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
+| [aws_ec2_managed_prefix_list.s3](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ec2_managed_prefix_list) | data source |
 | [aws_route_tables.private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route_tables) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -68,5 +90,8 @@ CMS Cloud generates our VPCs, though we set this configuration.
 -->
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_vpce_clients_all_security_group_id"></a> [vpce\_clients\_all\_security\_group\_id](#output\_vpce\_clients\_all\_security\_group\_id) | n/a |
+| <a name="output_vpce_clients_platform_security_group_id"></a> [vpce\_clients\_platform\_security\_group\_id](#output\_vpce\_clients\_platform\_security\_group\_id) | n/a |
 <!-- END_TF_DOCS -->

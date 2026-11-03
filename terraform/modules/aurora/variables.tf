@@ -61,6 +61,16 @@ variable "enable_iam_database_authentication" {
   default     = true
 }
 
+variable "needs_interface_access" {
+  description = <<-EOT
+    Whether this database calls S3 directly and will do so through VPC endpoint.
+    Also supports network access to KMS. Currently required for AWS Quick Exports, 
+    they use calls like `aws_s3.query_export_to_s3`. 
+  EOT
+  type        = bool
+  default     = true
+}
+
 variable "platform" {
   description = "Object that describes standardized platform values."
   type        = any
@@ -87,6 +97,7 @@ variable "instance_count" {
   type        = number
 }
 
+#FIXME PLT-1824 Remove this option and assume security groups are handled within module 
 variable "vpc_security_group_ids" {
   default     = []
   description = <<-EOT

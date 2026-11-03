@@ -1,3 +1,4 @@
+#FIXME in PLT-1824 Remove option for security group generated outside of module
 locals {
   alb_name            = var.name_override != null ? var.name_override : "${var.platform.app}-${var.platform.env}-${var.platform.service}-alb"
   managed_sg          = length(var.security_group_ids) == 0

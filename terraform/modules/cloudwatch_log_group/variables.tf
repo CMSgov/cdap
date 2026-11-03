@@ -5,11 +5,11 @@ variable "name" {
 
 variable "env" {
   type        = string
-  description = "The application environment (dev, test, sandbox, prod, mgmt), or an ephemeral environment name ending in one of those (e.g. mybranch-dev)"
+  description = "The application environment (dev, test, sandbox, prod), or an ephemeral environment name ending in one of those (e.g. mybranch-dev)"
 
   validation {
-    condition     = can(regex("(dev|test|sandbox|prod|mgmt)$", var.env))
-    error_message = "Valid value for env is dev, test, sandbox, prod, mgmt, or an ephemeral environment name ending in one of those."
+    condition     = can(regex("(dev|test|sandbox|prod)$", var.env))
+    error_message = "Valid value for env is dev, test, sandbox, prod, or an ephemeral environment name ending in one of those."
   }
 }
 

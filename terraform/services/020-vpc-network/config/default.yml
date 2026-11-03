@@ -1,0 +1,42 @@
+enable_interface_endpoints: false
+
+# Needed by every provisioned resource (ECS tasks, Lambdas, Aurora) at runtime,
+# plus CodeBuild and Zscaler. Attach vpce_clients_all to get this set.
+all_interface_services:
+  - ec2messages # SSM Session Manager agent (EC2)
+  - ecr.api # ECR control-plane (auth tokens, private repo metadata)
+  - ecr.dkr # ECR image layer push/pull
+  - ecs-agent # Service Connect's Envoy proxy management traffic
+  - kms
+  - lambda # covers Invoke/InvokeAsync and other control-plane calls. does NOT cover Function URLs, which have no PrivateLink path
+  - logs # CloudWatch Logs API; required for every Lambda function and ECS task
+  - monitoring # CloudWatch metrics/alarms API
+  - secretsmanager
+  - sns
+  - sqs
+  - ssm # parameter lookups, GetParameter, etc.
+  - ssmmessages # SSM Session Manager agent channel
+  - sts # requires AWS_STS_REGIONAL_ENDPOINTS=regional on callers as SDK defaults to the global endpoint, which this does NOT cover
+
+all_global_interface_services: [] # none today; kept for future additions
+
+# Only called by tofu apply (provisioning/control-plane), never by a
+# running resource. Attach vpce_clients_platform, in addition to vpce_clients_all, to get this set.
+build_interface_services:
+  - application-autoscaling # ECS target-tracking scaling policies (control-plane only)
+  - backup # (us-east-1) AWS Backup vault only; secondary us-west-2 vault calls use the general egress path
+  - codebuild # CodeBuild's own tofu apply managing its own project definition
+  - ec2 # EC2/VPC "data" lookups in tofu
+  - events # classic CloudWatch Events / EventBridge rules (control-plane only)
+  - kinesis-firehose # provisioning delivery streams via tofu; does not cover the CloudWatch Logs to Firehose to S3 data path, which is AWS-internal not interface
+  - rds # Aurora cluster provisioning and the local-exec modify-db-cluster call
+  - scheduler # EventBridge Scheduler (aws_scheduler_schedule)
+
+build_global_interface_services:
+  - cloudfront # control plane limited by AWS to us-east-1
+  - iam # control-plane limited by AWS to us-east-1 access/availability
+  - route53 # hosted zone/record management via tofu; not for actual DNS resolution, which uses the VPC's built-in resolver
+
+
+# A list of available interfaces can be found: https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html
+

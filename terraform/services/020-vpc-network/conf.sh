@@ -1,1 +1,1 @@
-TARGET_ENVS="cdap-test cdap-prod ab2d-test bcda-test dpc-test"
+TARGET_ENVS=all
