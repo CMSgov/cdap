@@ -8,8 +8,13 @@ output "vpc_endpoint_dns_name" {
 }
 
 output "friendly_dns_name" {
-  description = "Friendly CNAME, if created. Null otherwise and callers can use AWS generated name"
-  value       = var.dns_record_name != null ? "${var.dns_record_name}.${data.aws_route53_zone.internal[0].name}" : null
+  description = <<-EOT
+    "<this app>.<target_domain_name>" that resolves only within this VPC,
+    via the shadow zone this module creates. Matches a SAN on the
+    target's cert if this app is enrolled there. Use this to build
+    DOWNSTREAM_URL.
+  EOT
+  value       = trimsuffix(aws_route53_record.friendly_name.fqdn, ".")
 }
 
 output "security_group_id" {

@@ -35,3 +35,22 @@ variable "dns_record_name" {
   type        = string
   default     = null
 }
+
+variable "target_domain_name" {
+  description = <<-EOT
+    The target's acm_certificate_private "internal_domain" output, e.g.
+    "myservice.dev.bcda.internal.cms.gov" — the primary domain the
+    target's cert was issued for.
+
+    This module creates a new private hosted zone with this name,
+    associated only to this VPC, and one CNAME
+    inside it: "<this app>.<target_domain_name>", pointing at this VPC's
+    endpoint ENIs.
+
+    That record name must also appear as an entry in the target's
+    enrolled_upstream_apps list (keyed on var.platform.app). If it
+    doesn't, DNS still resolves, but TLS will fail, since the 
+    target's cert has no SAN for a name that was never enrolled.
+  EOT
+  type        = string
+}

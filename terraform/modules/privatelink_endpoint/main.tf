@@ -32,20 +32,34 @@ resource "aws_vpc_endpoint" "this" {
   tags = { Name = "${local.base_name}-vpce" }
 }
 
-# Friendly name, in a zone this account/VPC owns. Interface endpoint DNS
-# names aren't eligible for alias records, so this is a plain CNAME.
+# -------------------------------------------------------
+# Friendly name — shadow zone
+# -------------------------------------------------------
+# target_domain_name is the target's acm_certificate_private
+# "internal_domain" output, e.g. "myservice.dev.bcda.internal.cms.gov".
+# That domain is the target cert's primary domain_name, and the target
+# enrolls this app (var.platform.app) as a SAN of
+# "<this app>.<target_domain_name>" via its own enrolled_upstream_apps.
+#
+# To prevent broad resolution between VPCs, we do NOT associate the target's full 
+# hosted zone which is managed by CDAP. 
+# this consumer VPC resolves against this zone while the target's
+# VPC resolves against its own domain
+resource "aws_route53_zone" "target_shadow" {
+  name = var.target_domain_name
 
-data "aws_route53_zone" "internal" {
-  count        = var.dns_record_name != null ? 1 : 0
-  name         = local.hosted_zone_base_internal
-  private_zone = true
+  vpc {
+    vpc_id = var.platform.vpc_id
+  }
+
+  comment = "Shadow zone for PrivateLink to ${var.target_domain_name} — scoped to this VPC only, not the target's real zone."
+
+  tags = { Name = "${local.base_name}-privatelink-shadow-zone" }
 }
 
 resource "aws_route53_record" "friendly_name" {
-  count = var.dns_record_name != null ? 1 : 0
-
-  zone_id = data.aws_route53_zone.internal[0].zone_id
-  name    = var.dns_record_name
+  zone_id = aws_route53_zone.target_shadow.zone_id
+  name    = "${var.platform.app}.${var.target_domain_name}"
   type    = "CNAME"
   ttl     = 300
   records = [aws_vpc_endpoint.this.dns_entry[0].dns_name]
