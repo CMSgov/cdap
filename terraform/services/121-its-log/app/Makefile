@@ -5,6 +5,8 @@ prep-local:
 	mkdir -p ${HOME}/.its-log/data
 	mkdir -p ${HOME}/.its-log/archive
 
+# Changes to go.mod should always happen locally, and undergo review.
+# Never run `go mod tidy` as part of a build process.
 build: prep-local
 	cd src/api ; go build -o its-log .
 
