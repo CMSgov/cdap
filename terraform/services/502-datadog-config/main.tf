@@ -74,7 +74,7 @@ data "datadog_sensitive_data_scanner_standard_pattern" "selected_standard_rules"
 }
 
 resource "datadog_sensitive_data_scanner_rule" "selected_standard_rules" {
-  for_each = { for k in local.selected_standard_rules : k => data.datadog_sensitive_data_scanner_standard_pattern.selected_standard_rules[each.value] }
+  for_each = { for k in local.selected_standard_rules : k => data.datadog_sensitive_data_scanner_standard_pattern.selected_standard_rules[k] }
 
   lifecycle {
     // This meta-argument avoids disabling the group when modifying the
