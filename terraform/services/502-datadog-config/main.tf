@@ -68,13 +68,13 @@ locals {
 }
 
 data "datadog_sensitive_data_scanner_standard_pattern" "selected_standard_rules" {
-  for_each = local.selected_standard_rules
+  for_each = toset(local.selected_standard_rules)
 
   standard_pattern_id = each.value
 }
 
 resource "datadog_sensitive_data_scanner_rule" "selected_standard_rules" {
-  for_each = datadog_sensitive_data_scanner_standard_pattern.selected_standard_rules[*].id
+  for_each = data.datadog_sensitive_data_scanner_standard_pattern.selected_standard_rules[*].id
 
   lifecycle {
     // This meta-argument avoids disabling the group when modifying the
