@@ -74,7 +74,7 @@ data "datadog_sensitive_data_scanner_standard_pattern" "selected_standard_rules"
 }
 
 resource "datadog_sensitive_data_scanner_rule" "selected_standard_rules" {
-  for_each = data.datadog_sensitive_data_scanner_standard_pattern.selected_standard_rules[*].id
+  for_each = toset(local.selected_standard_rules)
 
   lifecycle {
     // This meta-argument avoids disabling the group when modifying the
@@ -85,9 +85,9 @@ resource "datadog_sensitive_data_scanner_rule" "selected_standard_rules" {
   group_id   = datadog_sensitive_data_scanner_group.main.id
   is_enabled = true
 
-  standard_pattern_id = each.value
+  standard_pattern_id = data.datadog_sensitive_data_scanner_standard_pattern.selected_standard_rules[each.value].id
 
-  tags = "managed-by:tofu"
+  tags = ["managed-by:tofu"]
 }
 
 resource "datadog_sensitive_data_scanner_rule" "dot_client_id" {
@@ -110,7 +110,7 @@ resource "datadog_sensitive_data_scanner_rule" "dot_client_id" {
   group_id   = datadog_sensitive_data_scanner_group.main.id
   is_enabled = true
 
-  tags = "managed-by:tofu"
+  tags = ["managed-by:tofu"]
 }
 
 resource "datadog_sensitive_data_scanner_rule" "dot_client_secret" {
@@ -133,7 +133,7 @@ resource "datadog_sensitive_data_scanner_rule" "dot_client_secret" {
   group_id   = datadog_sensitive_data_scanner_group.main.id
   is_enabled = true
 
-  tags = "managed-by:tofu"
+  tags = ["managed-by:tofu"]
 }
 
 resource "datadog_sensitive_data_scanner_rule" "dot_access_token" {
@@ -156,7 +156,7 @@ resource "datadog_sensitive_data_scanner_rule" "dot_access_token" {
   group_id   = datadog_sensitive_data_scanner_group.main.id
   is_enabled = true
 
-  tags = "managed-by:tofu"
+  tags = ["managed-by:tofu"]
 }
 
 resource "datadog_sensitive_data_scanner_rule" "bb_encrypted_values" {
@@ -174,7 +174,7 @@ resource "datadog_sensitive_data_scanner_rule" "bb_encrypted_values" {
   group_id   = datadog_sensitive_data_scanner_group.main.id
   is_enabled = true
 
-  tags = "managed-by:tofu"
+  tags = ["managed-by:tofu"]
 }
 
 resource "datadog_sensitive_data_scanner_rule" "mbi" {
@@ -192,5 +192,5 @@ resource "datadog_sensitive_data_scanner_rule" "mbi" {
   group_id   = datadog_sensitive_data_scanner_group.main.id
   is_enabled = true
 
-  tags = "managed-by:tofu"
+  tags = ["managed-by:tofu"]
 }
