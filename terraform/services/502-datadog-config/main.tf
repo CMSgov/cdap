@@ -159,5 +159,38 @@ resource "datadog_sensitive_data_scanner_rule" "dot_access_token" {
   tags = "managed-by:tofu"
 }
 
-// also possible: MBI
+resource "datadog_sensitive_data_scanner_rule" "bb_encrypted_values" {
+  lifecycle {
+    // This meta-argument avoids disabling the group when modifying the
+    // `included_keyword_configuration` field
+    create_before_destroy = true
+  }
 
+  name        = "Blue Button Values"
+  description = "Encrypted database values from Blue Button"
+
+  pattern = "pbkdf2_sha256$[$\\w=]+"
+
+  group_id   = datadog_sensitive_data_scanner_group.main.id
+  is_enabled = true
+
+  tags = "managed-by:tofu"
+}
+
+resource "datadog_sensitive_data_scanner_rule" "mbi" {
+  lifecycle {
+    // This meta-argument avoids disabling the group when modifying the
+    // `included_keyword_configuration` field
+    create_before_destroy = true
+  }
+
+  name        = "Medicare Beneficiary Identifier"
+  description = "Medicare Beneficiary Identifier"
+
+  pattern = "(?i)\\b[1-9][ACDEFGHJKMNPQRTUVWXY][ACDEFGHJKMNPQRTUVWXY0-9][0-9]-?[ACDEFGHJKMNPQRTUVWXY][ACDEFGHJKMNPQRTUVWXY0-9][0-9]-?[ACDEFGHJKMNPQRTUVWXY]{2}[0-9]{2}\\b"
+
+  group_id   = datadog_sensitive_data_scanner_group.main.id
+  is_enabled = true
+
+  tags = "managed-by:tofu"
+}
