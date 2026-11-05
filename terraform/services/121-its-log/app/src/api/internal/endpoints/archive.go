@@ -305,6 +305,18 @@ func ArchiveConsolidate(c *gin.Context) {
 		Kind:  storage.ConsolidatedStorage,
 	})
 
+	// DROP EVERYTHING FROM THE consolidated TABLE BEFORE
+	// DOING ANYTHING ELSE.
+	err = clearConsolidatedTable(to)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"method":  c.Request.Method,
+			"message": "could not clear consolidated table",
+		})
+		return
+	}
+
 	// Open an "archive" file
 	// Copy the summary tables one-by-one
 	for _, d := range dates {
@@ -408,5 +420,18 @@ func InsertConsolidationRows(from *storage.Storage, to *storage.Storage, summari
 		to.Unlock("InsertConsolidationRows")
 	}
 
+	return nil
+}
+
+func clearConsolidatedTable(to *storage.Storage) error {
+	to.Lock("clearConsolidatedTable")
+	_, err := to.Endpoints.Exec("clear_consolidated_table", []any{})
+	if err != nil {
+		zap.L().Error("insertsummaryrows:clear_consolidated_table",
+			zap.Error(err))
+		to.Unlock("clearConsolidatedTable")
+		return err
+	}
+	to.Unlock("clearConsolidatedTable")
 	return nil
 }

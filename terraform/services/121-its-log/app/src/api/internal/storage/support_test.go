@@ -101,11 +101,13 @@ func TestNewStorage(t *testing.T) {
 func TestConstructDBFilenameAndPath(t *testing.T) {
 	setupEnv()
 	filename, path := ConstructDBFilenameAndPath("a", "b", LiveStorage)
-	if filename != "a_b.duckdb" {
-		t.Error("filename constructed incorrectly")
+	expected := "a_b.duckdb"
+	if filename != expected {
+		t.Errorf("filename constructed incorrectly: %s vs %s", filename, expected)
 	}
-	if slices.Compare(path, []string{viper.GetString("storage.path"), "a_b.duckdb"}) != 0 {
-		t.Errorf("path constructed incorrectly: %s", path)
+	pathExpected := []string{viper.GetString("storage.path"), "a_b.duckdb"}
+	if slices.Compare(path, pathExpected) != 0 {
+		t.Errorf("path constructed incorrectly: %s vs %s", path, pathExpected)
 	}
 }
 

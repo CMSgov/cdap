@@ -100,7 +100,7 @@ func ConstructDBFilenameAndPath(appId string, date string, kind StorageType) (st
 	case ConsolidatedStorage:
 		base = viper.GetString("storage.path")
 	case LiveStorage:
-		viper.GetString("storage.path")
+		base = viper.GetString("storage.path")
 	}
 	path := []string{base, fname}
 	return fname, path
