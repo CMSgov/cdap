@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"maps"
 	"os"
 	"slices"
 	"strings"
 
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
 
-var LiveKeys types.ApiKeys
+var LiveKeys []types.ApiKey = make([]types.ApiKey, 0)
 
 var minimum = []string{
 	"ITSLOG_BUFFER_FLUSHWAITSEC",
@@ -25,6 +25,8 @@ var minimum = []string{
 	"ITSLOG_SERVE_HOST",
 	"ITSLOG_SERVE_PORT",
 	"ITSLOG_STORAGE_PATH",
+	"ITSLOG_ARCHIVE_PATH",
+	"ITSLOG_EVENTUAL_CONSISTENCY_SECONDS",
 }
 
 func ConfirmEnvVars() error {
@@ -66,27 +68,29 @@ func ConfirmApiKeyMapKeys(envvar string, m map[string]string) error {
 			return fmt.Errorf("%s missing JSON key %s", envvar, must_have)
 		}
 	}
-
+	// Make the key is long enough.
+	if len(m["key"]) < constants.MINIMUM_API_KEY_LENGTH {
+		return fmt.Errorf("key too short, ending %s", m["key"][len(m["key"])-3:])
+	}
 	return nil
 }
 
 // API keys take the form
 // ITSLOG_APIKEY_<appId>='{"app_id": "the_app", "key_id": "uniq", "permission": "log", "key": "32-byte-string"}'
 func GetApiKeys() error {
-	LiveKeys = make([]types.ApiKey, 0)
 
 	allvars := os.Environ()
+
 	for _, e := range allvars {
 		key := types.ApiKey{}
 		pair := strings.SplitN(e, "=", 2)
 
 		if strings.HasPrefix(pair[0], "ITSLOG_APIKEY_") {
-			log.Println("unmarshalling " + pair[0])
 			// key.AppId = pieces[2]
 			keymap := make(map[string]string)
 			err := json.Unmarshal([]byte(pair[1]), &keymap)
 			if err != nil {
-				return fmt.Errorf("could not parse JSON for %s", pair[0])
+				return fmt.Errorf("could not parse JSON for %s", pair[1])
 			}
 			err = ConfirmApiKeyMapKeys(pair[0], keymap)
 			if err != nil {
@@ -100,6 +104,10 @@ func GetApiKeys() error {
 			key.ConfigurePermissions()
 			LiveKeys = append(LiveKeys, key)
 		}
+	}
+
+	if len(LiveKeys) < 1 {
+		return fmt.Errorf("no API keys configured")
 	}
 
 	return nil

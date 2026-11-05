@@ -1,9 +1,7 @@
 SELECT 
-    date, 
     operation, 
-    tags, 
-    value,
-    count
+    tags,
+    data
   FROM itslog_summary
   WHERE 
     tags LIKE $tags

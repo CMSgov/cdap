@@ -20,7 +20,6 @@ type EmbedSql struct {
 	Path       string
 	filesystem embed.FS
 	Files      map[string]string
-	Statements map[string]*sql.Stmt
 	db         *sql.DB
 }
 
@@ -30,7 +29,6 @@ func NewEmbedSql(path string) *EmbedSql {
 	esql := &EmbedSql{}
 	esql.Path = path
 	esql.Files = make(map[string]string, 0)
-	esql.Statements = make(map[string]*sql.Stmt, 0)
 
 	return esql
 }
@@ -71,62 +69,38 @@ func (e *EmbedSql) ReadContents() {
 	}
 }
 
-// https://go.dev/doc/database/prepared-statements#behavior
-func (e *EmbedSql) Prepare() {
-	for name, contents := range e.Files {
-		// Prepare everything into the DB if it has not happened before.
-		if _, ok := e.Statements[name]; !ok {
-
-			stmt, err := e.db.Prepare(contents)
-			if err != nil {
-				zap.L().Fatal("cannot prepare embedded SQL statement",
-					zap.String("path", e.Path),
-					zap.String("name", name),
-					zap.String("contents", contents),
-					zap.Error(err))
-			}
-			zap.L().Debug("prepared statement", zap.String("name", name))
-			e.Statements[name] = stmt
-			// _, err = stmt.Exec()
-			// if err != nil {
-			// 	zap.L().Fatal("could not prepare statement",
-			// 		zap.String("name", name))
-			// }
-		}
-	}
-}
-
 func (e *EmbedSql) Exec(name string, args []any) (sql.Result, error) {
-
 	var res sql.Result = nil
 	var err error
 
-	if stmt, ok := e.Statements[name]; ok {
-		res, err = stmt.Exec(args...)
-		if err != nil {
-			zap.L().Error("EmbedSql Exec if",
-				zap.String("name", name),
-				zap.Any("args", args),
-				zap.Error(err))
-		}
-	} else {
-		res, err = e.db.Exec(e.Files[name], args)
-		if err != nil {
-			zap.L().Error("EmbedSql Exec else",
-				zap.String("name", name),
-				zap.Any("args", args),
-				zap.Error(err))
-		}
+	res, err = e.db.Exec(e.Files[name], args...)
+	if err != nil {
+		zap.L().Error("EmbedSql Exec error",
+			zap.String("name", name),
+			zap.Any("args", args),
+			zap.Error(err))
 	}
-
 	return res, err
 }
 
 func (e *EmbedSql) Query(name string, namedArgs []any) (*sql.Rows, error) {
-	return e.Statements[name].Query(namedArgs...)
+	rows, err := e.db.Query(e.Files[name], namedArgs...)
+	if err != nil {
+		zap.L().Error("EmbedSql Exec else",
+			zap.String("name", name),
+			zap.Any("args", namedArgs),
+			zap.Error(err))
+	}
+	return rows, nil
 }
 
 func (e *EmbedSql) QueryRow(name string, namedArgs []any) *sql.Row {
-	row := e.Statements[name].QueryRow(namedArgs...)
+	stmt, err := e.db.Prepare(e.Files[name])
+	if err != nil {
+		zap.L().Info("could not prepare etl", zap.String("name", name))
+		return nil
+	}
+	row := stmt.QueryRow(namedArgs...)
+	// row := e.db.QueryRow(e.Files[name], namedArgs)
 	return row
 }

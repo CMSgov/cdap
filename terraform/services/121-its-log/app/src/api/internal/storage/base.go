@@ -1,23 +1,37 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"sync"
 
-	"github.com/duckdb/duckdb-go/v2"
 	"github.com/navapbc/its-log/internal/types"
 )
 
+type StorageType int
+
+const (
+	LiveStorage StorageType = iota
+	ArchiveStorage
+	ConsolidatedStorage
+)
+
+type StorageConfig struct {
+	AppId string
+	Date  string
+	Kind  StorageType
+}
 type Storage struct {
 	AppId     string
+	KeyId     string
 	Path      []string
 	ILTime    *types.ILTime
 	Filename  string
+	Kind      StorageType
 	firstUse  bool
 	lock      sync.Mutex
+	Context   context.Context
 	db        *sql.DB
-	connector *duckdb.Connector
-	appender  *duckdb.Appender
 	Schema    *EmbedSql
 	Endpoints *EmbedSql
 }
@@ -25,8 +39,7 @@ type Storage struct {
 type StorageMap map[string]*Storage
 
 type EtlRow struct {
-	Inserted int64
-	Name     string
-	Kind     string
-	Body     sql.NullString
+	Name string
+	Kind string
+	Body string
 }

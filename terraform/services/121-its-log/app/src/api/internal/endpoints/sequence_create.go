@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
@@ -24,13 +25,17 @@ func SequenceCreate(c *gin.Context) {
 		return
 	}
 
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
-
-	s, err := SetupGinDB(c, appId, body.Date)
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
+	sanitized, _ := types.SanitizeDate(constants.TODAY)
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Kind:  storage.LiveStorage,
+	})
 	if err != nil {
-		zap.L().Fatal("could not setup DB for CreateEtl")
+		return
 	}
+	defer s.Close()
 
 	// Convert the sequence into a string.
 	seqBytes, err := json.Marshal(body.Body)
@@ -41,7 +46,7 @@ func SequenceCreate(c *gin.Context) {
 			"status":  "error",
 			"method":  c.Request.Method,
 			"message": "could not save ETL step",
-			"date":    body.Date,
+			"date":    sanitized,
 			"name":    body.Name,
 		})
 		return
@@ -68,7 +73,7 @@ func SequenceCreate(c *gin.Context) {
 			"status":  "error",
 			"method":  c.Request.Method,
 			"message": "could not save ETL step",
-			"date":    body.Date,
+			"date":    sanitized,
 			"name":    body.Name,
 		})
 		return
@@ -77,7 +82,7 @@ func SequenceCreate(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status": "ok",
 		"method": c.Request.Method,
-		"date":   body.Date,
+		"date":   sanitized,
 		"name":   body.Name,
 	})
 }

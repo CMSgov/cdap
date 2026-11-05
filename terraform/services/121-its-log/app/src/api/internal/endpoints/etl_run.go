@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
 	"go.uber.org/zap"
@@ -28,7 +29,7 @@ func checkRunEtlBody(c *gin.Context) (map[string]any, error) {
 	}
 
 	zap.L().Debug("payload", zap.Any("payload", payload))
-	for _, k := range []string{"date", "name"} {
+	for _, k := range []string{"name"} {
 		if _, ok := payload[k]; !ok {
 			return nil, fmt.Errorf("missing in body: %s", k)
 		}
@@ -45,32 +46,31 @@ func checkRunEtlBody(c *gin.Context) (map[string]any, error) {
 // This is the handler if we call it directly from the API.
 // We only get the gin context.
 func RunEtl(c *gin.Context) {
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
 
 	payload, err := checkRunEtlBody(c)
 	if err != nil {
-		bogoStorage, _ := storage.NewStorage(appId)
-		ser := etl.NewStandardErrorResponse(&etl.RunEtlParams{
-			AppId:   appId,
-			KeyId:   keyId,
-			GinCtx:  c,
-			Storage: bogoStorage,
-			EtlName: "unknown",
-			Payload: payload,
-		}, err)
-		ser.SetStatus(http.StatusBadRequest).Send("ETL run must have a name and date")
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"method":  c.Request.Method,
+			"message": fmt.Sprintf("ETL run must have a name and date: %s", err.Error()),
+			"date":    "?",
+		})
 		return
 	}
-	date := payload["date"].(string)
+
 	name := payload["name"].(string)
 
-	s, err := SetupGinDB(c, appId, date)
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Kind:  storage.LiveStorage,
+	})
 	if err != nil {
-		zap.L().Fatal("could not setup DB for RunEtl")
+		return
 	}
+	defer s.Close()
 
-	dateErr := s.SetDateYMD(date)
 	etlP := &etl.RunEtlParams{
 		AppId:   appId,
 		KeyId:   keyId,
@@ -79,15 +79,6 @@ func RunEtl(c *gin.Context) {
 		EtlName: name,
 		Payload: payload,
 	}
-
-	// FUTURE IMPROVEMENT: Could this pattern be used in etl_create?
-	if dateErr != nil {
-		ser := etl.NewStandardErrorResponse(etlP, dateErr)
-		ser.SetStatus(http.StatusBadRequest).Send("could not parse date; must be YYYY-MM-DD")
-		return
-	}
-
-	s.InitDB()
 
 	etlErr := runEtl(etlP)
 
@@ -100,34 +91,34 @@ func RunEtl(c *gin.Context) {
 }
 
 func runEtl(etlP *etl.RunEtlParams) error {
-	// There is a lock buried down the call tree...
-	// etlP.Storage.Lock("runEtl")
 	etlRow, err := etlP.Storage.GetEtlFromDb(etlP.EtlName)
-	// etlP.Storage.Unlock("runEtl")
 	if err != nil {
 		return err
 	}
 
-	etlP = insertDefaultParams(etlP)
+	etlP, err = insertDefaultParams(etlP)
+	if err != nil {
+		return err
+	}
 
 	switch etlRow.Kind {
-	case "sql":
-		err := etlRunSql(etlP, etlRow, nil)
+	case constants.SQL:
+		err := etlRunSql(etlP, etlRow)
 		if err != nil {
 			return err
 		}
-	case "golang":
+	case constants.GOLANG:
 		err := etlRunGolang(etlP, etlRow, nil)
 		if err != nil {
 			return err
 		}
-	case "starlark":
+	case constants.STARLARK:
 		err := etlRunStarlark(etlP, etlRow, nil)
 		if err != nil {
 			return err
 		}
 
-	case "sequence":
+	case constants.SEQUENCE:
 		// The name of the step will have been loaded into the context.
 
 	default:
@@ -140,16 +131,8 @@ func runEtl(etlP *etl.RunEtlParams) error {
 		return fmt.Errorf("%s: %s", msg, http.StatusText(http.StatusInternalServerError))
 	}
 
-	max_id, err := etlP.Storage.GetMaxId("get_max_etl_id", storage.EmbedParamMap{
-		"name": etlP.EtlName,
-	})
-	if err != nil {
-		return err
-	}
-
 	_, err = etlP.Storage.Exec(storage.Endpoint, "update_last_run", storage.EmbedParamMap{
 		"key_id":   etlP.KeyId,
-		"etl_id":   max_id,
 		"etl_name": etlP.EtlName,
 		"activity": "run etl via API",
 	})
@@ -162,6 +145,57 @@ func runEtl(etlP *etl.RunEtlParams) error {
 			ser.SetStatus(http.StatusInternalServerError).Send(msg)
 		}
 		return fmt.Errorf("%s: %s", msg, err.Error())
+	}
+
+	return nil
+}
+
+func InsertSummaryRows(source string, etlP *etl.RunEtlParams, summaries []etl.ItslogSummary) error {
+	//
+	// Now, write the new summar(y|ies) to the summary table.
+	for _, summary := range summaries {
+		var deleted bool = false
+
+		etlP.Payload["key_id"] = etlP.KeyId
+		// What date should this be?
+		etlP.Payload["date"] = etlP.Storage.YYYYMMDD()
+		etlP.Payload["operation"] = summary.Operation
+		etlP.Payload["tags"] = summary.Tags
+		etlP.Payload["data"] = summary.Data
+
+		if !deleted && etlP.DeleteBeforeInsert {
+			zap.L().Debug("deleting existing summaries", zap.String("etl", etlP.EtlName))
+			// Delete existing rows that match the key_id/date/operation
+			delArgs, err := etlP.Storage.PrepareNamedArgs("delete_existing_summaries", etlP.Payload)
+			if err != nil {
+				return err
+			}
+			_, err = etlP.Storage.Endpoints.Exec("delete_existing_summaries", delArgs)
+			if err != nil {
+				zap.L().Error("possible error delete_existing_summaries",
+					zap.String("source", source),
+					zap.Any("payload", etlP.Payload),
+					zap.Error(err))
+			}
+			deleted = true
+		}
+
+		args, err := etlP.Storage.PrepareNamedArgs("insert_full_summary", etlP.Payload)
+		if err != nil {
+			return err
+		}
+
+		etlP.Storage.Lock("InsertSummaryRows")
+		_, err = etlP.Storage.Endpoints.Exec("insert_full_summary", args)
+		if err != nil {
+			zap.L().Error("insertsummaryrows:insert_full_summary",
+				zap.String("source", source),
+				zap.Any("payload", etlP.Payload),
+				zap.Error(err))
+			etlP.Storage.Unlock("InsertSummaryRows")
+			return err
+		}
+		etlP.Storage.Unlock("InsertSummaryRows")
 	}
 
 	return nil

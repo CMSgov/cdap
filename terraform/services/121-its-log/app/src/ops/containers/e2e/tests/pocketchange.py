@@ -18,16 +18,15 @@ def test_pocketchange(PARAMS):
     run_etl(PARAMS, "sum-pocket-change")
     js = summary_read(PARAMS, "total.pocketchange")
 
-    if js and "count" in js:
-        existing_pennies = js["count"]
-        print(f"🟢 found {NUMBER_OF_PENNIES} pennies pre-existing")
+    if js and "data" in js and "count" in js["data"]:
+        existing_pennies = js["data"]["count"]
+        print(f"🟢 found {existing_pennies} pennies pre-existing")
     else:
         print(f"🟢 found no pennies")
 
     for i in range(NUMBER_OF_PENNIES):
-        res: requests.Response = log_create(PARAMS, None, ["pocketchange"], json.dumps({
-            "pennies": 1
-        }))
+        res: requests.Response = log_create(
+            PARAMS, None, ["pocketchange"], {"pennies": 1})
         if res.status_code > 399:
             res.close()
             sys.exit(-1)
@@ -39,7 +38,7 @@ def test_pocketchange(PARAMS):
     run_etl(PARAMS, "sum-pocket-change")
     js = summary_read(PARAMS, "total.pocketchange")
 
-    if js["count"] == NUMBER_OF_PENNIES + existing_pennies:
+    if js["data"]["count"] == NUMBER_OF_PENNIES + existing_pennies:
         print(f"🟢 found {NUMBER_OF_PENNIES + existing_pennies} pennies")
     else:
         print("🔴 bad penny")

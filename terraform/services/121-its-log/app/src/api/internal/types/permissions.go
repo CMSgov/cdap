@@ -25,5 +25,3 @@ type ApiKey struct {
 	PermissionString string `json:"permission" mapstructure:"permission"`
 	Permission       PermissionType
 }
-
-type ApiKeys []ApiKey

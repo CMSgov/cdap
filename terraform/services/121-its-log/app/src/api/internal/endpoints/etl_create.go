@@ -3,10 +3,10 @@ package endpoints
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
@@ -17,20 +17,6 @@ type EtlCreateSql struct {
 	Kind string `json:"kind"`
 	Body string `json:"body"`
 	Date string `json:"date"`
-}
-
-func SetupGinDB(c *gin.Context, appId string, date string) (*storage.Storage, error) {
-	s, err := storage.SetupDB(appId, date)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not initialize storage backend",
-			"date":    date,
-		})
-		return nil, err
-	}
-	return s, nil
 }
 
 func CreateEtl(c *gin.Context) {
@@ -44,25 +30,33 @@ func CreateEtl(c *gin.Context) {
 		return
 	}
 
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
+	// We need the AppId and KeyId, which the middleware attached
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
+	sanitized, _ := types.SanitizeDate(constants.TODAY)
 
-	// DuckDB wants Base64 values padded to mod(len, 4).
-	// We'll make sure the padding is right, even though the client
-	// should do this work.
-	etl := strings.ReplaceAll(body.Body, "=", "")
-	offset := len(etl) % 4
-	if offset != 0 {
-		for range 4 - offset {
-			etl += "="
-		}
-	}
-
-	s, err := SetupGinDB(c, appId, body.Date)
+	// We want to check the Base64 work that the client did.
+	err := checkBase64Encoding(body.Body)
 	if err != nil {
-		zap.L().Fatal("could not setup DB for CreateEtl")
+		zap.L().Info("failed base64 encoding check", zap.String("body", body.Body))
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": err.Error()})
+		return
 	}
+	// And, pad it. DuckDB is very particular about its Base64 values.
+	etl := padToMod4(body.Body)
 
+	// Set up the database
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Kind:  storage.LiveStorage,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": err.Error()})
+		return
+	}
+	defer s.Close()
+
+	// Run the code to insert the ETL into the database
 	_, err = s.Exec(storage.Endpoint, "insert_etl", storage.EmbedParamMap{
 		"key_id": keyId,
 		"name":   body.Name,
@@ -72,12 +66,11 @@ func CreateEtl(c *gin.Context) {
 
 	if err != nil {
 		zap.L().Error("etl save error", zap.Error(err))
-
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"method":  c.Request.Method,
 			"message": "could not save ETL step",
-			"date":    body.Date,
+			"date":    sanitized,
 			"name":    body.Name,
 		})
 		return
@@ -86,7 +79,7 @@ func CreateEtl(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status": "ok",
 		"method": c.Request.Method,
-		"date":   body.Date,
+		"date":   sanitized,
 		"name":   body.Name,
 	})
 }

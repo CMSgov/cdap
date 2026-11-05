@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,7 +21,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Serve(params types.ServeParams) {
+func SetupRouter(params types.ServeParams) *gin.Engine {
 	buffer_length := viper.GetInt("buffer.length")
 	buffer_flushwaitsec := viper.GetInt("buffer.flushwaitsec")
 	log.Printf("buffer length: %d flushwaitsec: %d\n", buffer_length, buffer_flushwaitsec)
@@ -29,20 +30,23 @@ func Serve(params types.ServeParams) {
 	// saving events that come in via the API
 	ch_eb := make(chan types.EventBuffer)
 	ch_evt := make(chan *types.Event)
-	//ch_funs := make(chan func())
 
-	// FIXME: add these constants to the configuration
-	go csp.Enqueue(ch_evt, ch_eb, buffer_length, buffer_flushwaitsec)
+	go csp.Enqueue(context.Background(), ch_evt, ch_eb, buffer_length, buffer_flushwaitsec)
 	go csp.FlushBuffers(ch_eb)
-	// This updates *yesterdays* database on minute one of the day
 
 	engine := PourGin(ch_evt)
 	if params.Mode == "debug" {
 		pprof.Register(engine, "dev/pprof")
 	}
 
+	return engine
+}
+
+func Serve(params types.ServeParams) {
+	engine := SetupRouter(params)
 	host := viper.GetString("serve.host")
 	port := viper.GetString("serve.port")
+
 	_ = engine.Run(fmt.Sprintf("%s:%s", host, port))
 }
 
@@ -80,10 +84,10 @@ func PourGin(ch_evt_out chan<- *types.Event) *gin.Engine {
 
 	addLoggingEndpoints(apiV1, ch_evt_out)
 	addMetadataEndpoints(apiV1)
-	//addTestingEndpoints(apiV1, ch_evt_out)
 	addEtlEndpoints(apiV1)
 	addSequenceEndpoints(apiV1)
 	addSummaryEndpoints(apiV1)
+	addArchiveEndpoints(apiV1)
 
 	return router
 }
@@ -104,9 +108,7 @@ func addEtlEndpoints(rG *gin.RouterGroup) {
 	permissions := []types.PermissionType{constants.Admin, constants.Test}
 	auth_adminV1.Use(AuthMiddleWare(permissions))
 
-	// Insert a new ETL step
 	auth_adminV1.POST(ETL_CREATE, CreateEtl)
-	// Run an ETL step
 	auth_adminV1.POST(ETL_RUN, RunEtl)
 }
 
@@ -158,5 +160,19 @@ func addSummaryEndpoints(rG *gin.RouterGroup) {
 
 	auth_adminV1ReadOnly.POST(SUMMARY_READ, SummaryRead)
 	auth_adminV1ReadWrite.POST(SUMMARY_CREATE, SummaryCreate)
+}
 
+// ARCHIVE ENDPOINTS
+func addArchiveEndpoints(rG *gin.RouterGroup) {
+	auth_adminV1ReadOnly := rG.Group("/")
+	auth_adminV1ReadWrite := rG.Group("/")
+
+	permsRO := []types.PermissionType{constants.Admin, constants.ReadOnly, constants.Test}
+	permsRW := []types.PermissionType{constants.Admin, constants.Test}
+	auth_adminV1ReadOnly.Use(AuthMiddleWare(permsRO))
+	auth_adminV1ReadWrite.Use(AuthMiddleWare(permsRW))
+
+	auth_adminV1ReadWrite.POST(ARCHIVE, Archive)
+	auth_adminV1ReadOnly.POST(ARCHIVE_LIST, ArchiveList)
+	auth_adminV1ReadWrite.POST(ARCHIVE_CONSOLIDATE, ArchiveConsolidate)
 }

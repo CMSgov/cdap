@@ -2,13 +2,14 @@ package endpoints
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"sort"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/constants"
+	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
@@ -25,61 +26,59 @@ func SummaryCreate(c *gin.Context) {
 		return
 	}
 
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
 
-	s, err := storage.NewStorage(appId)
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		// We have to be able to create summaries in previous days.
+		Date: body.Date,
+		Kind: storage.LiveStorage,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not initialize storage backend",
-			"date":    body.Date,
-			"name":    appId,
+			"status":    "error",
+			"method":    c.Request.Method,
+			"message":   "could not set up database",
+			"error":     err.Error(),
+			"operation": body.Operation,
 		})
 		return
 	}
-
-	err = s.SetDateYMD(body.Date)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"method":  c.Request.Method,
-			"message": "could not parse date; must be YYYY-MM-DD",
-			"date":    body.Date,
-			"name":    body.Operation,
-		})
-		return
-	}
-
-	err = s.InitDB()
-	if err != nil {
-		log.Println("storage init error: " + err.Error())
-		panic(err)
-	}
+	defer s.Close()
 
 	// The tags field comes in as a JSON array. It needs to become
 	// a sorted, dot-separated string.
 	sort.Strings(body.Tags)
 	theTags := strings.Join(body.Tags, ".")
 
-	_, err = s.Exec(storage.Endpoint, "insert_full_summary", storage.EmbedParamMap{
-		"key_id":    keyId,
-		"date":      body.Date,
-		"operation": body.Operation,
-		"tags":      theTags,
-		"value":     body.Value,
-		"count":     body.Count,
-	})
+	// Prep params for running the insert many operation
+	etlP := &etl.RunEtlParams{
+		AppId:   appId,
+		GinCtx:  c,
+		EtlName: "SummaryCreate",
+		KeyId:   keyId,
+		Storage: s,
+		Payload: make(types.M, 0),
+	}
 
-	if err != nil {
-		zap.L().Error("summary save error", zap.Error(err))
+	// We're only inserting one event, but it is about code reuse.
+	summary := etl.ItslogSummary{
+		KeyID:     keyId,
+		Operation: body.Operation,
+		Tags:      theTags,
+		Data:      body.Data,
+	}
+
+	ierr := InsertSummaryRows("summarycreate", etlP, []etl.ItslogSummary{summary})
+
+	if ierr != nil {
+		zap.L().Error("summary save error", zap.Error(ierr))
 
 		c.JSON(http.StatusNotImplemented, gin.H{
 			"status":    "error",
 			"method":    c.Request.Method,
-			"message":   "could not save ETL step",
-			"date":      body.Date,
+			"message":   "could not save etl step",
 			"operation": body.Operation,
 		})
 		return
@@ -88,11 +87,9 @@ func SummaryCreate(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":    "ok",
 		"method":    c.Request.Method,
-		"date":      body.Date,
 		"operation": body.Operation,
 		"tags":      theTags,
-		"value":     body.Value,
-		"count":     body.Count,
+		"data":      body.Data,
 	})
 
 }

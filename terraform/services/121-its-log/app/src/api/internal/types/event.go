@@ -10,17 +10,17 @@ type Event struct {
 	AppId     string
 	KeyId     string
 	Cluster   string   `json:"cluster"`
-	Tags      []string `json:"tags"`
+	Tags      []string `json:"tags" binding:"required"`
 	TagString string
-	Value     string `json:"value"`
+	Data      any    `json:"data" binding:"required"`
 	Date      string `json:"date"`
 }
 
 type EventRow struct {
-	ID        string
-	Timestamp string
-	KeyId     string
-	Cluster   sql.NullString
-	Tags      string
-	Value     sql.NullString
+	ID       int64
+	Inserted time.Time
+	KeyId    string
+	Cluster  sql.NullString
+	Tags     string
+	Data     any
 }

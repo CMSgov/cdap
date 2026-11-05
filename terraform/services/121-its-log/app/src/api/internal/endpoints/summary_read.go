@@ -1,9 +1,7 @@
 package endpoints
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,14 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
-type SummaryReadBody struct {
-	Date      string `json:"date" binding:"required"`
-	Tags      string `json:"tags" binding:"required"`
-	Operation string `json:"operation" binding:"required"`
-}
-
 func SummaryRead(c *gin.Context) {
-	var body SummaryReadBody
+	var body types.SummaryReadBody
 	// Call ShouldBindJSON to bind the incoming JSON to the newItem struct
 	if err := c.ShouldBindJSON(&body); err != nil {
 		// If an error occurs (e.g., invalid JSON, missing required fields),
@@ -32,35 +24,31 @@ func SummaryRead(c *gin.Context) {
 		return
 	}
 
-	appId := base.GetOrPanic(c, "AppId")
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
 
-	s, err := storage.NewStorage(appId)
+	s, err := SetupGinDB(c, storage.StorageConfig{
+		AppId: appId,
+		Date:  body.Date,
+		Kind:  storage.LiveStorage,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":    "error",
+			"method":    c.Request.Method,
+			"message":   "could not set up database",
+			"error":     err.Error(),
+			"operation": body.Operation,
+		})
+		return
+	}
+	defer s.Close()
 
 	etlP := etl.RunEtlParams{
 		EtlName: "SummaryRead",
 		GinCtx:  c,
 		Storage: s,
-	}
-
-	if err != nil {
-		msg := "could not initialize storage backend"
-		ser := etl.NewStandardErrorResponse(&etlP, errors.New(msg))
-		ser.SetStatus(http.StatusInternalServerError).Send(msg)
-		return
-	}
-
-	err = s.SetDateYMD(body.Date)
-	if err != nil {
-		msg := "could not parse date; must be YYYY-MM-DD"
-		ser := etl.NewStandardErrorResponse(&etlP, err)
-		ser.SetStatus(http.StatusInternalServerError).Send(msg)
-		return
-	}
-
-	err = s.InitDB()
-	if err != nil {
-		log.Println("storage init error: " + err.Error())
-		panic(err)
+		KeyId:   keyId,
 	}
 
 	args, err := s.PrepareNamedArgs("read_summary", storage.EmbedParamMap{
@@ -70,43 +58,32 @@ func SummaryRead(c *gin.Context) {
 	if err != nil {
 		zap.L().Error("read_summary arg prep error", zap.Error(err))
 	}
-	row := s.Endpoints.Statements["read_summary"].QueryRow(args...)
+	row := s.Endpoints.QueryRow("read_summary", args)
 	if err != nil {
 		zap.L().Error("read_summary exec error", zap.Error(err))
-		msg := "could not parse date; must be YYYY-MM-DD"
 		ser := etl.NewStandardErrorResponse(&etlP, err)
-		ser.SetStatus(http.StatusNotFound).Send(msg)
+		ser.SetStatus(http.StatusInternalServerError).Send("could not read summary")
 		return
 	}
 
 	var summaryRow types.SummaryRow
-	row.Scan(&summaryRow.Date, &summaryRow.Operation, &summaryRow.Tags, &summaryRow.Value, &summaryRow.Count)
-	if row.Err() != nil {
-		zap.L().Error("read_summary row scan", zap.Error(err))
+	scanErr := row.Scan(&summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
+	if scanErr != nil {
 		msg := fmt.Sprintf("no summary found for %s", body.Operation)
-		ser := etl.NewStandardErrorResponse(&etlP, err)
-		ser.SetStatus(http.StatusNotFound).Send(msg)
-	}
-	response := gin.H{
-		"status":    constants.OK,
-		"date":      summaryRow.Date,
-		"operation": summaryRow.Operation,
-		"value":     summaryRow.Value,
-		"tags":      summaryRow.Tags,
-		"count":     summaryRow.Count,
+		zap.L().Info(msg)
+		response := gin.H{
+			"status":  constants.OK,
+			"message": msg,
+		}
+		c.JSON(http.StatusNoContent, response)
+		return
 	}
 
-	// Cleanup the sql.NullString values
-	if summaryRow.Value.Valid {
-		response["value"] = summaryRow.Value.String
-	} else {
-		response["value"] = nil
-	}
-	if summaryRow.Tags.Valid {
-		response["tags"] = summaryRow.Tags.String
-	} else {
-		response["tags"] = nil
-	}
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, gin.H{
+		"status":    constants.OK,
+		"operation": summaryRow.Operation,
+		"tags":      summaryRow.Tags.String,
+		"data":      summaryRow.Data,
+	})
 
 }

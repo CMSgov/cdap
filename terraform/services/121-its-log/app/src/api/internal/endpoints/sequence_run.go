@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
+	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
@@ -17,12 +18,10 @@ import (
 
 // Run a sequence immediately, synchronously.
 func SequenceRun(c *gin.Context) {
-	appId := base.GetOrPanic(c, "AppId")
-	keyId := base.GetOrPanic(c, "KeyId")
-	// sequenceName := c.Param("name")
-	// sequenceDate := c.Param("date")
+	appId := base.GetOrPanic(c, constants.ITSLOG_APPID)
+	keyId := base.GetOrPanic(c, constants.ITSLOG_KEYID)
 
-	// // ETL steps can have an arbitrary POST body?
+	// // ETL steps can have an arbitrary POST body
 	body, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		body = []byte("{}")
@@ -57,9 +56,10 @@ func SequenceRun(c *gin.Context) {
 		})
 		return
 	}
+	defer s.Close()
 
-	dateErr := s.SetDateYMD(sequenceDate)
-	if dateErr != nil {
+	s.ILTime, err = types.StringToYMD(sequenceDate)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"method":  c.Request.Method,
@@ -79,9 +79,9 @@ func SequenceRun(c *gin.Context) {
 	// Sequences are JSON.
 	// [ { name: "count-total" }, { name: "consolidate", params: { ... } } ]
 	var seqEntries []types.SequenceEntry
-	jsonErr2 := json.Unmarshal([]byte(seq.Body.String), &seqEntries)
+	jsonErr2 := json.Unmarshal([]byte(seq.Body), &seqEntries)
 	if jsonErr2 != nil {
-		msg := fmt.Sprintf("malformed sequence spec: %s", seq.Body.String)
+		msg := fmt.Sprintf("malformed sequence spec: %s", seq.Body)
 		log.Println(msg)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -99,16 +99,11 @@ func SequenceRun(c *gin.Context) {
 		for k, v := range payload {
 			merged[k] = v
 		}
-		// DEBUG LOG
-		// log.Printf("step params: %v\n", step.Params)
 		if step.Params != nil {
 			for k, v := range step.Params {
 				merged[k] = v
 			}
 		}
-
-		// DEBUG LOG
-		// log.Printf("date[%s] sequence[%s] step[%s]\n", s.YYYYMMDD(), sequenceName, step.Name)
 
 		sequenceError := runEtl(&etl.RunEtlParams{
 			AppId:   appId,

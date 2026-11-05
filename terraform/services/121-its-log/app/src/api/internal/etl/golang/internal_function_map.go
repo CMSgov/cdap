@@ -8,7 +8,5 @@ import "github.com/navapbc/its-log/internal/etl"
 var GolangETLMap = map[string]func(*etl.RunEtlParams) error{
 	// FIXME
 	// "count-all-combinations": CountAllCombinations,
-	"db-to-csv":      DBToCSV,
-	"consolidate":    Consolidate,
 	"hash-summaries": HashSummaries,
 }

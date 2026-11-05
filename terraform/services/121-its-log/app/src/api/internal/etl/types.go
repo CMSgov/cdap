@@ -1,12 +1,8 @@
 package etl
 
 import (
-	"crypto/sha1"
 	"database/sql"
-	"encoding/hex"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/storage"
@@ -16,12 +12,13 @@ import (
 
 // FIXME: These need to be at the ETL level, not the type level.
 type RunEtlParams struct {
-	AppId   string
-	GinCtx  *gin.Context
-	EtlName string
-	KeyId   string
-	Storage *storage.Storage
-	Payload map[string]any
+	AppId              string
+	GinCtx             *gin.Context
+	EtlName            string
+	KeyId              string
+	Storage            *storage.Storage
+	Payload            map[string]any
+	DeleteBeforeInsert bool
 }
 
 type StandardErrorResponseParams struct {
@@ -48,7 +45,7 @@ func (ser *StandardErrorResponseParams) SetStatus(status int) *StandardErrorResp
 }
 
 func (ser *StandardErrorResponseParams) Send(msg string) {
-	zap.L().Error("ERR",
+	zap.L().Info("StandardErrorResponse",
 		zap.Int("status", ser.Status),
 		zap.String("msg", msg),
 		zap.String("error", ser.err.Error()),
@@ -119,58 +116,11 @@ type ItslogEtl struct {
 	Body     sql.NullString
 }
 
-type ItslogEvent struct {
-	ID        int64
-	Timestamp sql.NullInt64
-	KeyID     string
-	Cluster   sql.NullString
-	Tags      string
-	Value     sql.NullString
-}
-
 type ItslogSummary struct {
 	ID        int64
-	LastRun   int64
-	Date      string
+	Inserted  int64
 	KeyID     string
 	Operation string
 	Tags      string
-	Value     string
-	Count     float64
-	Hash      sql.NullString
-}
-
-func (ils *ItslogSummary) ReturnHash() string {
-	fields := []string{
-		ils.Date,
-		ils.KeyID,
-		ils.Operation,
-		ils.Tags,
-		ils.Value,
-		strconv.FormatFloat(ils.Count, 'f', 3, 64),
-	}
-	joined := strings.Join(fields, "-")
-	h := sha1.New()
-	h.Write([]byte(joined))
-	hashed := hex.EncodeToString(h.Sum(nil))
-	return hashed
-}
-
-func (ils *ItslogSummary) UpdateHash() {
-	hashed := ils.ReturnHash()
-	ils.Hash = sql.NullString{String: hashed, Valid: true}
-}
-
-func (ils ItslogSummary) IsHashSameAs(other ItslogSummary) bool {
-	return ils.ReturnHash() == other.ReturnHash()
-}
-
-type InsertSummaryParams struct {
-	KeyID     string
-	Date      string
-	Operation string
-	Tags      string
-	Value     string
-	Count     float64
-	Hash      sql.NullString
+	Data      any
 }

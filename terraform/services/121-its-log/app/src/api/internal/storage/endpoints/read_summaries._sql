@@ -1,6 +1,6 @@
+-- Not used? Possibly remove.
 PREPARE read_summaries AS
   SELECT 
-    date, 
     operation, 
     COALESCE(tags, '') as tags, 
     value,

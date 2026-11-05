@@ -43,6 +43,7 @@ func serve_cmd(cmd *cobra.Command, args []string) {
 	}
 
 	zap.L().Info("storage path", zap.String("storage.path", viper.GetString("storage.path")))
+	zap.L().Info("archive path", zap.String("archive.path", viper.GetString("archive.path")))
 
 	// FIXME: Need CTRL-C/OS signal handling
 	endpoints.Serve(types.ServeParams{

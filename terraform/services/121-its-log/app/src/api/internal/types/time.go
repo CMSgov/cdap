@@ -2,10 +2,26 @@ package types
 
 import (
 	"time"
+
+	"github.com/navapbc/its-log/internal/constants"
 )
 
 type ILTime struct {
 	theTime time.Time
+}
+
+func StringToYMD(ymd string) (*ILTime, error) {
+	switch ymd {
+	case constants.TODAY:
+		return NewILTimeToday(), nil
+	case constants.YESTERDAY:
+		return NewILTimeYesterday(), nil
+	case constants.CONSOLIDATED:
+		return NewILTimeToday(), nil
+	default:
+		d, e := NewILTimeFromYMD(ymd)
+		return d, e
+	}
 }
 
 func NewILTimeNow() *ILTime {
@@ -15,6 +31,12 @@ func NewILTimeNow() *ILTime {
 func NewILTimeToday() *ILTime {
 	t := time.Now()
 	return &ILTime{theTime: truncateToDay(t)}
+}
+
+func NewILTimeYesterday() *ILTime {
+	today := NewILTimeToday()
+	today.SubtractDays(1)
+	return today
 }
 
 func NewILTimeFromTime(t time.Time) *ILTime {
@@ -60,4 +82,25 @@ func (ilt *ILTime) AsEpoch() int64 {
 
 func truncateToDay(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+}
+
+func SanitizeDate(date string) (string, error) {
+	// We might get "today" or "yesterday"
+	// Convert them into a date string.
+	switch date {
+	case constants.TODAY:
+		currentDate := NewILTimeToday()
+		date = currentDate.AsYYYYMMDD()
+	case constants.YESTERDAY:
+		currentDate := NewILTimeYesterday()
+		date = currentDate.AsYYYYMMDD()
+	default:
+		d, err := NewILTimeFromYMD(date)
+		if err != nil {
+			return "BADDATES", err
+		}
+		date = d.AsYYYYMMDD()
+	}
+
+	return date, nil
 }
