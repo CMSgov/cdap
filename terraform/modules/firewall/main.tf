@@ -253,32 +253,12 @@ module "waf_log_group" {
   kms_key_id = var.platform.kms_alias_primary.target_key_arn
 }
 
-resource "aws_cloudwatch_log_resource_policy" "waf" {
-  policy_name = "aws-waf-logs-${var.name}"
-  policy_document = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "delivery.logs.amazonaws.com"
-        }
-        Action = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "${module.waf_log_group.this.arn}:*"
-        Condition = {
-          StringEquals = {
-            "aws:SourceAccount" = var.platform.account_id
-          }
-        }
-      }
-    ]
-  })
-}
-
 resource "aws_wafv2_web_acl_logging_configuration" "this" {
+  # NOTE: No explicit aws_cloudwatch_log_resource_policy here. WAF logs are
+  # vended logs: PutLoggingConfiguration makes the log delivery service
+  # create/update the shared AWSLogDeliveryWrite resource policy on the
+  # caller's behalf. Accounts allow only 10 CloudWatch Logs resource policies
+  # per region, so per-WAF policies risk LimitExceededException.
   log_destination_configs = [module.waf_log_group.this.arn]
   resource_arn            = aws_wafv2_web_acl.this.arn
 

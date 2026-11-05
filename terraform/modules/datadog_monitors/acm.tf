@@ -16,7 +16,7 @@ resource "datadog_monitor" "acm_cert_expiry" {
     ${local.notify}
   EOT
 
-  query = "avg(${var.monitor_config.acm.timeframe}):avg:aws.acm.days_to_expiry{application:${var.app},environment:${var.env}} by {domain} < ${var.monitor_config.acm.critical_days_threshold}"
+  query = "avg(${var.monitor_config.acm.timeframe}):avg:aws.certificatemanager.days_to_expiry{application:${var.app},environment:${var.env}} by {domain} < ${var.monitor_config.acm.critical_days_threshold}"
 
   monitor_thresholds {
     critical = var.monitor_config.acm.critical_days_threshold
