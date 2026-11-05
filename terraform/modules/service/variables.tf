@@ -381,9 +381,7 @@ variable "platform" {
     service            = string
     account_id         = string
     vpc_id             = string
-    vpc_name           = string
     account_env_suffix = string
-
   })
 }
 

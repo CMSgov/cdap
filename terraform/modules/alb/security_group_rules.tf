@@ -11,7 +11,7 @@ resource "aws_vpc_security_group_ingress_rule" "https_public" {
 
 # HTTP ingress — only when http_redirect is enabled
 resource "aws_vpc_security_group_ingress_rule" "http" {
-  count             = (local.managed_sg && var.enable_http_redirect) ? 1 : 0
+  count             = local.managed_sg ? 1 : 0
   security_group_id = aws_security_group.alb[0].id
   from_port         = 80
   to_port           = 80
@@ -23,7 +23,7 @@ resource "aws_vpc_security_group_ingress_rule" "http" {
 # Zscaler private App Connector ingress
 # Use for internal ALBs registered in cmscloud.local DNS
 resource "aws_vpc_security_group_ingress_rule" "https_zscaler" {
-  count                        = (local.managed_sg && var.enable_zscaler_ingress) ? 1 : 0
+  count                        = (local.managed_sg && var.create_zscaler_dns_record) ? 1 : 0
   security_group_id            = aws_security_group.alb[0].id
   referenced_security_group_id = var.platform.security_groups["zscaler-private"].id
   from_port                    = 443
@@ -32,17 +32,21 @@ resource "aws_vpc_security_group_ingress_rule" "https_zscaler" {
   description                  = "Allow HTTPS from Zscaler private App Connector"
 }
 
+data "aws_ssm_parameter" "datadog_private_location_sg" {
+  count = var.enable_datadog_synthetics_ingress ? 1 : 0
+  name  = "/cdap/${var.platform.cdap_env}/datadog/nonsensitive/private_location_task_security_group_id"
+}
+
 # Datadog synthetics private location ingress
 resource "aws_vpc_security_group_ingress_rule" "https_datadog" {
   count                        = (local.managed_sg && var.enable_datadog_synthetics_ingress) ? 1 : 0
   security_group_id            = aws_security_group.alb[0].id
-  referenced_security_group_id = var.platform.security_groups["datadog-synthetics"].id
+  referenced_security_group_id = data.aws_ssm_parameter.datadog_private_location_sg[0].value
   from_port                    = 443
   to_port                      = 443
   ip_protocol                  = "tcp"
   description                  = "Allow HTTPS from Datadog synthetics private location runner"
 }
-
 
 # CMS security tools ingress — always on when module manages the SG
 resource "aws_vpc_security_group_ingress_rule" "https_security_tools" {
@@ -53,4 +57,26 @@ resource "aws_vpc_security_group_ingress_rule" "https_security_tools" {
   to_port                      = 443
   ip_protocol                  = "tcp"
   description                  = "Allow HTTPS from CMS security scanning tools"
+}
+
+# Codebuild runner ingress option
+data "aws_vpc" "cdap" {
+  tags = {
+    Name = var.platform.cdap_vpc_name
+  }
+}
+
+data "aws_security_group" "codebuild_repo" {
+  count = (local.managed_sg && var.enable_ingress_from_codebuild_repo != null) ? 1 : 0
+  name  = "${var.enable_ingress_from_codebuild_repo}-${var.platform.account_env_suffix}-codebuild-project"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "codebuild" {
+  count                        = (local.managed_sg && var.enable_ingress_from_codebuild_repo != null) ? 1 : 0
+  security_group_id            = aws_security_group.alb[0].id
+  referenced_security_group_id = data.aws_security_group.codebuild_repo[0].id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+  description                  = "Allow HTTPS from Codebuild runner"
 }

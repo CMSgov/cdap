@@ -40,6 +40,7 @@ data "aws_iam_policy_document" "github_actions_observability" {
       "logs:DeleteSubscriptionFilter",
       "logs:DisassociateKmsKey",
       "logs:PutMetricFilter",
+      "logs:PutResourcePolicy",
       "logs:PutRetentionPolicy",
       "logs:PutSubscriptionFilter",
       "logs:TagResource",
@@ -92,6 +93,20 @@ data "aws_iam_policy_document" "github_actions_observability" {
       "arn:aws:logs:*:*:log-group:aws-waf-logs-${var.app}-${var.env}*",
       "arn:aws:logs:*:*:log-group:aws-waf-logs-${var.app}-${var.env}*:*",
     ]
+  }
+
+  # Vended log delivery (WAF logging to CloudWatch Logs). WAF invokes these on
+  # the caller's behalf during Put/DeleteLoggingConfiguration to manage the
+  # shared AWSLogDeliveryWrite resource policy. These are account level actions
+  # that do not support resource level permissions, so resources must be "*".
+  statement {
+    sid = "LogsVendedDeliveryWrite"
+    actions = [
+      "logs:CreateLogDelivery",
+      "logs:DeleteLogDelivery",
+      "logs:PutResourcePolicy",
+    ]
+    resources = ["*"]
   }
 
   # Logs Read

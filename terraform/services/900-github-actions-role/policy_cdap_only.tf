@@ -110,6 +110,15 @@ data "aws_iam_policy_document" "github_actions_cdap" {
     ]
     resources = ["*"]
   }
+
+  # We limit deletion of namespaces, used for service connect, to CDAP to ensure API teams don't accidentally delete namespaces used in active deployments ; admin can still apply / delete locally  
+  statement {
+    actions = [
+      "servicediscovery:DeleteNamespace",
+    ]
+    resources = ["*"]
+  }
+
   statement {
     sid = "S3SharedBucketTagging"
     actions = [

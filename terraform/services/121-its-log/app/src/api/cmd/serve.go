@@ -17,7 +17,7 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve the its-log API",
 	Long: `Serve the its-log API
-This takes no parameters; all configureation is provided
+This takes no parameters; all configuration is provided
 via the application's 'config.yaml'.
 `,
 	Run: serve_cmd,

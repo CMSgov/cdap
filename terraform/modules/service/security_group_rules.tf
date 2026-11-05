@@ -12,7 +12,6 @@ resource "aws_vpc_security_group_egress_rule" "https" {
 resource "aws_vpc_security_group_ingress_rule" "alb_to_task" {
   count = (
     var.enable_alb_integration &&
-    var.alb_security_group_id != null &&
     length(var.security_groups) == 0
   ) ? 1 : 0
 
@@ -92,9 +91,4 @@ resource "aws_vpc_security_group_ingress_rule" "datadog_to_health" {
   to_port                      = var.proxy_healthcheck_port
   ip_protocol                  = "tcp"
   description                  = "Allow Datadog synthetics to reach proxy health port ${var.proxy_healthcheck_port}"
-}
-
-data "aws_security_group" "vpce_clients_all" {
-  name   = "${var.platform.vpc_name}-vpce-clients-all"
-  vpc_id = var.platform.vpc_id
 }

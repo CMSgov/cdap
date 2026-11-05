@@ -426,7 +426,7 @@ resource "aws_ecs_service" "this" {
   network_configuration {
     subnets          = var.subnets == null ? [for s in var.platform.private_subnets : s.id] : var.subnets
     assign_public_ip = false
-    security_groups  = (length(var.security_groups) == 0) ? [aws_security_group.task[0].id, data.aws_security_group.vpce_clients_all.id] : var.security_groups
+    security_groups  = (length(var.security_groups) == 0) ? [aws_security_group.task[0].id] : var.security_groups
   }
 
   dynamic "load_balancer" {

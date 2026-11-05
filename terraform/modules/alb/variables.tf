@@ -4,13 +4,17 @@
 variable "platform" {
   description = "Object representing the CDAP platform module."
   type = object({
-    app             = string
-    env             = string
-    primary_region  = object({ name = string })
-    private_subnets = map(object({ id = string }))
-    public_subnets  = map(object({ id = string }))
-    service         = string
-    vpc_id          = string
+    account_env_suffix = string
+    app                = string
+    cdap_env           = string
+    cdap_vpc_name      = string
+    env                = string
+    primary_region     = object({ name = string })
+    private_subnets    = map(object({ id = string }))
+    public_subnets     = map(object({ id = string }))
+    service            = string
+    vpc_cidr           = string
+    vpc_id             = string
     security_groups = map(object({
       id   = string
       arn  = string
@@ -29,17 +33,25 @@ variable "name_override" {
 # Networking
 # -------------------------------------------------------
 
-variable "enable_zscaler_ingress" {
-  type        = bool
-  default     = false
-  description = <<-EOT
-    When true, adds an ingress rule allowing the Zscaler private App
-    Connector to reach the ALB on HTTPS:443.
-    Enable this when the ALB is registered in cmscloud.local DNS and
-    accessed by developers via Zscaler.
-    Should be set alongside enable_zscaler_endpoint = true on the
-    acm_certificate module.
-  EOT
+variable "enable_ingress_from_codebuild_repo" {
+  description = "When set, adds an ingress rule allowing that repo's CodeBuild security group access through 443. Null disables this rule entirely."
+  type        = string
+  default     = null
+
+  validation {
+    condition = var.enable_ingress_from_codebuild_repo == null || contains([
+      "ab2d",
+      "ab2d-website",
+      "bcda-app",
+      "bcda-ssas-app",
+      "bcda-static-site",
+      "cdap",
+      "dpc-app",
+      "dpc-ops",
+      "dpc-static-site",
+    ], var.enable_ingress_from_codebuild_repo)
+    error_message = "Supports connections only from repos with codebuild runners."
+  }
 }
 
 variable "enable_datadog_synthetics_ingress" {
@@ -78,16 +90,45 @@ variable "internal" {
   description = "true = private (internal) ALB; false = public (internet-facing) ALB."
 }
 
+#
+# Domain Management 
+#
+
+variable "private_record_name" {
+  type        = string
+  default     = null
+  description = "Subdomain label for this ALB's record, e.g. 'api-admin'"
+}
+
+variable "create_internal_dns_record" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Create a record reachable by other services in the AWS account.
+    Creates `$private_record_name.$env.$app.internal.cms.gov`
+  EOT
+}
+
+variable "create_zscaler_dns_record" {
+  type        = bool
+  default     = false
+  description = <<-EOT
+    Create a record reachable by users in ZScaler network,
+    if the hosted zone is registered with Zscaler team.
+    Creates `$private_record_name.$env.$app.cmscloud.local`
+  EOT
+
+}
+
 # -------------------------------------------------------
 # TLS / ACM
 # -------------------------------------------------------
 variable "acm_certificate_arn" {
   type        = string
   description = <<-EOT
-    ARN of the ACM certificate (public or private CA) for the HTTPS listener.
+    ARN of the ACM certificate (private CA) for the HTTPS listener.
        Pass either:
          - module.acm.private_cert_arn  for internal/Zscaler endpoints
-         - module.acm.public_cert_arn   for public *.<app>.cms.gov endpoints
        Required — this module enforces TLS on all listeners.
   EOT
 }
@@ -101,18 +142,25 @@ variable "ssl_policy" {
 # -------------------------------------------------------
 # Listeners
 # -------------------------------------------------------
-variable "enable_http_redirect" {
-  type        = bool
-  default     = true
-  description = "When true, adds an HTTP:80 listener that redirects all traffic to HTTPS:443."
+variable "http_redirect_target_port" {
+  description = "Port the plain-HTTP listener redirects to. Must match a key's port in https_listeners."
+  type        = number
+  default     = 443
 }
 
-variable "extra_listeners" {
-  description = "Additional HTTPS listeners beyond the default 443"
+variable "https_listeners" {
+  description = "HTTPS listeners for this ALB. Every entry enforces TLS 1.3 — there is no plain-HTTP option."
   type = map(object({
-    port                = number
-    acm_certificate_arn = optional(string)
-    ssl_policy          = optional(string)
+    port                               = optional(number, 443)
+    certificate_arn                    = string
+    default_action_type                = optional(string, "fixed-response")
+    default_target_group_arn           = optional(string)
+    default_fixed_response_status_code = optional(number, 404)
   }))
   default = {}
+
+  validation {
+    condition     = length(var.https_listeners) > 0
+    error_message = "At least one entry in https_listeners is required — each must include a certificate_arn."
+  }
 }

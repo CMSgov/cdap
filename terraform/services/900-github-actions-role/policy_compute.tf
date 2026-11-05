@@ -143,9 +143,26 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ecs:Describe*",
       "ecs:List*",
       "servicediscovery:GetNamespace",
+      "servicediscovery:ListNamespaces",
       "servicediscovery:ListTagsForResource",
     ]
     resources = ["*"] # Describe*/List* cannot be resource-scoped
+  }
+
+  statement {
+    sid = "NamespaceWrite"
+    actions = [
+      "servicediscovery:CreateHttpNamespace",
+      "servicediscovery:CreatePrivateDnsNamespace",
+      "servicediscovery:DeleteNamespace",
+      "servicediscovery:GetNamespace",
+      "servicediscovery:UpdateHttpNamespace",
+      "servicediscovery:UpdatePrivateDnsNamespace",
+      "servicediscovery:GetOperation",
+      "servicediscovery:TagResource",
+      "servicediscovery:UntagResource",
+    ]
+    resources = ["*"]
   }
 
   # ECS Write — scoped to app/env

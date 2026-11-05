@@ -40,7 +40,7 @@ We lose fewer events from smaller buffers in the event of a crash. So, smaller b
 
 ## 2025-12-16 PUT
 
-This test added a way to write the buffered events as a single transaction. Notice that this took the logger from 3600 events/second to 58K/second. The max used to be 2.8s, which was probably beacuse I was writing 10K events one-at-a-time, and therefore doing a full database TX for each event.
+This test added a way to write the buffered events as a single transaction. Notice that this took the logger from 3600 events/second to 58K/second. The max used to be 2.8s, which was probably because I was writing 10K events one-at-a-time, and therefore doing a full database TX for each event.
 
 Now, all 10K (or, however many are buffered) events get written as a single TX. That's 20K int64s, or... 160K bytes. That's easy for SQLite to eat in a single transaction, apparently.
 
@@ -91,7 +91,7 @@ Flushing more often (every 2K or 5K events) might be better, "just in case." Be 
 
 ## 2025-12-15 GET
 
-This is a cleaner/more authentic test. It runs up to 30 VUs (virtual users), and we see a throughput of somewhere around 3600 events/second. The median is around 200us. Probably becuase I gave it a 10K buffer for events.
+This is a cleaner/more authentic test. It runs up to 30 VUs (virtual users), and we see a throughput of somewhere around 3600 events/second. The median is around 200us. Probably because I gave it a 10K buffer for events.
 
         /\      Grafana   /‾‾/  
     /\  /  \     |\  __   /  /   
