@@ -218,3 +218,28 @@ resource "aws_cloudwatch_log_delivery" "this" {
     suffix_path = "/AWSLogs/${var.platform.aws_caller_identity.account_id}/Cloudfront/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
   }
 }
+
+# Long-term retention bucket managed by the log-retention service
+data "aws_ssm_parameter" "log_retention_bucket" {
+  name = "/cdap/${var.platform.cdap_env}/common/nonsensitive/log-retention/bucket"
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "log_retention" {
+  name          = "${local.naming_prefix}-log-retention"
+  output_format = "json"
+
+  delivery_destination_configuration {
+    destination_resource_arn = "arn:aws:s3:::${data.aws_ssm_parameter.log_retention_bucket.value}/cloudfront"
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "log_retention" {
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.this.name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.log_retention.arn
+
+  s3_delivery_configuration {
+    suffix_path = "/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}"
+  }
+
+  depends_on = [aws_cloudwatch_log_delivery.this]
+}
