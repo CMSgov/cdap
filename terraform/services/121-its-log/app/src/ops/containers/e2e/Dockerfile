@@ -1,5 +1,5 @@
 # Use the official, secure Amazon Linux 2023 minimal image from AWS ECR
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023.12.20261026.1-minimal
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
