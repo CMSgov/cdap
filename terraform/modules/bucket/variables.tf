@@ -50,6 +50,23 @@ variable "additional_bucket_policies" {
   type        = list(string)
 }
 
+variable "platform" {
+  description = "Object representing the CDAP platform module. Used to encrypt the access-logging log group with the account's primary KMS key."
+  type = object({
+    kms_alias_primary = object({ target_key_arn = string })
+  })
+}
+
+variable "access_logging" {
+  description = "Server access log delivery route. cloudwatch (the default) delivers through a per-bucket CloudWatch log group and the shared log-retention Firehose into the log-retention bucket. External means the caller configures access logging itself, outside this module. Used by the log-retention bucket, which logs directly to the CMS bucket to avoid looping its own access logs back into itself."
+  type        = string
+  default     = "cloudwatch"
+  validation {
+    condition     = contains(["external", "cloudwatch"], var.access_logging)
+    error_message = "Valid values for access_logging are cloudwatch or external."
+  }
+}
+
 variable "object_lock" {
   description = "S3 Object Lock (WORM) default retention. Object Lock can only be enabled at bucket creation. Mode is GOVERNANCE or COMPLIANCE."
   type = object({
