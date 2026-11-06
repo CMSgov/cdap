@@ -6,6 +6,7 @@ module "tfstate_bucket" {
   source = "../../modules/bucket"
   name   = local.name
 
-  app = var.app
-  env = var.env
+  app      = var.app
+  env      = var.env
+  platform = module.platform
 }

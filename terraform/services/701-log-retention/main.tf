@@ -26,12 +26,18 @@ resource "aws_kms_alias" "log_retention" {
 module "log_bucket" {
   source = "../../modules/bucket"
 
-  app  = module.platform.app
-  env  = var.env
-  name = local.shared_name
+  app      = module.platform.app
+  env      = var.env
+  name     = local.shared_name
+  platform = module.platform
 
   kms_key_arn        = aws_kms_key.log_retention.arn
   use_custom_kms_key = true
+
+  # Never route this bucket's access logs through the Firehose pipeline: they
+  # would be delivered back into this bucket, creating a feedback loop. Access
+  # logging for this goes directly to the CMS-provided bucket
+  access_logging = "external"
 
   # Compliance-mode WORM in prod only: objects cannot be deleted or overwritten
   # for 6 years by anyone, including root (HIPAA retention requirement).
@@ -66,6 +72,29 @@ module "log_bucket" {
   expiration_days = 2200
 
   ssm_parameter = "/${module.platform.app}/${module.platform.env}/common/nonsensitive/log-retention/bucket"
+}
+
+# Server access logs are vended directly to the CMS-provided ingestion
+# bucket rather than through the shared Firehose, which would loop back into
+# this bucket
+resource "aws_cloudwatch_log_delivery_source" "log_bucket_access_logs" {
+  name         = "${local.shared_name}-s3-access-logs"
+  log_type     = "S3_SERVER_ACCESS_LOGS"
+  resource_arn = module.log_bucket.arn
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "log_bucket_access_logs" {
+  name          = "${local.shared_name}-s3-access-logs"
+  output_format = "json"
+
+  delivery_destination_configuration {
+    destination_resource_arn = module.platform.splunk_logging_bucket.arn
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "log_bucket_access_logs" {
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.log_bucket_access_logs.name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.log_bucket_access_logs.arn
 }
 
 data "aws_ssm_parameter" "cloudwatch_alarms_topic_arn" {

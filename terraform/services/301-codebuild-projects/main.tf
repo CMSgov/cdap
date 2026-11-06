@@ -167,6 +167,7 @@ module "build_cache" {
   ssm_parameter = "/${each.key}/${module.standards.account_env_suffix}/buildcachebucket"
   app           = "cdap"
   env           = var.env
+  platform      = module.platform
   force_destroy = true # cache contents are disposable
 }
 
