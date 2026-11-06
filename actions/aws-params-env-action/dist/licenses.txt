@@ -439,7 +439,7 @@ Working on "node_modules". It might take a while...
 │ uglify-js@3.19.3          │ BSD 2 Clause   │ BSD 2 Clause + │ -              │
 │ undefined@undefined       │ -              │ -              │ -              │
 │ undici-types@7.24.6       │ MIT            │ MIT            │ -              │
-│ undici@8.11.2             │ MIT            │ MIT            │ -              │
+│ undici@8.12.3             │ MIT            │ MIT            │ -              │
 │ unrs-resolver@1.12.2      │ MIT            │ -              │ MIT            │
 │ update-browserslist-db@1. │ MIT            │ MIT            │ -              │
 │ uri-js@4.4.1              │ BSD 2 Clause   │ -              │ -              │

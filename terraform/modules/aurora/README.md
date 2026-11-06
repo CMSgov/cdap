@@ -127,8 +127,8 @@ resource "aws_ssm_parameter" "writer_endpoint" {
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.69.1 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -147,7 +147,7 @@ No requirements.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_backup_window"></a> [backup\_window](#input\_backup\_window) | Daily time range during which automated backups are created if automated backups are enabled in UTC, e.g. `04:00-09:00` | `string` | n/a | yes |
 | <a name="input_instance_class"></a> [instance\_class](#input\_instance\_class) | Aurora cluster instance class, restricted to RI instances | `string` | n/a | yes |
 | <a name="input_maintenance_window"></a> [maintenance\_window](#input\_maintenance\_window) | Weekly time range during which system maintenance can occur in UTC, e.g. `wed:04:00-wed:04:30` | `string` | n/a | yes |
@@ -164,7 +164,8 @@ No requirements.
 | <a name="input_enable_iam_database_authentication"></a> [enable\_iam\_database\_authentication](#input\_enable\_iam\_database\_authentication) | If true, enables the IAM database authentication capability on the<br/>cluster. This only makes IAM auth available -- it does not disable or<br/>replace username/password authentication, and no Postgres role uses it<br/>until a consuming terraservice grants that role `rds_iam` and attaches<br/>its own IAM policy scoped to that dbuser, using the cluster\_resource\_id<br/>this module publishes via SSM. Defaults to true because enabling the<br/>capability has no effect on teams that don't use it. | `bool` | `true` | no |
 | <a name="input_engine_version"></a> [engine\_version](#input\_engine\_version) | Selected major engine version for either RDS DB Instance or RDS Aurora DB Cluster. | `string` | `"16"` | no |
 | <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Desired number of cluster instances | `number` | `1` | no |
-| <a name="input_kms_key_override"></a> [kms\_key\_override](#input\_kms\_key\_override) | Override to the platform-managed KMS key | `string` | `null` | no |
+| <a name="input_kms_key_override"></a> [kms\_key\_override](#input\_kms\_key\_override) | Override to the platform-managed KMS key. Also encrypts the postgresql log group. The key policy must allow the CloudWatch Logs service principal. | `string` | `null` | no |
+| <a name="input_log_retention_days"></a> [log\_retention\_days](#input\_log\_retention\_days) | Override for the number of days to retain exported postgresql logs in CloudWatch. When null, the cloudwatch\_log\_group module's default (180) applies. Value is validated by the cloudwatch\_log\_group module. | `number` | `null` | no |
 | <a name="input_manage_breakglass_password"></a> [manage\_breakglass\_password](#input\_manage\_breakglass\_password) | If true, RDS creates and manages the breakglass password in AWS<br/>Secrets Manager instead of using var.password. Opt-in and off by<br/>default. Existing username/password behavior is unchanged unless a<br/>team explicitly turns this on. | `bool` | `false` | no |
 | <a name="input_monitoring_interval"></a> [monitoring\_interval](#input\_monitoring\_interval) | The [monitoring\_interval](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#monitoring_interval-1) in seconds determines the time between sampling enhanced monitoring metrics for the cluster. | `number` | `15` | no |
 | <a name="input_monitoring_role_path"></a> [monitoring\_role\_path](#input\_monitoring\_role\_path) | IAM path for the monitoring role this module creates. | `string` | `"/delegatedadmin/developer/"` | no |
@@ -183,7 +184,9 @@ No requirements.
 -->
 ## Modules
 
-No modules.
+| Name | Source | Version |
+| ---- | ------ | ------- |
+| <a name="module_postgresql_logs"></a> [postgresql\_logs](#module\_postgresql\_logs) | ../cloudwatch_log_group | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -193,7 +196,7 @@ No modules.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_cloudwatch_log_metric_filter.breakglass_secret_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_metric_filter) | resource |
 | [aws_cloudwatch_metric_alarm.breakglass_secret_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_db_parameter_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_parameter_group) | resource |
@@ -228,7 +231,7 @@ No modules.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_aurora_cluster"></a> [aurora\_cluster](#output\_aurora\_cluster) | n/a |
 | <a name="output_aurora_instances"></a> [aurora\_instances](#output\_aurora\_instances) | n/a |
 | <a name="output_breakglass_secret_arn"></a> [breakglass\_secret\_arn](#output\_breakglass\_secret\_arn) | Secrets Manager ARN of the RDS-managed breakglass secret. Null unless manage\_breakglass\_password = true. |

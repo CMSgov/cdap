@@ -82,8 +82,22 @@ data "aws_rds_engine_version" "this" {
   latest       = true
 }
 
+module "postgresql_logs" {
+  source = "../cloudwatch_log_group"
+
+  name               = local.postgresql_log_group_name
+  env                = var.platform.env
+  kms_key_id         = local.kms_key_id
+  log_retention_days = var.log_retention_days
+  skip_destroy       = strcontains(var.platform.env, "prod") ? true : false
+
+  tags = {
+    Name = local.postgresql_log_group_name
+  }
+}
+
 resource "aws_rds_cluster" "this" {
-  cluster_identifier   = coalesce(var.cluster_identifier, local.service_prefix)
+  cluster_identifier   = local.cluster_identifier
   engine               = local.aurora_engine
   engine_version       = data.aws_rds_engine_version.this.version
   master_username      = var.username
@@ -91,7 +105,7 @@ resource "aws_rds_cluster" "this" {
   db_subnet_group_name = aws_db_subnet_group.this.name
   storage_type         = var.storage_type
   storage_encrypted    = true
-  kms_key_id           = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
+  kms_key_id           = local.kms_key_id
 
   # --- breakglass credential ---
   # Teams that opt in to manage_breakglass_password get an RDS-managed secret in Secrets
@@ -99,7 +113,7 @@ resource "aws_rds_cluster" "this" {
   # breakglass_password_rotation_days below.
   master_password               = var.manage_breakglass_password ? null : var.password
   manage_master_user_password   = var.manage_breakglass_password ? true : null
-  master_user_secret_kms_key_id = var.manage_breakglass_password ? coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn) : null
+  master_user_secret_kms_key_id = var.manage_breakglass_password ? local.kms_key_id : null
 
   backup_retention_period         = var.backup_retention_period
   preferred_backup_window         = var.backup_window
@@ -129,9 +143,11 @@ resource "aws_rds_cluster" "this" {
     var.vpc_security_group_ids
   ])
 
+  # RDS must never create the exported log group itself as it would escape retention management
   depends_on = [
     aws_iam_role_policy_attachment.db_monitoring,
-    aws_iam_role_policy_attachment.db_monitoring_kms
+    aws_iam_role_policy_attachment.db_monitoring_kms,
+    module.postgresql_logs,
   ]
 
   tags = {
@@ -188,7 +204,7 @@ resource "aws_secretsmanager_secret_rotation" "breakglass_password" {
 resource "aws_rds_cluster_instance" "this" {
   count = var.instance_count
 
-  identifier                 = "${coalesce(var.cluster_identifier, local.service_prefix)}-${count.index}"
+  identifier                 = "${local.cluster_identifier}-${count.index}"
   cluster_identifier         = aws_rds_cluster.this.id
   engine                     = aws_rds_cluster.this.engine
   engine_version             = aws_rds_cluster.this.engine_version

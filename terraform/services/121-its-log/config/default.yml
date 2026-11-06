@@ -1,0 +1,4 @@
+image:
+  enabled: true
+  docker_target: builder
+  test_command: "cd /app/api && go mod download && go test ./... -coverprofile=/app/coverage/coverage.out -json > /app/coverage/report.json"

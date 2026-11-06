@@ -1,6 +1,7 @@
 # ECR Terraservice
 
 This service is established for testing a cohesive provisioning and deployment of an ECR stored image and ECS hosted service. 
+
 Each image category gets its own repository to support fully immutable tags. 
 Currently, CDAP images are used only in the non-prod context.
 

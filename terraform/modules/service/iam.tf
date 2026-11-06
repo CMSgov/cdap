@@ -110,67 +110,42 @@ resource "aws_iam_role" "service_connect" {
   })
 }
 
-resource "aws_iam_policy" "service_connect" {
-  count       = var.service_connect_enabled ? 1 : 0
-  name        = "${local.service_name_full}-service-connect"
-  description = "Base permissions for ECS Service Connect TLS lifecycle"
-  policy      = data.aws_iam_policy_document.service_connect.json
-}
-
-resource "aws_iam_role_policy_attachment" "service_connect" {
-  count      = var.service_connect_enabled ? 1 : 0
-  role       = aws_iam_role.service_connect[0].name
-  policy_arn = aws_iam_policy.service_connect[0].arn
-}
-
-data "aws_iam_policy_document" "service_connect" {
+# -------------------------------------------------------
+# Service Connect Base Policy — for client and publishing services
+# -------------------------------------------------------
+data "aws_iam_policy_document" "service_connect_base" {
   statement {
-    sid = "AllowPCAUse"
+    sid = "AllowPCATrustChainRefad"
     actions = [
-      "acm-pca:GetCertificate",
       "acm-pca:GetCertificateAuthorityCertificate",
-      "acm-pca:DescribeCertificateAuthority",
-      "acm-pca:IssueCertificate"
+      "acm-pca:DescribeCertificateAuthority"
     ]
     resources = data.aws_ram_resource_share.pace_ca.resource_arns
   }
 
-  dynamic "statement" {
-    for_each = (length(var.service_connect) > 0) ? [1] : []
-    content {
-      sid = "AllowCertManagement"
-      actions = [
-        "acm:ExportCertificate",
-        "acm:DescribeCertificate",
-        "acm:GetCertificate"
-      ]
-      resources = ["arn:aws:acm:${var.platform.primary_region.name}:${var.platform.account_id}:certificate/*"]
+  statement {
+    sid    = "AllowCertRead"
+    effect = "Allow"
+    actions = [
+      "acm:DescribeCertificate",
+      "acm:GetCertificate"
+    ]
+    resources = ["arn:aws:acm:${var.platform.primary_region.name}:${var.platform.account_id}:certificate/*"]
 
-      condition {
-        test     = "StringLike"
-        variable = "acm:DomainName"
-        values   = ["*.${var.platform.app}-${var.platform.env}.sc.internal.cms.gov"]
-      }
+    condition {
+      test     = "StringLike"
+      variable = "acm:DomainName"
+      values   = ["*.${local.service_discovery_namespace_name}"]
     }
   }
 
-  # Scoped to ECS Service Connect-managed secrets only (ecs-sc! prefix)
   statement {
-    sid = "AllowSecretsManagerForTLS"
+    sid = "AllowSecretsManagerReadForTLS"
     actions = [
-      "secretsmanager:CreateSecret",
       "secretsmanager:GetSecretValue",
-      "secretsmanager:DescribeSecret",
-      "secretsmanager:UpdateSecret",
-      "secretsmanager:UpdateSecretVersionStage",
-      "secretsmanager:DeleteSecret",
-      "secretsmanager:PutSecretValue",
-      "secretsmanager:TagResource",
-      "secretsmanager:RotateSecret"
+      "secretsmanager:DescribeSecret"
     ]
-    resources = [
-      "arn:aws:secretsmanager:${var.platform.primary_region.name}:${var.platform.account_id}:secret:ecs-sc!*"
-    ]
+    resources = ["arn:aws:secretsmanager:${var.platform.primary_region.name}:${var.platform.account_id}:secret:ecs-sc!*"]
   }
 
   statement {
@@ -182,6 +157,75 @@ data "aws_iam_policy_document" "service_connect" {
     ]
     resources = [var.platform.kms_alias_primary.target_key_arn]
   }
+}
+
+resource "aws_iam_policy" "service_connect_base" {
+  count       = var.service_connect_enabled ? 1 : 0
+  name        = "${local.service_name_full}-service-connect-base"
+  description = "Base permissions for ECS Service Connect TLS — client and server"
+  policy      = data.aws_iam_policy_document.service_connect_base.json
+}
+
+resource "aws_iam_role_policy_attachment" "service_connect_base" {
+  count      = var.service_connect_enabled ? 1 : 0
+  role       = aws_iam_role.service_connect[0].name
+  policy_arn = aws_iam_policy.service_connect_base[0].arn
+}
+
+# -------------------------------------------------------
+# Service Connect Policy — for services publishing ports
+# -------------------------------------------------------
+data "aws_iam_policy_document" "service_connect_publisher" {
+  count = length(var.service_connect) > 0 ? 1 : 0
+
+  statement {
+    sid = "AllowPCAIssue"
+    actions = [
+      "acm-pca:IssueCertificate"
+    ]
+    resources = data.aws_ram_resource_share.pace_ca.resource_arns
+  }
+
+  statement {
+    sid = "AllowCertExport"
+    actions = [
+      "acm:ExportCertificate"
+    ]
+    resources = ["arn:aws:acm:${var.platform.primary_region.name}:${var.platform.account_id}:certificate/*"]
+
+    condition {
+      test     = "StringLike"
+      variable = "acm:DomainName"
+      values   = ["*.${local.service_discovery_namespace_name}"]
+    }
+  }
+
+  statement {
+    sid = "AllowSecretsManagerLifecycleForTLS"
+    actions = [
+      "secretsmanager:CreateSecret",
+      "secretsmanager:UpdateSecret",
+      "secretsmanager:UpdateSecretVersionStage",
+      "secretsmanager:DeleteSecret",
+      "secretsmanager:PutSecretValue",
+      "secretsmanager:TagResource",
+      "secretsmanager:RotateSecret"
+    ]
+    resources = ["arn:aws:secretsmanager:${var.platform.primary_region.name}:${var.platform.account_id}:secret:ecs-sc!*"]
+  }
+}
+
+resource "aws_iam_policy" "service_connect_publisher" {
+  count       = length(var.service_connect) > 0 ? 1 : 0
+  name        = "${local.service_name_full}-service-connect-publisher"
+  description = "Publisher-only permissions for ECS Service Connect — cert issuance and secret lifecycle"
+  policy      = data.aws_iam_policy_document.service_connect_publisher[0].json
+}
+
+resource "aws_iam_role_policy_attachment" "service_connect_publisher" {
+  count      = length(var.service_connect) > 0 ? 1 : 0
+  role       = aws_iam_role.service_connect[0].name
+  policy_arn = aws_iam_policy.service_connect_publisher[0].arn
 }
 
 # -------------------------------------------------------
@@ -279,7 +323,7 @@ data "aws_iam_policy_document" "task" {
 # -------------------------------------------------------
 resource "aws_iam_policy" "ecs_exec" {
   count       = var.enable_execute_command ? 1 : 0
-  name        = "${var.platform.app}-${var.platform.env}-tftesting-ecs-exec"
+  name        = "${var.platform.app}-${var.platform.env}-${var.platform.service}-ecs-exec"
   description = "Allows ECS Exec (execute-command) for interactive debugging. Test environments only."
   policy      = data.aws_iam_policy_document.ecs_exec.json
 }
