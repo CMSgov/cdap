@@ -109,6 +109,7 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ecr:Describe*",
       "ecr:GetDownloadUrlForLayer",
       "ecr:GetLifecyclePolicy",
+      "ecr:GetRepositoryPolicy",
       "ecr:List*",
     ]
     resources = [
@@ -124,9 +125,11 @@ data "aws_iam_policy_document" "github_actions_compute" {
       "ecr:CompleteLayerUpload",
       "ecr:CreateRepository",
       "ecr:DeleteLifecyclePolicy",
+      "ecr:DeleteRepositoryPolicy",
       "ecr:InitiateLayerUpload",
       "ecr:PutImage",
       "ecr:PutLifecyclePolicy",
+      "ecr:SetRepositoryPolicy",
       "ecr:TagResource",
       "ecr:UnTagResource",
       "ecr:UploadLayerPart",
