@@ -66,6 +66,7 @@ module "zip_bucket" {
   app                        = local.app
   env                        = local.env
   name                       = "${local.full_name_string}-function"
+  platform                   = var.platform
   ssm_parameter              = "/${local.app}/${local.env}/${local.name}-bucket"
   force_destroy              = true
 }
