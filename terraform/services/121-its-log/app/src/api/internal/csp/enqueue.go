@@ -22,12 +22,10 @@ package csp
 import (
 	"context"
 	"time"
-
-	"github.com/navapbc/its-log/internal/types"
 )
 
-func Enqueue(ctx context.Context, ch_evt_in <-chan *types.Event, ch_flush_out chan<- types.EventBuffer, bufferLength int, timeout int) {
-	event_buffers := types.NewEventBuffer(bufferLength)
+func Enqueue(ctx context.Context, ch_evt_in <-chan *Event, ch_flush_out chan<- EventBuffer, bufferLength int, timeout int) {
+	event_buffers := NewEventBuffer(bufferLength)
 	timeoutDuration := time.Duration(timeout) * time.Second
 	timer := time.NewTimer(timeoutDuration)
 	defer timer.Stop()
@@ -52,7 +50,7 @@ func Enqueue(ctx context.Context, ch_evt_in <-chan *types.Event, ch_flush_out ch
 				// DEBUG LOG
 				// log.Println("flushing full buffers")
 				ch_flush_out <- event_buffers
-				event_buffers = types.NewEventBuffer(bufferLength)
+				event_buffers = NewEventBuffer(bufferLength)
 			}
 		case <-timer.C:
 			// This will flush once at startup, because the timer fires.
@@ -62,7 +60,7 @@ func Enqueue(ctx context.Context, ch_evt_in <-chan *types.Event, ch_flush_out ch
 			// Send the structure out for writing
 			ch_flush_out <- event_buffers
 			// Allocate a new structure here in this process
-			event_buffers = types.NewEventBuffer(bufferLength)
+			event_buffers = NewEventBuffer(bufferLength)
 			// Do not reset the timer here. Only reset if
 			// new events come through, and they might need to
 			// be flushed before the buffer is full.

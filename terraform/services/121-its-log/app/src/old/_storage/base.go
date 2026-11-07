@@ -8,19 +8,6 @@ import (
 	"github.com/navapbc/its-log/internal/types"
 )
 
-type StorageType int
-
-const (
-	LiveStorage StorageType = iota
-	ArchiveStorage
-	ConsolidatedStorage
-)
-
-type App struct {
-	AppId string
-	KeyId string
-}
-
 type StorageConfig struct {
 	AppId string
 	Date  string

@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 	"time"
-
-	"github.com/navapbc/its-log/internal/types"
 )
 
 func TestContext(t *testing.T) {
@@ -15,8 +13,8 @@ func TestContext(t *testing.T) {
 
 	// Build the process network for buffering and
 	// saving events that come in via the API
-	ch_eb := make(chan types.EventBuffer)
-	ch_evt := make(chan *types.Event)
+	ch_eb := make(chan EventBuffer)
+	ch_evt := make(chan *Event)
 
 	go Enqueue(ctx, ch_evt, ch_eb, buffer_length, buffer_flushwaitsec)
 	cancel()
@@ -29,8 +27,8 @@ func TestEnqueueTimesOut(t *testing.T) {
 
 	// Build the process network for buffering and
 	// saving events that come in via the API
-	ch_eb := make(chan types.EventBuffer)
-	ch_evt := make(chan *types.Event)
+	ch_eb := make(chan EventBuffer)
+	ch_evt := make(chan *Event)
 
 	go Enqueue(ctx, ch_evt, ch_eb, buffer_length, buffer_flushwaitsec)
 
@@ -38,7 +36,7 @@ func TestEnqueueTimesOut(t *testing.T) {
 	start := time.Now()
 	go func() {
 		// Enqueue one event
-		ch_evt <- &types.Event{}
+		ch_evt <- &Event{}
 	}()
 	// Block on reading the channel
 	<-ch_eb
@@ -61,8 +59,8 @@ func TestEnqueueImmediateFlush(t *testing.T) {
 	go func() {
 		// Build the process network for buffering and
 		// saving events that come in via the API
-		ch_eb := make(chan types.EventBuffer)
-		ch_evt := make(chan *types.Event)
+		ch_eb := make(chan EventBuffer)
+		ch_evt := make(chan *Event)
 
 		go Enqueue(ctx, ch_evt, ch_eb, buffer_length, buffer_flushwaitsec)
 
@@ -73,7 +71,7 @@ func TestEnqueueImmediateFlush(t *testing.T) {
 			// Enqueue more events than the buffer size
 			// Do this async, so the block on the next line can wait.
 			for range buffer_length * 2 {
-				ch_evt <- &types.Event{}
+				ch_evt <- &Event{}
 			}
 		}()
 		// Block on reading the channel

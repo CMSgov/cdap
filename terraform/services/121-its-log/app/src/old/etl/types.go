@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/navapbc/its-log/internal/storage"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
+	"golang.org/x/mod/sumdb/storage"
 )
 
 // FIXME: These need to be at the ETL level, not the type level.

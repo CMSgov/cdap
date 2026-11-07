@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-// This is a type alias.
-// Everywhere this is used, it is the same
-// as saying map[string]any.
-type M = map[string]any
-
 type ETLPostBody struct {
 	Name string `json:"name" binding:"required"`
 	Kind string `json:"kind" binding:"required"`
@@ -18,9 +13,9 @@ type ETLPostBody struct {
 }
 
 type SequencePostBody struct {
-	Name string           `json:"name" binding:"required"`
-	Kind string           `json:"kind" binding:"required"`
-	Body []map[string]any `json:"body" binding:"required"`
+	Name string `json:"name" binding:"required"`
+	Kind string `json:"kind" binding:"required"`
+	Body []M    `json:"body" binding:"required"`
 	// Date string           `json:"date" binding:"required"`
 }
 type SummaryRow struct {

@@ -1,0 +1,121 @@
+package endpoints
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"strings"
+	"time"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/pprof"
+	ginzap "github.com/gin-contrib/zap"
+	"github.com/gin-gonic/gin"
+	"github.com/navapbc/its-log/internal/constants"
+	"github.com/navapbc/its-log/internal/csp"
+	"github.com/navapbc/its-log/internal/types"
+
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+)
+
+func SetupRouter(params types.ServeParams) *gin.Engine {
+	buffer_length := viper.GetInt("buffer.length")
+	buffer_flushwaitsec := viper.GetInt("buffer.flushwaitsec")
+	log.Printf("buffer length: %d flushwaitsec: %d\n", buffer_length, buffer_flushwaitsec)
+
+	// Build the process network for buffering and
+	// saving events that come in via the API
+	ch_eb := make(chan csp.EventBuffer)
+	ch_evt := make(chan *csp.Event)
+
+	go csp.Enqueue(context.Background(), ch_evt, ch_eb, buffer_length, buffer_flushwaitsec)
+	go csp.FlushBuffers(ch_eb)
+
+	engine := PourGin(ch_evt)
+	if params.Mode == "debug" {
+		pprof.Register(engine, "dev/pprof")
+	}
+
+	return engine
+}
+
+func Serve(params types.ServeParams) {
+	engine := SetupRouter(params)
+	host := viper.GetString("serve.host")
+	port := viper.GetString("serve.port")
+
+	_ = engine.Run(fmt.Sprintf("%s:%s", host, port))
+}
+
+func PourGin(ch_evt_out chan<- *csp.Event) *gin.Engine {
+	router := gin.Default()
+
+	// Adding this will override the default logging in Gin.
+	// May be useful to flip entirely to zap.
+	// Also https://stackoverflow.com/questions/48780070/disable-request-logging-for-a-particular-go-gin-route
+	// gin.DefaultWriter = io.Discard
+
+	// We may want production mode.
+	// This is configured via the environment
+	if viper.GetString("ginmode") == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	// See https://gin-gonic.com/en/docs/deployment/
+	router.SetTrustedProxies(strings.Split(viper.GetString("proxies"), ","))
+
+	log.Println("Setting default CORS handling")
+	router.Use(cors.New(cors.Config{
+		AllowMethods:     []string{"PUT", "GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "X-Api-Key"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowAllOrigins:  true,
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
+	// https://github.com/gin-contrib/zap?tab=readme-ov-file#example
+	router.Use(ginzap.Ginzap(zap.L(), time.RFC3339, true))
+
+	apiV1 := router.Group("/v1")
+
+	addMetadataEndpoints(apiV1)
+	addLoggingEndpoints(apiV1, ch_evt_out)
+	// addEtlEndpoints(apiV1)
+	// addSequenceEndpoints(apiV1)
+	// addSummaryEndpoints(apiV1)
+	// addArchiveEndpoints(apiV1)
+
+	return router
+}
+
+// LOGGING ENDPOINTS
+func addLoggingEndpoints(rG *gin.RouterGroup, ch_evt_out chan<- *csp.Event) {
+	// Logging
+	auth_logV1 := rG.Group("/")
+	permissions := []types.PermissionType{constants.Log}
+	auth_logV1.Use(AuthMiddleWare(permissions))
+	auth_logV1.POST(LOG_CREATE, LogCreate(ch_evt_out))
+}
+
+// METADATA ENDPOINTS
+func addMetadataEndpoints(rG *gin.RouterGroup) {
+	// The healthcheck is a public endpoint
+	rG.GET(METADATA_HEALTH, func(c *gin.Context) {
+		StatusOk(c, "healthy")
+	})
+
+	// The status endpoint provides server data, and needs a valid key
+	// https://github.com/appleboy/gin-status-api
+	auth_adminV1 := rG.Group("/")
+	permissions := []types.PermissionType{
+		constants.Admin,
+		constants.Log,
+		constants.ReadOnly,
+		constants.Test,
+	}
+	auth_adminV1.Use(AuthMiddleWare(permissions))
+	// auth_adminV1.GET(METADATA_STATUS, status.GinHandler)
+
+}

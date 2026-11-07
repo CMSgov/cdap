@@ -1,8 +1,9 @@
-package storage
+package metabase
 
 import (
 	"database/sql"
 	"embed"
+	"fmt"
 	"io/fs"
 	"path"
 	"strings"
@@ -20,20 +21,23 @@ type EmbedSql struct {
 	Path       string
 	filesystem embed.FS
 	Files      map[string]string
-	db         *sql.DB
 }
 
 type EmbedParamMap map[string]any
+
+var EmbeddedSchema = NewEmbedSql("schema")
+var EmbeddedEndpoints = NewEmbedSql("endpoints")
 
 func NewEmbedSql(path string) *EmbedSql {
 	esql := &EmbedSql{}
 	esql.Path = path
 	esql.Files = make(map[string]string, 0)
+	esql.Init()
 
 	return esql
 }
 
-func (e *EmbedSql) Init(db *sql.DB) {
+func (e *EmbedSql) Init() {
 	switch e.Path {
 	case "endpoints":
 		e.filesystem = endpointFS
@@ -43,9 +47,28 @@ func (e *EmbedSql) Init(db *sql.DB) {
 		zap.L().Fatal("unknown embedded filesystem; cannot init",
 			zap.String("path", e.Path))
 	}
-
-	e.db = db
 	e.ReadContents()
+}
+
+func (e *EmbedSql) Contains(name string) bool {
+	_, exists := e.Files[name]
+	return exists
+}
+
+func (e *EmbedSql) Get(name string) (string, error) {
+	if e.Contains(name) {
+		return e.Files[name], nil
+	} else {
+		return "", fmt.Errorf("cannot find embedded sql for %s", name)
+	}
+}
+
+func (e *EmbedSql) GetOrPanic(name string) string {
+	if e.Contains(name) {
+		return e.Files[name]
+	} else {
+		panic(fmt.Sprintf("cannot find embedded sql for %s", name))
+	}
 }
 
 func (e *EmbedSql) ReadContents() {
@@ -69,22 +92,22 @@ func (e *EmbedSql) ReadContents() {
 	}
 }
 
-func (e *EmbedSql) Exec(name string, args []any) (sql.Result, error) {
+func (e *EmbedSql) Exec(db *sql.DB, name string, namedArgs []any) (sql.Result, error) {
 	var res sql.Result = nil
 	var err error
 
-	res, err = e.db.Exec(e.Files[name], args...)
+	res, err = db.Exec(e.Files[name], namedArgs...)
 	if err != nil {
 		zap.L().Error("EmbedSql Exec error",
 			zap.String("name", name),
-			zap.Any("args", args),
+			zap.Any("args", namedArgs),
 			zap.Error(err))
 	}
 	return res, err
 }
 
-func (e *EmbedSql) Query(name string, namedArgs []any) (*sql.Rows, error) {
-	rows, err := e.db.Query(e.Files[name], namedArgs...)
+func (e *EmbedSql) Query(db *sql.DB, name string, namedArgs []any) (*sql.Rows, error) {
+	rows, err := db.Query(e.Files[name], namedArgs...)
 	if err != nil {
 		zap.L().Error("EmbedSql Exec else",
 			zap.String("name", name),
@@ -94,13 +117,12 @@ func (e *EmbedSql) Query(name string, namedArgs []any) (*sql.Rows, error) {
 	return rows, nil
 }
 
-func (e *EmbedSql) QueryRow(name string, namedArgs []any) *sql.Row {
-	stmt, err := e.db.Prepare(e.Files[name])
+func (e *EmbedSql) QueryRow(db *sql.DB, name string, namedArgs []any) *sql.Row {
+	stmt, err := db.Prepare(e.Files[name])
 	if err != nil {
 		zap.L().Info("could not prepare etl", zap.String("name", name))
 		return nil
 	}
 	row := stmt.QueryRow(namedArgs...)
-	// row := e.db.QueryRow(e.Files[name], namedArgs)
 	return row
 }

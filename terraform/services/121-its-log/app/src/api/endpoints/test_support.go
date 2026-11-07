@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	testify "github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
@@ -23,7 +22,8 @@ import (
 func setupEnv(t *testing.T) *gin.Engine {
 	os.Setenv("x-api-key-log", "01234567890123456789012345678901234567890123456789")
 	os.Setenv("x-api-key-admin", "abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefgh")
-	tmpDir := t.TempDir()
+	//tmpDir := t.TempDir()
+	tmpDir := os.Getenv("HOME") + "/.its-log"
 	os.Mkdir(path.Join(tmpDir, "data"), 0755)
 	os.Mkdir(path.Join(tmpDir, "archive"), 0755)
 
@@ -40,11 +40,11 @@ func setupEnv(t *testing.T) *gin.Engine {
 		{"ITSLOG_BUFFER_LENGTH", "2000"},
 		{"ITSLOG_GINMODE", "debug"},
 		{"ITSLOG_ZAPMODE", "debug"},
-		{"ITSLOG_HASH_SEED", "42"},
 		{"ITSLOG_PROXIES_TRUSTED", "TBD"},
 		{"ITSLOG_STORAGE_PATH", path.Join(tmpDir, "data")},
 		{"ITSLOG_ARCHIVE_PATH", path.Join(tmpDir, "archive")},
 		{"ITSLOG_EVENTUAL_CONSISTENCY_SECONDS", "5"},
+		{"ITSLOG_INSTANCE_ID", "UNIT-TEST"},
 	}
 	for _, pair := range kv {
 		os.Setenv(pair.key, pair.val)
@@ -72,8 +72,6 @@ func setupEnv(t *testing.T) *gin.Engine {
 		Mode: viper.GetString("ginmode"),
 	})
 
-	//engine := gin.Default()
-
 	gin.SetMode(gin.TestMode)
 	return engine
 }
@@ -90,7 +88,7 @@ func toReader(data any) *strings.Reader {
 // 	os.Exit(m.Run())
 // }
 
-func testPost(engine *gin.Engine, t *testing.T, key string, path string, data any, expected int) []byte {
+func testPost(t *testing.T, engine *gin.Engine, key string, path string, data any, expected int) ([]byte, *httptest.ResponseRecorder) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", path, toReader(data))
 	req.Header.Set("x-api-key", os.Getenv(fmt.Sprintf("x-api-key-%s", key)))
@@ -102,6 +100,5 @@ func testPost(engine *gin.Engine, t *testing.T, key string, path string, data an
 	if err != nil {
 		t.Error("could not read response body")
 	}
-	testify.Equal(t, expected, w.Code)
-	return b
+	return b, w
 }

@@ -1,4 +1,4 @@
-package storage
+package metabase
 
 import (
 	"context"
@@ -13,36 +13,6 @@ import (
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
-)
-
-type FilesystemLocation int
-
-const (
-	LiveLocation = iota
-	ArchiveLocation
-	ExportLocation
-)
-
-func (f FilesystemLocation) String() string {
-	var names = [...]string{
-		LiveLocation:    "Live",
-		ArchiveLocation: "Archive",
-		ExportLocation:  "Export",
-	}
-	if f > 0 && int(f) < len(names) {
-		return names[f]
-	} else {
-		return "UnknownFilesystemLocation"
-	}
-}
-
-type MetabaseOpenMode int
-
-const (
-	OpenExistingOnly MetabaseOpenMode = iota
-	OpenExistingOrCreateNew
-	CreateNew
-	ReplaceExisting
 )
 
 type Lockable struct {
@@ -86,15 +56,26 @@ type Metabase struct {
 }
 
 type IMetabase interface {
-	setDB(db *sql.DB)
+	SetDB(db *sql.DB)
+	GetDB() *sql.DB
 	FullFilename() string
 	Open(mode MetabaseOpenMode) error
 	Close() error
 	Flush() error
 	Delete() error
+	Lock(msg string)
+	Unlock(msg string)
 }
 
 const DUCKDB_EXTENSION = "duckdb"
+
+// ##     ## ######## ########    ###    ########     ###     ######  ########
+// ###   ### ##          ##      ## ##   ##     ##   ## ##   ##    ## ##
+// #### #### ##          ##     ##   ##  ##     ##  ##   ##  ##       ##
+// ## ### ## ######      ##    ##     ## ########  ##     ##  ######  ######
+// ##     ## ##          ##    ######### ##     ## #########       ## ##
+// ##     ## ##          ##    ##     ## ##     ## ##     ## ##    ## ##
+// ##     ## ########    ##    ##     ## ########  ##     ##  ######  ########
 
 func NewMetabase(location FilesystemLocation, filename string) (*Metabase, error) {
 	p := "BAD_PATH"
@@ -122,8 +103,12 @@ func NewMetabase(location FilesystemLocation, filename string) (*Metabase, error
 	}, nil
 }
 
-func (M *Metabase) setDB(db *sql.DB) {
+func (M *Metabase) SetDB(db *sql.DB) {
 	M.database.db = db
+}
+
+func (M *Metabase) GetDB() *sql.DB {
+	return M.database.db
 }
 
 func (M *Metabase) FullFilename() string {
@@ -196,7 +181,7 @@ func open(im IMetabase, mode MetabaseOpenMode) error {
 			return errors.New("open: " + err.Error())
 		}
 		db.SetMaxIdleConns(0)
-		im.setDB(db)
+		im.SetDB(db)
 		db.Close()
 
 	}
@@ -205,11 +190,17 @@ func open(im IMetabase, mode MetabaseOpenMode) error {
 		return errors.New("open: " + err.Error())
 	}
 	db.SetMaxIdleConns(0)
-	im.setDB(db)
+	im.SetDB(db)
+	// Create the tables.
+	_, err = Exec(im, EmbeddedSchema.Files["schema"], EmbedParamMap{})
+	if err != nil {
+		return err
+	}
 
 	if !CheckExists(im) {
 		return errors.New("file does not exist after open")
 	}
+
 	return err
 }
 
@@ -272,6 +263,7 @@ func (M *Metabase) Delete() error {
 	return delete(M)
 }
 
+// /////////////
 type Database struct {
 	meta *Metabase
 	app  App
@@ -283,6 +275,14 @@ func NewDatabase(app App, M *Metabase) *Database {
 		meta: M,
 	}
 }
+
+// #### ##    ##  ######  ########    ###    ##    ##  ######  ######## ########     ###    ########    ###    ########     ###     ######  ########
+//	##  ###   ## ##    ##    ##      ## ##   ###   ## ##    ## ##       ##     ##   ## ##      ##      ## ##   ##     ##   ## ##   ##    ## ##
+//	##  ####  ## ##          ##     ##   ##  ####  ## ##       ##       ##     ##  ##   ##     ##     ##   ##  ##     ##  ##   ##  ##       ##
+//	##  ## ## ##  ######     ##    ##     ## ## ## ## ##       ######   ##     ## ##     ##    ##    ##     ## ########  ##     ##  ######  ######
+//	##  ##  ####       ##    ##    ######### ##  #### ##       ##       ##     ## #########    ##    ######### ##     ## #########       ## ##
+//	##  ##   ### ##    ##    ##    ##     ## ##   ### ##    ## ##       ##     ## ##     ##    ##    ##     ## ##     ## ##     ## ##    ## ##
+// #### ##    ##  ######     ##    ##     ## ##    ##  ######  ######## ########  ##     ##    ##    ##     ## ########  ##     ##  ######  ########
 
 type InstanceDatabase struct {
 	database   *Database
@@ -299,12 +299,12 @@ func NewInstanceDatabase(app App) (*InstanceDatabase, error) {
 	I := &InstanceDatabase{
 		database:   NewDatabase(app, M),
 		InstanceId: viper.GetString("instance.id"),
-		YYYYMMDD:   types.NewILTimeNow().AsYYYYMMDD(),
+		YYYYMMDD:   types.NewYYYYMMDD().String(),
 	}
 	return I, nil
 }
 
-func (I *InstanceDatabase) setDB(db *sql.DB) {
+func (I *InstanceDatabase) SetDB(db *sql.DB) {
 	if I.database == nil {
 		panic("InstanceDatabase database is nil")
 	}
@@ -317,13 +317,17 @@ func (I *InstanceDatabase) setDB(db *sql.DB) {
 	I.database.meta.database.db = db
 }
 
+func (I *InstanceDatabase) GetDB() *sql.DB {
+	return I.database.meta.GetDB()
+}
+
 // By implementing the entire interface, we can pass this anywhere
 // a type of IMetabase is expected.
 func (I *InstanceDatabase) FullFilename() string {
 	filename := fmt.Sprintf("%s_instance_%s_%s.%s",
 		I.database.app.AppId,
 		viper.GetString("instance.id"),
-		types.NewILTimeToday().AsYYYYMMDD(),
+		types.NewYYYYMMDD().String(),
 		DUCKDB_EXTENSION,
 	)
 	return path.Join(I.database.meta.path, filename)
@@ -345,6 +349,21 @@ func (I *InstanceDatabase) Delete() error {
 	return delete(I)
 }
 
+func (I *InstanceDatabase) Lock(msg string) {
+	I.database.meta.Lock(msg)
+}
+
+func (I *InstanceDatabase) Unlock(msg string) {
+	I.database.meta.Unlock(msg)
+}
+
+// ########     ###    #### ##       ##    ## ########     ###    ########    ###    ########     ###     ######  ########
+// ##     ##   ## ##    ##  ##        ##  ##  ##     ##   ## ##      ##      ## ##   ##     ##   ## ##   ##    ## ##
+// ##     ##  ##   ##   ##  ##         ####   ##     ##  ##   ##     ##     ##   ##  ##     ##  ##   ##  ##       ##
+// ##     ## ##     ##  ##  ##          ##    ##     ## ##     ##    ##    ##     ## ########  ##     ##  ######  ######
+// ##     ## #########  ##  ##          ##    ##     ## #########    ##    ######### ##     ## #########       ## ##
+// ##     ## ##     ##  ##  ##          ##    ##     ## ##     ##    ##    ##     ## ##     ## ##     ## ##    ## ##
+// ########  ##     ## #### ########    ##    ########  ##     ##    ##    ##     ## ########  ##     ##  ######  ########
 type DailyDatabase struct {
 	database *Database
 	YYYYMMDD string
@@ -365,8 +384,13 @@ func NewDailyDatabase(app App, yyyymmdd string) (*DailyDatabase, error) {
 	}
 	return I, nil
 }
-func (DB *DailyDatabase) setDB(db *sql.DB) {
-	DB.database.meta.setDB(db)
+
+func (DB *DailyDatabase) SetDB(db *sql.DB) {
+	DB.database.meta.SetDB(db)
+}
+
+func (DD *DailyDatabase) GetDB() *sql.DB {
+	return DD.database.meta.GetDB()
 }
 
 // By implementing the entire interface, we can pass this anywhere
@@ -394,6 +418,14 @@ func (DD *DailyDatabase) Flush() error {
 
 func (DD *DailyDatabase) Delete() error {
 	return delete(DD)
+}
+
+func (DD *DailyDatabase) Lock(msg string) {
+	DD.database.meta.Lock(msg)
+}
+
+func (DD *DailyDatabase) Unlock(msg string) {
+	DD.database.meta.Unlock(msg)
 }
 
 type WeeklyDatabase struct {

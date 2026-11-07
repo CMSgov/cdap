@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "its-log instance 1",
             "type": "go",
             "request": "launch",
             "mode": "debug",
@@ -26,16 +26,8 @@
                 "ITSLOG_PROXIES_TRUSTED": "TBD",
                 "ITSLOG_STORAGE_PATH": "${userHome}/.its-log/data",
                 "ITSLOG_ARCHIVE_PATH": "${userHome}/.its-log/archive",
-                "ITSLOG_BACKUP_BUCKET": "backup",
-                "ITSLOG_BACKUP_AWS_ENDPOINT_HOST": "0.0.0.0",
-                "ITSLOG_BACKUP_AWS_ENDPOINT_PORT": "4566",
-                "ITSLOG_BACKUP_AWS_ENDPOINT_SCHEME": "http",
-                "ITSLOG_BACKUP_AWS_KEYID": "000000000000",
-                "ITSLOG_BACKUP_AWS_ACCESSKEY": "anything",
-                "ITSLOG_BACKUP_AWS_REGION": "us-east-1",
-                "ITSLOG_EVENTUAL_CONSISTENCY_SECONDS": "5"
+                "ITSLOG_INSTANCE_ID": "1"
             }
-
         }
     ]
 }

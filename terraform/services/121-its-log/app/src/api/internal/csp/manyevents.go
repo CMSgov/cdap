@@ -1,29 +1,46 @@
 package csp
 
 import (
-	"github.com/navapbc/its-log/internal/storage"
+	"github.com/navapbc/its-log/internal/metabase"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
 
-func ManyEvents(s *storage.Storage, evt_buff []*types.Event) (int64, error) {
+func ManyEvents(events []*Event) (int64, error) {
 	counter := int64(0)
+	var app metabase.App
+	if len(events) > 0 {
+		app = metabase.App{
+			AppId: events[0].AppId,
+			KeyId: events[0].KeyId,
+		}
+	} else {
+		return 0, nil
+	}
+	id, err := metabase.NewInstanceDatabase(app)
+	if err != nil {
+		zap.L().Error("could not create instance database")
+		return -1, err
+	}
+	id.Open(metabase.OpenExistingOrCreateNew)
+	if err != nil {
+		zap.L().Error("could not open instance database")
+		return -1, err
+	}
+	defer func() {
+		id.Flush()
+		id.Close()
+	}()
 
-	// This could/should become an appender in DuckDB.
-	// https://duckdb.org/docs/current/data/appender
-	// Doing individual commits without a transaction is the slowest
-	// way to do this in DuckDB. Appenders are much better, both for
-	// performance and safety.
-
-	for _, e := range evt_buff {
+	for _, e := range events {
 		if e != nil {
-			_, err := s.ExecNoLock(storage.Endpoint,
-				"log_event",
-				storage.EmbedParamMap{
+			_, err := metabase.ExecNoLock(id,
+				metabase.EmbeddedEndpoints.GetOrPanic("log_event"),
+				types.M{
 					"inserted": e.Timestamp,
 					"key_id":   e.KeyId,
 					"cluster":  e.Cluster,
-					"tags":     e.TagString,
+					"tags":     e.Tags,
 					"data":     e.Data,
 				},
 			)
