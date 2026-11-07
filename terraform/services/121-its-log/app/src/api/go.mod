@@ -1,6 +1,6 @@
 module github.com/navapbc/its-log
 
-go 1.26.0
+go 1.27
 
 require (
 	github.com/appleboy/gin-status-api v1.3.2

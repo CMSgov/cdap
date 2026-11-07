@@ -1,13 +1,15 @@
 package storage
 
 import (
+	"fmt"
+	"math/rand/v2"
 	"os"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 func setupMetabaseEnv(t *testing.T) {
@@ -15,7 +17,7 @@ func setupMetabaseEnv(t *testing.T) {
 	os.Setenv("ITSLOG_STORAGE_PATH", t.TempDir())
 	os.Setenv("ITSLOG_ARCHIVE_PATH", t.TempDir())
 	os.Setenv("ITSLOG_EXPORT_PATH", t.TempDir())
-
+	os.Setenv("ITSLOG_INSTANCE_ID", fmt.Sprintf("THE-INSTANCE-ID-%d", rand.IntN(1000)))
 	// Load 'em up
 	replacer := strings.NewReplacer(".", "_")
 	viper.SetEnvKeyReplacer(replacer)
@@ -23,110 +25,104 @@ func setupMetabaseEnv(t *testing.T) {
 	viper.AutomaticEnv()
 }
 
-func TestOpen(t *testing.T) {
+func TestInstanceDatabaseExistence(t *testing.T) {
 	setupMetabaseEnv(t)
-	tests := []struct {
-		location FilesystemLocation
-		filename string
-		mode     MetabaseOpenMode
-		pass     bool
-		expected string
-	}{
-		// If we try and open existing only, it won't work.
-		{
-			location: Live,
-			filename: "pupper_daily",
-			mode:     OpenExistingOnly,
-			pass:     false,
-			expected: "does not",
-		},
-		// If we allow creation, it will work
-		{
-			location: Live,
-			filename: "pupper_daily",
-			mode:     OpenExistingOrCreateNew,
-			pass:     true,
-			expected: "IGNORED",
-		},
-		// This should also work, the db exists
-		{
-			location: Live,
-			filename: "pupper_daily",
-			mode:     ReplaceExisting,
-			pass:     true,
-			expected: "IGNORED",
-		},
-		// This should fail, the db does not exist
-		{
-			location: Live,
-			filename: "pupper_nope",
-			mode:     ReplaceExisting,
-			pass:     false,
-			expected: "does not exist",
-		},
+	id, err := NewInstanceDatabase(App{AppId: "app0123", KeyId: "key0123"})
+	if err != nil {
+		t.Error(err)
+	}
+	// t.Log(id.FullFilename())
+	assert.False(t, CheckExists(id))
+	id.Open(OpenExistingOrCreateNew)
+	assert.True(t, CheckExists(id))
+}
+
+func _touch(filename string) error {
+	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	file.Close() // Close immediately to avoid resource leaks
+	now := time.Now()
+	err = os.Chtimes(filename, now, now)
+	if err != nil {
+		return err
 	}
 
-	for ndx, tt := range tests {
-		t.Logf("TestOpen: %d", ndx)
-
-		m, err := NewMetabase(tt.location, tt.filename)
-		if err != nil {
-			t.Error(err)
-		}
-		if m.filename != tt.filename+"."+DUCKDB_EXTENSION {
-			t.Error("filenames do not match")
-		}
-
-		var before os.FileInfo
-		var after os.FileInfo
-		if tt.mode == ReplaceExisting {
-			// t.Log(os.ReadDir(m.path))
-			before, err = os.Stat(m.FullFilename())
-			if err != nil {
-				// if is possible the file does not exist in the first instance.
-			}
-
-		}
-		// "/var/folders/hf/hbf81j7j2d765_zrwnh6s_dh0000gp/T/TestOpen2481285748/001"
-		// "/var/folders/hf/hbf81j7j2d765_zrwnh6s_dh0000gp/T/TestOpen2481285748/001"
-		time.Sleep(5 * time.Millisecond)
-		openErr := m.Open(tt.mode)
-
-		if openErr != nil && tt.pass == false {
-			matched, err := regexp.MatchString(tt.expected, openErr.Error())
-			if err != nil {
-				t.Error("regex error: " + err.Error())
-			}
-			if !matched {
-				t.Errorf("failed to match error: %v", m)
-			}
-			continue
-		} else if openErr != nil {
-			// everything was fine!
-		}
-
-		if tt.mode == ReplaceExisting {
-			// t.Log(os.ReadDir(m.path))
-			after, err = os.Stat(m.FullFilename())
-			if err != nil {
-				t.Error("after: " + err.Error())
-			}
-		}
-
-		// If we are creating new OR replacing if exists, then
-		// the stat should not be the same on these.
-		if tt.mode == ReplaceExisting {
-			// If it was create new, then we should nave a nil and valid value.
-			if before == nil && after != nil {
-				// good!
-			}
-			// If both existed, the time should have changed
-			if before != nil && after != nil {
-				if before.ModTime().Equal(after.ModTime()) {
-					t.Error("replace if exists has same timestamps")
-				}
-			}
-		}
-
+	return nil
+}
+func TestCreateNew(t *testing.T) {
+	setupMetabaseEnv(t)
+	id, err := NewInstanceDatabase(App{AppId: "app0123", KeyId: "key0123"})
+	if err != nil {
+		t.Error(err)
 	}
+	// Cannot create a new file if it exists
+	_touch(id.FullFilename())
+	assert.True(t, CheckExists(id))
+	err = id.Open(CreateNew)
+	assert.Error(t, err)
+	id.Close()
+
+	// Can create a new file if it does not exist
+	os.Remove(id.FullFilename())
+	assert.False(t, CheckExists(id))
+	err = id.Open(CreateNew)
+	assert.NoError(t, err)
+	assert.True(t, CheckExists(id))
+	id.Close()
+}
+
+func TestOpenExisting(t *testing.T) {
+	setupMetabaseEnv(t)
+	id, err := NewInstanceDatabase(App{AppId: "app0123", KeyId: "key0123"})
+	if err != nil {
+		t.Error(err)
+	}
+	// Can open existing
+	os.Remove(id.FullFilename())
+	assert.False(t, CheckExists(id))
+	err = id.Open(CreateNew)
+	assert.NoError(t, err)
+	assert.True(t, CheckExists(id))
+	err = id.Close()
+	assert.NoError(t, err)
+	err = id.Open(OpenExistingOnly)
+	assert.NoError(t, err)
+
+	// Can not open a file that does not exist
+	os.Remove(id.FullFilename())
+	assert.False(t, CheckExists(id))
+	err = id.Open(OpenExistingOnly)
+	assert.False(t, CheckExists(id))
+	assert.Error(t, err)
+	id.Close()
+}
+
+func TestReplaceExisting(t *testing.T) {
+	setupMetabaseEnv(t)
+	id, e0 := NewInstanceDatabase(App{AppId: "app0123", KeyId: "key0123"})
+	if e0 != nil {
+		t.Error(e0)
+	}
+	// Can only replace a file that exists
+	os.Remove(id.FullFilename())
+	e1 := id.Open(ReplaceExisting)
+	assert.Error(t, e1)
+
+	// Can replace a file that exists
+	os.Remove(id.FullFilename())
+	e2 := id.Open(CreateNew)
+	assert.NoError(t, e2)
+	id.Close()
+	assert.True(t, CheckExists(id))
+	before, _ := os.Stat(id.FullFilename())
+	time.Sleep(5 * time.Millisecond)
+
+	e3 := id.Open(ReplaceExisting)
+	assert.NoError(t, e3)
+	id.Close()
+	after, _ := os.Stat(id.FullFilename())
+	// Assert that the files have diff timestamps
+	assert.True(t, before.ModTime().Before(after.ModTime()))
 }
