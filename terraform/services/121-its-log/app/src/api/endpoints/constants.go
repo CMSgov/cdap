@@ -22,8 +22,4 @@ var SUMMARY_ALLOWED_KINDS = []string{
 	"monthly",
 }
 
-const ARCHIVE = "/archive"
-const ARCHIVE_LIST = "/archive/list"
-const ARCHIVE_CONSOLIDATE = "/archive/consolidate"
-const ARCHIVE_READ = "/archive/summary/read"
-const ARCHIVE_ALL = "/archive/summary/all"
+const CONSOLIDATE = "/consolidate"

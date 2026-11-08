@@ -141,5 +141,5 @@ func addArchiveEndpoints(rG *gin.RouterGroup) {
 	permsRW := []types.PermissionType{constants.Admin, constants.Test}
 	auth_adminV1ReadWrite.Use(AuthMiddleWare(permsRW))
 
-	auth_adminV1ReadWrite.POST(ARCHIVE, Archive)
+	auth_adminV1ReadWrite.POST(CONSOLIDATE, Consolidate)
 }

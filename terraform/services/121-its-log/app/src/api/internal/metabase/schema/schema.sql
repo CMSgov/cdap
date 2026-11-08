@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS metadata (
 );
 
 CREATE SEQUENCE IF NOT EXISTS events_id_seq START 1;
-CREATE TABLE IF NOT EXISTS events (
+CREATE TABLE IF NOT EXISTS event (
     -- automatically provided by the SQLite engine
     id BIGINT PRIMARY KEY DEFAULT nextval('events_id_seq') NOT NULL,
     inserted DATETIME DEFAULT now() NOT NULL, 
@@ -30,23 +30,6 @@ CREATE TABLE IF NOT EXISTS summary (
     tags JSON,
     data JSON NOT NULL
 );
-
-CREATE SEQUENCE IF NOT EXISTS consolidated_id_seq START 1;
-CREATE TABLE IF NOT EXISTS consolidated (
-    id INTEGER PRIMARY KEY default nextval('consolidated_id_seq') NOT NULL,
-    inserted DATETIME DEFAULT now() NOT NULL,
-    key_id TEXT NOT NULL,
-    date DATE NOT NULL,
-    operation TEXT NOT NULL,
-    tags JSON,
-    data JSON NOT NULL
-);
-
--- See https://stackoverflow.com/questions/22699409/sqlite-null-and-unique
--- We want NULL values to count towards uniqueness here.
--- Seems like it might work for DuckDB, too.
--- CREATE UNIQUE INDEX IF NOT EXISTS summary_ndx ON summary 
---     (date, operation, IFNULL(tags, 'index_default'), IFNULL(value, 'index_default'));
 
 CREATE SEQUENCE IF NOT EXISTS etl_id_seq START 1;
 
