@@ -439,9 +439,70 @@ func (DD *DailyDatabase) Unlock(msg string) {
 }
 
 type WeeklyDatabase struct {
-	Database
+	database   *Database
 	YYYY       int
 	WeekNumber int
+}
+
+func NewWeeklyDatabase(app App, year int, week int) (*WeeklyDatabase, error) {
+
+	M, err := NewMetabase(ArchiveLocation, app.AppId)
+	if err != nil {
+		return nil, err
+	}
+	I := &WeeklyDatabase{
+		database: &Database{
+			app:  app,
+			meta: M,
+		},
+		YYYY:       year,
+		WeekNumber: week,
+	}
+	return I, nil
+}
+
+func (DB *WeeklyDatabase) SetDB(db *sql.DB) {
+	DB.database.meta.SetDB(db)
+}
+
+func (DB *WeeklyDatabase) GetDB() *sql.DB {
+	return DB.database.meta.GetDB()
+}
+
+// By implementing the entire interface, we can pass this anywhere
+// a type of IMetabase is expected.
+func (DB *WeeklyDatabase) FullFilename() string {
+	filename := fmt.Sprintf("%s_weekly_%d-%d.%s",
+		DB.database.app.AppId,
+		DB.YYYY,
+		DB.WeekNumber,
+		DUCKDB_EXTENSION,
+	)
+	return path.Join(DB.database.meta.path, filename)
+}
+
+func (DB *WeeklyDatabase) Open(mode MetabaseOpenMode) error {
+	return open(DB, mode)
+}
+
+func (DB *WeeklyDatabase) Close() error {
+	return DB.database.meta.Close()
+}
+
+func (DB *WeeklyDatabase) Flush() error {
+	return DB.database.meta.Flush()
+}
+
+func (DB *WeeklyDatabase) Delete() error {
+	return delete(DB)
+}
+
+func (DB *WeeklyDatabase) Lock(msg string) {
+	DB.database.meta.Lock(msg)
+}
+
+func (DB *WeeklyDatabase) Unlock(msg string) {
+	DB.database.meta.Unlock(msg)
 }
 
 type MonthlyDatabase struct {

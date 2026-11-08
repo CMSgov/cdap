@@ -1,7 +1,9 @@
 package endpoints
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
@@ -11,11 +13,14 @@ import (
 )
 
 type SummaryPostBody struct {
-	Operation string   `json:"operation" binding:"required"`
-	Tags      []string `json:"tags"`
-	Data      any      `json:"data" binding:"required"`
-	Kind      string
-	YYYYMMDD  string `json:"ymd"`
+	Operation   string   `json:"operation" binding:"required"`
+	Tags        []string `json:"tags"`
+	Data        any      `json:"data" binding:"required"`
+	Kind        string   `json:"kind" binding:"required"`
+	YYYYMMDD    string   `json:"ymd"`
+	WeekNumber  int      `json:"week"`
+	MonthNumber int      `json:"month"`
+	YearNumber  int      `json:"year"`
 }
 
 func SummaryCreate(c *gin.Context) {
@@ -27,7 +32,7 @@ func SummaryCreate(c *gin.Context) {
 	}
 
 	// Summaries are either daily, weekly, yearly, or consolidated
-	body.Kind = base.GetParamOrPanic(c, "kind", SUMMARY_ALLOWED_KINDS)
+	// body.Kind = base.GetParamOrPanic(c, "kind", SUMMARY_ALLOWED_KINDS)
 
 	app := metabase.App{
 		AppId: base.GetOrPanic(c, constants.ITSLOG_APPID),
@@ -38,86 +43,84 @@ func SummaryCreate(c *gin.Context) {
 	var err error
 	switch body.Kind {
 	case "daily":
-		err = types.IsValidYYYYMMDD(body.YYYYMMDD)
+		im, err = openDailyDB(c, app, body)
 		if err != nil {
-			BadRequest(c, err, "invalid YYYY-MM-DD")
+			return
 		}
-		im, err = metabase.NewDailyDatabase(
-			app,
-			body.YYYYMMDD,
-		)
+		defer im.Close()
+	case "weekly":
+		im, err = openWeeklyDB(c, app, body)
 		if err != nil {
-			ServerError(c, err, "could not create daily database")
+			return
 		}
-		err = im.Open(metabase.OpenExistingOnly)
-		if err != nil {
-			BadRequest(c, err, fmt.Sprintf("no daily database exists %s", body.YYYYMMDD))
-		}
+		defer im.Close()
+	}
+
+	_, err = metabase.Exec(im, metabase.EmbeddedEndpoints.GetOrPanic("summary_create"), metabase.EmbedParamMap{
+		"key_id":    app.KeyId,
+		"operation": body.Operation,
+		"tags":      body.Tags,
+		"data":      body.Data,
+	})
+	if err != nil {
+		ServerError(c, err, "could not insert summary")
+		return
 	}
 
 	StatusOk(c, "summary created")
+}
 
-	// s, err := SetupGinDB(c, storage.StorageConfig{
-	// 	AppId: appId,
-	// 	// We have to be able to create summaries in previous days.
-	// 	Date: body.Date,
-	// 	Kind: storage.LiveStorage,
-	// })
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{
-	// 		"status":    "error",
-	// 		"method":    c.Request.Method,
-	// 		"message":   "could not set up database",
-	// 		"error":     err.Error(),
-	// 		"operation": body.Operation,
-	// 	})
-	// 	return
-	// }
-	// defer s.Close()
+func openDailyDB(c *gin.Context, app metabase.App, body SummaryPostBody) (metabase.IMetabase, error) {
+	err := types.IsValidYYYYMMDD(body.YYYYMMDD)
+	if err != nil {
+		BadRequest(c, err, "invalid YYYY-MM-DD")
+		return nil, err
+	}
+	im, err := metabase.NewDailyDatabase(
+		app,
+		body.YYYYMMDD,
+	)
+	if err != nil {
+		ServerError(c, err, "could not create daily database")
+		return nil, err
+	}
+	err = im.Open(metabase.OpenExistingOnly)
+	if err != nil {
+		BadRequest(c, err, fmt.Sprintf("no daily database exists %s", body.YYYYMMDD))
+		return nil, err
+	}
 
-	// // The tags field comes in as a JSON array. It needs to become
-	// // a sorted, dot-separated string.
-	// sort.Strings(body.Tags)
-	// theTags := strings.Join(body.Tags, ".")
+	return im, nil
+}
 
-	// // Prep params for running the insert many operation
-	// etlP := &etl.RunEtlParams{
-	// 	AppId:   appId,
-	// 	GinCtx:  c,
-	// 	EtlName: "SummaryCreate",
-	// 	KeyId:   keyId,
-	// 	Storage: s,
-	// 	Payload: make(types.M, 0),
-	// }
+func openWeeklyDB(c *gin.Context, app metabase.App, body SummaryPostBody) (metabase.IMetabase, error) {
+	if body.WeekNumber < 1 || body.WeekNumber > 53 {
+		msg := fmt.Sprintf("must provide valid week number (1-53), not %d", body.WeekNumber)
+		BadRequest(c, errors.New(msg), msg)
+		return nil, errors.New(msg)
+	}
 
-	// // We're only inserting one event, but it is about code reuse.
-	// summary := etl.ItslogSummary{
-	// 	KeyID:     keyId,
-	// 	Operation: body.Operation,
-	// 	Tags:      theTags,
-	// 	Data:      body.Data,
-	// }
+	currentYear := time.Now().Year()
+	if body.YearNumber < 2000 || body.YearNumber > currentYear {
+		msg := fmt.Sprintf("must provide valid year (2000-%d), not %d", currentYear, body.YearNumber)
+		BadRequest(c, errors.New(msg), msg)
+		return nil, errors.New(msg)
+	}
 
-	// ierr := InsertSummaryRows("summarycreate", etlP, []etl.ItslogSummary{summary})
+	im, err := metabase.NewWeeklyDatabase(
+		app,
+		body.YearNumber,
+		body.WeekNumber,
+	)
+	if err != nil {
+		ServerError(c, err, "could not create daily database")
+		return nil, err
+	}
+	err = im.Open(metabase.OpenExistingOnly)
+	if err != nil {
+		BadRequest(c, err, fmt.Sprintf("no weekly database exists %s", body.YYYYMMDD))
+		return nil, err
+	}
 
-	// if ierr != nil {
-	// 	zap.L().Error("summary save error", zap.Error(ierr))
-
-	// 	c.JSON(http.StatusNotImplemented, gin.H{
-	// 		"status":    "error",
-	// 		"method":    c.Request.Method,
-	// 		"message":   "could not save etl step",
-	// 		"operation": body.Operation,
-	// 	})
-	// 	return
-	// }
-
-	// c.JSON(http.StatusCreated, gin.H{
-	// 	"status":    "ok",
-	// 	"method":    c.Request.Method,
-	// 	"operation": body.Operation,
-	// 	"tags":      theTags,
-	// 	"data":      body.Data,
-	// })
-
+	return im, nil
 }

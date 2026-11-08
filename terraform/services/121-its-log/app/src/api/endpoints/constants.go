@@ -13,7 +13,7 @@ const METADATA_HEALTH = "/health"
 const METADATA_STATUS = "/status"
 
 const SUMMARY_READ = "/summary/read"
-const SUMMARY_CREATE = "/summary/create/:kind"
+const SUMMARY_CREATE = "/summary/create"
 const SUMMARY_CLEAR = "/summary/wipe"
 
 var SUMMARY_ALLOWED_KINDS = []string{
