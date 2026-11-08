@@ -22,12 +22,15 @@ func ManyEvents(events []*Event) (int64, error) {
 		zap.L().Error("could not create instance database")
 		return -1, err
 	}
-	id.Open(metabase.OpenExistingOrCreateNew)
+	err = id.Open(metabase.OpenExistingOrCreateNew)
 	if err != nil {
 		zap.L().Error("could not open instance database")
 		return -1, err
 	}
+
+	id.Lock("ManyEvents")
 	defer func() {
+		id.Unlock("ManyEvents")
 		id.Flush()
 		id.Close()
 	}()

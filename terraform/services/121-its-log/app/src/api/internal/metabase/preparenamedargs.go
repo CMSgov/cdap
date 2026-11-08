@@ -85,6 +85,13 @@ func generateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 				params[trimmed] = string(b)
 			case time.Time:
 				params[trimmed] = params[trimmed].(time.Time)
+			case sql.NullString:
+				ns := params[trimmed].(sql.NullString)
+				if ns.Valid {
+					params[trimmed] = ns.String
+				} else {
+					params[trimmed] = nil
+				}
 			default:
 				zap.L().Error("unable to generate named arg",
 					zap.String("key", trimmed),

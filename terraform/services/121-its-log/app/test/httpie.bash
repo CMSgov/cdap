@@ -26,6 +26,17 @@ http --check-status --ignore-stdin GET \
     ${SCHEME}://${HOST}:${PORT}/v1/health \
     | assert_equals "ok" $(jq -r .status)
 
+
+# How about create a summary?
+http --check-status --ignore-stdin POST \
+    ${SCHEME}://${HOST}:${PORT}/v1/summary/create/daily \
+    x-api-key:${API_KEY_ADMIN} \
+    operation="test.create.summary" \
+    tags[]="one" \
+    tags[]="two" \
+    data[]="required" \
+    YYYYMMDD="2026-11-07"
+
 # Can we post an event?
 http --check-status --ignore-stdin POST \
     ${SCHEME}://${HOST}:${PORT}/v1/log/create \

@@ -20,3 +20,11 @@ func BadRequest(c *gin.Context, err error, msg string) {
 		"message": msg,
 	})
 }
+
+func ServerError(c *gin.Context, err error, msg string) {
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"status":  "error",
+		"error":   err.Error(),
+		"message": msg,
+	})
+}

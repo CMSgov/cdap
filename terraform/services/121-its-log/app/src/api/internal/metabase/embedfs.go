@@ -1,7 +1,6 @@
 package metabase
 
 import (
-	"database/sql"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -90,39 +89,4 @@ func (e *EmbedSql) ReadContents() {
 			e.Files[nameWithoutExt] = string(contents)
 		}
 	}
-}
-
-func (e *EmbedSql) Exec(db *sql.DB, name string, namedArgs []any) (sql.Result, error) {
-	var res sql.Result = nil
-	var err error
-
-	res, err = db.Exec(e.Files[name], namedArgs...)
-	if err != nil {
-		zap.L().Error("EmbedSql Exec error",
-			zap.String("name", name),
-			zap.Any("args", namedArgs),
-			zap.Error(err))
-	}
-	return res, err
-}
-
-func (e *EmbedSql) Query(db *sql.DB, name string, namedArgs []any) (*sql.Rows, error) {
-	rows, err := db.Query(e.Files[name], namedArgs...)
-	if err != nil {
-		zap.L().Error("EmbedSql Exec else",
-			zap.String("name", name),
-			zap.Any("args", namedArgs),
-			zap.Error(err))
-	}
-	return rows, nil
-}
-
-func (e *EmbedSql) QueryRow(db *sql.DB, name string, namedArgs []any) *sql.Row {
-	stmt, err := db.Prepare(e.Files[name])
-	if err != nil {
-		zap.L().Info("could not prepare etl", zap.String("name", name))
-		return nil
-	}
-	row := stmt.QueryRow(namedArgs...)
-	return row
 }

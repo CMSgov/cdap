@@ -82,10 +82,11 @@ func PourGin(ch_evt_out chan<- *csp.Event) *gin.Engine {
 
 	addMetadataEndpoints(apiV1)
 	addLoggingEndpoints(apiV1, ch_evt_out)
+	addSummaryEndpoints(apiV1)
+	addArchiveEndpoints(apiV1)
+
 	// addEtlEndpoints(apiV1)
 	// addSequenceEndpoints(apiV1)
-	// addSummaryEndpoints(apiV1)
-	// addArchiveEndpoints(apiV1)
 
 	return router
 }
@@ -118,4 +119,27 @@ func addMetadataEndpoints(rG *gin.RouterGroup) {
 	auth_adminV1.Use(AuthMiddleWare(permissions))
 	// auth_adminV1.GET(METADATA_STATUS, status.GinHandler)
 
+}
+
+// SUMMARY ENDPOINTS
+func addSummaryEndpoints(rG *gin.RouterGroup) {
+	auth_adminV1ReadOnly := rG.Group("/")
+	auth_adminV1ReadWrite := rG.Group("/")
+
+	permsRO := []types.PermissionType{constants.Admin, constants.ReadOnly, constants.Test}
+	permsRW := []types.PermissionType{constants.Admin, constants.Test}
+	auth_adminV1ReadOnly.Use(AuthMiddleWare(permsRO))
+	auth_adminV1ReadWrite.Use(AuthMiddleWare(permsRW))
+
+	// auth_adminV1ReadOnly.POST(SUMMARY_READ, SummaryRead)
+	auth_adminV1ReadWrite.POST(SUMMARY_CREATE, SummaryCreate)
+}
+
+func addArchiveEndpoints(rG *gin.RouterGroup) {
+	auth_adminV1ReadWrite := rG.Group("/")
+
+	permsRW := []types.PermissionType{constants.Admin, constants.Test}
+	auth_adminV1ReadWrite.Use(AuthMiddleWare(permsRW))
+
+	auth_adminV1ReadWrite.POST(ARCHIVE, Archive)
 }

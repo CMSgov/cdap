@@ -48,11 +48,6 @@ func QueryRow(im IMetabase, theSql string, params EmbedParamMap) *sql.Row {
 		im.Unlock("QueryRow")
 		return nil
 	}
-	if err != nil {
-		zap.L().Error("could not get embedded sql for query",
-			zap.Error(err))
-		return nil
-	}
 	row = im.GetDB().QueryRow(theSql, args...)
 	im.Unlock("QueryRow")
 

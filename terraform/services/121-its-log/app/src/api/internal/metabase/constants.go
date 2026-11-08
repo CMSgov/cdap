@@ -9,14 +9,16 @@ const (
 	OpenExistingOrCreateNew
 	CreateNew
 	ReplaceExisting
+	ReplaceExistingOrCreateNew
 )
 
 func (f MetabaseOpenMode) String() string {
 	var names = [...]string{
-		OpenExistingOnly:        "OpenExistingOnly",
-		OpenExistingOrCreateNew: "OpenExistingOrCreateNew",
-		CreateNew:               "CreateNew",
-		ReplaceExisting:         "ReplaceExisting",
+		OpenExistingOnly:           "OpenExistingOnly",
+		OpenExistingOrCreateNew:    "OpenExistingOrCreateNew",
+		CreateNew:                  "CreateNew",
+		ReplaceExisting:            "ReplaceExisting",
+		ReplaceExistingOrCreateNew: "ReplaceExistingOrCreateNew",
 	}
 	if f > 0 && int(f) < len(names) {
 		return names[f]

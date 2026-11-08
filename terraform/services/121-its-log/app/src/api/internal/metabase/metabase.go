@@ -173,6 +173,17 @@ func open(im IMetabase, mode MetabaseOpenMode) error {
 		} else {
 			return errors.New("cannot replace on open; database does not exist: " + im.FullFilename())
 		}
+	case ReplaceExistingOrCreateNew:
+		if CheckExists(im) {
+			zap.L().Info("ReplaceIfExists")
+			// delete if it exists, and then fall through.
+			delErr := im.Delete()
+			if delErr != nil {
+				return delErr
+			}
+			touch = true
+		}
+		// fall through
 	}
 
 	if touch {
@@ -222,13 +233,15 @@ func (M *Metabase) Close() error {
 		M.database.db = nil
 	}
 	// Give it the old college try...
-	if M.lock.TryLock() {
-		// This means the lock was acquired...
-		defer M.Unlock("Close")
-	} else {
-		// It is locked. Unlock it.
-		defer M.Unlock("Close")
-	}
+	// In theory, this could cause a race.
+	// if M.lock.TryLock() {
+	// 	// This means the lock was acquired...
+	// 	defer M.Unlock("Was Not Locked")
+	// } else {
+	// 	// It is locked. Unlock it.
+	// 	defer M.Unlock("Lock Malingering")
+	// }
+
 	zap.L().Info("database closed via Close()")
 	return nil
 }
@@ -371,7 +384,7 @@ type DailyDatabase struct {
 
 func NewDailyDatabase(app App, yyyymmdd string) (*DailyDatabase, error) {
 
-	M, err := NewMetabase(LiveLocation, app.AppId)
+	M, err := NewMetabase(ArchiveLocation, app.AppId)
 	if err != nil {
 		return nil, err
 	}
