@@ -122,9 +122,6 @@ func CheckExists(im IMetabase) bool {
 	if err == nil {
 		return true
 	} else if errors.Is(err, os.ErrNotExist) {
-		// If there is an error, we'll log and return.
-		zap.L().Info("file does not exist",
-			zap.String("filename", full))
 		return false
 	} else {
 		// Other errors could have occurred; for example,

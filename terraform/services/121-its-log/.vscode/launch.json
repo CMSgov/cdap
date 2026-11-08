@@ -26,7 +26,7 @@
                 "ITSLOG_PROXIES_TRUSTED": "TBD",
                 "ITSLOG_STORAGE_PATH": "${userHome}/.its-log/data",
                 "ITSLOG_ARCHIVE_PATH": "${userHome}/.its-log/archive",
-                "ITSLOG_INSTANCE_ID": "DEBUG-INSTANCE-1"
+                "ITSLOG_INSTANCE_ID": "DEBUG-INSTANCE-"
             }
         },
         {

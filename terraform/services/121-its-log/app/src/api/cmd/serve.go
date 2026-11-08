@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"math/rand/v2"
 	"os"
 
 	"github.com/navapbc/its-log/endpoints"
@@ -44,6 +46,11 @@ func serve_cmd(cmd *cobra.Command, args []string) {
 
 	zap.L().Info("storage path", zap.String("storage.path", viper.GetString("storage.path")))
 	zap.L().Info("archive path", zap.String("archive.path", viper.GetString("archive.path")))
+	// Randomize the instance if we are debugging, and it is the right shape.
+	if viper.GetString("ginmode") == "debug" {
+		viper.Set("instance.id", fmt.Sprintf("DEBUG-INSTANCE-%d", rand.IntN(8)))
+	}
+	zap.L().Info("instance id", zap.String("instance.id", viper.GetString("instance.id")))
 
 	// FIXME: Need CTRL-C/OS signal handling
 	endpoints.Serve(types.ServeParams{
