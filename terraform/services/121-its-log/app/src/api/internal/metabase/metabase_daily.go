@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"path"
+
+	"github.com/navapbc/its-log/internal/types"
 )
 
 // /////////////////////////////////////////////////////////////////////////
@@ -16,7 +18,7 @@ type DailyDatabase struct {
 	YYYYMMDD string
 }
 
-func NewDailyDatabase(app App, yyyymmdd string) (*DailyDatabase, error) {
+func NewDailyDatabase(app types.App, yyyymmdd string) (*DailyDatabase, error) {
 
 	M, err := NewMetabase(ArchiveLocation, app.AppId)
 	if err != nil {

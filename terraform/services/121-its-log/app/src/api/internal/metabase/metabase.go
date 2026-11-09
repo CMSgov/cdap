@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/navapbc/its-log/internal/embedfs"
+	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -273,10 +274,10 @@ func (M *Metabase) Delete() error {
 // /////////////
 type Database struct {
 	meta *Metabase
-	app  App
+	app  types.App
 }
 
-func NewDatabase(app App, M *Metabase) *Database {
+func NewDatabase(app types.App, M *Metabase) *Database {
 	return &Database{
 		app:  app,
 		meta: M,

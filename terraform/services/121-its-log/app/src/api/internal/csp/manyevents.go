@@ -7,11 +7,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func ManyEvents(events []*Event) (int64, error) {
+func ManyEvents(events []*types.Event) (int64, error) {
 	counter := int64(0)
-	var app metabase.App
+	var app types.App
 	if len(events) > 0 {
-		app = metabase.App{
+		app = types.App{
 			AppId: events[0].AppId,
 			KeyId: events[0].KeyId,
 		}

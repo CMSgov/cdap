@@ -34,7 +34,7 @@ func SummaryCreate(c *gin.Context) {
 	// Summaries are either daily, weekly, yearly, or consolidated
 	// body.Kind = base.GetParamOrPanic(c, "kind", SUMMARY_ALLOWED_KINDS)
 
-	app := metabase.App{
+	app := types.App{
 		AppId: base.GetOrPanic(c, constants.ITSLOG_APPID),
 		KeyId: base.GetOrPanic(c, constants.ITSLOG_KEYID),
 	}
@@ -67,7 +67,7 @@ func SummaryCreate(c *gin.Context) {
 	StatusOk(c, "summary created")
 }
 
-func openDailyDB(c *gin.Context, app metabase.App, body SummaryPostBody) (metabase.IMetabase, error) {
+func openDailyDB(c *gin.Context, app types.App, body SummaryPostBody) (metabase.IMetabase, error) {
 	err := types.IsValidYYYYMMDD(body.YYYYMMDD)
 	if err != nil {
 		BadRequest(c, err, "invalid YYYY-MM-DD")

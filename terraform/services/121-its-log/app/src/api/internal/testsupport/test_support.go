@@ -1,4 +1,4 @@
-package base
+package testsupport
 
 import (
 	"encoding/json"
@@ -14,11 +14,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
+	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 )
 
-func SetupTestEnv(t *testing.T, rsf func(types.ServeParams) *gin.Engine) *gin.Engine {
+func SetupTestEnv(t *testing.T) {
 	os.Setenv("x-api-key-log", "01234567890123456789012345678901234567890123456789")
 	os.Setenv("x-api-key-admin", "abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefgh")
 	//tmpDir := t.TempDir()
@@ -61,11 +62,16 @@ func SetupTestEnv(t *testing.T, rsf func(types.ServeParams) *gin.Engine) *gin.En
 	// The global variable gets corrupted in testing, because it is collected.
 	// Or... well, in the AuthMiddleware, base.LiveKeys is fine, but the accessor to key.Key
 	// is not.
-	err := GetApiKeys()
+	err := base.GetApiKeys()
 	if err != nil {
 		t.Error("could not get api keys")
 	}
-	zap.L().Debug("found API keys", zap.Int("length", len(LiveKeys)))
+	zap.L().Debug("found API keys", zap.Int("length", len(base.LiveKeys)))
+
+}
+
+func SetupTestRouter(t *testing.T, rsf func(types.ServeParams) *gin.Engine) *gin.Engine {
+	SetupTestEnv(t)
 
 	engine := rsf(types.ServeParams{
 		Mode: viper.GetString("ginmode"),

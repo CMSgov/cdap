@@ -4,20 +4,21 @@ import (
 	"time"
 
 	_ "github.com/duckdb/duckdb-go/v2"
+	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
 
 // For use in infinite contexts
-func FlushBuffers(ch_flush_in <-chan EventBuffer) {
+func FlushBuffers(ch_flush_in <-chan types.EventBuffer) {
 	for {
 		FlushBuffersOnce(ch_flush_in)
 	}
 }
 
-func FlushBuffersOnce(ch_flush_in <-chan EventBuffer) {
+func FlushBuffersOnce(ch_flush_in <-chan types.EventBuffer) {
 	eventBuffer := <-ch_flush_in
 	// org := organizeEvents(eventBuffer)
-	org := make(map[string][]*Event, 0)
+	org := make(map[string][]*types.Event, 0)
 	// Organize the events
 	if eventBuffer.EventBufferLength <= 0 {
 		zap.L().Info("no events in buffer")
@@ -27,7 +28,7 @@ func FlushBuffersOnce(ch_flush_in <-chan EventBuffer) {
 	for _, evt := range eventBuffer.Events {
 		if evt != nil {
 			if _, exists := org[evt.AppId]; !exists {
-				org[evt.AppId] = make([]*Event, 0)
+				org[evt.AppId] = make([]*types.Event, 0)
 			}
 			org[evt.AppId] = append(org[evt.AppId], evt)
 		}

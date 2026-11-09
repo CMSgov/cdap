@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"path"
+
+	"github.com/navapbc/its-log/internal/types"
 )
 
 // /////////////////////////////////////////////////////////////////////////
@@ -17,7 +19,7 @@ type MonthlyDatabase struct {
 	MonthNumber int
 }
 
-func NewMonthlyDatabase(app App, year int, month int) (*MonthlyDatabase, error) {
+func NewMonthlyDatabase(app types.App, year int, month int) (*MonthlyDatabase, error) {
 
 	M, err := NewMetabase(ArchiveLocation, app.AppId)
 	if err != nil {

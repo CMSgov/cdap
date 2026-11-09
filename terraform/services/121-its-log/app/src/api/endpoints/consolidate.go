@@ -8,7 +8,7 @@ import (
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/consolidate"
 	"github.com/navapbc/its-log/internal/constants"
-	"github.com/navapbc/its-log/internal/metabase"
+	"github.com/navapbc/its-log/internal/types"
 )
 
 type ConsolidateBody struct {
@@ -34,7 +34,7 @@ func Consolidate(c *gin.Context) {
 		return
 	}
 
-	app := metabase.App{
+	app := types.App{
 		AppId: base.GetOrPanic(c, constants.ITSLOG_APPID),
 		KeyId: base.GetOrPanic(c, constants.ITSLOG_KEYID),
 	}

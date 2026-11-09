@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"path"
+
+	"github.com/navapbc/its-log/internal/types"
 )
 
 // /////////////////////////////////////////////////////////////////////////
@@ -17,7 +19,7 @@ type YearlyDatabase struct {
 	YYYY     int
 }
 
-func NewYearlyDatabase(app App, year int) (*YearlyDatabase, error) {
+func NewYearlyDatabase(app types.App, year int) (*YearlyDatabase, error) {
 
 	M, err := NewMetabase(ArchiveLocation, app.AppId)
 	if err != nil {

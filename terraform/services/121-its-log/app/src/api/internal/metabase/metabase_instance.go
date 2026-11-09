@@ -20,7 +20,7 @@ type InstanceDatabase struct {
 	YYYYMMDD   string
 }
 
-func NewInstanceDatabase(app App) (*InstanceDatabase, error) {
+func NewInstanceDatabase(app types.App) (*InstanceDatabase, error) {
 
 	M, err := NewMetabase(LiveLocation, app.AppId)
 	if err != nil {
@@ -56,7 +56,7 @@ func (I *InstanceDatabase) GetDB() *sql.DB {
 func (I *InstanceDatabase) FullFilename() string {
 	filename := fmt.Sprintf("%s_instance_%s_%s.%s",
 		I.database.app.AppId,
-		viper.GetString("instance.id"),
+		I.InstanceId,
 		types.NewYYYYMMDD().String(),
 		DUCKDB_EXTENSION,
 	)

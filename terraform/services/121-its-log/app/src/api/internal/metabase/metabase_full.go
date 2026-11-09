@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"path"
+
+	"github.com/navapbc/its-log/internal/types"
 )
 
 // /////////////////////////////////////////////////////////////////////////
@@ -16,7 +18,7 @@ type FullDatabase struct {
 	database *Database
 }
 
-func NewFullDatabase(app App) (*FullDatabase, error) {
+func NewFullDatabase(app types.App) (*FullDatabase, error) {
 
 	M, err := NewMetabase(ArchiveLocation, app.AppId)
 	if err != nil {

@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type App struct {
-	AppId string
-	KeyId string
-}
-
 type EventsRow struct {
 	Id       int64
 	Inserted time.Time

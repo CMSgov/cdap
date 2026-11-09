@@ -21,7 +21,7 @@ const (
 )
 
 type ConsolidationParams interface {
-	GetApp() metabase.App
+	GetApp() types.App
 	Validate() error
 	Glob() string
 }
@@ -31,7 +31,7 @@ type ConsolidationBase struct{}
 // DAILY
 type DailyParams struct {
 	ConsolidationBase
-	App      metabase.App
+	App      types.App
 	YYYYMMDD string
 }
 
@@ -46,14 +46,14 @@ func (p *DailyParams) Glob() string {
 		metabase.DUCKDB_EXTENSION))
 }
 
-func (p *DailyParams) GetApp() metabase.App {
+func (p *DailyParams) GetApp() types.App {
 	return p.App
 }
 
 // MONTHLY
 type MonthlyParams struct {
 	ConsolidationBase
-	App         metabase.App
+	App         types.App
 	YearNumber  int
 	MonthNumber int
 }
@@ -85,14 +85,14 @@ func (p *MonthlyParams) Glob() string {
 		))
 }
 
-func (p *MonthlyParams) GetApp() metabase.App {
+func (p *MonthlyParams) GetApp() types.App {
 	return p.App
 }
 
 // YEARLY
 type YearlyParams struct {
 	ConsolidationBase
-	App        metabase.App
+	App        types.App
 	YearNumber int
 }
 
@@ -117,7 +117,7 @@ func (p *YearlyParams) Glob() string {
 		))
 }
 
-func (p *YearlyParams) GetApp() metabase.App {
+func (p *YearlyParams) GetApp() types.App {
 	return p.App
 }
 
@@ -125,7 +125,7 @@ func (p *YearlyParams) GetApp() metabase.App {
 
 type FullParams struct {
 	ConsolidationBase
-	App metabase.App
+	App types.App
 }
 
 func (p *FullParams) Validate() error {
@@ -137,12 +137,12 @@ func (p *FullParams) Glob() string {
 	// into a list of valid values, and glob them into the filename... elch.
 	// Perhaps there are only `full` consolidations for a year and month?
 	return filepath.Join(viper.GetString("archive.path"),
-		fmt.Sprintf("%s_daily_%d-*.%s",
+		fmt.Sprintf("%s_daily_*.%s",
 			p.App.AppId,
 			metabase.DUCKDB_EXTENSION,
 		))
 }
 
-func (p *FullParams) GetApp() metabase.App {
+func (p *FullParams) GetApp() types.App {
 	return p.App
 }

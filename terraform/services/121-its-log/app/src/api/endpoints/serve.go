@@ -26,8 +26,8 @@ func SetupRouter(params types.ServeParams) *gin.Engine {
 
 	// Build the process network for buffering and
 	// saving events that come in via the API
-	ch_eb := make(chan csp.EventBuffer)
-	ch_evt := make(chan *csp.Event)
+	ch_eb := make(chan types.EventBuffer)
+	ch_evt := make(chan *types.Event)
 
 	go csp.Enqueue(context.Background(), ch_evt, ch_eb, buffer_length, buffer_flushwaitsec)
 	go csp.FlushBuffers(ch_eb)
@@ -48,7 +48,7 @@ func Serve(params types.ServeParams) {
 	_ = engine.Run(fmt.Sprintf("%s:%s", host, port))
 }
 
-func PourGin(ch_evt_out chan<- *csp.Event) *gin.Engine {
+func PourGin(ch_evt_out chan<- *types.Event) *gin.Engine {
 	router := gin.Default()
 
 	// Adding this will override the default logging in Gin.
@@ -92,7 +92,7 @@ func PourGin(ch_evt_out chan<- *csp.Event) *gin.Engine {
 }
 
 // LOGGING ENDPOINTS
-func addLoggingEndpoints(rG *gin.RouterGroup, ch_evt_out chan<- *csp.Event) {
+func addLoggingEndpoints(rG *gin.RouterGroup, ch_evt_out chan<- *types.Event) {
 	// Logging
 	auth_logV1 := rG.Group("/")
 	permissions := []types.PermissionType{constants.Log}

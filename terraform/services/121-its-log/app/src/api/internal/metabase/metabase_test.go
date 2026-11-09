@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +28,7 @@ func setupMetabaseEnv(t *testing.T) {
 
 func TestInstanceDatabaseExistence(t *testing.T) {
 	setupMetabaseEnv(t)
-	id, err := NewInstanceDatabase(App{AppId: "app0123", KeyId: "key0123"})
+	id, err := NewInstanceDatabase(types.App{AppId: "app0123", KeyId: "key0123"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -53,7 +54,7 @@ func _touch(filename string) error {
 }
 func TestCreateNew(t *testing.T) {
 	setupMetabaseEnv(t)
-	id, err := NewInstanceDatabase(App{AppId: "app0123", KeyId: "key0123"})
+	id, err := NewInstanceDatabase(types.App{AppId: "app0123", KeyId: "key0123"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,7 +76,7 @@ func TestCreateNew(t *testing.T) {
 
 func TestOpenExisting(t *testing.T) {
 	setupMetabaseEnv(t)
-	id, err := NewInstanceDatabase(App{AppId: "app0123", KeyId: "key0123"})
+	id, err := NewInstanceDatabase(types.App{AppId: "app0123", KeyId: "key0123"})
 	if err != nil {
 		t.Error(err)
 	}
@@ -101,7 +102,7 @@ func TestOpenExisting(t *testing.T) {
 
 func TestReplaceExisting(t *testing.T) {
 	setupMetabaseEnv(t)
-	id, e0 := NewInstanceDatabase(App{AppId: "app0123", KeyId: "key0123"})
+	id, e0 := NewInstanceDatabase(types.App{AppId: "app0123", KeyId: "key0123"})
 	if e0 != nil {
 		t.Error(e0)
 	}
