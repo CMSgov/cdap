@@ -1,4 +1,4 @@
-package endpoints
+package base
 
 import (
 	"encoding/json"
@@ -14,12 +14,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
-	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 )
 
-func setupEnv(t *testing.T) *gin.Engine {
+func SetupTestEnv(t *testing.T, rsf func(types.ServeParams) *gin.Engine) *gin.Engine {
 	os.Setenv("x-api-key-log", "01234567890123456789012345678901234567890123456789")
 	os.Setenv("x-api-key-admin", "abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefgh")
 	//tmpDir := t.TempDir()
@@ -62,24 +61,18 @@ func setupEnv(t *testing.T) *gin.Engine {
 	// The global variable gets corrupted in testing, because it is collected.
 	// Or... well, in the AuthMiddleware, base.LiveKeys is fine, but the accessor to key.Key
 	// is not.
-	err := base.GetApiKeys()
+	err := GetApiKeys()
 	if err != nil {
 		t.Error("could not get api keys")
 	}
-	zap.L().Debug("found API keys", zap.Int("length", len(base.LiveKeys)))
+	zap.L().Debug("found API keys", zap.Int("length", len(LiveKeys)))
 
-	engine := SetupRouter(types.ServeParams{
+	engine := rsf(types.ServeParams{
 		Mode: viper.GetString("ginmode"),
 	})
 
 	gin.SetMode(gin.TestMode)
 	return engine
-}
-
-func toReader(data any) *strings.Reader {
-	body, _ := json.Marshal(data)
-	content := strings.NewReader(string(body))
-	return content
 }
 
 // This makes things quieter
@@ -88,7 +81,7 @@ func toReader(data any) *strings.Reader {
 // 	os.Exit(m.Run())
 // }
 
-func testPost(t *testing.T, engine *gin.Engine, key string, path string, data any, expected int) ([]byte, *httptest.ResponseRecorder) {
+func TestPost(t *testing.T, engine *gin.Engine, key string, path string, data any, expected int) ([]byte, *httptest.ResponseRecorder) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", path, toReader(data))
 	req.Header.Set("x-api-key", os.Getenv(fmt.Sprintf("x-api-key-%s", key)))
@@ -101,4 +94,10 @@ func testPost(t *testing.T, engine *gin.Engine, key string, path string, data an
 		t.Error("could not read response body")
 	}
 	return b, w
+}
+
+func toReader(data any) *strings.Reader {
+	body, _ := json.Marshal(data)
+	content := strings.NewReader(string(body))
+	return content
 }

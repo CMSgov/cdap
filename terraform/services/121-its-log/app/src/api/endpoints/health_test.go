@@ -5,12 +5,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/navapbc/its-log/internal/base"
 	testify "github.com/stretchr/testify/assert"
 )
 
 // health
 func TestHealth(t *testing.T) {
-	engine := setupEnv(t)
+	engine := base.SetupTestEnv(t, SetupRouter)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/health", nil)
