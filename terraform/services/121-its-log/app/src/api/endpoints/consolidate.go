@@ -12,12 +12,10 @@ import (
 )
 
 type ConsolidateBody struct {
-	Table      string `json:"table" validate:"required,oneof=event summary"`
-	Kind       string `json:"kind" validate:"required,oneof=daily weekly monthly all"`
-	YYYYMMDD   string `json:"ymd" validate:"omitempty,yyyymmdd"`
-	WeekNumber int    `json:"week" validate:"omitempty,gte=1,lte=53"`
-	Year       int    `json:"year" validate:"omitempty,gte=2000"`
-	Month      int    `json:"month" validate:"omitempty,gte=1,lte=12"`
+	Kind     string `json:"kind" validate:"required,oneof=daily monthly full"`
+	YYYYMMDD string `json:"ymd" validate:"omitempty,yyyymmdd"`
+	Year     int    `json:"year" validate:"omitempty,gte=2000"`
+	Month    int    `json:"month" validate:"omitempty,gte=1,lte=12"`
 }
 
 // Archives from all instances today into a DailyDatabase
@@ -29,6 +27,7 @@ func Consolidate(c *gin.Context) {
 		return
 	}
 
+	// FIXME: this could be at the Gin framework level.
 	validate := setupValidators()
 	if err := validate.Struct(body); err != nil {
 		BadRequest(c, err, "json does not validate")
@@ -41,16 +40,6 @@ func Consolidate(c *gin.Context) {
 	}
 
 	err = nil
-	var tableKind consolidate.ConsolidationKind
-	switch body.Table {
-	case "event":
-		tableKind = consolidate.EventsConsolidation
-	case "summary":
-		tableKind = consolidate.SummaryConsolidation
-	default:
-		tableKind = consolidate.EventsConsolidation
-	}
-
 	switch body.Kind {
 	case "daily":
 		if len(body.YYYYMMDD) < 10 {
@@ -58,19 +47,31 @@ func Consolidate(c *gin.Context) {
 			return
 		}
 		err = consolidate.Consolidate(&consolidate.DailyParams{
-			Kind:     tableKind,
 			App:      app,
 			YYYYMMDD: body.YYYYMMDD,
 		})
-	case "weekly":
-		if body.WeekNumber == 0 || body.Year == 0 {
-			BadRequest(c, errors.New("must provide week number and year"), "missing week or year")
+	case "monthly":
+		if body.Month == 0 || body.Year == 0 {
+			BadRequest(c, errors.New("must provide month number and year"), "missing month or year")
 			return
 		}
-		err = consolidate.Consolidate(&consolidate.WeeklyParams{
-			Kind:       tableKind,
-			WeekNumber: body.WeekNumber,
+		err = consolidate.Consolidate(&consolidate.MonthlyParams{
+			App:         app,
+			MonthNumber: body.Month,
+			YearNumber:  body.Year,
+		})
+	case "yearly":
+		if body.Year == 0 {
+			BadRequest(c, errors.New("must provide year"), "missing year")
+			return
+		}
+		err = consolidate.Consolidate(&consolidate.YearlyParams{
+			App:        app,
 			YearNumber: body.Year,
+		})
+	case "full":
+		err = consolidate.Consolidate(&consolidate.FullParams{
+			App: app,
 		})
 	default:
 		// Should not get here with validator

@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	_ "github.com/duckdb/duckdb-go/v2"
+	"github.com/navapbc/its-log/internal/embedfs"
 	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -69,13 +70,11 @@ type IMetabase interface {
 
 const DUCKDB_EXTENSION = "duckdb"
 
-// ##     ## ######## ########    ###    ########     ###     ######  ########
-// ###   ### ##          ##      ## ##   ##     ##   ## ##   ##    ## ##
-// #### #### ##          ##     ##   ##  ##     ##  ##   ##  ##       ##
-// ## ### ## ######      ##    ##     ## ########  ##     ##  ######  ######
-// ##     ## ##          ##    ######### ##     ## #########       ## ##
-// ##     ## ##          ##    ##     ## ##     ## ##     ## ##    ## ##
-// ##     ## ########    ##    ##     ## ########  ##     ##  ######  ########
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+// METABASE
+///////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 
 func NewMetabase(location FilesystemLocation, filename string) (*Metabase, error) {
 	p := "BAD_PATH"
@@ -200,7 +199,7 @@ func open(im IMetabase, mode MetabaseOpenMode) error {
 	db.SetMaxIdleConns(0)
 	im.SetDB(db)
 	// Create the tables.
-	_, err = Exec(im, EmbeddedSchema.Files["schema"], EmbedParamMap{})
+	_, err = Exec(im, embedfs.EmbeddedSchema.Files["schema"], embedfs.EmbedParamMap{})
 	if err != nil {
 		return err
 	}
@@ -286,14 +285,11 @@ func NewDatabase(app App, M *Metabase) *Database {
 	}
 }
 
-// #### ##    ##  ######  ########    ###    ##    ##  ######  ######## ########     ###    ########    ###    ########     ###     ######  ########
-//	##  ###   ## ##    ##    ##      ## ##   ###   ## ##    ## ##       ##     ##   ## ##      ##      ## ##   ##     ##   ## ##   ##    ## ##
-//	##  ####  ## ##          ##     ##   ##  ####  ## ##       ##       ##     ##  ##   ##     ##     ##   ##  ##     ##  ##   ##  ##       ##
-//	##  ## ## ##  ######     ##    ##     ## ## ## ## ##       ######   ##     ## ##     ##    ##    ##     ## ########  ##     ##  ######  ######
-//	##  ##  ####       ##    ##    ######### ##  #### ##       ##       ##     ## #########    ##    ######### ##     ## #########       ## ##
-//	##  ##   ### ##    ##    ##    ##     ## ##   ### ##    ## ##       ##     ## ##     ##    ##    ##     ## ##     ## ##     ## ##    ## ##
-// #### ##    ##  ######     ##    ##     ## ##    ##  ######  ######## ########  ##     ##    ##    ##     ## ########  ##     ##  ######  ########
-
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
+// INSTANCE
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
 type InstanceDatabase struct {
 	database   *Database
 	InstanceId string
@@ -367,13 +363,11 @@ func (I *InstanceDatabase) Unlock(msg string) {
 	I.database.meta.Unlock(msg)
 }
 
-// ########     ###    #### ##       ##    ## ########     ###    ########    ###    ########     ###     ######  ########
-// ##     ##   ## ##    ##  ##        ##  ##  ##     ##   ## ##      ##      ## ##   ##     ##   ## ##   ##    ## ##
-// ##     ##  ##   ##   ##  ##         ####   ##     ##  ##   ##     ##     ##   ##  ##     ##  ##   ##  ##       ##
-// ##     ## ##     ##  ##  ##          ##    ##     ## ##     ##    ##    ##     ## ########  ##     ##  ######  ######
-// ##     ## #########  ##  ##          ##    ##     ## #########    ##    ######### ##     ## #########       ## ##
-// ##     ## ##     ##  ##  ##          ##    ##     ## ##     ##    ##    ##     ## ##     ## ##     ## ##    ## ##
-// ########  ##     ## #### ########    ##    ########  ##     ##    ##    ##     ## ########  ##     ##  ######  ########
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
+// DAILY
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
 type DailyDatabase struct {
 	database *Database
 	YYYYMMDD string
@@ -438,75 +432,211 @@ func (DD *DailyDatabase) Unlock(msg string) {
 	DD.database.meta.Unlock(msg)
 }
 
-type WeeklyDatabase struct {
-	database   *Database
-	YYYY       int
-	WeekNumber int
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
+// MONTHLY
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
+type MonthlyDatabase struct {
+	database    *Database
+	YYYY        int
+	MonthNumber int
 }
 
-func NewWeeklyDatabase(app App, year int, week int) (*WeeklyDatabase, error) {
+func NewMonthlyDatabase(app App, year int, month int) (*MonthlyDatabase, error) {
 
 	M, err := NewMetabase(ArchiveLocation, app.AppId)
 	if err != nil {
 		return nil, err
 	}
-	I := &WeeklyDatabase{
+	I := &MonthlyDatabase{
 		database: &Database{
 			app:  app,
 			meta: M,
 		},
-		YYYY:       year,
-		WeekNumber: week,
+		YYYY:        year,
+		MonthNumber: month,
 	}
 	return I, nil
 }
 
-func (DB *WeeklyDatabase) SetDB(db *sql.DB) {
+func (DB *MonthlyDatabase) SetDB(db *sql.DB) {
 	DB.database.meta.SetDB(db)
 }
 
-func (DB *WeeklyDatabase) GetDB() *sql.DB {
+func (DB *MonthlyDatabase) GetDB() *sql.DB {
 	return DB.database.meta.GetDB()
 }
 
 // By implementing the entire interface, we can pass this anywhere
 // a type of IMetabase is expected.
-func (DB *WeeklyDatabase) FullFilename() string {
-	filename := fmt.Sprintf("%s_weekly_%d-%d.%s",
+func (DB *MonthlyDatabase) FullFilename() string {
+	filename := fmt.Sprintf("%s_monthly_%d-%d.%s",
 		DB.database.app.AppId,
 		DB.YYYY,
-		DB.WeekNumber,
+		DB.MonthNumber,
 		DUCKDB_EXTENSION,
 	)
 	return path.Join(DB.database.meta.path, filename)
 }
 
-func (DB *WeeklyDatabase) Open(mode MetabaseOpenMode) error {
+func (DB *MonthlyDatabase) Open(mode MetabaseOpenMode) error {
 	return open(DB, mode)
 }
 
-func (DB *WeeklyDatabase) Close() error {
+func (DB *MonthlyDatabase) Close() error {
 	return DB.database.meta.Close()
 }
 
-func (DB *WeeklyDatabase) Flush() error {
+func (DB *MonthlyDatabase) Flush() error {
 	return DB.database.meta.Flush()
 }
 
-func (DB *WeeklyDatabase) Delete() error {
+func (DB *MonthlyDatabase) Delete() error {
 	return delete(DB)
 }
 
-func (DB *WeeklyDatabase) Lock(msg string) {
+func (DB *MonthlyDatabase) Lock(msg string) {
 	DB.database.meta.Lock(msg)
 }
 
-func (DB *WeeklyDatabase) Unlock(msg string) {
+func (DB *MonthlyDatabase) Unlock(msg string) {
 	DB.database.meta.Unlock(msg)
 }
 
-type MonthlyDatabase struct {
-	Database
-	YYYY        int
-	MonthNumber int
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
+// YEARLY
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
+
+type YearlyDatabase struct {
+	database *Database
+	YYYY     int
+}
+
+func NewYearlyDatabase(app App, year int) (*YearlyDatabase, error) {
+
+	M, err := NewMetabase(ArchiveLocation, app.AppId)
+	if err != nil {
+		return nil, err
+	}
+	I := &YearlyDatabase{
+		database: &Database{
+			app:  app,
+			meta: M,
+		},
+		YYYY: year,
+	}
+	return I, nil
+}
+
+func (DB *YearlyDatabase) SetDB(db *sql.DB) {
+	DB.database.meta.SetDB(db)
+}
+
+func (DB *YearlyDatabase) GetDB() *sql.DB {
+	return DB.database.meta.GetDB()
+}
+
+// By implementing the entire interface, we can pass this anywhere
+// a type of IMetabase is expected.
+func (DB *YearlyDatabase) FullFilename() string {
+	filename := fmt.Sprintf("%s_yearly_%d.%s",
+		DB.database.app.AppId,
+		DB.YYYY,
+		DUCKDB_EXTENSION,
+	)
+	return path.Join(DB.database.meta.path, filename)
+}
+
+func (DB *YearlyDatabase) Open(mode MetabaseOpenMode) error {
+	return open(DB, mode)
+}
+
+func (DB *YearlyDatabase) Close() error {
+	return DB.database.meta.Close()
+}
+
+func (DB *YearlyDatabase) Flush() error {
+	return DB.database.meta.Flush()
+}
+
+func (DB *YearlyDatabase) Delete() error {
+	return delete(DB)
+}
+
+func (DB *YearlyDatabase) Lock(msg string) {
+	DB.database.meta.Lock(msg)
+}
+
+func (DB *YearlyDatabase) Unlock(msg string) {
+	DB.database.meta.Unlock(msg)
+}
+
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
+// FULL
+// /////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////
+
+type FullDatabase struct {
+	database *Database
+}
+
+func NewFullDatabase(app App) (*FullDatabase, error) {
+
+	M, err := NewMetabase(ArchiveLocation, app.AppId)
+	if err != nil {
+		return nil, err
+	}
+	I := &FullDatabase{
+		database: &Database{
+			app:  app,
+			meta: M,
+		},
+	}
+	return I, nil
+}
+
+func (DB *FullDatabase) SetDB(db *sql.DB) {
+	DB.database.meta.SetDB(db)
+}
+
+func (DB *FullDatabase) GetDB() *sql.DB {
+	return DB.database.meta.GetDB()
+}
+
+// By implementing the entire interface, we can pass this anywhere
+// a type of IMetabase is expected.
+func (DB *FullDatabase) FullFilename() string {
+	filename := fmt.Sprintf("%s_full.%s",
+		DB.database.app.AppId,
+		DUCKDB_EXTENSION,
+	)
+	return path.Join(DB.database.meta.path, filename)
+}
+
+func (DB *FullDatabase) Open(mode MetabaseOpenMode) error {
+	return open(DB, mode)
+}
+
+func (DB *FullDatabase) Close() error {
+	return DB.database.meta.Close()
+}
+
+func (DB *FullDatabase) Flush() error {
+	return DB.database.meta.Flush()
+}
+
+func (DB *FullDatabase) Delete() error {
+	return delete(DB)
+}
+
+func (DB *FullDatabase) Lock(msg string) {
+	DB.database.meta.Lock(msg)
+}
+
+func (DB *FullDatabase) Unlock(msg string) {
+	DB.database.meta.Unlock(msg)
 }

@@ -1,6 +1,7 @@
 package csp
 
 import (
+	"github.com/navapbc/its-log/internal/embedfs"
 	"github.com/navapbc/its-log/internal/metabase"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
@@ -38,7 +39,7 @@ func ManyEvents(events []*Event) (int64, error) {
 	for _, e := range events {
 		if e != nil {
 			_, err := metabase.ExecNoLock(id,
-				metabase.EmbeddedEndpoints.GetOrPanic("log_event"),
+				embedfs.EmbeddedEndpoints.GetOrPanic("log_event"),
 				types.M{
 					"inserted": e.Timestamp,
 					"key_id":   e.KeyId,

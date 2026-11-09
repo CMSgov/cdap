@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/navapbc/its-log/internal/embedfs"
 	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
@@ -18,7 +19,7 @@ import (
 // Finds the named params in the SQL (which must begin with $_)
 // and looks up the name in the map, returning a list of sql.NamedArgs
 // matching the variables needed to execute the SQL
-func PrepareNamedArgs(sql string, params EmbedParamMap) ([]any, error) {
+func PrepareNamedArgs(sql string, params embedfs.EmbedParamMap) ([]any, error) {
 	// Look for the named params expected in the SQL
 	named, err := generateNamedArgs(sql, params)
 	if err != nil {
@@ -27,7 +28,7 @@ func PrepareNamedArgs(sql string, params EmbedParamMap) ([]any, error) {
 	return named, nil
 }
 
-func generateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
+func generateNamedArgs(theSql string, params embedfs.EmbedParamMap) ([]any, error) {
 	// We now are going to figure out which named params are present in the SQL.
 	// That way, we only create named args for things that are present.
 	// The SQL engine does not like when you pass named paramters that do not exist in the SQL.
@@ -105,7 +106,7 @@ func generateNamedArgs(theSql string, params EmbedParamMap) ([]any, error) {
 	return named, nil
 }
 
-func asJson(params EmbedParamMap, trimmed string) ([]byte, error) {
+func asJson(params embedfs.EmbedParamMap, trimmed string) ([]byte, error) {
 	b, err := json.Marshal(params[trimmed])
 	if err != nil {
 		orig := fmt.Sprintf("%v", params[trimmed])

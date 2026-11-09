@@ -3,11 +3,11 @@ package endpoints
 import (
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/constants"
+	"github.com/navapbc/its-log/internal/embedfs"
 	"github.com/navapbc/its-log/internal/metabase"
 	"github.com/navapbc/its-log/internal/types"
 )
@@ -48,15 +48,12 @@ func SummaryCreate(c *gin.Context) {
 			return
 		}
 		defer im.Close()
-	case "weekly":
-		im, err = openWeeklyDB(c, app, body)
-		if err != nil {
-			return
-		}
-		defer im.Close()
+	default:
+		ServerError(c, errors.New("unknown summary target"), "unknown summary target")
+		return
 	}
 
-	_, err = metabase.Exec(im, metabase.EmbeddedEndpoints.GetOrPanic("summary_create"), metabase.EmbedParamMap{
+	_, err = metabase.Exec(im, embedfs.EmbeddedEndpoints.GetOrPanic("summary_create"), embedfs.EmbedParamMap{
 		"key_id":    app.KeyId,
 		"operation": body.Operation,
 		"tags":      body.Tags,
@@ -87,38 +84,6 @@ func openDailyDB(c *gin.Context, app metabase.App, body SummaryPostBody) (metaba
 	err = im.Open(metabase.OpenExistingOnly)
 	if err != nil {
 		BadRequest(c, err, fmt.Sprintf("no daily database exists %s", body.YYYYMMDD))
-		return nil, err
-	}
-
-	return im, nil
-}
-
-func openWeeklyDB(c *gin.Context, app metabase.App, body SummaryPostBody) (metabase.IMetabase, error) {
-	if body.WeekNumber < 1 || body.WeekNumber > 53 {
-		msg := fmt.Sprintf("must provide valid week number (1-53), not %d", body.WeekNumber)
-		BadRequest(c, errors.New(msg), msg)
-		return nil, errors.New(msg)
-	}
-
-	currentYear := time.Now().Year()
-	if body.YearNumber < 2000 || body.YearNumber > currentYear {
-		msg := fmt.Sprintf("must provide valid year (2000-%d), not %d", currentYear, body.YearNumber)
-		BadRequest(c, errors.New(msg), msg)
-		return nil, errors.New(msg)
-	}
-
-	im, err := metabase.NewWeeklyDatabase(
-		app,
-		body.YearNumber,
-		body.WeekNumber,
-	)
-	if err != nil {
-		ServerError(c, err, "could not create daily database")
-		return nil, err
-	}
-	err = im.Open(metabase.OpenExistingOnly)
-	if err != nil {
-		BadRequest(c, err, fmt.Sprintf("no weekly database exists %s", body.YYYYMMDD))
 		return nil, err
 	}
 

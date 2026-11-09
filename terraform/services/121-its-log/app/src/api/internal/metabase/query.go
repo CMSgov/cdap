@@ -3,6 +3,7 @@ package metabase
 import (
 	"database/sql"
 
+	"github.com/navapbc/its-log/internal/embedfs"
 	"go.uber.org/zap"
 )
 
@@ -14,7 +15,7 @@ import (
 // ##    ##  ##     ## ##       ##    ##     ##
 //  ##### ##  #######  ######## ##     ##    ##
 
-func Query(im IMetabase, theSql string, params EmbedParamMap) (*sql.Rows, error) {
+func Query(im IMetabase, theSql string, params embedfs.EmbedParamMap) (*sql.Rows, error) {
 
 	args, err := PrepareNamedArgs(theSql, params)
 	if err != nil {
@@ -39,7 +40,7 @@ func Query(im IMetabase, theSql string, params EmbedParamMap) (*sql.Rows, error)
 // ##    ##  ##     ## ##       ##    ##     ##    ##    ##  ##     ## ##  ##  ##
 //  ##### ##  #######  ######## ##     ##    ##    ##     ##  #######   ###  ###
 
-func QueryRow(im IMetabase, theSql string, params EmbedParamMap) *sql.Row {
+func QueryRow(im IMetabase, theSql string, params embedfs.EmbedParamMap) *sql.Row {
 	var row *sql.Row
 	im.Lock("QueryRow")
 	args, err := PrepareNamedArgs(theSql, params)
