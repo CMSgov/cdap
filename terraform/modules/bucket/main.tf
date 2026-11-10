@@ -43,7 +43,7 @@ resource "aws_s3_bucket_versioning" "this" {
 
 data "aws_kms_alias" "default_encryption_key" {
   count = var.use_custom_kms_key ? 0 : 1
-  name  = "alias/${var.app}-${var.env}"
+  name  = "alias/${var.platform.app}-${var.platform.env}"
 }
 
 data "aws_iam_policy_document" "ssl_only" {
@@ -121,7 +121,7 @@ module "access_logs_group" {
   source = "../cloudwatch_log_group"
 
   name = "/aws/s3/access-logs/${aws_s3_bucket.this.id}"
-  env  = var.env
+  env  = var.platform.env
   # CloudWatch Logs requires a key ARN (not an alias ARN)
   kms_key_id = var.platform.kms_alias_primary.target_key_arn
 }

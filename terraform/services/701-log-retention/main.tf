@@ -26,8 +26,6 @@ resource "aws_kms_alias" "log_retention" {
 module "log_bucket" {
   source = "../../modules/bucket"
 
-  app      = module.platform.app
-  env      = var.env
   name     = local.shared_name
   platform = module.platform
 

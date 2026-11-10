@@ -54,8 +54,6 @@ module "export_buckets" {
   source   = "../../modules/bucket"
   for_each = local.insights_exports
 
-  app                = each.value.app
-  env                = each.value.env
   name               = each.value.bucket_name
   platform           = module.platform
   kms_key_arn        = aws_kms_alias.aurora_export.target_key_arn

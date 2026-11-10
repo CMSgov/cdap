@@ -1,3 +1,27 @@
+# bucket
+
+S3 bucket with versioning, SSE-KMS, lifecycle rules, and access logging 
+wired into the shared log-retention pipeline.
+
+## Access logging
+
+By default (access_logging = "cloudwatch"), access logs flow:
+
+```
+bucket    -> per-bucket log group (/aws/s3/access-logs/<bucket-id>) -> subscription filter
+          -> shared Firehose (701-log-retention) -> log-retention bucket (6-year retention)
+```
+
+Exception: the log-retention bucket itself sets access_logging = "external"
+and sends its logs directly to the CMS Splunk bucket to avoid looping into
+itself.
+
+## Deletion
+
+All per-bucket logging resources (log group, subscription filter, etc.)
+live in the caller's state and are destroyed alongside their bucket The shared pipeline is unaffected. Logs already delivered to the retention
+bucket persist for the retention window.
+
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -8,7 +32,7 @@
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.72.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -28,11 +52,9 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_app"></a> [app](#input\_app) | The application name (ab2d, bcda, dpc, cdap) | `string` | n/a | yes |
-| <a name="input_env"></a> [env](#input\_env) | The application environment (dev, test, sandbox, prod, mgmt) | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Name for the S3 bucket | `string` | n/a | yes |
-| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP platform module. Used to encrypt the access-logging log group with the account's primary KMS key. | <pre>object({<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>  })</pre> | n/a | yes |
-| <a name="input_access_logging"></a> [access\_logging](#input\_access\_logging) | Server access log delivery route. cloudwatch (the default) delivers through a per-bucket CloudWatch log group and the shared log-retention Firehose into the log-retention bucket. External means the caller configures access logging itself, outside this module. Used by the log-retention bucket, which logs directly to the CMS bucket to avoid looping its own access logs back into itself. | `string` | `"cloudwatch"` | no |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP platform module. Provides the app and environment names and the account's primary KMS key for encrypting the access-logging log group. | <pre>object({<br/>    app               = string<br/>    env               = string<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>  })</pre> | n/a | yes |
+| <a name="input_access_logging"></a> [access\_logging](#input\_access\_logging) | external is reserved for the 701-log-retention bucket only. Server access log delivery route. cloudwatch (the default) delivers through a per-bucket CloudWatch log group and the shared log-retention Firehose into the log-retention bucket. 701-log-retention bucket must log directly to the CMS bucket to avoid looping its own access logs back into itself. Do not use external for any other bucket. | `string` | `"cloudwatch"` | no |
 | <a name="input_additional_bucket_policies"></a> [additional\_bucket\_policies](#input\_additional\_bucket\_policies) | A list of additional bucket policies to be merged with the default. | `list(string)` | `[]` | no |
 | <a name="input_additional_bucket_statements"></a> [additional\_bucket\_statements](#input\_additional\_bucket\_statements) | Structured statements that will reference the bucket's ARN. Useful for iterative calls of the module. | <pre>list(object({<br/>    sid        = string<br/>    principals = list(string)<br/>    actions    = list(string)<br/>  }))</pre> | `[]` | no |
 | <a name="input_expiration_days"></a> [expiration\_days](#input\_expiration\_days) | Days after object creation when current versions expire and noncurrent versions are permanently deleted. Must exceed any Object Lock retention period. | `number` | `null` | no |

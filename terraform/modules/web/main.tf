@@ -147,8 +147,6 @@ resource "aws_cloudfront_function" "redirects" {
 # S3 origin for distribution
 module "origin_bucket" {
   source   = "../bucket"
-  app      = var.platform.app
-  env      = var.platform.env
   name     = var.domain_name
   platform = var.platform
 }
