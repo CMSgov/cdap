@@ -7,58 +7,9 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/navapbc/its-log/internal/testsupport"
 	"github.com/stretchr/testify/assert"
 )
-
-// SummaryCreate
-var scts = []struct {
-	key    string
-	path   string
-	status int
-	data   any
-}{
-	{
-		"admin",
-		"/v1/summary/create",
-		http.StatusCreated,
-		map[string]any{
-			"date":      "yesterday",
-			"tags":      []string{"a"},
-			"operation": "just.42",
-			"data":      42},
-	},
-	// Good call, creates DB
-	{
-		"admin",
-		"/v1/summary/create",
-		http.StatusCreated,
-		map[string]any{
-			"date":      "yesterday",
-			"tags":      []string{"a", "b"},
-			"operation": "map.42",
-			"data": map[string]any{
-				"count": 42,
-			}},
-	},
-	// Empty object is OK
-	{
-		"admin",
-		"/v1/summary/create",
-		http.StatusCreated,
-		map[string]any{
-			"date":      "yesterday",
-			"tags":      []string{"x", "y", "z"},
-			"operation": "empty.object",
-			"data":      map[string]any{}},
-	},
-}
-
-func TestSummaryCreate(t *testing.T) {
-	engine := setupEnv(t)
-	for _, tt := range scts {
-		testPost(engine, t, tt.key, tt.path, tt.data, tt.status)
-	}
-}
 
 // SummaryRead
 // https://pkg.go.dev/encoding/json#Unmarshal
@@ -139,15 +90,18 @@ var srts = []struct {
 }
 
 func TestSummaryRead(t *testing.T) {
-	engine := setupEnv(t)
+	engine := testsupport.SetupTestRouter(t, SetupRouter)
 
 	// We need to create things first.
 	for _, tt := range scts {
-		testPost(engine, t, tt.key, tt.path, tt.data, tt.status)
+		testsupport.TestPost(t, engine, tt.key, tt.path, tt.data, tt.status)
 	}
 
 	for _, tt := range srts {
-		res := testPost(engine, t, tt.key, tt.path, tt.data, tt.status)
+		res, err := testsupport.TestPost(t, engine, tt.key, tt.path, tt.data, tt.status)
+		if err != nil {
+			t.Error(err)
+		}
 		if slices.Contains([]int{http.StatusOK}, tt.status) {
 			var ret map[string]any
 			err := json.Unmarshal(res, &ret)

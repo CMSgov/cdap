@@ -19,7 +19,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-func SetupTestEnv(t *testing.T) {
+type TestStorageLocation int
+
+const (
+	TestStorageHomeDirectory TestStorageLocation = iota
+	TestStorageTempDirectory
+)
+
+const GlobalTestStorageLocation = TestStorageTempDirectory
+
+func SetupTestEnv(t *testing.T, location TestStorageLocation) {
 	os.Setenv("x-api-key-log", "01234567890123456789012345678901234567890123456789")
 	os.Setenv("x-api-key-admin", "abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefgh")
 	//tmpDir := t.TempDir()
@@ -41,8 +50,6 @@ func SetupTestEnv(t *testing.T) {
 		{"ITSLOG_GINMODE", "debug"},
 		{"ITSLOG_ZAPMODE", "debug"},
 		{"ITSLOG_PROXIES_TRUSTED", "TBD"},
-		{"ITSLOG_STORAGE_PATH", path.Join(tmpDir, "data")},
-		{"ITSLOG_ARCHIVE_PATH", path.Join(tmpDir, "archive")},
 		{"ITSLOG_EVENTUAL_CONSISTENCY_SECONDS", "5"},
 		{"ITSLOG_INSTANCE_ID", "UNIT-TEST"},
 	}
@@ -51,6 +58,17 @@ func SetupTestEnv(t *testing.T) {
 	}
 	os.Setenv("ITSLOG_GINMODE", "debug")
 	os.Setenv("ITSLOG_ZAPMODE", "debug")
+
+	switch location {
+	case TestStorageTempDirectory:
+		os.Setenv("ITSLOG_STORAGE_PATH", path.Join(tmpDir, "data"))
+		os.Setenv("ITSLOG_ARCHIVE_PATH", path.Join(tmpDir, "archive"))
+	case TestStorageHomeDirectory:
+		os.Setenv("ITSLOG_STORAGE_PATH", path.Join(os.Getenv("HOME"), ".its-log", "data"))
+		os.Setenv("ITSLOG_ARCHIVE_PATH", path.Join(os.Getenv("HOME"), ".its-log", "archive"))
+	default:
+		panic("invalid test storage location")
+	}
 
 	// Load 'em up
 	replacer := strings.NewReplacer(".", "_")
@@ -71,7 +89,7 @@ func SetupTestEnv(t *testing.T) {
 }
 
 func SetupTestRouter(t *testing.T, rsf func(types.ServeParams) *gin.Engine) *gin.Engine {
-	SetupTestEnv(t)
+	//SetupTestEnv(t)
 
 	engine := rsf(types.ServeParams{
 		Mode: viper.GetString("ginmode"),

@@ -1,15 +1,12 @@
 package consolidate
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"regexp"
 	"testing"
 	"time"
-	"uuid"
 
-	"github.com/navapbc/its-log/internal/csp"
 	"github.com/navapbc/its-log/internal/metabase"
 	"github.com/navapbc/its-log/internal/testsupport"
 	"github.com/navapbc/its-log/internal/types"
@@ -29,8 +26,9 @@ var instanceCount int = 4
 var useHomeDirectory bool = false
 
 func TestConsolidate(t *testing.T) {
+	testsupport.SetupTestEnv(t, testsupport.GlobalTestStorageLocation)
 	app := types.RandomApp("puppers")
-	createInstanceDbs(t, app)
+	testsupport.CreateInstanceDbs(t, app, instanceCount, eventsPerInstance)
 	// This consolidates the DBs, and makes sure they exist
 	createConsolidatedDbs(app, t)
 	// Now, is the data in the databases?
@@ -113,24 +111,6 @@ func assertConsolidated(t *testing.T, cp ConsolidationParams) {
 	Consolidate(cp)
 	count := countFiles(cp.Glob())
 	assert.Greater(t, count, 0)
-}
-
-func createInstanceDbs(t *testing.T, app types.App) {
-	testsupport.SetupTestEnv(t)
-	if useHomeDirectory {
-		os.Setenv("ITSLOG_STORAGE_PATH", path.Join(os.Getenv("HOME"), ".its-log", "data"))
-		os.Setenv("ITSLOG_ARCHIVE_PATH", path.Join(os.Getenv("HOME"), ".its-log", "archive"))
-	}
-
-	for range instanceCount {
-		os.Setenv("ITSLOG_INSTANCE_ID", fmt.Sprintf("CT-%s", uuid.New().String()))
-		e1 := testsupport.CreateEvents(app, eventsPerInstance)
-		inserted, err := csp.ManyEvents(e1)
-		if err != nil {
-			t.Error(err)
-		}
-		assert.Equal(t, int64(eventsPerInstance), inserted)
-	}
 }
 
 func cleanupDirectories(t *testing.T, app types.App) {
