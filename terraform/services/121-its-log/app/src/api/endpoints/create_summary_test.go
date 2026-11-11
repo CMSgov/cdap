@@ -58,16 +58,27 @@ var scts = []struct {
 
 func TestSummaryCreate(t *testing.T) {
 	testsupport.SetupTestEnv(t, testsupport.TestStorageHomeDirectory)
+
 	engine := testsupport.SetupTestRouter(t, SetupRouter)
 	app := types.App{
 		AppId: "pupper",
 		KeyId: "pupper_create_key_123",
 	}
 
+	// Cleanup from other tests
+	err := testsupport.CleanupTestDirectory("storage.path", app.AppId)
+	if err != nil {
+		t.Error(err)
+	}
+	testsupport.CleanupTestDirectory("archive.path", app.AppId)
+	if err != nil {
+		t.Error(err)
+	}
+
 	// Create some test DBs
 	testsupport.CreateInstanceDbs(t, app, 2, 50)
 	// Consolidate them
-	err := consolidate.Consolidate(&metabase.DailyParams{
+	err = consolidate.Consolidate(&metabase.DailyParams{
 		App:      app,
 		YYYYMMDD: types.NewYYYYMMDD().String(),
 	})
