@@ -1,0 +1,30 @@
+info:
+  name: summary read
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/summary/read"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "kind": "daily",
+        "operation": "%",
+        "tags": ["a"],
+        "ymd": "2026-11-10",
+        "year": 2026,
+        "week": 44
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS etl (
     id INTEGER PRIMARY KEY DEFAULT nextval('etl_id_seq') NOT NULL,
     inserted DATETIME DEFAULT now() NOT NULL,
     key_id TEXT NOT NULL,
-    name TEXT NOT NULL,
+    -- Any DB should only have one ETL of a given name
+    name TEXT NOT NULL UNIQUE,
     kind TEXT NOT NULL,
     body TEXT NOT NULL
 );

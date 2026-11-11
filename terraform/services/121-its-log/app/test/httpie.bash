@@ -44,13 +44,12 @@ for i in {1..10}; do
         assert_equals "ok" $(jq -r .status)
 done
 
-
-# How about create a summary?
-# http --check-status --ignore-stdin POST \
-#     ${SCHEME}://${HOST}:${PORT}/v1/summary/create/daily \
-#     x-api-key:${API_KEY_ADMIN} \
-#     operation="test.create.summary" \
-#     tags[]="one" \
-#     tags[]="two" \
-#     data[]="required" \
-#     YYYYMMDD="2026-11-07"
+# how about consolidating into a summary day
+http --check-status --ignore-stdin POST \
+    ${SCHEME}://${HOST}:${PORT}/v1/summary/create/daily \
+    x-api-key:${API_KEY_ADMIN} \
+    operation="test.create.summary" \
+    tags[]="one" \
+    tags[]="two" \
+    data[]="required" \
+    YYYYMMDD="$(date +%Y-%m-%d)"

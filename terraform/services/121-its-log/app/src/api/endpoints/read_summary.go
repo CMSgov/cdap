@@ -52,11 +52,14 @@ func SummaryRead(c *gin.Context) {
 
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
-	destination, err := getSummaryDB(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
+	mp, err := getSummaryParams(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
 	if err != nil {
-		BadRequest(c, err, "cannot open summary db")
+		BadRequest(c, err, "could not set up database")
 	}
-
+	destination, err := getSummaryDB(mp)
+	if err != nil {
+		BadRequest(c, err, "cannot open database")
+	}
 	// Open the database we created.
 	err = destination.Open(metabase.OpenExistingOnly)
 	if err != nil {

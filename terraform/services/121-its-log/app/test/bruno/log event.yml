@@ -1,0 +1,29 @@
+info:
+  name: log event
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/log/create"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-logging}}"
+  body:
+    type: json
+    data: |-
+      {
+        "tags": {{tags}}
+      }
+
+runtime:
+  variables:
+    - name: tags
+      value: '["v3", "EoB"]'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

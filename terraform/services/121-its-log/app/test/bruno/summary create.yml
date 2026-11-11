@@ -1,0 +1,31 @@
+info:
+  name: summary create
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/summary/create"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "kind": "daily",
+        "operation": "total count",
+        "tags": ["a", "b", "c"],
+        "data":{"number": 42},
+        "ymd": "2026-11-10",
+        "year": 2026,
+        "week": 44
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

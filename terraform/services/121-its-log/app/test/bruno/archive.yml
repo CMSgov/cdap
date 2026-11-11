@@ -1,0 +1,27 @@
+info:
+  name: archive
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/consolidate"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "kind": "monthly",
+        "ymd": "{{YMD}}",
+        "month": 11,
+        "year": 2026
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

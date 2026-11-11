@@ -1,0 +1,39 @@
+info:
+  name: etl create
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/etl/create"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "kind": "monthly",
+        "name": "sentinel",
+        "kind": "daily",
+        "ymd": "{{YMD}}",
+        "b64": "{{B64}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const btoa = require("btoa");
+        sql = `
+        select * from event
+        `
+        encoded = btoa(sql.trim())
+        bru.setVar("B64", encoded);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

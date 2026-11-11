@@ -29,9 +29,6 @@ func SummaryCreate(c *gin.Context) {
 		return
 	}
 
-	// Summaries are either daily, weekly, yearly, or consolidated
-	// body.Kind = base.GetParamOrPanic(c, "kind", SUMMARY_ALLOWED_KINDS)
-
 	app := types.App{
 		AppId: base.GetOrPanic(c, constants.ITSLOG_APPID),
 		KeyId: base.GetOrPanic(c, constants.ITSLOG_KEYID),
@@ -44,36 +41,10 @@ func SummaryCreate(c *gin.Context) {
 	if err != nil {
 		BadRequest(c, err, "bad summary params")
 	}
-	var destination *metabase.Metabase
-	switch cp := cp.(type) {
-	case *metabase.DailyParams:
-		// We are consolidating instances into a daily DB.
-		destination, err = metabase.NewDailyDatabase(&metabase.DailyParams{
-			App:      cp.App,
-			YYYYMMDD: cp.YYYYMMDD,
-		})
-	case *metabase.MonthlyParams:
-		destination, err = metabase.NewMonthlyDatabase(&metabase.MonthlyParams{
-			App:         cp.App,
-			YearNumber:  cp.YearNumber,
-			MonthNumber: cp.MonthNumber,
-		})
-	case *metabase.YearlyParams:
-		destination, err = metabase.NewYearlyDatabase(&metabase.YearlyParams{
-			App:        cp.App,
-			YearNumber: cp.YearNumber,
-		})
-	case *metabase.FullParams:
-		destination, err = metabase.NewFullDatabase(&metabase.FullParams{
-			App: cp.App,
-		})
-	default:
-		BadRequest(c, errors.New("cannot consolidation unknown type"), "unknown consolidation")
-	}
+	destination, err := getSummaryDB(cp)
 	if err != nil {
-		ServerError(c, err, "cannot get summary database")
+		ServerError(c, err, "could not get database")
 	}
-
 	// Open the database we created.
 	err = destination.Open(metabase.ReplaceExistingOrCreateNew)
 	if err != nil {
@@ -124,14 +95,10 @@ func getSummaryParams(app types.App, kind string, ymd string, year int, month in
 	}
 }
 
-func getSummaryDB(app types.App, kind string, ymd string, year int, month int) (*metabase.Metabase, error) {
+func getSummaryDB(cp metabase.MetaParams) (*metabase.Metabase, error) {
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
 	var err error
-	cp, err := getSummaryParams(app, kind, ymd, year, month)
-	if err != nil {
-		return nil, err
-	}
 	var destination *metabase.Metabase
 	switch cp := cp.(type) {
 	case *metabase.DailyParams:
@@ -162,11 +129,5 @@ func getSummaryDB(app types.App, kind string, ymd string, year int, month int) (
 		return nil, err
 	}
 
-	// Open the database we created.
-	err = destination.Open(metabase.ReplaceExistingOrCreateNew)
-	if err != nil {
-		return nil, err
-	}
 	return destination, err
-
 }
