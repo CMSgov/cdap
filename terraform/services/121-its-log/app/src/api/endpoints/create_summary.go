@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/consolidate"
 	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/embedfs"
 	"github.com/navapbc/its-log/internal/metabase"
@@ -41,21 +40,33 @@ func SummaryCreate(c *gin.Context) {
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
 	var err error
-	cp, err := getParams(app, body)
+	cp, err := getSummaryParams(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
 	if err != nil {
 		BadRequest(c, err, "bad summary params")
 	}
-	var destination metabase.IMetabase
+	var destination *metabase.Metabase
 	switch cp := cp.(type) {
-	case *consolidate.DailyParams:
+	case *metabase.DailyParams:
 		// We are consolidating instances into a daily DB.
-		destination, err = metabase.NewDailyDatabase(cp.App, cp.YYYYMMDD)
-	case *consolidate.MonthlyParams:
-		destination, err = metabase.NewMonthlyDatabase(cp.App, cp.YearNumber, cp.MonthNumber)
-	case *consolidate.YearlyParams:
-		destination, err = metabase.NewYearlyDatabase(cp.App, cp.YearNumber)
-	case *consolidate.FullParams:
-		destination, err = metabase.NewFullDatabase(cp.App)
+		destination, err = metabase.NewDailyDatabase(&metabase.DailyParams{
+			App:      cp.App,
+			YYYYMMDD: cp.YYYYMMDD,
+		})
+	case *metabase.MonthlyParams:
+		destination, err = metabase.NewMonthlyDatabase(&metabase.MonthlyParams{
+			App:         cp.App,
+			YearNumber:  cp.YearNumber,
+			MonthNumber: cp.MonthNumber,
+		})
+	case *metabase.YearlyParams:
+		destination, err = metabase.NewYearlyDatabase(&metabase.YearlyParams{
+			App:        cp.App,
+			YearNumber: cp.YearNumber,
+		})
+	case *metabase.FullParams:
+		destination, err = metabase.NewFullDatabase(&metabase.FullParams{
+			App: cp.App,
+		})
 	default:
 		BadRequest(c, errors.New("cannot consolidation unknown type"), "unknown consolidation")
 	}
@@ -68,7 +79,10 @@ func SummaryCreate(c *gin.Context) {
 	if err != nil {
 		ServerError(c, errors.New("could not open summary databse"), "cannot open summary db")
 	}
-	defer destination.Close()
+	defer func() {
+		destination.Flush()
+		destination.Close()
+	}()
 
 	_, err = metabase.Exec(destination, embedfs.EmbeddedEndpoints.GetOrPanic("summary_create"), embedfs.EmbedParamMap{
 		"key_id":    app.KeyId,
@@ -84,28 +98,75 @@ func SummaryCreate(c *gin.Context) {
 	StatusOk(c, "summary created")
 }
 
-func getParams(app types.App, body SummaryPostBody) (consolidate.ConsolidationParams, error) {
-	switch body.Kind {
+func getSummaryParams(app types.App, kind string, ymd string, year int, month int) (metabase.MetaParams, error) {
+	switch kind {
 	case "daily":
-		return &consolidate.DailyParams{
+		return &metabase.DailyParams{
 			App:      app,
-			YYYYMMDD: body.YYYYMMDD,
+			YYYYMMDD: ymd,
 		}, nil
 	case "monthly":
-		return &consolidate.MonthlyParams{
+		return &metabase.MonthlyParams{
 			App:         app,
-			MonthNumber: body.Month,
+			MonthNumber: month,
 		}, nil
 	case "yearly":
-		return &consolidate.YearlyParams{
+		return &metabase.YearlyParams{
 			App:        app,
-			YearNumber: body.Year,
+			YearNumber: year,
 		}, nil
 	case "full":
-		return &consolidate.FullParams{
+		return &metabase.FullParams{
 			App: app,
 		}, nil
 	default:
 		return nil, errors.New("could not setup summary database")
 	}
+}
+
+func getSummaryDB(app types.App, kind string, ymd string, year int, month int) (*metabase.Metabase, error) {
+	// The destination will depend on the kind of consolidation source
+	// we are dealing with.
+	var err error
+	cp, err := getSummaryParams(app, kind, ymd, year, month)
+	if err != nil {
+		return nil, err
+	}
+	var destination *metabase.Metabase
+	switch cp := cp.(type) {
+	case *metabase.DailyParams:
+		// We are consolidating instances into a daily DB.
+		destination, err = metabase.NewDailyDatabase(&metabase.DailyParams{
+			App:      cp.App,
+			YYYYMMDD: cp.YYYYMMDD,
+		})
+	case *metabase.MonthlyParams:
+		destination, err = metabase.NewMonthlyDatabase(&metabase.MonthlyParams{
+			App:         cp.App,
+			YearNumber:  cp.YearNumber,
+			MonthNumber: cp.MonthNumber,
+		})
+	case *metabase.YearlyParams:
+		destination, err = metabase.NewYearlyDatabase(&metabase.YearlyParams{
+			App:        cp.App,
+			YearNumber: cp.YearNumber,
+		})
+	case *metabase.FullParams:
+		destination, err = metabase.NewFullDatabase(&metabase.FullParams{
+			App: cp.App,
+		})
+	default:
+		return nil, errors.New("cannot consolidation unknown type")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Open the database we created.
+	err = destination.Open(metabase.ReplaceExistingOrCreateNew)
+	if err != nil {
+		return nil, err
+	}
+	return destination, err
+
 }

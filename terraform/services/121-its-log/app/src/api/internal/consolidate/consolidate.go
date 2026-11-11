@@ -8,7 +8,7 @@ import (
 	"github.com/navapbc/its-log/internal/metabase"
 )
 
-func Consolidate(cp ConsolidationParams) error {
+func Consolidate(cp metabase.MetaParams) error {
 	// Make sure we're going to match some files.
 	count := countFiles(cp.Glob())
 	if count < 1 {
@@ -24,17 +24,29 @@ func Consolidate(cp ConsolidationParams) error {
 
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
-	var destination metabase.IMetabase
+	var destination *metabase.Metabase
 	switch cp := cp.(type) {
-	case *DailyParams:
+	case *metabase.DailyParams:
 		// We are consolidating instances into a daily DB.
-		destination, err = metabase.NewDailyDatabase(cp.App, cp.YYYYMMDD)
-	case *MonthlyParams:
-		destination, err = metabase.NewMonthlyDatabase(cp.App, cp.YearNumber, cp.MonthNumber)
-	case *YearlyParams:
-		destination, err = metabase.NewYearlyDatabase(cp.App, cp.YearNumber)
-	case *FullParams:
-		destination, err = metabase.NewFullDatabase(cp.App)
+		destination, err = metabase.NewDailyDatabase(&metabase.DailyParams{
+			App:      cp.App,
+			YYYYMMDD: cp.YYYYMMDD,
+		})
+	case *metabase.MonthlyParams:
+		destination, err = metabase.NewMonthlyDatabase(&metabase.MonthlyParams{
+			App:         cp.App,
+			YearNumber:  cp.YearNumber,
+			MonthNumber: cp.MonthNumber,
+		})
+	case *metabase.YearlyParams:
+		destination, err = metabase.NewYearlyDatabase(&metabase.YearlyParams{
+			App:        cp.App,
+			YearNumber: cp.YearNumber,
+		})
+	case *metabase.FullParams:
+		destination, err = metabase.NewFullDatabase(&metabase.FullParams{
+			App: cp.App,
+		})
 	default:
 		return errors.New("cannot consolidation unknown type")
 	}

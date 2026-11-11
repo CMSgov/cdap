@@ -8,6 +8,7 @@ import (
 	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/consolidate"
 	"github.com/navapbc/its-log/internal/constants"
+	"github.com/navapbc/its-log/internal/metabase"
 	"github.com/navapbc/its-log/internal/types"
 )
 
@@ -46,7 +47,7 @@ func Consolidate(c *gin.Context) {
 			BadRequest(c, errors.New("must provide YYYY-MM-DD"), "must provide ymd")
 			return
 		}
-		err = consolidate.Consolidate(&consolidate.DailyParams{
+		err = consolidate.Consolidate(&metabase.DailyParams{
 			App:      app,
 			YYYYMMDD: body.YYYYMMDD,
 		})
@@ -55,7 +56,7 @@ func Consolidate(c *gin.Context) {
 			BadRequest(c, errors.New("must provide month number and year"), "missing month or year")
 			return
 		}
-		err = consolidate.Consolidate(&consolidate.MonthlyParams{
+		err = consolidate.Consolidate(&metabase.MonthlyParams{
 			App:         app,
 			MonthNumber: body.Month,
 			YearNumber:  body.Year,
@@ -65,12 +66,12 @@ func Consolidate(c *gin.Context) {
 			BadRequest(c, errors.New("must provide year"), "missing year")
 			return
 		}
-		err = consolidate.Consolidate(&consolidate.YearlyParams{
+		err = consolidate.Consolidate(&metabase.YearlyParams{
 			App:        app,
 			YearNumber: body.Year,
 		})
 	case "full":
-		err = consolidate.Consolidate(&consolidate.FullParams{
+		err = consolidate.Consolidate(&metabase.FullParams{
 			App: app,
 		})
 	default:

@@ -28,14 +28,16 @@ func setupMetabaseEnv(t *testing.T) {
 
 func TestInstanceDatabaseExistence(t *testing.T) {
 	setupMetabaseEnv(t)
-	id, err := NewInstanceDatabase(types.App{AppId: "app0123", KeyId: "key0123"})
+	id, err := NewInstanceDatabase(&InstanceParams{
+		App: types.App{AppId: "app0123", KeyId: "key0123"},
+	})
 	if err != nil {
 		t.Error(err)
 	}
 	// t.Log(id.FullFilename())
-	assert.False(t, CheckExists(id))
+	assert.False(t, id.CheckExists())
 	id.Open(OpenExistingOrCreateNew)
-	assert.True(t, CheckExists(id))
+	assert.True(t, id.CheckExists())
 }
 
 func _touch(filename string) error {
@@ -54,38 +56,42 @@ func _touch(filename string) error {
 }
 func TestCreateNew(t *testing.T) {
 	setupMetabaseEnv(t)
-	id, err := NewInstanceDatabase(types.App{AppId: "app0123", KeyId: "key0123"})
+	id, err := NewInstanceDatabase(&InstanceParams{
+		App: types.App{AppId: "app0123", KeyId: "key0123"},
+	})
 	if err != nil {
 		t.Error(err)
 	}
 	// Cannot create a new file if it exists
 	_touch(id.FullFilename())
-	assert.True(t, CheckExists(id))
+	assert.True(t, id.CheckExists())
 	err = id.Open(CreateNew)
 	assert.Error(t, err)
 	id.Close()
 
 	// Can create a new file if it does not exist
 	os.Remove(id.FullFilename())
-	assert.False(t, CheckExists(id))
+	assert.False(t, id.CheckExists())
 	err = id.Open(CreateNew)
 	assert.NoError(t, err)
-	assert.True(t, CheckExists(id))
+	assert.True(t, id.CheckExists())
 	id.Close()
 }
 
 func TestOpenExisting(t *testing.T) {
 	setupMetabaseEnv(t)
-	id, err := NewInstanceDatabase(types.App{AppId: "app0123", KeyId: "key0123"})
+	id, err := NewInstanceDatabase(&InstanceParams{
+		App: types.App{AppId: "app0123", KeyId: "key0123"},
+	})
 	if err != nil {
 		t.Error(err)
 	}
 	// Can open existing
 	os.Remove(id.FullFilename())
-	assert.False(t, CheckExists(id))
+	assert.False(t, id.CheckExists())
 	err = id.Open(CreateNew)
 	assert.NoError(t, err)
-	assert.True(t, CheckExists(id))
+	assert.True(t, id.CheckExists())
 	err = id.Close()
 	assert.NoError(t, err)
 	err = id.Open(OpenExistingOnly)
@@ -93,16 +99,18 @@ func TestOpenExisting(t *testing.T) {
 
 	// Can not open a file that does not exist
 	os.Remove(id.FullFilename())
-	assert.False(t, CheckExists(id))
+	assert.False(t, id.CheckExists())
 	err = id.Open(OpenExistingOnly)
-	assert.False(t, CheckExists(id))
+	assert.False(t, id.CheckExists())
 	assert.Error(t, err)
 	id.Close()
 }
 
 func TestReplaceExisting(t *testing.T) {
 	setupMetabaseEnv(t)
-	id, e0 := NewInstanceDatabase(types.App{AppId: "app0123", KeyId: "key0123"})
+	id, e0 := NewInstanceDatabase(&InstanceParams{
+		App: types.App{AppId: "app0123", KeyId: "key0123"},
+	})
 	if e0 != nil {
 		t.Error(e0)
 	}
@@ -116,7 +124,7 @@ func TestReplaceExisting(t *testing.T) {
 	e2 := id.Open(CreateNew)
 	assert.NoError(t, e2)
 	id.Close()
-	assert.True(t, CheckExists(id))
+	assert.True(t, id.CheckExists())
 	before, _ := os.Stat(id.FullFilename())
 	time.Sleep(5 * time.Millisecond)
 

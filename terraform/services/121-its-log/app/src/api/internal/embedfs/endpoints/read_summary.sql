@@ -2,9 +2,12 @@ SELECT
     operation, 
     tags,
     data
-  FROM itslog_summary
+  FROM summary
   WHERE 
-    tags LIKE $tags
+    len(list_intersect(
+      cast($tags as JSON)::string[],
+      cast(tags as JSON)::string[])
+      ) > 0
     AND
     operation LIKE $operation
   ORDER BY id DESC

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/navapbc/its-log/internal/consolidate"
+	"github.com/navapbc/its-log/internal/metabase"
 	"github.com/navapbc/its-log/internal/testsupport"
 	"github.com/navapbc/its-log/internal/types"
 )
@@ -66,7 +67,7 @@ func TestSummaryCreate(t *testing.T) {
 	// Create some test DBs
 	testsupport.CreateInstanceDbs(t, app, 2, 50)
 	// Consolidate them
-	err := consolidate.Consolidate(&consolidate.DailyParams{
+	err := consolidate.Consolidate(&metabase.DailyParams{
 		App:      app,
 		YYYYMMDD: types.NewYYYYMMDD().String(),
 	})

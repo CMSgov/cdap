@@ -23,7 +23,7 @@ var instanceCount int = 4
 // creation of instance databases and the archived data. Good for debugging
 // and local testing. Leaving it `false` will use a t.TempDir() which is
 // cleaned up automatically by the test engine.
-var useHomeDirectory bool = false
+var useHomeDirectory bool = true
 
 func TestConsolidate(t *testing.T) {
 	testsupport.SetupTestEnv(t, testsupport.GlobalTestStorageLocation)
@@ -39,25 +39,37 @@ func TestConsolidate(t *testing.T) {
 }
 
 func checkInstanceDataInConsolidatedDbs(app types.App, t *testing.T) {
-	dd, err := metabase.NewDailyDatabase(app, types.NewYYYYMMDD().String())
+	dd, err := metabase.NewDailyDatabase(&metabase.DailyParams{
+		App:      app,
+		YYYYMMDD: types.NewYYYYMMDD().String(),
+	})
 	if err != nil {
 		t.Error(err)
 	}
 	checkIM(t, dd)
 
-	md, err := metabase.NewMonthlyDatabase(app, time.Now().Year(), int(time.Now().Month()))
+	md, err := metabase.NewMonthlyDatabase(&metabase.MonthlyParams{
+		App:         app,
+		YearNumber:  time.Now().Year(),
+		MonthNumber: int(time.Now().Month()),
+	})
+
 	if err != nil {
 		t.Error(err)
 	}
 	checkIM(t, md)
 
-	yd, err := metabase.NewYearlyDatabase(app, time.Now().Year())
+	yd, err := metabase.NewYearlyDatabase(&metabase.YearlyParams{
+		App:        app,
+		YearNumber: time.Now().Year(),
+	})
+
 	if err != nil {
 		t.Error(err)
 	}
 	checkIM(t, yd)
 
-	fd, err := metabase.NewFullDatabase(app)
+	fd, err := metabase.NewFullDatabase(&metabase.FullParams{App: app})
 	if err != nil {
 		t.Error(err)
 	}
@@ -65,13 +77,13 @@ func checkInstanceDataInConsolidatedDbs(app types.App, t *testing.T) {
 
 }
 
-func checkIM(t *testing.T, im metabase.IMetabase) {
-	err := im.Open(metabase.OpenExistingOnly)
+func checkIM(t *testing.T, m *metabase.Metabase) {
+	err := m.Open(metabase.OpenExistingOnly)
 	if err != nil {
 		t.Error(err)
 	}
-	defer im.Close()
-	db := im.GetDB()
+	defer m.Close()
+	db := m.GetDB()
 
 	var count int
 	err = db.QueryRow("SELECT COUNT(*) FROM event").Scan(&count)
@@ -82,32 +94,32 @@ func checkIM(t *testing.T, im metabase.IMetabase) {
 }
 
 func createConsolidatedDbs(app types.App, t *testing.T) {
-	dp := DailyParams{
+	dp := metabase.DailyParams{
 		App:      app,
 		YYYYMMDD: types.NewYYYYMMDD().String(),
 	}
 	assertConsolidated(t, &dp)
 
-	mp := MonthlyParams{
+	mp := metabase.MonthlyParams{
 		App:         app,
 		YearNumber:  time.Now().Year(),
 		MonthNumber: int(time.Now().Month()),
 	}
 	assertConsolidated(t, &mp)
 
-	yp := YearlyParams{
+	yp := metabase.YearlyParams{
 		App:        app,
 		YearNumber: time.Now().Year(),
 	}
 	assertConsolidated(t, &yp)
 
-	fp := FullParams{
+	fp := metabase.FullParams{
 		App: app,
 	}
 	assertConsolidated(t, &fp)
 }
 
-func assertConsolidated(t *testing.T, cp ConsolidationParams) {
+func assertConsolidated(t *testing.T, cp metabase.MetaParams) {
 	Consolidate(cp)
 	count := countFiles(cp.Glob())
 	assert.Greater(t, count, 0)

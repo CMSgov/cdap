@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func ExecNoLock(im IMetabase, theSql string, params embedfs.EmbedParamMap) (sql.Result, error) {
+func ExecNoLock(im *Metabase, theSql string, params embedfs.EmbedParamMap) (sql.Result, error) {
 	args, err := PrepareNamedArgs(theSql, params)
 	if err != nil {
 		zap.L().Error("error in PrepareNamedArgs", zap.Error(err))
@@ -34,7 +34,7 @@ func ExecNoLock(im IMetabase, theSql string, params embedfs.EmbedParamMap) (sql.
 // ##        ##   ##  ##       ##    ##
 // ######## ##     ## ########  ######
 
-func Exec(im IMetabase, theSql string, params embedfs.EmbedParamMap) (sql.Result, error) {
+func Exec(im *Metabase, theSql string, params embedfs.EmbedParamMap) (sql.Result, error) {
 	im.Lock("Exec")
 	res, err := ExecNoLock(im, theSql, params)
 	im.Flush()

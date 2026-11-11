@@ -2,8 +2,6 @@ package metabase
 
 import (
 	"database/sql"
-	"fmt"
-	"path"
 
 	"github.com/navapbc/its-log/internal/types"
 )
@@ -45,12 +43,7 @@ func (DD *DailyDatabase) GetDB() *sql.DB {
 // By implementing the entire interface, we can pass this anywhere
 // a type of IMetabase is expected.
 func (DD *DailyDatabase) FullFilename() string {
-	filename := fmt.Sprintf("%s_daily_%s.%s",
-		DD.database.app.AppId,
-		DD.YYYYMMDD,
-		DUCKDB_EXTENSION,
-	)
-	return path.Join(DD.database.meta.path, filename)
+
 }
 
 func (DD *DailyDatabase) Open(mode MetabaseOpenMode) error {
@@ -58,11 +51,11 @@ func (DD *DailyDatabase) Open(mode MetabaseOpenMode) error {
 }
 
 func (DD *DailyDatabase) Close() error {
-	return DD.database.meta.Close()
+	return close(DD)
 }
 
 func (DD *DailyDatabase) Flush() error {
-	return DD.database.meta.Flush()
+	return flush(DD)
 }
 
 func (DD *DailyDatabase) Delete() error {

@@ -4,67 +4,27 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"os"
 	"path"
 	"sync"
 
 	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/navapbc/its-log/internal/embedfs"
-	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
-type Lockable struct {
+type Metabase struct {
+	config   MetaParams
+	Kind     MetaType
 	lock     sync.Mutex
 	path     string
 	filename string
-}
-
-func (L *Lockable) Lock(location string) {
-	zap.L().Debug("== Lock ==",
-		zap.String("location", location),
-		zap.String("path", L.path),
-		zap.String("filename", L.filename),
-	)
-	L.lock.Lock()
-}
-
-func (L *Lockable) Unlock(location string) {
-	zap.L().Debug("== Unlock ==",
-		zap.String("location", location),
-		zap.String("path", L.path),
-		zap.String("filename", L.filename),
-	)
-	L.lock.Unlock()
-}
-
-type DB struct {
-	Context context.Context
-	db      *sql.DB
-}
-
-type LockableDB struct {
-	*Lockable
-	database *DB
-}
-
-type Metabase struct {
-	*LockableDB
+	Context  context.Context
+	db       *sql.DB
 	location FilesystemLocation
 	openMode MetabaseOpenMode
-}
-
-type IMetabase interface {
-	SetDB(db *sql.DB)
-	GetDB() *sql.DB
-	FullFilename() string
-	Open(mode MetabaseOpenMode) error
-	Close() error
-	Flush() error
-	Delete() error
-	Lock(msg string)
-	Unlock(msg string)
 }
 
 const DUCKDB_EXTENSION = "duckdb"
@@ -75,46 +35,148 @@ const DUCKDB_EXTENSION = "duckdb"
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-func NewMetabase(location FilesystemLocation, filename string) (*Metabase, error) {
+func getPath(kind MetaType) string {
 	p := "BAD_PATH"
-	switch location {
-	case LiveLocation:
+	switch kind {
+	case Instance:
 		p = viper.GetString("storage.path")
-	case ArchiveLocation:
+	case Daily:
 		p = viper.GetString("archive.path")
-	case ExportLocation:
-		p = viper.GetString("export.path")
+	case Monthly:
+		p = viper.GetString("archive.path")
+	case Yearly:
+		p = viper.GetString("archive.path")
+	case Full:
+		p = viper.GetString("archive.path")
+	default:
+		panic("cannot get path for invalid MetaType")
 	}
+	return p
+}
+func NewMetabase(kind MetaType, filename string) (*Metabase, error) {
 
 	return &Metabase{
-		location: location,
-		LockableDB: &LockableDB{
-			database: &DB{
-				Context: context.Background(),
-				db:      nil,
-			},
-			Lockable: &Lockable{
-				path:     p,
-				filename: filename,
-			},
-		},
+		Kind:     kind,
+		Context:  context.Background(),
+		db:       nil,
+		path:     getPath(kind),
+		filename: filename,
 	}, nil
 }
 
-func (M *Metabase) SetDB(db *sql.DB) {
-	M.database.db = db
+func NewInstanceDatabase(config MetaParams) (*Metabase, error) {
+	config.(*InstanceParams).instanceId = viper.GetString("instance.id")
+	return &Metabase{
+		Kind:    Instance,
+		Context: context.Background(),
+		db:      nil,
+		path:    getPath(Instance),
+		config:  config,
+	}, nil
+}
+
+func NewDailyDatabase(config MetaParams) (*Metabase, error) {
+	return &Metabase{
+		Kind:    Daily,
+		Context: context.Background(),
+		db:      nil,
+		path:    getPath(Daily),
+		config:  config,
+	}, nil
+}
+
+func NewMonthlyDatabase(config MetaParams) (*Metabase, error) {
+	return &Metabase{
+		Kind:    Monthly,
+		Context: context.Background(),
+		db:      nil,
+		path:    getPath(Monthly),
+		config:  config,
+	}, nil
+}
+
+func NewYearlyDatabase(config MetaParams) (*Metabase, error) {
+	return &Metabase{
+		Kind:    Yearly,
+		Context: context.Background(),
+		db:      nil,
+		path:    getPath(Yearly),
+		config:  config,
+	}, nil
+}
+
+func NewFullDatabase(config MetaParams) (*Metabase, error) {
+	return &Metabase{
+		Kind:    Full,
+		Context: context.Background(),
+		db:      nil,
+		path:    getPath(Full),
+		config:  config,
+	}, nil
+}
+
+func (M *Metabase) setDB(db *sql.DB) {
+	M.db = db
 }
 
 func (M *Metabase) GetDB() *sql.DB {
-	return M.database.db
+	return M.db
+}
+
+func (M *Metabase) GetContext() context.Context {
+	return M.Context
+}
+
+func (M *Metabase) ContextDone() {
+	M.Context.Done()
 }
 
 func (M *Metabase) FullFilename() string {
-	return path.Join(M.path, M.filename)
+	switch M.Kind {
+	case Instance:
+		filename := fmt.Sprintf("%s_instance_%s_%s.%s",
+			M.config.GetApp().AppId,
+			M.config.(*InstanceParams).instanceId,
+			M.config.(*InstanceParams).YYYYMMDD,
+			DUCKDB_EXTENSION,
+		)
+		return path.Join(M.path, filename)
+	case Daily:
+		filename := fmt.Sprintf("%s_daily_%s.%s",
+			M.config.GetApp().AppId,
+			M.config.(*DailyParams).YYYYMMDD,
+			DUCKDB_EXTENSION,
+		)
+		return path.Join(M.path, filename)
+	case Monthly:
+		filename := fmt.Sprintf("%s_monthly_%d_%02d.%s",
+			M.config.GetApp().AppId,
+			M.config.(*MonthlyParams).YearNumber,
+			M.config.(*MonthlyParams).MonthNumber,
+			DUCKDB_EXTENSION,
+		)
+		return path.Join(M.path, filename)
+	case Yearly:
+		filename := fmt.Sprintf("%s_yearly_%d.%s",
+			M.config.GetApp().AppId,
+			M.config.(*YearlyParams).YearNumber,
+			DUCKDB_EXTENSION,
+		)
+		return path.Join(M.path, filename)
+	case Full:
+		filename := fmt.Sprintf("%s_full.%s",
+			M.config.GetApp().AppId,
+			DUCKDB_EXTENSION,
+		)
+		return path.Join(M.path, filename)
+	default:
+		panic("cannot get filename of unknown MetabaseKind")
+	}
+
 }
 
-func CheckExists(im IMetabase) bool {
-	full := im.FullFilename()
+func (M *Metabase) CheckExists() bool {
+	full := M.FullFilename()
 	_, err := os.Stat(full)
 	// If we don't get an error, the file exists.
 	if err == nil {
@@ -131,18 +193,32 @@ func CheckExists(im IMetabase) bool {
 	}
 }
 
-func open(im IMetabase, mode MetabaseOpenMode) error {
+func (M *Metabase) Lock(loc string) {
+	zap.L().Debug("== LOCK ==",
+		zap.String("location", loc),
+		zap.String("db", M.FullFilename()))
+	M.lock.Lock()
+}
+
+func (M *Metabase) Unlock(loc string) {
+	zap.L().Debug("== UNLOCK ==",
+		zap.String("location", loc),
+		zap.String("db", M.FullFilename()))
+	M.lock.Unlock()
+}
+
+func (M *Metabase) Open(mode MetabaseOpenMode) error {
 	touch := false
 	switch mode {
 	case OpenExistingOnly:
-		if CheckExists(im) {
+		if M.CheckExists() {
 			zap.L().Info("OpenExistingOnly")
 			// fall through to open
 		} else {
 			return errors.New("database does not exist")
 		}
 	case OpenExistingOrCreateNew:
-		if CheckExists(im) {
+		if M.CheckExists() {
 			zap.L().Info("OpenExisting")
 			// fall through to open
 		} else {
@@ -151,28 +227,28 @@ func open(im IMetabase, mode MetabaseOpenMode) error {
 			// fall through; the open call will create
 		}
 	case CreateNew:
-		if CheckExists(im) {
+		if M.CheckExists() {
 			zap.L().Info("CreateNew")
 			return errors.New("cannot open; already exists")
 		}
 		touch = true
 	case ReplaceExisting:
-		if CheckExists(im) {
+		if M.CheckExists() {
 			zap.L().Info("ReplaceIfExists")
 			// delete if it exists, and then fall through.
-			delErr := im.Delete()
+			delErr := M.Delete()
 			if delErr != nil {
 				return delErr
 			}
 			touch = true
 		} else {
-			return errors.New("cannot replace on open; database does not exist: " + im.FullFilename())
+			return errors.New("cannot replace on open; database does not exist: " + M.FullFilename())
 		}
 	case ReplaceExistingOrCreateNew:
-		if CheckExists(im) {
+		if M.CheckExists() {
 			zap.L().Info("ReplaceIfExists")
 			// delete if it exists, and then fall through.
-			delErr := im.Delete()
+			delErr := M.Delete()
 			if delErr != nil {
 				return delErr
 			}
@@ -182,104 +258,74 @@ func open(im IMetabase, mode MetabaseOpenMode) error {
 	}
 
 	if touch {
-		db, err := sql.Open("duckdb", im.FullFilename())
+		db, err := sql.Open("duckdb", M.FullFilename())
 		if err != nil {
 			return errors.New("open: " + err.Error())
 		}
 		db.SetMaxIdleConns(0)
-		im.SetDB(db)
+		M.setDB(db)
 		db.Close()
 
 	}
-	db, err := sql.Open("duckdb", im.FullFilename())
+	db, err := sql.Open("duckdb", M.FullFilename())
 	if err != nil {
 		return errors.New("open: " + err.Error())
 	}
 	db.SetMaxIdleConns(0)
-	im.SetDB(db)
+	M.setDB(db)
 	// Create the tables.
-	_, err = Exec(im, embedfs.EmbeddedSchema.Files["schema"], embedfs.EmbedParamMap{})
+	_, err = Exec(M, embedfs.EmbeddedSchema.Files["schema"], embedfs.EmbedParamMap{})
 	if err != nil {
 		return err
 	}
 
-	if !CheckExists(im) {
+	if !M.CheckExists() {
 		return errors.New("file does not exist after open")
 	}
 
 	return err
 }
 
-func (M *Metabase) Open(mode MetabaseOpenMode) error {
-	M.openMode = mode
-	return open(M, mode)
-}
-
 func (M *Metabase) Close() error {
-	if M.database.Context != nil {
-		M.database.Context.Done()
-		M.database.Context = nil
-	}
-	if M.database.db != nil {
-		err := M.database.db.Close()
+	if M.GetDB() != nil {
+		err := M.GetDB().Close()
 		if err != nil {
 			return err
 		}
-		M.database.db = nil
+		zap.L().Info("database closed via Close()")
+	} else {
+		zap.L().Debug("not closing, DB was nil")
 	}
-	// Give it the old college try...
-	// In theory, this could cause a race.
-	// if M.lock.TryLock() {
-	// 	// This means the lock was acquired...
-	// 	defer M.Unlock("Was Not Locked")
-	// } else {
-	// 	// It is locked. Unlock it.
-	// 	defer M.Unlock("Lock Malingering")
-	// }
-
-	zap.L().Info("database closed via Close()")
 	return nil
 }
 
 func (M *Metabase) Flush() error {
-	// This flushes any outstanding actions/transactions on the DuckDB.
-	// Good to do before closing the file or doing any operations on the DB file itself.
-	_, err := M.database.db.Exec("CHECKPOINT;")
-	if err != nil {
-		return err
+	if M.GetDB() != nil {
+		// This flushes any outstanding actions/transactions on the DuckDB.
+		// Good to do before closing the file or doing any operations on the DB file itself.
+		_, err := M.GetDB().Exec("CHECKPOINT;")
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func delete(im IMetabase) error {
-	if err := im.Close(); err != nil {
-		return err
-	}
-	err := os.Remove(im.FullFilename())
-	if err != nil {
-		zap.L().Error("could not delete",
-			zap.String("filename", im.FullFilename()))
-	}
-
-	if CheckExists(im) {
-		return errors.New("failed to delete database")
-	}
-	return err
-}
-
 func (M *Metabase) Delete() error {
-	return delete(M)
-}
+	if M.GetDB() != nil {
+		if err := M.Close(); err != nil {
+			return err
+		}
+		err := os.Remove(M.FullFilename())
+		if err != nil {
+			zap.L().Error("could not delete",
+				zap.String("filename", M.FullFilename()))
+			return err
+		}
 
-// /////////////
-type Database struct {
-	meta *Metabase
-	app  types.App
-}
-
-func NewDatabase(app types.App, M *Metabase) *Database {
-	return &Database{
-		app:  app,
-		meta: M,
+		if M.CheckExists() {
+			return errors.New("failed to delete database")
+		}
 	}
+	return nil
 }

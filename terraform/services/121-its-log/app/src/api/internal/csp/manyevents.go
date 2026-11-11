@@ -18,7 +18,10 @@ func ManyEvents(events []*types.Event) (int64, error) {
 	} else {
 		return 0, nil
 	}
-	id, err := metabase.NewInstanceDatabase(app)
+	id, err := metabase.NewInstanceDatabase(&metabase.InstanceParams{
+		App:      app,
+		YYYYMMDD: types.NewYYYYMMDD().String(),
+	})
 	if err != nil {
 		zap.L().Error("could not create instance database")
 		return -1, err

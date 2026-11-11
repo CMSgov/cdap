@@ -15,16 +15,16 @@ import (
 // ##    ##  ##     ## ##       ##    ##     ##
 //  ##### ##  #######  ######## ##     ##    ##
 
-func Query(im IMetabase, theSql string, params embedfs.EmbedParamMap) (*sql.Rows, error) {
+func Query(m *Metabase, theSql string, params embedfs.EmbedParamMap) (*sql.Rows, error) {
 
 	args, err := PrepareNamedArgs(theSql, params)
 	if err != nil {
 		zap.L().Error("error in PrepareNamedArgs", zap.Error(err))
 		return nil, err
 	}
-	im.Lock("Query")
-	res, err := im.GetDB().Query(theSql, args)
-	im.Unlock("Query")
+	m.Lock("Query")
+	res, err := m.GetDB().Query(theSql, args)
+	m.Unlock("Query")
 	if err != nil {
 		return nil, err
 	}
@@ -40,17 +40,17 @@ func Query(im IMetabase, theSql string, params embedfs.EmbedParamMap) (*sql.Rows
 // ##    ##  ##     ## ##       ##    ##     ##    ##    ##  ##     ## ##  ##  ##
 //  ##### ##  #######  ######## ##     ##    ##    ##     ##  #######   ###  ###
 
-func QueryRow(im IMetabase, theSql string, params embedfs.EmbedParamMap) *sql.Row {
+func QueryRow(m *Metabase, theSql string, params embedfs.EmbedParamMap) *sql.Row {
 	var row *sql.Row
-	im.Lock("QueryRow")
+	m.Lock("QueryRow")
 	args, err := PrepareNamedArgs(theSql, params)
 	if err != nil {
 		zap.L().Error("error in PrepareNamedArgs", zap.Error(err))
-		im.Unlock("QueryRow")
+		m.Unlock("QueryRow")
 		return nil
 	}
-	row = im.GetDB().QueryRow(theSql, args...)
-	im.Unlock("QueryRow")
+	row = m.GetDB().QueryRow(theSql, args...)
+	m.Unlock("QueryRow")
 
 	return row
 }
