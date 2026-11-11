@@ -18,11 +18,11 @@ type CreateETLPostBody struct {
 	Name string `json:"name" binding:"required"`
 	// Run a B64 validator that also filters the SQL for
 	// INSERT, DELETE, and UPDATE.
-	B64      string `json:"b64" binding:"required,validateB64SQL" validate:"required"`
+	B64      string `json:"b64" binding:"required,validateB64SQL"`
 	Kind     string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
-	YYYYMMDD string `json:"ymd" validate:"omitempty,validateYMD"`
-	Year     int    `json:"year" validate:"omitempty,gte=2000"`
-	Month    int    `json:"month" validate:"omitempty,gte=1,lte=12"`
+	YYYYMMDD string `json:"ymd" binding:"omitempty,validateYMD"`
+	Year     int    `json:"year" binding:"omitempty,gte=2000"`
+	Month    int    `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 func CreateEtl(c *gin.Context) {

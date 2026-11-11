@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"regexp"
 	"slices"
 	"strconv"
@@ -28,17 +29,41 @@ func PrepareNamedArgs(sql string, params embedfs.EmbedParamMap) ([]any, error) {
 	return named, nil
 }
 
+func getParams(regEx, url string) (paramsMap map[string]string) {
+
+	var compRegEx = regexp.MustCompile(regEx)
+	match := compRegEx.FindStringSubmatch(url)
+
+	paramsMap = make(map[string]string)
+	for i, name := range compRegEx.SubexpNames() {
+		if i > 0 && i <= len(match) {
+			paramsMap[name] = match[i]
+		}
+	}
+	return paramsMap
+}
+
 func generateNamedArgs(theSql string, params embedfs.EmbedParamMap) ([]any, error) {
 	// We now are going to figure out which named params are present in the SQL.
 	// That way, we only create named args for things that are present.
 	// The SQL engine does not like when you pass named paramters that do not exist in the SQL.
 	// E.g. we cannot provide more names than exist.
-	re := regexp.MustCompile(`\` + SQL_NAMED_PARAM_SYMBOL + `([a-zA-Z0-9_]+)`)
-	matches := re.FindAllString(theSql, -1)
+	all_matches := make(map[string]any, 0)
+	re := regexp.MustCompile(`\$(?P<tag>[a-zA-Z0-9_]+)`)
+	match_pairs := re.FindAllStringSubmatch(theSql, -1)
+	// Comes back as a list of pairs, ["$burt", "burt"], ["$ernie", "ernie"]
+	for _, pair := range match_pairs {
+		all_matches[pair[1]] = true
+	}
+	// What if we use getvariable?
+	re = regexp.MustCompile(`getvariable\('(?P<tag>[a-zA-Z0-9_]+)'\)`)
+	var_pairs := re.FindAllStringSubmatch(theSql, -1)
+	for _, pair := range var_pairs {
+		all_matches[pair[1]] = true
+	}
 
 	// Uniquify; we want each match only once.
-	slices.Sort(matches)
-	matches = slices.Compact(matches)
+	matches := slices.Collect(maps.Keys(all_matches))
 
 	// And, check everything we found in the SQL is in the params
 	named := make([]any, 0)
@@ -70,20 +95,20 @@ func generateNamedArgs(theSql string, params embedfs.EmbedParamMap) ([]any, erro
 					params[trimmed] = params[trimmed]
 				}
 			case []string:
-				b, _ := json.Marshal(params[trimmed])
-				params[trimmed] = b
+				// Pass the JSON through for when we are querying.
+				params[trimmed] = params[trimmed]
 			case types.M:
 				b, err := asJson(params, trimmed)
 				if err != nil {
 					return nil, err
 				}
 				params[trimmed] = string(b)
-			case []any:
-				b, err := asJson(params, trimmed)
-				if err != nil {
-					return nil, err
-				}
-				params[trimmed] = string(b)
+			// case []any:
+			// 	b, err := asJson(params, trimmed)
+			// 	if err != nil {
+			// 		return nil, err
+			// 	}
+			// 	params[trimmed] = string(b)
 			case time.Time:
 				params[trimmed] = params[trimmed].(time.Time)
 			case sql.NullString:

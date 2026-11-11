@@ -1,11 +1,11 @@
 SELECT 
     operation, 
     tags,
-    data
+    "data",
   FROM summary
   WHERE 
     len(list_intersect(
-      cast($tags as JSON)::string[],
+      $tags::JSON::string[],
       cast(tags as JSON)::string[])
       ) > 0
     AND

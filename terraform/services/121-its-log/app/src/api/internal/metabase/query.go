@@ -43,6 +43,7 @@ func Query(m *Metabase, theSql string, params embedfs.EmbedParamMap) (*sql.Rows,
 func QueryRow(m *Metabase, theSql string, params embedfs.EmbedParamMap) *sql.Row {
 	var row *sql.Row
 	m.Lock("QueryRow")
+
 	args, err := PrepareNamedArgs(theSql, params)
 	if err != nil {
 		zap.L().Error("error in PrepareNamedArgs", zap.Error(err))

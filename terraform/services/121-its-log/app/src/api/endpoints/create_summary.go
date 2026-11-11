@@ -15,10 +15,10 @@ type SummaryPostBody struct {
 	Operation string   `json:"operation" binding:"required"`
 	Tags      []string `json:"tags"`
 	Data      any      `json:"data" binding:"required"`
-	Kind      string   `json:"kind" validate:"required,oneof=daily monthly yearly full"`
-	YYYYMMDD  string   `json:"ymd" validate:"omitempty,validateYMD"`
-	Year      int      `json:"year" validate:"omitempty,gte=2000"`
-	Month     int      `json:"month" validate:"omitempty,gte=1,lte=12"`
+	Kind      string   `json:"kind" binding:"required,oneof=daily monthly yearly full"`
+	YYYYMMDD  string   `json:"ymd" binding:"omitempty,validateYMD"`
+	Year      int      `json:"year" binding:"omitempty,gte=2000"`
+	Month     int      `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 func SummaryCreate(c *gin.Context) {

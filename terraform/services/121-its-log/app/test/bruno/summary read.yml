@@ -14,11 +14,9 @@ http:
     data: |-
       {
         "kind": "daily",
-        "operation": "%",
+        "operation": "y",
         "tags": ["a"],
-        "ymd": "2026-11-10",
-        "year": 2026,
-        "week": 44
+        "ymd": "2026-11-10"
       }
   auth: inherit
 
@@ -27,4 +25,3 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
-  forwardAuthorizationHeader: false

@@ -1,3 +1,7 @@
+-- SCHEMA
+-- Tells the engine to skip parameter replacement
+-- Makes no sense on schemas
+
 -- its-log version / schema version
 -- date
 -- current github hash?

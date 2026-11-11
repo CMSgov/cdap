@@ -1,7 +1,6 @@
 package endpoints
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,22 +16,22 @@ import (
 )
 
 type SummaryReadBody struct {
-	Operation string   `json:"operation" binding:"required" validate:"required"`
+	Operation string   `json:"operation" binding:"required"`
 	Tags      []string `json:"tags"`
-	Kind      string   `json:"kind" validate:"required,oneof=daily monthly full"`
-	YYYYMMDD  string   `json:"ymd" validate:"omitempty,validateYMD"`
-	Year      int      `json:"year" validate:"omitempty,gte=2000"`
-	Month     int      `json:"month" validate:"omitempty,gte=1,lte=12"`
+	Kind      string   `json:"kind" binding:"required,oneof=daily monthly full"`
+	YYYYMMDD  string   `json:"ymd" binding:"omitempty,validateYMD"`
+	Year      int      `json:"year" binding:"omitempty,gte=2000"`
+	Month     int      `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 type SummaryRow struct {
 	ID       int64     `json:"id"`
 	Inserted time.Time `json:"inserted"`
 	// Date      string         `json:"date"`
-	KeyId     string         `json:"key_id"`
-	Operation string         `json:"operation"`
-	Tags      sql.NullString `json:"tags"`
-	Data      any            `json:"data"`
+	KeyId     string `json:"key_id"`
+	Operation string `json:"operation"`
+	Tags      any    `json:"tags"`
+	Data      any    `json:"data"`
 }
 
 func SummaryRead(c *gin.Context) {
@@ -67,10 +66,12 @@ func SummaryRead(c *gin.Context) {
 	}
 	defer destination.Close()
 
-	row := metabase.QueryRow(destination, embedfs.EmbeddedEndpoints.Files["read_summary"], types.M{
-		"tags":      body.Tags,
-		"operation": body.Operation,
-	})
+	row := metabase.QueryRow(destination,
+		embedfs.EmbeddedEndpoints.Files["read_summary"],
+		embedfs.EmbedParamMap{
+			"tags":      body.Tags,
+			"operation": body.Operation,
+		})
 
 	if row.Err() != nil {
 		zap.L().Error("read_summary exec error", zap.Error(row.Err()))
@@ -80,11 +81,13 @@ func SummaryRead(c *gin.Context) {
 	var summaryRow SummaryRow
 	scanErr := row.Scan(&summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
 	if scanErr != nil {
-		msg := fmt.Sprintf("no summary found for %s", body.Operation)
-		zap.L().Info(msg)
+		zap.L().Info("error scanning summary row",
+			zap.String("operation", body.Operation),
+			zap.Any("tags", body.Tags),
+			zap.Error(scanErr))
 		response := gin.H{
 			"status":  constants.OK,
-			"message": msg,
+			"message": "no summaries found",
 		}
 		c.JSON(http.StatusNoContent, response)
 		return
@@ -93,7 +96,7 @@ func SummaryRead(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":    constants.OK,
 		"operation": summaryRow.Operation,
-		"tags":      summaryRow.Tags.String,
+		"tags":      summaryRow.Tags,
 		"data":      summaryRow.Data,
 	})
 
