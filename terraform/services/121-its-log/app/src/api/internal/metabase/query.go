@@ -15,7 +15,7 @@ import (
 // ##    ##  ##     ## ##       ##    ##     ##
 //  ##### ##  #######  ######## ##     ##    ##
 
-func Query(m *Metabase, theSql string, params embedfs.EmbedParamMap) (*sql.Rows, error) {
+func Query(m *Metabase, theSql string, params []embedfs.EmbeddedParam) (*sql.Rows, error) {
 
 	args, err := PrepareNamedArgs(theSql, params)
 	if err != nil {
@@ -40,7 +40,7 @@ func Query(m *Metabase, theSql string, params embedfs.EmbedParamMap) (*sql.Rows,
 // ##    ##  ##     ## ##       ##    ##     ##    ##    ##  ##     ## ##  ##  ##
 //  ##### ##  #######  ######## ##     ##    ##    ##     ##  #######   ###  ###
 
-func QueryRow(m *Metabase, theSql string, params embedfs.EmbedParamMap) *sql.Row {
+func QueryRow(m *Metabase, theSql string, params []embedfs.EmbeddedParam) *sql.Row {
 	var row *sql.Row
 	m.Lock("QueryRow")
 

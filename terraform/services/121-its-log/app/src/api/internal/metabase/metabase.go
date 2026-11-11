@@ -115,10 +115,6 @@ func NewFullDatabase(config MetaParams) (*Metabase, error) {
 	}, nil
 }
 
-func (M *Metabase) setDB(db *sql.DB) {
-	M.db = db
-}
-
 func (M *Metabase) GetDB() *sql.DB {
 	return M.db
 }
@@ -263,7 +259,10 @@ func (M *Metabase) Open(mode MetabaseOpenMode) error {
 			return errors.New("open: " + err.Error())
 		}
 		db.SetMaxIdleConns(0)
-		M.setDB(db)
+		M.db = db
+		if db == nil {
+			return errors.New("database is nil")
+		}
 		db.Close()
 
 	}
@@ -272,9 +271,12 @@ func (M *Metabase) Open(mode MetabaseOpenMode) error {
 		return errors.New("open: " + err.Error())
 	}
 	db.SetMaxIdleConns(0)
-	M.setDB(db)
+	if db == nil {
+		return errors.New("database is nil")
+	}
+	M.db = db
 	// Create the tables.
-	_, err = Exec(M, embedfs.EmbeddedSchema.Files["schema"], embedfs.EmbedParamMap{})
+	_, err = Exec(M, embedfs.EmbeddedSchema.Files["schema"], []embedfs.EmbeddedParam{})
 	if err != nil {
 		return err
 	}

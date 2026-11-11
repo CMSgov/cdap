@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "kind": "monthly",
+        "kind": "daily",
         "ymd": "{{YMD}}",
         "month": 11,
         "year": 2026

@@ -13,6 +13,7 @@ import (
 )
 
 func TestCreateLog(t *testing.T) {
+	testsupport.SetupTestEnv(t, testsupport.TestStorageHomeDirectory)
 	engine := testsupport.SetupTestRouter(t, SetupRouter)
 	b, w := testsupport.TestPost(t, engine, "log", "/v1/log/create", types.M{"tags": []string{"uno"}}, http.StatusOK)
 	t.Log(string(b))
@@ -23,6 +24,7 @@ func TestCreateLog(t *testing.T) {
 }
 
 func TestCreateManyLogs(t *testing.T) {
+	testsupport.SetupTestEnv(t, testsupport.TestStorageHomeDirectory)
 	engine := testsupport.SetupTestRouter(t, SetupRouter)
 	for range 10000 {
 		_, w := testsupport.TestPost(t, engine, "log", "/v1/log/create", types.M{"tags": []string{"many"}}, http.StatusOK)
@@ -34,6 +36,7 @@ func TestCreateManyLogs(t *testing.T) {
 }
 
 func TestCreateWithClusters(t *testing.T) {
+	testsupport.SetupTestEnv(t, testsupport.TestStorageHomeDirectory)
 	engine := testsupport.SetupTestRouter(t, SetupRouter)
 	firstCluster := uuid.New().String()
 	secondCluster := uuid.New().String()

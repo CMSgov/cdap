@@ -12,11 +12,11 @@ import (
 )
 
 type SummaryPostBody struct {
+	Kind      string   `json:"kind" binding:"required,oneof=daily monthly yearly full"`
 	Operation string   `json:"operation" binding:"required"`
 	Tags      []string `json:"tags"`
 	Data      any      `json:"data" binding:"required"`
-	Kind      string   `json:"kind" binding:"required,oneof=daily monthly yearly full"`
-	YYYYMMDD  string   `json:"ymd" binding:"omitempty,validateYMD"`
+	YMD       string   `json:"ymd" binding:"omitempty"`
 	Year      int      `json:"year" binding:"omitempty,gte=2000"`
 	Month     int      `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
@@ -36,52 +36,63 @@ func SummaryCreate(c *gin.Context) {
 
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
-	var err error
-	cp, err := getSummaryParams(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
+	sdbsp, err := getSummaryDbSetupParams(app, body.Kind, body.YMD, 2001, 12)
 	if err != nil {
-		BadRequest(c, err, "bad summary params")
+		BadRequest(c, err, "could not set up database")
+		return
 	}
-	destination, err := getSummaryDB(cp)
+	destination, err := getSummaryDB(sdbsp)
 	if err != nil {
-		ServerError(c, err, "could not get database")
+		BadRequest(c, err, "cannot open database")
+		return
 	}
 	// Open the database we created.
-	err = destination.Open(metabase.ReplaceExistingOrCreateNew)
+	err = destination.Open(metabase.OpenExistingOnly)
 	if err != nil {
-		ServerError(c, errors.New("could not open summary databse"), "cannot open summary db")
+		ServerError(c, errors.New("could not open summary database"), "cannot open summary db")
+		return
 	}
-	defer func() {
-		destination.Flush()
-		destination.Close()
-	}()
+	defer destination.Close()
 
-	_, err = metabase.Exec(destination, embedfs.EmbeddedEndpoints.GetOrPanic("summary_create"), embedfs.EmbedParamMap{
-		"key_id":    app.KeyId,
-		"operation": body.Operation,
-		"tags":      body.Tags,
-		"data":      body.Data,
-	})
+	_, err = metabase.Exec(destination,
+		embedfs.EmbeddedEndpoints.GetOrPanic("create_summary"),
+		[]embedfs.EmbeddedParam{
+			{Name: "key_id", Value: app.KeyId, Type: embedfs.EmbeddedString},
+			{Name: "operation", Value: body.Operation, Type: embedfs.EmbeddedString},
+			{Name: "tags", Value: body.Tags, Type: embedfs.EmbeddedJson},
+			{Name: "data", Value: body.Data, Type: embedfs.EmbeddedJson},
+		})
 	if err != nil {
 		ServerError(c, err, "could not insert summary")
 		return
 	}
 
-	StatusOk(c, "summary created")
+	StatusCreated(c, "summary created")
 }
 
-func getSummaryParams(app types.App, kind string, ymd string, year int, month int) (metabase.MetaParams, error) {
+func getSummaryDbSetupParams(app types.App, kind string, ymd string, year int, month int) (metabase.MetaParams, error) {
 	switch kind {
 	case "daily":
+		if len(ymd) < len("2020-05-20") {
+			return nil, errors.New("ymd is not yyyy-mm-dd for daily summary")
+		}
 		return &metabase.DailyParams{
 			App:      app,
 			YYYYMMDD: ymd,
 		}, nil
 	case "monthly":
+		if (month < 0 || month > 12) || (year < 2000) {
+			return nil, errors.New("invalid month or year for monthly summary")
+		}
 		return &metabase.MonthlyParams{
 			App:         app,
 			MonthNumber: month,
+			YearNumber:  year,
 		}, nil
 	case "yearly":
+		if year < 2000 {
+			return nil, errors.New("invalid year for yearly summary")
+		}
 		return &metabase.YearlyParams{
 			App:        app,
 			YearNumber: year,
@@ -123,7 +134,7 @@ func getSummaryDB(cp metabase.MetaParams) (*metabase.Metabase, error) {
 			App: cp.App,
 		})
 	default:
-		return nil, errors.New("cannot consolidation unknown type")
+		err = errors.New("cannot get summary db, unknown type")
 	}
 	if err != nil {
 		return nil, err

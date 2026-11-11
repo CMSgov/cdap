@@ -15,11 +15,9 @@ http:
       {
         "kind": "daily",
         "operation": "total count",
-        "tags": ["a", "b", "c"],
-        "data":{"number": 42},
-        "ymd": "2026-11-10",
-        "year": 2026,
-        "week": 44
+        "tags": ["a", "b"],
+        "data": [{"three": 3}, {"five": 5}],
+        "ymd": "{{YMD}}"
       }
   auth: inherit
 
@@ -28,4 +26,3 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
-  forwardAuthorizationHeader: false

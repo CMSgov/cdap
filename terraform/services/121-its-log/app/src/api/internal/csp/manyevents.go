@@ -43,14 +43,13 @@ func ManyEvents(events []*types.Event) (int64, error) {
 		if e != nil {
 			_, err := metabase.ExecNoLock(id,
 				embedfs.EmbeddedEndpoints.GetOrPanic("log_event"),
-				types.M{
-					"inserted": e.Timestamp,
-					"key_id":   e.KeyId,
-					"cluster":  e.Cluster,
-					"tags":     e.Tags,
-					"data":     e.Data,
-				},
-			)
+				[]embedfs.EmbeddedParam{
+					{Name: "inserted", Value: e.Timestamp, Type: embedfs.EmbeddedTime},
+					{Name: "key_id", Value: e.KeyId, Type: embedfs.EmbeddedString},
+					{Name: "cluster", Value: e.Cluster, Type: embedfs.EmbeddedString},
+					{Name: "tags", Value: e.Tags, Type: embedfs.EmbeddedJson},
+					{Name: "data", Value: e.Data, Type: embedfs.EmbeddedJson},
+				})
 			if err != nil {
 				zap.L().Error("error storing event", zap.Error(err))
 				return -1, err

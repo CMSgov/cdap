@@ -17,21 +17,20 @@ import (
 
 type SummaryReadBody struct {
 	Operation string   `json:"operation" binding:"required"`
-	Tags      []string `json:"tags"`
-	Kind      string   `json:"kind" binding:"required,oneof=daily monthly full"`
-	YYYYMMDD  string   `json:"ymd" binding:"omitempty,validateYMD"`
+	Tags      []string `json:"tags" binding:"validateArrString"`
+	Kind      string   `json:"kind" binding:"required,oneof=daily monthly yearly full"`
+	YMD       string   `json:"ymd" binding:"omitempty,validateYMD"`
 	Year      int      `json:"year" binding:"omitempty,gte=2000"`
 	Month     int      `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 type SummaryRow struct {
-	ID       int64     `json:"id"`
-	Inserted time.Time `json:"inserted"`
-	// Date      string         `json:"date"`
-	KeyId     string `json:"key_id"`
-	Operation string `json:"operation"`
-	Tags      any    `json:"tags"`
-	Data      any    `json:"data"`
+	ID        int64     `json:"id"`
+	Inserted  time.Time `json:"inserted"`
+	KeyId     string    `json:"key_id"`
+	Operation string    `json:"operation"`
+	Tags      any       `json:"tags"`
+	Data      any       `json:"data"`
 }
 
 func SummaryRead(c *gin.Context) {
@@ -51,31 +50,36 @@ func SummaryRead(c *gin.Context) {
 
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
-	mp, err := getSummaryParams(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
+	sdbsp, err := getSummaryDbSetupParams(app, body.Kind, body.YMD, body.Year, body.Month)
 	if err != nil {
 		BadRequest(c, err, "could not set up database")
+		return
 	}
-	destination, err := getSummaryDB(mp)
+	destination, err := getSummaryDB(sdbsp)
 	if err != nil {
 		BadRequest(c, err, "cannot open database")
+		return
 	}
-	// Open the database we created.
+	// Open the database
 	err = destination.Open(metabase.OpenExistingOnly)
 	if err != nil {
 		ServerError(c, errors.New("could not open summary database"), "cannot open summary db")
+		return
 	}
 	defer destination.Close()
 
+	params := []embedfs.EmbeddedParam{
+		{Name: "tags", Value: body.Tags, Type: embedfs.EmbeddedRaw},
+		{Name: "operation", Value: body.Operation, Type: embedfs.EmbeddedString},
+	}
 	row := metabase.QueryRow(destination,
 		embedfs.EmbeddedEndpoints.Files["read_summary"],
-		embedfs.EmbedParamMap{
-			"tags":      body.Tags,
-			"operation": body.Operation,
-		})
+		params)
 
 	if row.Err() != nil {
 		zap.L().Error("read_summary exec error", zap.Error(row.Err()))
 		BadRequest(c, row.Err(), "could not read summary")
+		return
 	}
 
 	var summaryRow SummaryRow
@@ -85,11 +89,7 @@ func SummaryRead(c *gin.Context) {
 			zap.String("operation", body.Operation),
 			zap.Any("tags", body.Tags),
 			zap.Error(scanErr))
-		response := gin.H{
-			"status":  constants.OK,
-			"message": "no summaries found",
-		}
-		c.JSON(http.StatusNoContent, response)
+		ContentNotFound(c, scanErr, "no summary found")
 		return
 	}
 

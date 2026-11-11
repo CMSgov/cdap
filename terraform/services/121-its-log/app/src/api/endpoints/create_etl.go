@@ -44,7 +44,7 @@ func CreateEtl(c *gin.Context) {
 
 	// And, pad it. DuckDB is very particular about its Base64 values.
 	etl := padToMod4(body.B64)
-	mp, err := getSummaryParams(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
+	mp, err := getSummaryDbSetupParams(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
 	if err != nil {
 		BadRequest(c, err, "cannot set up database params")
 		return
@@ -64,14 +64,13 @@ func CreateEtl(c *gin.Context) {
 	// Run the code to insert the ETL into the database
 	_, err = metabase.Exec(destination,
 		embedfs.EmbeddedEndpoints.GetOrPanic("create_etl"),
-		types.M{
-			"key_id": app.KeyId,
-			"name":   body.Name,
+		[]embedfs.EmbeddedParam{
+			{Name: "key_id", Value: app.KeyId, Type: embedfs.EmbeddedString},
+			{Name: "name", Value: body.Name, Type: embedfs.EmbeddedString},
 			// FIXME: "kind" here is meant to be sql or starlark
-			"kind": body.Kind,
-			"body": etl,
+			{Name: "kind", Value: body.Kind, Type: embedfs.EmbeddedString},
+			{Name: "body", Value: etl, Type: embedfs.EmbeddedString},
 		})
-
 	if err != nil {
 		zap.L().Error("etl save error", zap.Error(err))
 		ServerError(c, err, "could not save etl step")

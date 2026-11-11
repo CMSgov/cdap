@@ -17,6 +17,7 @@ var validators = []struct {
 }{
 	{"validateYMD", validateYMD},
 	{"validateB64SQL", validateB64sql},
+	{"validateArrString", validateArrString},
 }
 
 // FIXME: Gin has support for this library
@@ -52,6 +53,15 @@ func validateB64sql(fl validator.FieldLevel) bool {
 				zap.String("not_allowed", notAllowed))
 			return false
 		}
+	}
+	return true
+}
+
+func validateArrString(fl validator.FieldLevel) bool {
+	_, ok := fl.Field().Interface().([]string)
+	if !ok {
+		zap.L().Info("did not validate as string array")
+		return false
 	}
 	return true
 }

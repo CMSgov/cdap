@@ -22,7 +22,22 @@ type EmbedSql struct {
 	Files      map[string]string
 }
 
-type EmbedParamMap map[string]any
+type EmbeddedParamType int
+
+const (
+	EmbeddedInt = iota
+	EmbeddedInt64
+	EmbeddedString
+	EmbeddedJson
+	EmbeddedRaw
+	EmbeddedTime
+)
+
+type EmbeddedParam struct {
+	Name  string
+	Value any
+	Type  EmbeddedParamType
+}
 
 var EmbeddedSchema = NewEmbedSql("schema")
 var EmbeddedEndpoints = NewEmbedSql("endpoints")

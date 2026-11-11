@@ -21,8 +21,8 @@ var scts = []struct {
 		"admin",
 		"/v1/summary/create",
 		http.StatusCreated,
-		map[string]any{
-			"date":      types.NewYYYYMMDD().String(),
+		types.M{
+			"ymd":       types.NewYYYYMMDD().String(),
 			"kind":      "daily",
 			"tags":      []string{"a"},
 			"operation": "just.42",
@@ -33,12 +33,12 @@ var scts = []struct {
 		"admin",
 		"/v1/summary/create",
 		http.StatusCreated,
-		map[string]any{
-			"date":      types.NewYYYYMMDD().String(),
+		types.M{
+			"ymd":       types.NewYYYYMMDD().String(),
 			"kind":      "daily",
 			"tags":      []string{"a", "b"},
 			"operation": "map.42",
-			"data": map[string]any{
+			"data": types.M{
 				"count": 42,
 			}},
 	},
@@ -47,12 +47,12 @@ var scts = []struct {
 		"admin",
 		"/v1/summary/create",
 		http.StatusCreated,
-		map[string]any{
-			"date":      types.NewYYYYMMDD().String(),
+		types.M{
+			"ymd":       types.NewYYYYMMDD().String(),
 			"kind":      "daily",
 			"tags":      []string{"x", "y", "z"},
 			"operation": "empty.object",
-			"data":      map[string]any{}},
+			"data":      types.M{}},
 	},
 }
 

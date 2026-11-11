@@ -26,7 +26,7 @@ var instanceCount int = 4
 var useHomeDirectory bool = false
 
 func TestConsolidate(t *testing.T) {
-	testsupport.SetupTestEnv(t, testsupport.GlobalTestStorageLocation)
+	testsupport.SetupTestEnv(t, testsupport.TestStorageTempDirectory)
 	app := types.RandomApp("puppers")
 	testsupport.CreateInstanceDbs(t, app, instanceCount, eventsPerInstance)
 	// This consolidates the DBs, and makes sure they exist
@@ -84,9 +84,15 @@ func checkIM(t *testing.T, m *metabase.Metabase) {
 	}
 	defer m.Close()
 	db := m.GetDB()
+	assert.NotNil(t, db, "db should not be nil")
+
+	row := db.QueryRow("SELECT COUNT(*) FROM event")
+	if row.Err() != nil {
+		t.Error(row.Err())
+	}
 
 	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM event").Scan(&count)
+	err = row.Scan(&count)
 	if err != nil {
 		t.Error(err)
 	}

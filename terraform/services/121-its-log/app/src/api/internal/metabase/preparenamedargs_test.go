@@ -1,21 +1,79 @@
 package metabase
 
 import (
+	"database/sql"
 	"testing"
+	"time"
 
+	_ "github.com/duckdb/duckdb-go/v2"
+	"github.com/navapbc/its-log/internal/embedfs"
 	"github.com/navapbc/its-log/internal/types"
 )
 
+var tgnat = []struct {
+	statement string
+	params    []embedfs.EmbeddedParam
+	pass      bool
+}{
+	{"insert into test (data) values ($v)",
+		[]embedfs.EmbeddedParam{{
+			Name:  "v",
+			Value: "string-x",
+			Type:  embedfs.EmbeddedJson,
+		}},
+		true},
+	{"insert into test (data) values ($v)",
+		[]embedfs.EmbeddedParam{{
+			Name:  "v",
+			Value: 3,
+			Type:  embedfs.EmbeddedJson,
+		}},
+		true},
+	{"insert into test (data) values ($v)",
+		[]embedfs.EmbeddedParam{{
+			Name: "v",
+			Value: types.M{
+				"hello": "goodbye",
+			},
+			Type: embedfs.EmbeddedJson,
+		}},
+		true},
+	{"insert into test (inserted) values ($v)",
+		[]embedfs.EmbeddedParam{{
+			Name:  "v",
+			Value: time.Now(),
+			Type:  embedfs.EmbeddedTime,
+		}},
+		true},
+}
+
 func TestGenerateNamedArgs(t *testing.T) {
-	s1 := "select from x where tags = getvariable('bigbird') and foo = $tags amd bar = $asdf"
-	_, err := generateNamedArgs(s1, types.M{
-		"tags":    "hello",
-		"bigbird": 3,
-		"asdf": types.M{
-			"hi": "bye",
-		},
-	})
+	db, err := sql.Open("duckdb", ":memory:")
 	if err != nil {
 		t.Error(err)
+	}
+	_, err = db.Exec(`
+	create table test (
+	  data json,
+	  inserted DATETIME
+	)
+	`)
+	if err != nil {
+		t.Error(err)
+	}
+	for _, tt := range tgnat {
+		named_args, err := PrepareNamedArgs(tt.statement, tt.params)
+		if err != nil {
+			t.Errorf("could not generate named args: %v", tt.params)
+		}
+		_, err = db.Exec(tt.statement, named_args...)
+		if err != nil {
+			if tt.pass {
+				t.Error(err)
+			} else {
+				t.Log("passed: " + err.Error())
+			}
+		}
+
 	}
 }

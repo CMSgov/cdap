@@ -14,9 +14,9 @@ http:
     data: |-
       {
         "kind": "daily",
-        "operation": "y",
+        "operation": "total%",
         "tags": ["a"],
-        "ymd": "2026-11-10"
+        "ymd": "{{YMD}}"
       }
   auth: inherit
 

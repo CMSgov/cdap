@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS summary (
     key_id TEXT NOT NULL,
     operation TEXT NOT NULL,
     tags JSON,
-    data JSON NOT NULL
+    data JSON NOT NULL,
+    UNIQUE (operation, tags)
 );
 
 CREATE SEQUENCE IF NOT EXISTS etl_id_seq START 1;
@@ -42,9 +43,11 @@ CREATE TABLE IF NOT EXISTS etl (
     inserted DATETIME DEFAULT now() NOT NULL,
     key_id TEXT NOT NULL,
     -- Any DB should only have one ETL of a given name
-    name TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
     kind TEXT NOT NULL,
-    body TEXT NOT NULL
+    destination TEXT DEFAULT 'return',
+    body TEXT NOT NULL,
+    UNIQUE(name)
 );
 
 CREATE SEQUENCE IF NOT EXISTS activity_id_seq START 1;
