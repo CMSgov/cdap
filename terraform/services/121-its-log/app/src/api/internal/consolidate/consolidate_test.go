@@ -23,7 +23,7 @@ var instanceCount int = 4
 // creation of instance databases and the archived data. Good for debugging
 // and local testing. Leaving it `false` will use a t.TempDir() which is
 // cleaned up automatically by the test engine.
-var useHomeDirectory bool = true
+var useHomeDirectory bool = false
 
 func TestConsolidate(t *testing.T) {
 	testsupport.SetupTestEnv(t, testsupport.GlobalTestStorageLocation)

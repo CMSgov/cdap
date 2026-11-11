@@ -14,7 +14,7 @@ import (
 
 type ConsolidateBody struct {
 	Kind     string `json:"kind" validate:"required,oneof=daily monthly full"`
-	YYYYMMDD string `json:"ymd" validate:"omitempty,yyyymmdd"`
+	YYYYMMDD string `json:"ymd" validate:"omitempty,validateYMD"`
 	Year     int    `json:"year" validate:"omitempty,gte=2000"`
 	Month    int    `json:"month" validate:"omitempty,gte=1,lte=12"`
 }
@@ -29,11 +29,11 @@ func Consolidate(c *gin.Context) {
 	}
 
 	// FIXME: this could be at the Gin framework level.
-	validate := setupValidators()
-	if err := validate.Struct(body); err != nil {
-		BadRequest(c, err, "json does not validate")
-		return
-	}
+	// validate := setupValidators()
+	// if err := validate.Struct(body); err != nil {
+	// 	BadRequest(c, err, "json does not validate")
+	// 	return
+	// }
 
 	app := types.App{
 		AppId: base.GetOrPanic(c, constants.ITSLOG_APPID),

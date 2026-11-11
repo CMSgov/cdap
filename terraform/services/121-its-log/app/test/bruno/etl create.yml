@@ -13,9 +13,8 @@ http:
     type: json
     data: |-
       {
-        "kind": "monthly",
-        "name": "sentinel",
         "kind": "daily",
+        "name": "sentinel",
         "ymd": "{{YMD}}",
         "b64": "{{B64}}"
       }
@@ -27,7 +26,7 @@ runtime:
       code: |-
         const btoa = require("btoa");
         sql = `
-        select * from event
+        select into summary reject for keyword
         `
         encoded = btoa(sql.trim())
         bru.setVar("B64", encoded);

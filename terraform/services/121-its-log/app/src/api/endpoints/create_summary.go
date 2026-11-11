@@ -16,7 +16,7 @@ type SummaryPostBody struct {
 	Tags      []string `json:"tags"`
 	Data      any      `json:"data" binding:"required"`
 	Kind      string   `json:"kind" validate:"required,oneof=daily monthly yearly full"`
-	YYYYMMDD  string   `json:"ymd" validate:"omitempty,yyyymmdd"`
+	YYYYMMDD  string   `json:"ymd" validate:"omitempty,validateYMD"`
 	Year      int      `json:"year" validate:"omitempty,gte=2000"`
 	Month     int      `json:"month" validate:"omitempty,gte=1,lte=12"`
 }

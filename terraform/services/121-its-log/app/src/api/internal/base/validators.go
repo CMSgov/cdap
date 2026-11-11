@@ -1,13 +1,23 @@
-package endpoints
+package base
 
 import (
 	"encoding/base64"
+	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
+
+var validators = []struct {
+	name      string
+	validator validator.Func
+}{
+	{"validateYMD", validateYMD},
+	{"validateB64SQL", validateB64sql},
+}
 
 // FIXME: Gin has support for this library
 // https://oneuptime.com/blog/post/2026-01-30-how-to-implement-request-validation-with-go-playground/view#custom-validators
@@ -46,12 +56,30 @@ func validateB64sql(fl validator.FieldLevel) bool {
 	return true
 }
 
-func setupValidators() *validator.Validate {
-	validate := validator.New()
+// func setupValidators() *validator.Validate {
+// 	validate := validator.New()
 
-	// Register custom validators with descriptive names
-	validate.RegisterValidation("yyyymmdd", validateYMD)
-	validate.RegisterValidation("b64sql", validateB64sql)
+// 	// Register custom validators with descriptive names
+// 	var err error
+// 	err = validate.RegisterValidation("validateYMD", validateYMD)
+// 	if err != nil {
+// 		panic("could not register ymd validator")
+// 	}
+// 	err = validate.RegisterValidation("validateB64SQL", validateB64sql)
+// 	if err != nil {
+// 		panic("could not register b64 validator")
+// 	}
 
-	return validate
+// 	return validate
+// }
+
+func SetupValidators() error {
+	for _, tv := range validators {
+		if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+			v.RegisterValidation(tv.name, tv.validator)
+		} else {
+			return fmt.Errorf("failed to set up %s", tv.name)
+		}
+	}
+	return nil
 }

@@ -89,13 +89,16 @@ func SetupTestEnv(t *testing.T, location TestStorageLocation) {
 }
 
 func SetupTestRouter(t *testing.T, rsf func(types.ServeParams) *gin.Engine) *gin.Engine {
-	//SetupTestEnv(t)
-
 	engine := rsf(types.ServeParams{
 		Mode: viper.GetString("ginmode"),
 	})
 
 	gin.SetMode(gin.TestMode)
+	err := base.SetupValidators()
+	if err != nil {
+		zap.L().Error("validator setup failure", zap.Error(err))
+		panic("could not setup json validators")
+	}
 	return engine
 }
 
@@ -105,13 +108,22 @@ func SetupTestRouter(t *testing.T, rsf func(types.ServeParams) *gin.Engine) *gin
 // 	os.Exit(m.Run())
 // }
 
-func TestPost(t *testing.T, engine *gin.Engine, key string, path string, data any, expected int) ([]byte, *httptest.ResponseRecorder) {
+func TestPost(t *testing.T,
+	engine *gin.Engine,
+	key string,
+	path string,
+	data any,
+	expected int) ([]byte, *httptest.ResponseRecorder) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", path, toReader(data))
+	req, err := http.NewRequest("POST", path, toReader(data))
+	if err != nil {
+		t.Error(err)
+	}
 	req.Header.Set("x-api-key", os.Getenv(fmt.Sprintf("x-api-key-%s", key)))
 	engine.ServeHTTP(w, req)
 	if w.Code != expected {
-		t.Logf("mismatch: %s %v", path, data)
+		t.Logf("mismatch: %d expected %d, %s %v", w.Code, expected, path, data)
+		t.Error(fmt.Errorf("status code expected=%d received=%d", expected, w.Code))
 	}
 	b, err := io.ReadAll(w.Result().Body)
 	if err != nil {

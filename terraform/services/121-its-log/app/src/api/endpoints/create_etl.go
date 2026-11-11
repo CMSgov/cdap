@@ -18,9 +18,9 @@ type CreateETLPostBody struct {
 	Name string `json:"name" binding:"required"`
 	// Run a B64 validator that also filters the SQL for
 	// INSERT, DELETE, and UPDATE.
-	B64      string `json:"b64" binding:"required" validate:"required,b64sql"`
-	Kind     string `json:"kind" validate:"required,oneof=daily monthly yearly full"`
-	YYYYMMDD string `json:"ymd" validate:"omitempty,yyyymmdd"`
+	B64      string `json:"b64" binding:"required,validateB64SQL" validate:"required"`
+	Kind     string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
+	YYYYMMDD string `json:"ymd" validate:"omitempty,validateYMD"`
 	Year     int    `json:"year" validate:"omitempty,gte=2000"`
 	Month    int    `json:"month" validate:"omitempty,gte=1,lte=12"`
 }
@@ -47,6 +47,7 @@ func CreateEtl(c *gin.Context) {
 	mp, err := getSummaryParams(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
 	if err != nil {
 		BadRequest(c, err, "cannot set up database params")
+		return
 	}
 	destination, err := getSummaryDB(mp)
 	if err != nil {
@@ -57,6 +58,7 @@ func CreateEtl(c *gin.Context) {
 	err = destination.Open(metabase.OpenExistingOnly)
 	if err != nil {
 		BadRequest(c, err, "cannot open database")
+		return
 	}
 
 	// Run the code to insert the ETL into the database

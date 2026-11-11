@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/pprof"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
+	"github.com/navapbc/its-log/internal/base"
 	"github.com/navapbc/its-log/internal/constants"
 	"github.com/navapbc/its-log/internal/csp"
 	"github.com/navapbc/its-log/internal/types"
@@ -42,6 +43,11 @@ func SetupRouter(params types.ServeParams) *gin.Engine {
 
 func Serve(params types.ServeParams) {
 	engine := SetupRouter(params)
+	err := base.SetupValidators()
+	if err != nil {
+		zap.L().Error("validator setup failure", zap.Error(err))
+		panic("could not setup json validators")
+	}
 	host := viper.GetString("serve.host")
 	port := viper.GetString("serve.port")
 
