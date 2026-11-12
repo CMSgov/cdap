@@ -1,0 +1,6 @@
+event_rule:
+  # Set true and merge to main to apply the test resources in cdap-test.
+  # The apply fails if an event put on the bus doesn't reach the target Lambda.
+  # Set back to false after testing; the next apply destroys everything here.
+  enabled: false
+  schedule_expression: rate(1 day)
