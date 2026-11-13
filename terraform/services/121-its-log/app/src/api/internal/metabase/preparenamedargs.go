@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"slices"
 
-	"github.com/navapbc/its-log/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
 )
 
 // Consumes the name of embedded SQL and a parameter map.

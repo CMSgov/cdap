@@ -1,4 +1,4 @@
-module github.com/navapbc/its-log
+module github.com/CMSgov/cdap/terraform/services/121-its-log/app/src
 
 go 1.27.3
 

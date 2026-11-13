@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )

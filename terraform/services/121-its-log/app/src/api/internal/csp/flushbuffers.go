@@ -3,8 +3,8 @@ package csp
 import (
 	"time"
 
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	_ "github.com/duckdb/duckdb-go/v2"
-	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
 

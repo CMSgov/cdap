@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	starjson "go.starlark.net/lib/json"
 	starmath "go.starlark.net/lib/math"
 	startime "go.starlark.net/lib/time"

@@ -1,5 +1,5 @@
 info:
-  name: etl create sentinel
+  name: etl create sql sentinel
   type: http
   seq: 6
 
@@ -29,9 +29,11 @@ runtime:
         const btoa = require("btoa");
         sql = `
         select 
-          'sentinel' as operation, 
+          'sentinel.operation' as operation, 
           (JSON '["sentinel", "tags"]') as tags, 
-          (JSON '{"three": 3, "five": 5, "eight": 8}');
+          -- (JSON '{"three": 3, "five": 5, "eight": 8}');
+          3 as data
+          ;
         `
         encoded = btoa(sql.trim())
         bru.setVar("B64", encoded);

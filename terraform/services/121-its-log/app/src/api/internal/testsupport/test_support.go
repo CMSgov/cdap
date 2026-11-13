@@ -13,9 +13,9 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"github.com/gin-gonic/gin"
-	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/types"
 	"github.com/spf13/viper"
 )
 

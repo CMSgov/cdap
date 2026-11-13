@@ -6,8 +6,8 @@ import (
 	"testing"
 	"uuid"
 
-	"github.com/navapbc/its-log/internal/csp"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/csp"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -6,9 +6,9 @@ import (
 	"math/rand/v2"
 	"os"
 
-	"github.com/navapbc/its-log/endpoints"
-	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/endpoints"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"

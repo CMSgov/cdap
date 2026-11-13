@@ -9,8 +9,8 @@ import (
 	"path"
 	"sync"
 
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
 	_ "github.com/duckdb/duckdb-go/v2"
-	"github.com/navapbc/its-log/internal/embedfs"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )

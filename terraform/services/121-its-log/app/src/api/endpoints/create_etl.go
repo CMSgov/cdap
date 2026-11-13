@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"github.com/gin-gonic/gin"
-	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/constants"
-	"github.com/navapbc/its-log/internal/embedfs"
-	"github.com/navapbc/its-log/internal/metabase"
-	"github.com/navapbc/its-log/internal/types"
 	"go.uber.org/zap"
 )
 

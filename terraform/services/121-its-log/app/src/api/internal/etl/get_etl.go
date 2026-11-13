@@ -3,10 +3,10 @@ package etl
 import (
 	"errors"
 
-	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/embedfs"
-	"github.com/navapbc/its-log/internal/metabase"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"go.uber.org/zap"
 )
 
@@ -74,6 +74,7 @@ func userTypeToInternalType(t string) embedfs.EmbeddedParamType {
 		panic("unknown type from user; should not get here")
 	}
 }
+
 func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error) {
 	// Run the ETL
 	// Add another "no insert, delete, update" check here, for thoroughness

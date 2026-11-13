@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/navapbc/its-log/internal/testsupport"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/testsupport"
 	testify "github.com/stretchr/testify/assert"
 )
 

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"strings"
 
-	"github.com/navapbc/its-log/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
 	"go.uber.org/zap"
 )
 

@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	_ "github.com/duckdb/duckdb-go/v2"
-	"github.com/navapbc/its-log/internal/embedfs"
-	"github.com/navapbc/its-log/internal/types"
 )
 
 var tgnat = []struct {

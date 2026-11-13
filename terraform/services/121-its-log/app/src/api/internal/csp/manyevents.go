@@ -1,9 +1,9 @@
 package csp
 
 import (
-	"github.com/navapbc/its-log/internal/embedfs"
-	"github.com/navapbc/its-log/internal/metabase"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"go.uber.org/zap"
 )
 

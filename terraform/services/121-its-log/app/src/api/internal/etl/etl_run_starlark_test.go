@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"go.starlark.net/starlark"
 )
 

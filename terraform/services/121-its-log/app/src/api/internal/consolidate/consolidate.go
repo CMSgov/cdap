@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/navapbc/its-log/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
 	"go.uber.org/zap"
 )
 

@@ -7,10 +7,10 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/navapbc/its-log/internal/consolidate"
-	"github.com/navapbc/its-log/internal/metabase"
-	"github.com/navapbc/its-log/internal/testsupport"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/consolidate"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/testsupport"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"github.com/stretchr/testify/assert"
 )
 

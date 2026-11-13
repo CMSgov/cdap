@@ -3,13 +3,13 @@ package endpoints
 import (
 	"errors"
 
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/consolidate"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/gin-gonic/gin"
-	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/consolidate"
-	"github.com/navapbc/its-log/internal/constants"
-	"github.com/navapbc/its-log/internal/metabase"
-	"github.com/navapbc/its-log/internal/types"
 )
 
 type ConsolidateBody struct {

@@ -23,7 +23,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 )
 
 func Enqueue(ctx context.Context, ch_evt_in <-chan *types.Event, ch_flush_out chan<- types.EventBuffer, bufferLength int, timeout int) {

@@ -1,0 +1,46 @@
+info:
+  name: etl create starlark sentinel
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/etl/create"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "kind": "daily",
+        "language": "starlark",
+        "destination": "summary",
+        "name": "starlark-sentinel",
+        "ymd": "{{YMD}}",
+        "b64": "{{B64}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const btoa = require("btoa");
+        sql = `
+        def summarize():
+          return [
+            {
+              "operation": "starlark-sentinel",
+              "tags": ["starlark", "tags"],
+              "data": {"eight": 8, "five": 5, "three": 3},
+            }
+            ]`
+        encoded = btoa(sql.trim())
+        bru.setVar("B64", encoded);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -16,14 +16,7 @@ http:
         "kind": "daily",
         "name": "sentinel",
         "destination": "summary",
-        "ymd": "{{YMD}}",
-        "params": [
-          { 
-            "name": "importantnumber",
-            "value": 8,
-            "type": "int"
-          }
-        ]
+        "ymd": "{{YMD}}"
       }
   auth: inherit
 

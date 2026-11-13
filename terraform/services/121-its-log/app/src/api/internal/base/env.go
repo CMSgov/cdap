@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/navapbc/its-log/internal/constants"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"go.uber.org/zap"
 )
 

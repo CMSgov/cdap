@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/csp"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
-	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/constants"
-	"github.com/navapbc/its-log/internal/csp"
-	"github.com/navapbc/its-log/internal/types"
 
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
