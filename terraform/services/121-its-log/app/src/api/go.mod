@@ -13,6 +13,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
+	go.starlark.net v0.0.0-20261021141710-4f4267fb140d
 	go.uber.org/zap v1.28.0
 )
 

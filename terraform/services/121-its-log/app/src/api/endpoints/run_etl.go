@@ -56,6 +56,7 @@ func RunEtl(c *gin.Context) {
 	default:
 		body.YMD = types.NewYYYYMMDD().String()
 	}
+	body.App = app
 
 	// We now have some choices.
 	// We could be running an SQL or a Starlark ETL, and
@@ -64,7 +65,7 @@ func RunEtl(c *gin.Context) {
 
 	switch body.Destination {
 	case "summary":
-		inserted, err := etl.RunAndInsertEtl(app, destination, body)
+		inserted, err := etl.RunAndInsertEtl(destination, body)
 		if err != nil {
 			ServerError(c, err, "could not run and insert etl")
 			return
@@ -74,24 +75,6 @@ func RunEtl(c *gin.Context) {
 		// pass
 	}
 	StatusOk(c, "etl ran")
-
-	// etlP := &etl.RunEtlParams{
-	// 	AppId:   appId,
-	// 	KeyId:   keyId,
-	// 	GinCtx:  c,
-	// 	Storage: s,
-	// 	EtlName: name,
-	// 	Payload: payload,
-	// }
-
-	// etlErr := runEtl(etlP)
-
-	// if etlErr == nil {
-	// 	etl.NewStandardOkResponse(c, etlP).SetStatus(http.StatusOK).Send()
-	// } else {
-	// 	ser := etl.NewStandardErrorResponse(etlP, etlErr)
-	// 	ser.SetStatus(http.StatusInternalServerError).Send("golang ETL error")
-	// }
 }
 
 // func runEtl(etlP *etl.RunEtlParams) error {

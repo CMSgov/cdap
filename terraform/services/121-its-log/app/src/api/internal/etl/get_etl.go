@@ -7,9 +7,10 @@ import (
 	"github.com/navapbc/its-log/internal/embedfs"
 	"github.com/navapbc/its-log/internal/metabase"
 	"github.com/navapbc/its-log/internal/types"
+	"go.uber.org/zap"
 )
 
-func RunAndInsertEtl(app types.App, m *metabase.Metabase, etlb RunEtlBody) (int, error) {
+func RunAndInsertEtl(m *metabase.Metabase, etlb RunEtlBody) (int, error) {
 	var er types.EtlRow
 	row := metabase.QueryRow(m,
 		embedfs.EmbeddedEndpoints.GetOrPanic("read_etl"),
@@ -31,6 +32,7 @@ func RunAndInsertEtl(app types.App, m *metabase.Metabase, etlb RunEtlBody) (int,
 	if err != nil {
 		return -1, err
 	}
+
 	switch etlb.Destination {
 	case "summary":
 		// Write the rows back to the summary table.
@@ -39,7 +41,7 @@ func RunAndInsertEtl(app types.App, m *metabase.Metabase, etlb RunEtlBody) (int,
 				embedfs.EmbeddedEndpoints.GetOrPanic("create_summary"),
 				[]embedfs.EmbeddedParam{
 					{Name: "date", Value: summary.Date, Type: embedfs.EmbeddedString},
-					{Name: "key_id", Value: app.KeyId, Type: embedfs.EmbeddedString},
+					{Name: "key_id", Value: etlb.App.KeyId, Type: embedfs.EmbeddedString},
 					{Name: "operation", Value: summary.Operation, Type: embedfs.EmbeddedString},
 					{Name: "tags", Value: summary.Tags, Type: embedfs.EmbeddedJson},
 					{Name: "data", Value: summary.Data, Type: embedfs.EmbeddedJson},
@@ -88,15 +90,15 @@ func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) (
 			Type:  userTypeToInternalType(p.Type),
 		})
 	}
-	rows, err := metabase.Query(m, row.Body, params)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
 
 	erunres := make([]types.EtlRunResult, 0)
 	switch row.Language {
 	case "sql":
+		rows, err := metabase.Query(m, row.Body, params)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
 		for rows.Next() {
 			var res types.EtlRunResult
 			serr := rows.Scan(&res.Operation,
@@ -110,7 +112,12 @@ func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) (
 			erunres = append(erunres, res)
 		}
 	case "starlark":
-		// pass
+		var err error
+		erunres, err = RunStarlark(etlb, row)
+		if err != nil {
+			return nil, err
+		}
+		zap.L().Info("starlark", zap.Any("result", erunres))
 	}
 
 	return erunres, nil

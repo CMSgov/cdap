@@ -9,7 +9,6 @@ import (
 	"slices"
 
 	"github.com/navapbc/its-log/internal/embedfs"
-	"go.uber.org/zap"
 )
 
 // Consumes the name of embedded SQL and a parameter map.
@@ -63,7 +62,6 @@ func PrepareNamedArgs(theSql string, params []embedfs.EmbeddedParam) ([]any, err
 
 	named := make([]any, 0)
 	present := namesPresent(theSql)
-	zap.L().Debug("names in sql", zap.Any("names", present))
 	for _, param := range coerced {
 		if slices.Contains(present, param.Name) {
 			named = append(named, sql.Named(param.Name, param.Value))
