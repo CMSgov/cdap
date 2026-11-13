@@ -7,10 +7,9 @@ import (
 	"github.com/navapbc/its-log/internal/embedfs"
 	"github.com/navapbc/its-log/internal/metabase"
 	"github.com/navapbc/its-log/internal/types"
-	"go.uber.org/zap"
 )
 
-func RunAndInsertEtl(m *metabase.Metabase, etlb RunEtlBody) ([]types.EtlRunResult, error) {
+func RunAndInsertEtl(app types.App, m *metabase.Metabase, etlb RunEtlBody) (int, error) {
 	var er types.EtlRow
 	row := metabase.QueryRow(m,
 		embedfs.EmbeddedEndpoints.GetOrPanic("read_etl"),
@@ -18,27 +17,42 @@ func RunAndInsertEtl(m *metabase.Metabase, etlb RunEtlBody) ([]types.EtlRunResul
 			{Name: "name", Value: etlb.Name, Type: embedfs.EmbeddedString},
 		})
 	if row.Err() != nil {
-		return nil, row.Err()
+		return -1, row.Err()
 	}
 	scanErr := row.Scan(&er.Name, &er.Language, &er.Destination, &er.Body)
 	if scanErr != nil {
-		return nil, scanErr
+		return -1, scanErr
 	}
 
 	// Now, we have the ETL. Run it.
-	var results []types.EtlRunResult
-	switch er.Language {
-	case "sql":
-		summaries, err := RunAndReturnRows(m, etlb, er)
-		if err != nil {
-			return nil, err
+	var summaries []types.EtlRunResult
+	var err error
+	summaries, err = RunAndReturnRows(m, etlb, er)
+	if err != nil {
+		return -1, err
+	}
+	switch etlb.Destination {
+	case "summary":
+		// Write the rows back to the summary table.
+		for _, summary := range summaries {
+			_, err := metabase.Exec(m,
+				embedfs.EmbeddedEndpoints.GetOrPanic("create_summary"),
+				[]embedfs.EmbeddedParam{
+					{Name: "date", Value: summary.Date, Type: embedfs.EmbeddedString},
+					{Name: "key_id", Value: app.KeyId, Type: embedfs.EmbeddedString},
+					{Name: "operation", Value: summary.Operation, Type: embedfs.EmbeddedString},
+					{Name: "tags", Value: summary.Tags, Type: embedfs.EmbeddedJson},
+					{Name: "data", Value: summary.Data, Type: embedfs.EmbeddedJson},
+				})
+			if err != nil {
+				return -1, err
+			}
 		}
-		zap.L().Info("run and return", zap.Any("summaries", summaries))
-	case "starlark":
-		// pass
+	case "csv":
+		// A CSV
 	}
 
-	return results, nil
+	return len(summaries), nil
 
 }
 
@@ -80,46 +94,24 @@ func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) (
 	}
 	defer rows.Close()
 
-	zap.L().Info("query", zap.Any("rows", rows))
-	er := make([]types.EtlRunResult, 0)
-	for rows.Next() {
-		var res types.EtlRunResult
-		serr := rows.Scan(&res.Operation,
-			&res.Tags,
-			&res.Data,
-		)
-		if serr != nil {
-			return nil, serr
-		}
-		er = append(er, res)
-	}
-	return er, nil
-}
-
-func RunAndWriteEtl(m *metabase.Metabase, name string) ([]types.EtlRunResult, error) {
-	var er types.EtlRow
-	row := metabase.QueryRow(m,
-		embedfs.EmbeddedEndpoints.GetOrPanic("read_etl"),
-		[]embedfs.EmbeddedParam{
-			{Name: "name", Value: name, Type: embedfs.EmbeddedString},
-		})
-	if row.Err() != nil {
-		return nil, errors.New("etl query error")
-	}
-	scanErr := row.Scan(&er.Name, &er.Language, &er.Destination, &er.Body)
-	if scanErr != nil {
-		return nil, errors.New("could not scan etl row")
-	}
-
-	// Now, we have the ETL. Run it.
-	var results []types.EtlRunResult
-	switch er.Language {
+	erunres := make([]types.EtlRunResult, 0)
+	switch row.Language {
 	case "sql":
-		// pass
+		for rows.Next() {
+			var res types.EtlRunResult
+			serr := rows.Scan(&res.Operation,
+				&res.Tags,
+				&res.Data,
+			)
+			if serr != nil {
+				return nil, serr
+			}
+			res.Date = etlb.YMD
+			erunres = append(erunres, res)
+		}
 	case "starlark":
 		// pass
 	}
 
-	return results, nil
-
+	return erunres, nil
 }

@@ -46,6 +46,17 @@ func RunEtl(c *gin.Context) {
 	}
 	defer destination.Close()
 
+	// We're going to need the YMD for inserting summaries.
+	// If we're processing a daily db, the YMD is already provided.
+	// If we're processing a monthly, yearly, or full, we're going to have
+	// to use today's date for the YMD.
+	switch body.Kind {
+	case "daily":
+		// Leave YMD alone
+	default:
+		body.YMD = types.NewYYYYMMDD().String()
+	}
+
 	// We now have some choices.
 	// We could be running an SQL or a Starlark ETL, and
 	// we would be storing it to either the summary table in the DB
@@ -53,12 +64,12 @@ func RunEtl(c *gin.Context) {
 
 	switch body.Destination {
 	case "summary":
-		runResults, err := etl.RunAndInsertEtl(destination, body)
+		inserted, err := etl.RunAndInsertEtl(app, destination, body)
 		if err != nil {
 			ServerError(c, err, "could not run and insert etl")
 			return
 		}
-		zap.L().Info("results", zap.Any("rr", runResults))
+		zap.L().Info("summaries inserted", zap.Int("rows", inserted))
 	case "csv":
 		// pass
 	}

@@ -10,6 +10,7 @@ type EtlRow struct {
 }
 
 type EtlRunResult struct {
+	Date      string
 	Operation string
 	Tags      any
 	Data      any
