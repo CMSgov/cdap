@@ -1,0 +1,97 @@
+package endpoints
+
+import (
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+type CreateETLPostBody struct {
+	Name string `json:"name" binding:"required"`
+	// Run a B64 validator that also filters the SQL for
+	// INSERT, DELETE, and UPDATE.
+	B64         string `json:"b64" binding:"required,validateB64SQL"`
+	Kind        string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
+	Language    string `json:"language" binding:"required,oneof=sql starlark"`
+	Destination string `json:"destination" binding:"required,oneof=summary csv"`
+	YYYYMMDD    string `json:"ymd" binding:"omitempty,validateYMD"`
+	Year        int    `json:"year" binding:"omitempty,gte=2000"`
+	Month       int    `json:"month" binding:"omitempty,gte=1,lte=12"`
+}
+
+func CreateEtl(c *gin.Context) {
+
+	var body CreateETLPostBody
+	// Call ShouldBindJSON to bind the incoming JSON to the newItem struct
+	if err := c.ShouldBindJSON(&body); err != nil {
+		// If an error occurs (e.g., invalid JSON, missing required fields),
+		// return a 400 Bad Request error
+		c.JSON(http.StatusBadRequest, gin.H{"status": "error", "message": fmt.Sprintf("should bind: %s", err.Error())})
+		return
+	}
+
+	// We need the AppId and KeyId, which the middleware attached
+	app := types.App{
+		AppId: base.GetOrPanic(c, constants.ITSLOG_APPID),
+		KeyId: base.GetOrPanic(c, constants.ITSLOG_KEYID),
+	}
+
+	// And, pad it. DuckDB is very particular about its Base64 values.
+	etl := padToMod4(body.B64)
+	mp, err := getSummaryDbSetupParams(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
+	if err != nil {
+		BadRequest(c, err, "cannot set up database params")
+		return
+	}
+	destination, err := getSummaryDB(mp)
+	if err != nil {
+		BadRequest(c, err, "cannot set up database")
+		return
+	}
+	defer destination.Close()
+	err = destination.Open(metabase.OpenExistingOnly)
+	if err != nil {
+		BadRequest(c, err, "cannot open database")
+		return
+	}
+
+	// Run the code to insert the ETL into the database
+	_, err = metabase.Exec(destination,
+		embedfs.EmbeddedEndpoints.GetOrPanic("create_etl"),
+		[]embedfs.EmbeddedParam{
+			{Name: "key_id", Value: app.KeyId, Type: embedfs.EmbeddedString},
+			{Name: "language", Value: body.Language, Type: embedfs.EmbeddedString},
+			{Name: "destination", Value: body.Destination, Type: embedfs.EmbeddedString},
+			{Name: "name", Value: body.Name, Type: embedfs.EmbeddedString},
+			{Name: "body", Value: etl, Type: embedfs.EmbeddedString},
+		})
+	if err != nil {
+		zap.L().Error("etl save error", zap.Error(err))
+		ServerError(c, err, "could not save etl step")
+		return
+	}
+
+	StatusOk(c, "etl created")
+}
+
+func padToMod4(toPad string) string {
+	// DuckDB wants Base64 values padded to mod(len, 4).
+	// We'll make sure the padding is right, even though the client
+	// should do this work.
+	etl := strings.ReplaceAll(toPad, "=", "")
+	offset := len(etl) % 4
+	if offset != 0 {
+		for range 4 - offset {
+			etl += "="
+		}
+	}
+	return etl
+}

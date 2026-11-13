@@ -1,0 +1,25 @@
+info:
+  name: consolidate
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/consolidate"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "kind": "daily",
+        "ymd": "{{YMD}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

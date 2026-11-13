@@ -26,8 +26,10 @@ export ITSLOG_PROXIES_TRUSTED="TBD"
 export ITSLOG_SERVE_HOST="0.0.0.0"
 export ITSLOG_SERVE_PORT="8888"
 export ITSLOG_STORAGE_PATH="/data"
+export ITSLOG_ARCHIVE_PATH="/archive"
 # A comma-separated list of CIDRs and IP addresses
 export ITSLOG_PROXIES="172.18.0.0/12"
+export ITSLOG_EVENTUAL_CONSISTENCY_SECONDS=120
 
 chmod 755 its-log
 ./its-log serve

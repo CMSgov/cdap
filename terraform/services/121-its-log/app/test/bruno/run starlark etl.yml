@@ -1,0 +1,34 @@
+info:
+  name: run starlark etl
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/etl/run"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "kind": "daily",
+        "name": "starlark-sentinel",
+        "destination": "summary",
+        "ymd": "{{YMD}}",
+        "params": [
+          { 
+            "name": "importantnumber",
+            "value": 8,
+            "type": "int"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

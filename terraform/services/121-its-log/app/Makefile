@@ -2,10 +2,21 @@
 CONTAINER_CMD ?= $(shell command -v podman 2> /dev/null || echo docker)
 
 prep-local:
-	mkdir -p ~/.its-log/data
+	mkdir -p ${HOME}/.its-log/data
+	mkdir -p ${HOME}/.its-log/archive
 
+# Changes to go.mod should always happen locally, and undergo review.
+# Never run `go mod tidy` as part of a build process.
 build: prep-local
-	cd src/api ; go build -o its-log .
+	cd src/api ; \
+		go build \
+		-o its-log .
+
+test:
+	cd src/api ; go test -cover -coverprofile=coverage.out ./...
+
+coverage: test
+	cd src/api ; go tool cover -html=coverage.out
 
 container-api: prep-local
 	$(CONTAINER_CMD) build -t itslog-api:latest -f Dockerfile --load .

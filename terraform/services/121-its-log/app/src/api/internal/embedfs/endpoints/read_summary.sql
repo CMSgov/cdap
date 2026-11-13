@@ -1,0 +1,15 @@
+SELECT 
+    operation, 
+    tags,
+    data,
+  FROM summary
+  WHERE 
+    len(list_intersect(
+      cast($tags as JSON)::STRING[],
+      cast(tags as JSON)::STRING[])
+      ) > 0
+    AND
+    operation LIKE $operation
+  ORDER BY id DESC
+  LIMIT 1
+  ;
