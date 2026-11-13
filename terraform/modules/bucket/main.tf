@@ -1,5 +1,9 @@
 locals {
   effective_kms_key_arn = var.use_custom_kms_key ? var.kms_key_arn : data.aws_kms_alias.default_encryption_key[0].target_key_arn
+
+  # Delivery source/destination names are capped at 60 characters, so use the
+  # stable name prefix rather than the generated bucket name
+  access_logging_name = "${substr(var.name, 0, 36)}-s3-access-logs"
 }
 resource "aws_s3_bucket" "this" {
   # Max length on bucket_prefix is 37, so cut it to 36 plus the dash
@@ -39,7 +43,7 @@ resource "aws_s3_bucket_versioning" "this" {
 
 data "aws_kms_alias" "default_encryption_key" {
   count = var.use_custom_kms_key ? 0 : 1
-  name  = "alias/${var.app}-${var.env}"
+  name  = "alias/${var.platform.app}-${var.platform.env}"
 }
 
 data "aws_iam_policy_document" "ssl_only" {
@@ -105,19 +109,47 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   }
 }
 
-data "aws_iam_account_alias" "current" {}
+# access logging: bucket -> per-bucket log group -> subscription filter -> shared
+# Firehose -> log-retention bucket (under cloudwatch/aws/s3/access-logs/<bucket>/).
+# This is the default route. Only the log-retention bucket itself opts 
+# out with access_logging = "external", configuring its own direct delivery to CMS
+# bucket to avoid looping its own access logs.
 
-data "aws_s3_bucket" "bucket_access_logs" {
-  bucket = (data.aws_iam_account_alias.current.account_alias == "aws-cms-oeda-bcda-prod"
-    ? "bucket-access-logs-20250411172631068600000001"
-    : "bucket-access-logs-20250409172631068600000001"
-  )
+# Encrypted with the caller's platform primary key
+module "access_logs_group" {
+  count  = var.access_logging == "cloudwatch" ? 1 : 0
+  source = "../cloudwatch_log_group"
+
+  name = "/aws/s3/access-logs/${aws_s3_bucket.this.id}"
+  env  = var.platform.env
+  # CloudWatch Logs requires a key ARN (not an alias ARN)
+  kms_key_id = var.platform.kms_alias_primary.target_key_arn
 }
 
-resource "aws_s3_bucket_logging" "this" {
-  bucket        = aws_s3_bucket.this.id
-  target_bucket = data.aws_s3_bucket.bucket_access_logs.id
-  target_prefix = "${aws_s3_bucket.this.id}/"
+resource "aws_cloudwatch_log_delivery_source" "access_logs" {
+  count = var.access_logging == "cloudwatch" ? 1 : 0
+
+  name         = local.access_logging_name
+  log_type     = "S3_SERVER_ACCESS_LOGS"
+  resource_arn = aws_s3_bucket.this.arn
+}
+
+resource "aws_cloudwatch_log_delivery_destination" "access_logs" {
+  count = var.access_logging == "cloudwatch" ? 1 : 0
+
+  name          = local.access_logging_name
+  output_format = "json"
+
+  delivery_destination_configuration {
+    destination_resource_arn = module.access_logs_group[0].this.arn
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "access_logs" {
+  count = var.access_logging == "cloudwatch" ? 1 : 0
+
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.access_logs[0].name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.access_logs[0].arn
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
