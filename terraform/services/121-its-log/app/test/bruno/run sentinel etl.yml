@@ -27,17 +27,6 @@ http:
       }
   auth: inherit
 
-runtime:
-  scripts:
-    - type: before-request
-      code: |-
-        const btoa = require("btoa");
-        sql = `
-        select into summary reject for keyword
-        `
-        encoded = btoa(sql.trim())
-        bru.setVar("B64", encoded);
-
 settings:
   encodeUrl: true
   timeout: 0

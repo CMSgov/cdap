@@ -9,6 +9,7 @@ import (
 	"github.com/navapbc/its-log/internal/etl"
 	"github.com/navapbc/its-log/internal/metabase"
 	"github.com/navapbc/its-log/internal/types"
+	"go.uber.org/zap"
 )
 
 // This is the handler if we call it directly from the API.
@@ -52,7 +53,12 @@ func RunEtl(c *gin.Context) {
 
 	switch body.Destination {
 	case "summary":
-		etl.RunAndInsertEtl(destination, body)
+		runResults, err := etl.RunAndInsertEtl(destination, body)
+		if err != nil {
+			ServerError(c, err, "could not run and insert etl")
+			return
+		}
+		zap.L().Info("results", zap.Any("rr", runResults))
 	case "csv":
 		// pass
 	}

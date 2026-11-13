@@ -1,11 +1,12 @@
 INSERT INTO etl (
-  key_id, name, kind, body
+  key_id, name, language, destination, body
 ) VALUES (
-  $key_id, $name, $kind, decode(from_base64($body))
+  $key_id, $name, $language, $destination, decode(from_base64($body))
 )
 ON CONFLICT (name) DO UPDATE SET 
   key_id = EXCLUDED.key_id,
   name = EXCLUDED.name,
-  kind = EXCLUDED.kind,
+  language = EXCLUDED.language,
+  destination = EXCLUDED.destination,
   body = EXCLUDED.body
 ;

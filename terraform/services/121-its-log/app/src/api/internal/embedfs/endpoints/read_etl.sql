@@ -1,5 +1,5 @@
-SELECT name, kind, body
-FROM itslog_etl
+SELECT name, language, destination, body
+FROM etl
 WHERE
   name = $name
 ORDER BY id DESC 

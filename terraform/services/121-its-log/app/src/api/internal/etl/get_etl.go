@@ -11,25 +11,25 @@ import (
 )
 
 func RunAndInsertEtl(m *metabase.Metabase, etlb RunEtlBody) ([]types.EtlRunResult, error) {
-	var etlRow types.EtlRow
+	var er types.EtlRow
 	row := metabase.QueryRow(m,
 		embedfs.EmbeddedEndpoints.GetOrPanic("read_etl"),
 		[]embedfs.EmbeddedParam{
 			{Name: "name", Value: etlb.Name, Type: embedfs.EmbeddedString},
 		})
 	if row.Err() != nil {
-		return nil, errors.New("etl query error")
+		return nil, row.Err()
 	}
-	scanErr := row.Scan(&etlRow.Name, &etlRow.Language, &etlRow.Body)
+	scanErr := row.Scan(&er.Name, &er.Language, &er.Destination, &er.Body)
 	if scanErr != nil {
-		return nil, errors.New("could not scan etl row")
+		return nil, scanErr
 	}
 
 	// Now, we have the ETL. Run it.
 	var results []types.EtlRunResult
-	switch etlRow.Language {
+	switch er.Language {
 	case "sql":
-		summaries, err := RunAndReturnRows(m, etlb, etlRow)
+		summaries, err := RunAndReturnRows(m, etlb, er)
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +58,7 @@ func userTypeToInternalType(t string) embedfs.EmbeddedParamType {
 		panic("unknown type from user; should not get here")
 	}
 }
-func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]types.SummaryRow, error) {
+func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error) {
 	// Run the ETL
 	// Add another "no insert, delete, update" check here, for thoroughness
 	if !base.CheckNotAllowed(row.Body) {
@@ -78,12 +78,26 @@ func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) (
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
 	zap.L().Info("query", zap.Any("rows", rows))
-	return nil, nil
+	er := make([]types.EtlRunResult, 0)
+	for rows.Next() {
+		var res types.EtlRunResult
+		serr := rows.Scan(&res.Operation,
+			&res.Tags,
+			&res.Data,
+		)
+		if serr != nil {
+			return nil, serr
+		}
+		er = append(er, res)
+	}
+	return er, nil
 }
 
 func RunAndWriteEtl(m *metabase.Metabase, name string) ([]types.EtlRunResult, error) {
-	var etlRow types.EtlRow
+	var er types.EtlRow
 	row := metabase.QueryRow(m,
 		embedfs.EmbeddedEndpoints.GetOrPanic("read_etl"),
 		[]embedfs.EmbeddedParam{
@@ -92,14 +106,14 @@ func RunAndWriteEtl(m *metabase.Metabase, name string) ([]types.EtlRunResult, er
 	if row.Err() != nil {
 		return nil, errors.New("etl query error")
 	}
-	scanErr := row.Scan(&etlRow.Name, &etlRow.Language, &etlRow.Body)
+	scanErr := row.Scan(&er.Name, &er.Language, &er.Destination, &er.Body)
 	if scanErr != nil {
 		return nil, errors.New("could not scan etl row")
 	}
 
 	// Now, we have the ETL. Run it.
 	var results []types.EtlRunResult
-	switch etlRow.Language {
+	switch er.Language {
 	case "sql":
 		// pass
 	case "starlark":

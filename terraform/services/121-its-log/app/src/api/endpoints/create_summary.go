@@ -14,6 +14,7 @@ import (
 type SummaryPostBody struct {
 	Kind      string   `json:"kind" binding:"required,oneof=daily monthly yearly full"`
 	Operation string   `json:"operation" binding:"required"`
+	Language  string   `json:"language" binding:"required,oneof=sql starlark"`
 	Tags      []string `json:"tags"`
 	Data      any      `json:"data" binding:"required"`
 	YMD       string   `json:"ymd" binding:"omitempty"`

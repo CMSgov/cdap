@@ -18,12 +18,13 @@ type CreateETLPostBody struct {
 	Name string `json:"name" binding:"required"`
 	// Run a B64 validator that also filters the SQL for
 	// INSERT, DELETE, and UPDATE.
-	B64      string `json:"b64" binding:"required,validateB64SQL"`
-	Kind     string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
-	Language string `json:"language" binding:"required,oneof=sql starlark"`
-	YYYYMMDD string `json:"ymd" binding:"omitempty,validateYMD"`
-	Year     int    `json:"year" binding:"omitempty,gte=2000"`
-	Month    int    `json:"month" binding:"omitempty,gte=1,lte=12"`
+	B64         string `json:"b64" binding:"required,validateB64SQL"`
+	Kind        string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
+	Language    string `json:"language" binding:"required,oneof=sql starlark"`
+	Destination string `json:"destination" binding:"required,oneof=summary csv"`
+	YYYYMMDD    string `json:"ymd" binding:"omitempty,validateYMD"`
+	Year        int    `json:"year" binding:"omitempty,gte=2000"`
+	Month       int    `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 func CreateEtl(c *gin.Context) {
@@ -67,9 +68,9 @@ func CreateEtl(c *gin.Context) {
 		embedfs.EmbeddedEndpoints.GetOrPanic("create_etl"),
 		[]embedfs.EmbeddedParam{
 			{Name: "key_id", Value: app.KeyId, Type: embedfs.EmbeddedString},
+			{Name: "language", Value: body.Language, Type: embedfs.EmbeddedString},
+			{Name: "destination", Value: body.Destination, Type: embedfs.EmbeddedString},
 			{Name: "name", Value: body.Name, Type: embedfs.EmbeddedString},
-			// FIXME: "kind" here is meant to be sql or starlark
-			{Name: "kind", Value: body.Kind, Type: embedfs.EmbeddedString},
 			{Name: "body", Value: etl, Type: embedfs.EmbeddedString},
 		})
 	if err != nil {

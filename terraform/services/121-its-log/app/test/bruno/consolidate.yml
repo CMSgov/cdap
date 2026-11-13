@@ -13,8 +13,8 @@ http:
     type: json
     data: |-
       {
-        "kind": "full",
-        "ymd": "2026-11-11"
+        "kind": "daily",
+        "ymd": "{{YMD}}"
       }
   auth: inherit
 
