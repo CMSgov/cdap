@@ -30,10 +30,11 @@ CREATE TABLE IF NOT EXISTS summary (
     id INTEGER PRIMARY KEY default nextval('summary_id_seq') NOT NULL,
     inserted DATETIME DEFAULT now() NOT NULL,
     key_id TEXT NOT NULL,
+    date DATE DEFAULT now() NOT NULL,
     operation TEXT NOT NULL,
     tags JSON,
     data JSON NOT NULL,
-    UNIQUE (operation, tags)
+    UNIQUE (date, operation, tags)
 );
 
 CREATE SEQUENCE IF NOT EXISTS etl_id_seq START 1;

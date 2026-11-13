@@ -1,5 +1,5 @@
 info:
-  name: etl create
+  name: etl create sentinel
   type: http
   seq: 6
 
@@ -14,6 +14,7 @@ http:
     data: |-
       {
         "kind": "daily",
+        "language": "sql",
         "name": "sentinel",
         "ymd": "{{YMD}}",
         "b64": "{{B64}}"
@@ -26,7 +27,7 @@ runtime:
       code: |-
         const btoa = require("btoa");
         sql = `
-        select into summary reject for keyword
+        select 1
         `
         encoded = btoa(sql.trim())
         bru.setVar("B64", encoded);

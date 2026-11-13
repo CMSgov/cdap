@@ -19,11 +19,10 @@ http:
 runtime:
   variables:
     - name: tags
-      value: '["v3", "EoB"]'
+      value: '["v3", "EoB", "PupperFound"]'
 
 settings:
   encodeUrl: true
   timeout: 0
   followRedirects: true
   maxRedirects: 5
-  forwardAuthorizationHeader: false

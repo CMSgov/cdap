@@ -20,6 +20,7 @@ type CreateETLPostBody struct {
 	// INSERT, DELETE, and UPDATE.
 	B64      string `json:"b64" binding:"required,validateB64SQL"`
 	Kind     string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
+	Language string `json:"language" binding:"required,oneof=sql starlark"`
 	YYYYMMDD string `json:"ymd" binding:"omitempty,validateYMD"`
 	Year     int    `json:"year" binding:"omitempty,gte=2000"`
 	Month    int    `json:"month" binding:"omitempty,gte=1,lte=12"`

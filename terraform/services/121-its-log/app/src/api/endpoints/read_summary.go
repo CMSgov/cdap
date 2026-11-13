@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/navapbc/its-log/internal/base"
@@ -22,15 +21,6 @@ type SummaryReadBody struct {
 	YMD       string   `json:"ymd" binding:"omitempty,validateYMD"`
 	Year      int      `json:"year" binding:"omitempty,gte=2000"`
 	Month     int      `json:"month" binding:"omitempty,gte=1,lte=12"`
-}
-
-type SummaryRow struct {
-	ID        int64     `json:"id"`
-	Inserted  time.Time `json:"inserted"`
-	KeyId     string    `json:"key_id"`
-	Operation string    `json:"operation"`
-	Tags      any       `json:"tags"`
-	Data      any       `json:"data"`
 }
 
 func SummaryRead(c *gin.Context) {
@@ -82,7 +72,7 @@ func SummaryRead(c *gin.Context) {
 		return
 	}
 
-	var summaryRow SummaryRow
+	var summaryRow types.SummaryRow
 	scanErr := row.Scan(&summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
 	if scanErr != nil {
 		zap.L().Info("error scanning summary row",

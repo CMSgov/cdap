@@ -1,15 +1,13 @@
-package endpoints
+package etl
 
 import (
 	"database/sql"
 	"fmt"
 
-	"github.com/navapbc/its-log/internal/etl"
-	etlgo "github.com/navapbc/its-log/internal/etl/golang"
 	"github.com/navapbc/its-log/internal/storage"
 )
 
-func etlRunGolang(etlP *etl.RunEtlParams, row storage.EtlRow, tx *sql.Tx) error {
+func etlRunGolang(etlP *RunEtlParams, row storage.EtlRow, tx *sql.Tx) error {
 	functionName := row.Name
 	if function, ok := etlgo.GolangETLMap[functionName]; ok {
 		// Like the SQL actions, lock/unlock around what we do.

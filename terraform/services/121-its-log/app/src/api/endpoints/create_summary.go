@@ -36,7 +36,7 @@ func SummaryCreate(c *gin.Context) {
 
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
-	sdbsp, err := getSummaryDbSetupParams(app, body.Kind, body.YMD, 2001, 12)
+	sdbsp, err := getSummaryDbSetupParams(app, body.Kind, body.YMD, body.Year, body.Month)
 	if err != nil {
 		BadRequest(c, err, "could not set up database")
 		return
@@ -58,6 +58,7 @@ func SummaryCreate(c *gin.Context) {
 		embedfs.EmbeddedEndpoints.GetOrPanic("create_summary"),
 		[]embedfs.EmbeddedParam{
 			{Name: "key_id", Value: app.KeyId, Type: embedfs.EmbeddedString},
+			{Name: "date", Value: body.YMD, Type: embedfs.EmbeddedString},
 			{Name: "operation", Value: body.Operation, Type: embedfs.EmbeddedString},
 			{Name: "tags", Value: body.Tags, Type: embedfs.EmbeddedJson},
 			{Name: "data", Value: body.Data, Type: embedfs.EmbeddedJson},

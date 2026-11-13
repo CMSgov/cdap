@@ -33,15 +33,7 @@ func validateYMD(fl validator.FieldLevel) bool {
 	return matched
 }
 
-func validateB64sql(fl validator.FieldLevel) bool {
-	b64 := fl.Field().String()
-	// Lets try and Base64 decode the string, to make sure it is good.
-	decoded, err := base64.StdEncoding.DecodeString(b64)
-	if err != nil {
-		zap.L().Info("validateB64: could not decode", zap.String("b64", b64))
-		return false
-	}
-
+func CheckNotAllowed(decoded string) bool {
 	lowered := strings.ToLower(string(decoded))
 	// And, for fun: let's make sure the words "delete" or "update"
 	// do not appear anywhere in this ETL. We don't want ETLs to be able to
@@ -55,6 +47,16 @@ func validateB64sql(fl validator.FieldLevel) bool {
 		}
 	}
 	return true
+}
+func validateB64sql(fl validator.FieldLevel) bool {
+	b64 := fl.Field().String()
+	// Lets try and Base64 decode the string, to make sure it is good.
+	decoded, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		zap.L().Info("validateB64: could not decode", zap.String("b64", b64))
+		return false
+	}
+	return CheckNotAllowed(string(decoded))
 }
 
 func validateArrString(fl validator.FieldLevel) bool {

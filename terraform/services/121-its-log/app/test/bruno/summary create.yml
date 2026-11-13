@@ -17,7 +17,7 @@ http:
         "operation": "total count",
         "tags": ["a", "b"],
         "data": [{"three": 3}, {"five": 5}],
-        "ymd": "{{YMD}}"
+        "ymd": "2026-11-11"
       }
   auth: inherit
 

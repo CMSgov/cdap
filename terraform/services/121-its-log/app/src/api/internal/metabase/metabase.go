@@ -242,7 +242,7 @@ func (M *Metabase) Open(mode MetabaseOpenMode) error {
 		}
 	case ReplaceExistingOrCreateNew:
 		if M.CheckExists() {
-			zap.L().Info("ReplaceIfExists")
+			zap.L().Info("ReplaceExistingOrCreateNew")
 			// delete if it exists, and then fall through.
 			delErr := M.Delete()
 			if delErr != nil {
@@ -266,6 +266,7 @@ func (M *Metabase) Open(mode MetabaseOpenMode) error {
 		db.Close()
 
 	}
+
 	db, err := sql.Open("duckdb", M.FullFilename())
 	if err != nil {
 		return errors.New("open: " + err.Error())

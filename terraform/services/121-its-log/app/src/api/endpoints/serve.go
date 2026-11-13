@@ -157,5 +157,5 @@ func addEtlEndpoints(rG *gin.RouterGroup) {
 	auth_adminV1.Use(AuthMiddleWare(permissions))
 
 	auth_adminV1.POST(ETL_CREATE, CreateEtl)
-	//auth_adminV1.POST(ETL_RUN, RunEtl)
+	auth_adminV1.POST(ETL_RUN, RunEtl)
 }
