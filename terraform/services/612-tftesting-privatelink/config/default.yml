@@ -1,0 +1,17 @@
+stack:
+  infra_enabled: false # ACM cert and ALB, no compute; can be left applied
+  services_enabled: false # ECS services, runs fargate tasks; turn off after testing
+
+domain:
+  name: null # defaults to use the $service.$env.$app.cms.internal.gov for internal endpoints
+
+# SRE guidance: provide these options for developers to easily change
+services:
+  consumer:
+    cpu: 128
+    memory: 256
+    deployment_rollback: false
+  target:
+    cpu: 128
+    memory: 256
+    deployment_rollback: false
