@@ -1,6 +1,6 @@
 resource "aws_vpc_security_group_egress_rule" "alb_to_caller" {
   count                        = local.services_enabled ? 1 : 0
-  security_group_id            = module.alb[0].security_group_id
+  security_group_id            = module.alb[0].alb_security_group_id
   referenced_security_group_id = module.service_caller[0].task_security_group_id
   from_port                    = 8080
   to_port                      = 8080
