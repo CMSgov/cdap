@@ -7,8 +7,8 @@
 ## Providers
 
 | Name | Version |
-|------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| ---- | ------- |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.67.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -27,12 +27,12 @@ No requirements.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_app"></a> [app](#input\_app) | The application name (ab2d, bcda, dpc) | `string` | n/a | yes |
 | <a name="input_content_type"></a> [content\_type](#input\_content\_type) | Content type for firewall responses | `string` | n/a | yes |
 | <a name="input_env"></a> [env](#input\_env) | The application environment (dev, test, sbx, sandbox, prod) | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Web ACL name | `string` | n/a | yes |
-| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | <pre>object({<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>    account_id        = string<br/>  })</pre> | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP plaform module. | <pre>object({<br/>    env               = string<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>    account_id        = string<br/>  })</pre> | n/a | yes |
 | <a name="input_scope"></a> [scope](#input\_scope) | Firewall scope | `string` | n/a | yes |
 | <a name="input_associated_resource_arn"></a> [associated\_resource\_arn](#input\_associated\_resource\_arn) | ARN of the resource to associate the WAF with. | `string` | `""` | no |
 | <a name="input_ip_sets"></a> [ip\_sets](#input\_ip\_sets) | IP sets to allow | `list(string)` | `[]` | no |
@@ -47,7 +47,7 @@ No requirements.
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_waf_log_group"></a> [waf\_log\_group](#module\_waf\_log\_group) | ../cloudwatch_log_group | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -58,8 +58,7 @@ No requirements.
 ## Resources
 
 | Name | Type |
-|------|------|
-| [aws_cloudwatch_log_resource_policy.waf](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_resource_policy) | resource |
+| ---- | ---- |
 | [aws_wafv2_web_acl.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl) | resource |
 | [aws_wafv2_web_acl_association.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl_association) | resource |
 | [aws_wafv2_web_acl_logging_configuration.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl_logging_configuration) | resource |
@@ -72,6 +71,6 @@ No requirements.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_arn"></a> [arn](#output\_arn) | The ARN of the WAF WebACL. |
 <!-- END_TF_DOCS -->
