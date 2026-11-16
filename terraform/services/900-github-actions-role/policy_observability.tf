@@ -100,13 +100,13 @@ data "aws_iam_policy_document" "github_actions_observability" {
     ]
   }
 
-  # Vended log delivery. CreateLogDelivery, used by WAF logging and the
-  # Get* reads are account-level actions that do not support resource-level
-  # permissions. Delivery source/destination/delivery resources (used for
-  # S3 server access logs by the bucket module and 701-log-retention) have
-  # random IDs and wildcard-only name patterns, so scoping adds nothing.
+  # Vended log delivery writes. CreateLogDelivery (used by WAF logging) is an
+  # account-level action that does not support resource-level permissions.
+  # Delivery source/destination/delivery resources (used for S3 server access
+  # logs by the bucket module and 701-log-retention) have random IDs and
+  # wildcard-only name patterns, so scoping adds nothing.
   statement {
-    sid = "LogsVendedDelivery"
+    sid = "LogsVendedDeliveryWrite"
     actions = [
       "logs:CreateDelivery",
       "logs:CreateLogDelivery",
@@ -114,10 +114,6 @@ data "aws_iam_policy_document" "github_actions_observability" {
       "logs:DeleteDeliveryDestination",
       "logs:DeleteDeliverySource",
       "logs:DeleteLogDelivery",
-      "logs:GetDelivery",
-      "logs:GetDeliveryDestination",
-      "logs:GetDeliveryDestinationPolicy",
-      "logs:GetDeliverySource",
       "logs:PutDeliveryDestination",
       "logs:PutDeliverySource",
       "logs:PutResourcePolicy",
@@ -133,6 +129,10 @@ data "aws_iam_policy_document" "github_actions_observability" {
     sid = "LogsRead"
     actions = [
       "logs:Describe*",
+      "logs:GetDelivery",
+      "logs:GetDeliveryDestination",
+      "logs:GetDeliveryDestinationPolicy",
+      "logs:GetDeliverySource",
       "logs:GetLogGroupFields",
       "logs:List*",
     ]
