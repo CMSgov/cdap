@@ -9,7 +9,7 @@ import (
 	"path"
 	"sync"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/embedfs"
 	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -250,6 +250,9 @@ func (M *Metabase) Open(mode MetabaseOpenMode) error {
 			}
 			touch = true
 		}
+		if M.CheckExists() {
+			zap.L().Fatal("database should not exist at this point")
+		}
 		// fall through
 	}
 
@@ -315,20 +318,17 @@ func (M *Metabase) Flush() error {
 }
 
 func (M *Metabase) Delete() error {
-	if M.GetDB() != nil {
-		if err := M.Close(); err != nil {
-			return err
-		}
-		err := os.Remove(M.FullFilename())
-		if err != nil {
-			zap.L().Error("could not delete",
-				zap.String("filename", M.FullFilename()))
-			return err
-		}
-
-		if M.CheckExists() {
-			return errors.New("failed to delete database")
-		}
+	M.Close()
+	err := os.Remove(M.FullFilename())
+	if err != nil {
+		zap.L().Error("could not delete",
+			zap.String("filename", M.FullFilename()))
+		return err
 	}
+
+	if M.CheckExists() {
+		return errors.New("failed to delete database")
+	}
+
 	return nil
 }

@@ -3,7 +3,7 @@ package metabase
 import (
 	"database/sql"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/embedfs"
 	"go.uber.org/zap"
 )
 
@@ -17,14 +17,20 @@ import (
 
 func Query(m *Metabase, theSql string, params []embedfs.EmbeddedParam) (*sql.Rows, error) {
 
+	m.Lock("Query")
+	res, err := QueryNoLock(m, theSql, params)
+	m.Unlock("Query")
+	return res, err
+}
+
+func QueryNoLock(m *Metabase, theSql string, params []embedfs.EmbeddedParam) (*sql.Rows, error) {
+
 	args, err := PrepareNamedArgs(theSql, params)
 	if err != nil {
 		zap.L().Error("error in PrepareNamedArgs", zap.Error(err))
 		return nil, err
 	}
-	m.Lock("Query")
 	res, err := m.GetDB().Query(theSql, args)
-	m.Unlock("Query")
 	if err != nil {
 		return nil, err
 	}

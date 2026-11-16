@@ -2,11 +2,12 @@ package etl
 
 import (
 	"errors"
+	"fmt"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	"go.uber.org/zap"
 )
 
@@ -18,9 +19,9 @@ func RunAndInsertEtl(m *metabase.Metabase, etlb RunEtlBody) (int, error) {
 			{Name: "name", Value: etlb.Name, Type: embedfs.EmbeddedString},
 		})
 	if row.Err() != nil {
-		return -1, row.Err()
+		return -1, fmt.Errorf("read_etl: %s", row.Err().Error())
 	}
-	scanErr := row.Scan(&er.Name, &er.Language, &er.Destination, &er.Body)
+	scanErr := row.Scan(&er.Name, &er.Language, &er.Body)
 	if scanErr != nil {
 		return -1, scanErr
 	}
@@ -102,19 +103,23 @@ func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) (
 		defer rows.Close()
 		for rows.Next() {
 			var res types.EtlRunResult
-			serr := rows.Scan(&res.Operation,
+			serr := rows.Scan(
+				&res.Date,
+				&res.Operation,
 				&res.Tags,
 				&res.Data,
 			)
 			if serr != nil {
 				return nil, serr
 			}
-			res.Date = etlb.YMD
+			if types.IsValidYYYYMMDD(res.Date) != nil {
+				return nil, fmt.Errorf("invalid date returned from sql etl: ['%s']", res.Date)
+			}
 			erunres = append(erunres, res)
 		}
 	case "starlark":
 		var err error
-		erunres, err = RunStarlark(etlb, row)
+		erunres, err = RunStarlark(m, etlb, row)
 		if err != nil {
 			return nil, err
 		}

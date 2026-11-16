@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	starjson "go.starlark.net/lib/json"
 	starmath "go.starlark.net/lib/math"
 	startime "go.starlark.net/lib/time"
@@ -17,7 +20,7 @@ import (
 
 // -----------
 // Running Starlark ETLs
-func RunStarlark(etlP RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error) {
+func RunStarlark(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error) {
 
 	// The thread we'll execute the code in.
 	thread := &starlark.Thread{Name: row.Name + "-starlark-thread"}
@@ -30,7 +33,7 @@ func RunStarlark(etlP RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error
 
 	// Register a query function
 	// This lets Starlark code call out and query the itslog_events table
-	registrar := starlark.StringDict{"query": starlark.NewBuiltin("query", queryFun(etlP))}
+	registrar := starlark.StringDict{"query": starlark.NewBuiltin("query", queryFun(m, etlb))}
 
 	// This evals the file, which does not *yet* execute the code.
 	// Note we register "query" as a function in the interpreted namespace.
@@ -54,6 +57,8 @@ func RunStarlark(etlP RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error
 			zap.Error(err))
 		return nil, err
 	}
+	// FIXME: Add some checking to make sure the ETL
+	// returns a Starlark list, so the case below works
 
 	// Now, we're going to construct a list of rows that are suitable for insertion into the
 	// summary table from this result. We should get back a Starlark list, which will
@@ -93,6 +98,16 @@ func RunStarlark(etlP RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error
 			}
 		}
 
+		trimmed, err := types.TrimToYYYYMMDD(srjs.Date)
+		if err != nil {
+			if len(srjs.Date) == 0 {
+				return nil, fmt.Errorf("no date returned in starlark summary row")
+			} else {
+				return nil, fmt.Errorf("bad date from starlark summary: ['%s']", srjs.Date)
+			}
+		}
+		srjs.Date = trimmed
+
 		zap.L().Debug("starlark summary",
 			zap.String("summary", fmt.Sprintf("%v", srjs)))
 
@@ -102,7 +117,7 @@ func RunStarlark(etlP RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error
 	return summaries, nil
 }
 
-func queryFun(etlb RunEtlBody) func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func queryFun(m *metabase.Metabase, etlb RunEtlBody) func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	return func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 		var queryTable string
 		var queryString string
@@ -120,82 +135,86 @@ func queryFun(etlb RunEtlBody) func(_ *starlark.Thread, _ *starlark.Builtin, arg
 			}
 		}
 		// We now want to run the query from starlark, so it has data to operate on.
+		// An SQL step will read from the DB.
 
-		return nil, nil
+		// Do we need to lock for a read-only operation?
+		// How does the DuckDB/Golang driver handle this?
+		// lockMsg := "starlark:queryfun:" + etlb.Name
+		// m.Lock(lockMsg)
+		rows, err := metabase.QueryNoLock(m, queryString, []embedfs.EmbeddedParam{
+			{Name: "key_id", Value: etlb.App.KeyId, Type: embedfs.EmbeddedString},
+			{Name: "app_id", Value: etlb.App.AppId, Type: embedfs.EmbeddedString},
+			{Name: "date", Value: etlb.YMD, Type: embedfs.EmbeddedString},
+		})
+		// m.Unlock(lockMsg)
+		if err != nil {
+			return starlark.None, err
+		}
+		if rows.Err() != nil {
+			return starlark.None, rows.Err()
+		}
+
+		resultList := starlark.NewList([]starlark.Value{})
+		for rows.Next() {
+			switch queryTable {
+			case "events":
+				zap.L().Debug("starlark scanning events row")
+				var row types.EventRow
+				err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Cluster, &row.Tags, &row.Data)
+				if err != nil {
+					return starlark.None, err
+				} else {
+					tagArr, err := GolangToStarlark(row.Tags)
+					if err != nil {
+						return nil, err
+					}
+					d := starlark.NewDict(8)
+					dataDict, err := GolangToStarlark(row.Data)
+					if err != nil {
+						return nil, err
+					}
+					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
+					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
+					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
+					d.SetKey(starlark.String("cluster"), starlark.String(row.Cluster))
+					d.SetKey(starlark.String("tags"), tagArr)
+					d.SetKey(starlark.String("data"), dataDict)
+					resultList.Append(d)
+				}
+			case "summary":
+				zap.L().Debug("starlark scanning summary row")
+				var row types.SummaryRow
+				if err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Date, &row.Operation, &row.Tags, &row.Data); err != nil {
+					return starlark.None, err
+				} else {
+					tagArr, err := GolangToStarlark(row.Tags)
+					if err != nil {
+						zap.L().Info("error converting tags", zap.Any("row.Tags", row.Tags))
+						return starlark.None, err
+					}
+					d := starlark.NewDict(10)
+					dataDict, err := GolangToStarlark(row.Data)
+					if err != nil {
+						zap.L().Info("error converting data", zap.Any("row.Data", row.Data))
+						return starlark.None, err
+					}
+					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
+					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
+					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
+					trimmed, err := types.TrimToYYYYMMDD(row.Date)
+					if err != nil {
+						return starlark.None, err
+					}
+					d.SetKey(starlark.String("date"), starlark.String(trimmed))
+					d.SetKey(starlark.String("operation"), starlark.String(row.Operation))
+					d.SetKey(starlark.String("tags"), tagArr)
+					d.SetKey(starlark.String("data"), dataDict)
+					zap.L().Debug("summary dict", zap.Any("dict", d))
+					resultList.Append(d)
+				}
+			}
+		}
+
+		return resultList, nil
 	}
 }
-
-// etlb.
-// 	paramMap := storage.EmbedParamMap{
-// 	"key_id": etlb.KeyId,
-// 	"app_id": etlb.AppId,
-// 	"date":   etlb.Storage.YYYYMMDD(),
-// }
-// sqlArgs, err := storage.GenerateNamedArgs(queryString, paramMap)
-// if err != nil {
-// 	return nil, err
-// }
-
-// // An SQL step will read from the DB.
-// // Lock and release around this action.
-// lockMsg := "starlark:queryfun:" + etlb.EtlName
-// etlb.Storage.Lock(lockMsg)
-// rows, err := etlb.Storage.GetDB().Query(queryString, sqlArgs...)
-// etlb.Storage.Unlock(lockMsg)
-// if err != nil {
-// 	return starlark.None, err
-// }
-// if rows.Err() != nil {
-// 	return starlark.None, rows.Err()
-// 		// }
-
-// 		resultList := starlark.NewList([]starlark.Value{})
-// 		for rows.Next() {
-// 			switch queryTable {
-// 			case "events":
-// 				zap.L().Debug("starlark scanning events row")
-// 				var row types.EventRow
-// 				err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Cluster, &row.Tags, &row.Data)
-// 				if err != nil {
-// 					return starlark.None, err
-// 				} else {
-// 					d := starlark.NewDict(8)
-// 					dataDict, err := GolangToStarlark(row.Data)
-// 					if err != nil {
-// 						return nil, err
-// 					}
-// 					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
-// 					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
-// 					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
-// 					d.SetKey(starlark.String("cluster"), starlark.String(row.Cluster.String))
-// 					d.SetKey(starlark.String("tags"), starlark.String(row.Tags))
-// 					d.SetKey(starlark.String("data"), dataDict)
-// 					resultList.Append(d)
-// 				}
-// 			case "summary":
-// 				zap.L().Debug("starlark scanning summary row")
-// 				var row types.SummaryRow
-// 				if err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Operation, &row.Tags, &row.Data); err != nil {
-// 					return starlark.None, err
-// 				} else {
-// 					d := starlark.NewDict(10)
-// 					dataDict, err := GolangToStarlark(row.Data)
-// 					if err != nil {
-// 						return nil, err
-// 					}
-// 					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
-// 					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
-// 					// d.SetKey(starlark.String("date"), starlark.String(row.Date))
-// 					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
-// 					d.SetKey(starlark.String("operation"), starlark.String(row.Operation))
-// 					d.SetKey(starlark.String("tags"), starlark.String(row.Tags.String))
-// 					d.SetKey(starlark.String("data"), dataDict)
-// 					resultList.Append(d)
-// 				}
-// 			}
-// 		}
-
-// 		return resultList, nil
-
-// 	}
-// }

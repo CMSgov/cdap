@@ -10,12 +10,14 @@ import sys
 import time
 
 
-def test_pocketchange(PARAMS):
+def test_pocketchange(PARAMS, kind):
     NUMBER_OF_PENNIES = 100
     existing_pennies = 0
 
-    create_etl(PARAMS, 'starlark/sum-pocket-change.star')
-    run_etl(PARAMS, "sum-pocket-change")
+    create_etl(PARAMS, 'starlark/sum-pocket-change.star', kind)
+    run_etl(PARAMS, "sum-pocket-change", {
+        "kind": "daily",
+    })
     js = summary_read(PARAMS, "total.pocketchange")
 
     if js and "data" in js and "count" in js["data"]:
@@ -35,7 +37,9 @@ def test_pocketchange(PARAMS):
     # We have to wait until the buffer flushes to count the pennies.
     time.sleep(3)
 
-    run_etl(PARAMS, "sum-pocket-change")
+    run_etl(PARAMS, "sum-pocket-change", {
+        "kind": "daily",
+    })
     js = summary_read(PARAMS, "total.pocketchange")
 
     if js["data"]["count"] == NUMBER_OF_PENNIES + existing_pennies:

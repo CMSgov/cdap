@@ -14,7 +14,7 @@ http:
     data: |-
       {
         "kind": "daily",
-        "operation": "total%",
+        "operation": "%",
         "tags": ["a"],
         "ymd": "{{YMD}}"
       }

@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/constants"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	"go.uber.org/zap"
 )
 
@@ -26,7 +26,6 @@ var minimum = []string{
 	"ITSLOG_SERVE_PORT",
 	"ITSLOG_STORAGE_PATH",
 	"ITSLOG_ARCHIVE_PATH",
-	"ITSLOG_INSTANCE_ID",
 }
 
 func ConfirmEnvVars() error {

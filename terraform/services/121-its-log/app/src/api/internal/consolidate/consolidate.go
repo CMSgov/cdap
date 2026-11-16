@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/metabase"
 	"go.uber.org/zap"
 )
 
@@ -32,25 +32,13 @@ func Consolidate(cp metabase.MetaParams) error {
 	switch cp := cp.(type) {
 	case *metabase.DailyParams:
 		// We are consolidating instances into a daily DB.
-		destination, err = metabase.NewDailyDatabase(&metabase.DailyParams{
-			App:      cp.App,
-			YYYYMMDD: cp.YYYYMMDD,
-		})
+		destination, err = metabase.NewDailyDatabase(cp)
 	case *metabase.MonthlyParams:
-		destination, err = metabase.NewMonthlyDatabase(&metabase.MonthlyParams{
-			App:         cp.App,
-			YearNumber:  cp.YearNumber,
-			MonthNumber: cp.MonthNumber,
-		})
+		destination, err = metabase.NewMonthlyDatabase(cp)
 	case *metabase.YearlyParams:
-		destination, err = metabase.NewYearlyDatabase(&metabase.YearlyParams{
-			App:        cp.App,
-			YearNumber: cp.YearNumber,
-		})
+		destination, err = metabase.NewYearlyDatabase(cp)
 	case *metabase.FullParams:
-		destination, err = metabase.NewFullDatabase(&metabase.FullParams{
-			App: cp.App,
-		})
+		destination, err = metabase.NewFullDatabase(cp)
 	default:
 		return errors.New("cannot consolidation unknown type")
 	}
@@ -101,7 +89,7 @@ func Consolidate(cp metabase.MetaParams) error {
 		)
 
 		copyQ := replacer.Replace(tt.insert)
-		//zap.L().Info("consolidation_query", zap.String("q", copyQ))
+		zap.L().Info("consolidation_query", zap.String("q", copyQ))
 
 		// Copy the table.
 		_, err = inMem.Exec(copyQ)

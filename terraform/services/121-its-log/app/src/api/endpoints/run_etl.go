@@ -2,12 +2,13 @@ package endpoints
 
 import (
 	"errors"
+	"fmt"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/etl"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/constants"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/etl"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -17,7 +18,7 @@ import (
 func RunEtl(c *gin.Context) {
 	var body etl.RunEtlBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		BadRequest(c, err, "invalid json")
+		BadRequest(c, err, fmt.Sprintf("invalid json, given: %v", body))
 		return
 	}
 
@@ -67,7 +68,7 @@ func RunEtl(c *gin.Context) {
 	case "summary":
 		inserted, err := etl.RunAndInsertEtl(destination, body)
 		if err != nil {
-			ServerError(c, err, "could not run and insert etl")
+			ServerError(c, err, "could not run etl and insert summary rows")
 			return
 		}
 		zap.L().Info("summaries inserted", zap.Int("rows", inserted))

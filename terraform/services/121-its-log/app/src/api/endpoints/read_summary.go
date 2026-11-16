@@ -5,22 +5,22 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/constants"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
 type SummaryReadBody struct {
-	Operation string   `json:"operation" binding:"required"`
-	Tags      []string `json:"tags" binding:"validateArrString"`
-	Kind      string   `json:"kind" binding:"required,oneof=daily monthly yearly full"`
-	YMD       string   `json:"ymd" binding:"omitempty,validateYMD"`
-	Year      int      `json:"year" binding:"omitempty,gte=2000"`
-	Month     int      `json:"month" binding:"omitempty,gte=1,lte=12"`
+	Operation string `json:"operation" binding:"required"`
+	Tags      any    `json:"tags"`
+	Kind      string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
+	YMD       string `json:"ymd" binding:"omitempty,validateYMD"`
+	Year      int    `json:"year" binding:"omitempty,gte=2000"`
+	Month     int    `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 func SummaryRead(c *gin.Context) {

@@ -8,8 +8,8 @@ class Params:
         with open(env, "r") as f:
             self.params = json.load(f)
         self.params["TIMEOUT"] = 4
-        self.params["LESS_THAN_BUFFER"] = 100
-        self.params["MORE_THAN_BUFFER"] = 5000
+        self.params["LESS_THAN_BUFFER"] = 10
+        self.params["MORE_THAN_BUFFER"] = 10
         # Need to use a session, or requests will run out of sockets.
         self.params["session"] = requests.Session()
 
@@ -26,6 +26,9 @@ class Params:
 
     def get(self, key):
         return self.params[key]
+
+    def set(self, key, value):
+        self.params[key] = value
 
 
 PARAMS = None

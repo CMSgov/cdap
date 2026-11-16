@@ -1,5 +1,5 @@
 info:
-  name: run starlark etl
+  name: etl run starlark sentinel
   type: http
   seq: 9
 

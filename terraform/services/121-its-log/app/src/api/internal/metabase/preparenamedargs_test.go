@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	_ "github.com/duckdb/duckdb-go/v2"
 )
 

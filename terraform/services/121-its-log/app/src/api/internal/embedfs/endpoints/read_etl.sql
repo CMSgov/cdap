@@ -1,4 +1,4 @@
-SELECT name, language, destination, body
+SELECT name, language, body
 FROM etl
 WHERE
   name = $name

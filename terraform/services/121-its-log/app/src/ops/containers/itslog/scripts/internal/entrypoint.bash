@@ -24,12 +24,17 @@ export ITSLOG_ZAPMODE="info" # debug or info
 export ITSLOG_HASH_SEED=42
 export ITSLOG_PROXIES_TRUSTED="TBD"
 export ITSLOG_SERVE_HOST="0.0.0.0"
-export ITSLOG_SERVE_PORT="8888"
+export ITSLOG_SERVE_PORT="80"
 export ITSLOG_STORAGE_PATH="/data"
 export ITSLOG_ARCHIVE_PATH="/archive"
+export ITSLOG_EXPORT_PATH="/archive"
 # A comma-separated list of CIDRs and IP addresses
 export ITSLOG_PROXIES="172.18.0.0/12"
 export ITSLOG_EVENTUAL_CONSISTENCY_SECONDS=120
+
+uuid=$(cat /proc/sys/kernel/random/uuid)
+echo "ITSLOG UUID: ${uuid}"
+export ITSLOG_INSTANCE_ID="container-${uuid}"
 
 chmod 755 its-log
 ./its-log serve

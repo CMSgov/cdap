@@ -3,17 +3,17 @@ package endpoints
 import (
 	"errors"
 
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/base"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/consolidate"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/consolidate"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/constants"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/gin-gonic/gin"
 )
 
 type ConsolidateBody struct {
-	Kind     string `json:"kind" binding:"required,oneof=daily monthly full"`
+	Kind     string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
 	YYYYMMDD string `json:"ymd" binding:"omitempty,validateYMD"`
 	Year     int    `json:"year" binding:"omitempty,gte=2000"`
 	Month    int    `json:"month" binding:"omitempty,gte=1,lte=12"`

@@ -1,6 +1,6 @@
 package types
 
-import "github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/constants"
+import "github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/constants"
 
 type PermissionType int
 

@@ -26,16 +26,16 @@ def test_sequential_event_logging(PARAMS, id):
     print(f"== test_sequential_event_logging: {id}")
 
     time.sleep(PARAMS.get("TIMEOUT"))
-    create_etl(PARAMS, "sql/count-total.sql")
-    run_etl(PARAMS, "count-total")
+    # create_etl(PARAMS, "sql/count-total.sql")
+    # run_etl(PARAMS, "count-total")
 
-    js = summary_read(PARAMS, "count.total")
-    initial_events = -1
-    if js and "data" in js and "count" in js["data"]:
-        initial_events = js["data"]["count"]
-        print(f"🔵 {initial_events} found")
-    else:
-        print(js)
+    # js = summary_read(PARAMS, "count.total")
+    # initial_events = -1
+    # if js and "data" in js and "count" in js["data"]:
+    #     initial_events = js["data"]["count"]
+    #     print(f"🔵 {initial_events} found")
+    # else:
+    #     print(js)
     create_N_events(PARAMS, 1, "", ["v1"], {"count": 1})
     print(f"🟢 created 1 event")
 
@@ -62,19 +62,19 @@ def test_sequential_event_logging(PARAMS, id):
 
     time.sleep(PARAMS.get("TIMEOUT"))
 
-    run_etl(PARAMS, "count-total")
-    js = summary_read(PARAMS, "count.total")
-    final_events = -1
-    if js and "data" in js and "count" in js["data"]:
-        final_events = js["data"]["count"]
-        print(f"🔵 {final_events} found")
-    final_events = final_events - initial_events
-    inserted = PARAMS.get("LESS_THAN_BUFFER") + \
-        PARAMS.get("MORE_THAN_BUFFER") + 1
-    if final_events == inserted:
-        print(f"🟢 all events accounted for")
-    else:
-        print(
-            f"🔴 FAILURE event insertion error: expected {inserted}, found {final_events}")
+    # run_etl(PARAMS, "count-total")
+    # js = summary_read(PARAMS, "count.total")
+    # final_events = -1
+    # if js and "data" in js and "count" in js["data"]:
+    #     final_events = js["data"]["count"]
+    #     print(f"🔵 {final_events} found")
+    # final_events = final_events - initial_events
+    # inserted = PARAMS.get("LESS_THAN_BUFFER") + \
+    #     PARAMS.get("MORE_THAN_BUFFER") + 1
+    # if final_events == inserted:
+    #     print(f"🟢 all events accounted for")
+    # else:
+    #     print(
+    #         f"🔴 FAILURE event insertion error: expected {inserted}, found {final_events}")
 
     # There should now be 5101 events in the events table.

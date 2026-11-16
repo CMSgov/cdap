@@ -7,7 +7,7 @@
 #         ]
 
 def summarize():
-    query_rows = query("events", "SELECT * from itslog_events WHERE tags = 'pocketchange'")
+    query_rows = query("events", "SELECT * from event WHERE tags LIKE '%pocketchange%'")
     sums = {
         "pennies": 0,
         "nickels": 0,
@@ -22,9 +22,21 @@ def summarize():
             if coin in d:
                 sums[coin] = sums[coin] + d[coin]
     total = sums["pennies"] + (sums["nickels"] * 5) + (sums["dimes"] * 10) + (sums["quarters"] * 25)
+    now = time.now()
+    padded_month = ("00" + str(now.month))[-2:]
+    padded_day = ("00" + str(now.day))[-2:]
+    current_date = "{}-{}-{}".format(now.year, padded_month, padded_day)
+
     result = [
-        {"operation": "total.pocketchange", "data": {"count": total}},
-        {"operation": "total.pocketchange.json", "data": sums}
+        {
+            "date":  current_date,
+            "operation": "total.pocketchange", 
+            "data": {"count": total}
+        },
+        {
+            "date": current_date,
+            "operation": "total.pocketchange.json", 
+            "data": sums}
     ]
     print(result)
     return result

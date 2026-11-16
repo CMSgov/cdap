@@ -1,6 +1,6 @@
 package main
 
-import "github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/cmd"
+import "github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/cmd"
 
 func main() {
 	cmd.Execute()

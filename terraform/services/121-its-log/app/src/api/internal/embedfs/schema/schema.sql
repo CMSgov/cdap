@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS etl (
     -- Any DB should only have one ETL of a given name
     name TEXT NOT NULL,
     language TEXT NOT NULL,
-    destination TEXT DEFAULT 'summary',
     body TEXT NOT NULL,
     UNIQUE(name)
 );

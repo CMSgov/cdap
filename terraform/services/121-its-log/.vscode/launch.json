@@ -26,7 +26,6 @@
                 "ITSLOG_PROXIES_TRUSTED": "TBD",
                 "ITSLOG_STORAGE_PATH": "${userHome}/.its-log/data",
                 "ITSLOG_ARCHIVE_PATH": "${userHome}/.its-log/archive",
-                "ITSLOG_INSTANCE_ID": "DEBUG-INSTANCE-"
             }
         },
         {
@@ -34,7 +33,7 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/app/src/api",
+            "program": "${workspaceFolder}/app/src/api/api",
             "args": [
                 "serve"
             ],
@@ -51,7 +50,6 @@
                 "ITSLOG_PROXIES_TRUSTED": "TBD",
                 "ITSLOG_STORAGE_PATH": "${userHome}/.its-log/data",
                 "ITSLOG_ARCHIVE_PATH": "${userHome}/.its-log/archive",
-                "ITSLOG_INSTANCE_ID": "DEBUG-INSTANCE-2"
             }
         }
     ]

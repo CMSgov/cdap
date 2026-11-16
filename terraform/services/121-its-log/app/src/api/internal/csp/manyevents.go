@@ -1,9 +1,9 @@
 package csp
 
 import (
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/embedfs"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/metabase"
-	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/embedfs"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/metabase"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	"go.uber.org/zap"
 )
 

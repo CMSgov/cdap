@@ -1,6 +1,6 @@
 package etl
 
-import "github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/internal/types"
+import "github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 
 type EtlParam struct {
 	Name  string `json:"name" binding:"required"`

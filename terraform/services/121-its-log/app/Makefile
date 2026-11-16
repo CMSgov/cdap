@@ -4,6 +4,7 @@ CONTAINER_CMD ?= $(shell command -v podman 2> /dev/null || echo docker)
 prep-local:
 	mkdir -p ${HOME}/.its-log/data
 	mkdir -p ${HOME}/.its-log/archive
+	mkdir -p ${HOME}/.its-log/export
 
 # Changes to go.mod should always happen locally, and undergo review.
 # Never run `go mod tidy` as part of a build process.

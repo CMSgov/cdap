@@ -1,6 +1,6 @@
-module github.com/CMSgov/cdap/terraform/services/121-its-log/app/src
+module github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/duckdb/duckdb-go/v2 v2.10505.0

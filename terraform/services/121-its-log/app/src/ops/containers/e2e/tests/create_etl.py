@@ -4,6 +4,9 @@ import base64
 import requests
 import sys
 
+from .dates import yyyymmdd
+from datetime import datetime
+
 
 def get_contents(filename):
     contents = open(filename, 'r').read()
@@ -15,21 +18,29 @@ def get_contents(filename):
     return encoded
 
 
-def create_etl(PARAMS, filename):
-    encoded = get_contents(filename)
+def create_etl(PARAMS, filename, kind):
+    now = datetime.now()
 
+    encoded = get_contents(filename)
+    language = "INVALID_DEFAULT"
     if ".sql" in filename:
-        kind = "sql"
+        language = "sql"
     elif ".star" in filename:
-        kind = "starlark"
+        language = "starlark"
     else:
-        kind = "BAD_ETL_TYPE"
+        print("Bad ETL type")
+        sys.exit(-1)
 
     body = {
+        # Sending a superset of values to
+        # cover all the possible `kind` values.
         "name": Path(filename).stem,
         "kind": kind,
-        "body": encoded,
-        "date": "today"
+        "language": language,
+        "b64": encoded,
+        "ymd": yyyymmdd(),
+        "year": now.year,
+        "month": now.month,
     }
 
     try:
@@ -44,14 +55,14 @@ def create_etl(PARAMS, filename):
             print(res.text)
             res.close()
             sys.exit(-1)
-        if res.status_code == 201:
+        if res.status_code >= 200 and res.status_code <= 299:
             return res.status_code
         res.close()
     except requests.exceptions.Timeout as e:
         print(e)
 
 
-def test_create_etl(PARAMS, filename):
+def test_create_etl(PARAMS, filename, kind):
     print(f"== test_create_etl {filename}")
-    code = create_etl(PARAMS, filename)
+    code = create_etl(PARAMS, filename, kind)
     print(f"🟢 test_create_etl {code}")
