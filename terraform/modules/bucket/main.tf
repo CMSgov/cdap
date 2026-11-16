@@ -1,5 +1,5 @@
 locals {
-  effective_kms_key_arn = var.use_custom_kms_key ? var.kms_key_arn : data.aws_kms_alias.default_encryption_key[0].target_key_arn
+  effective_kms_key_arn = var.use_custom_kms_key ? var.kms_key_arn : var.platform.kms_alias_primary.target_key_arn
 
   # Delivery source/destination names are capped at 60 characters, so use the
   # stable name prefix rather than the generated bucket name
@@ -39,11 +39,6 @@ resource "aws_s3_bucket_versioning" "this" {
   versioning_configuration {
     status = "Enabled"
   }
-}
-
-data "aws_kms_alias" "default_encryption_key" {
-  count = var.use_custom_kms_key ? 0 : 1
-  name  = "alias/${var.platform.app}-${var.platform.env}"
 }
 
 data "aws_iam_policy_document" "ssl_only" {

@@ -33,9 +33,8 @@ variable "additional_bucket_policies" {
 }
 
 variable "platform" {
-  description = "Object representing the CDAP platform module. Provides the app and environment names and the account's primary KMS key for encrypting the access-logging log group."
+  description = "Object representing the CDAP platform module. Provides the environment name and the account's primary KMS key for default bucket encryption and the access-logging log group."
   type = object({
-    app               = string
     env               = string
     kms_alias_primary = object({ target_key_arn = string })
   })

@@ -32,7 +32,7 @@ bucket persist for the retention window.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.72.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -53,7 +53,7 @@ No requirements.
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_name"></a> [name](#input\_name) | Name for the S3 bucket | `string` | n/a | yes |
-| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP platform module. Provides the app and environment names and the account's primary KMS key for encrypting the access-logging log group. | <pre>object({<br/>    app               = string<br/>    env               = string<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>  })</pre> | n/a | yes |
+| <a name="input_platform"></a> [platform](#input\_platform) | Object representing the CDAP platform module. Provides the environment name and the account's primary KMS key for default bucket encryption and the access-logging log group. | <pre>object({<br/>    env               = string<br/>    kms_alias_primary = object({ target_key_arn = string })<br/>  })</pre> | n/a | yes |
 | <a name="input_access_logging"></a> [access\_logging](#input\_access\_logging) | external is reserved for the 701-log-retention bucket only. Server access log delivery route. cloudwatch (the default) delivers through a per-bucket CloudWatch log group and the shared log-retention Firehose into the log-retention bucket. 701-log-retention bucket must log directly to the CMS bucket to avoid looping its own access logs back into itself. Do not use external for any other bucket. | `string` | `"cloudwatch"` | no |
 | <a name="input_additional_bucket_policies"></a> [additional\_bucket\_policies](#input\_additional\_bucket\_policies) | A list of additional bucket policies to be merged with the default. | `list(string)` | `[]` | no |
 | <a name="input_additional_bucket_statements"></a> [additional\_bucket\_statements](#input\_additional\_bucket\_statements) | Structured statements that will reference the bucket's ARN. Useful for iterative calls of the module. | <pre>list(object({<br/>    sid        = string<br/>    principals = list(string)<br/>    actions    = list(string)<br/>  }))</pre> | `[]` | no |
@@ -97,7 +97,6 @@ No requirements.
 | [aws_ssm_parameter.bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
 | [aws_iam_policy_document.ssl_only](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_kms_alias.default_encryption_key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_alias) | data source |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
