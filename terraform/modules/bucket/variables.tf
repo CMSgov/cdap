@@ -41,7 +41,7 @@ variable "platform" {
 }
 
 variable "access_logging" {
-  description = "external is reserved for the 701-log-retention bucket only. Server access log delivery route. cloudwatch (the default) delivers through a per-bucket CloudWatch log group and the shared log-retention Firehose into the log-retention bucket. 701-log-retention bucket must log directly to the CMS bucket to avoid looping its own access logs back into itself. Do not use external for any other bucket."
+  description = "Use only for log-retention bucket. Cloudwatch as default delivers through a per-bucket CloudWatch log group which is connected to long term retention. The log retention bucket must log directly to the CMS bucket to avoid looping its own access logs back into itself.
   type        = string
   default     = "cloudwatch"
   validation {
