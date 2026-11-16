@@ -74,7 +74,7 @@ data "datadog_sensitive_data_scanner_standard_pattern" "selected_standard_rules"
 }
 
 resource "datadog_sensitive_data_scanner_rule" "selected_standard_rules" {
-  for_each = toset(local.selected_standard_rules)
+  for_each = { for k in local.selected_standard_rules : k => data.datadog_sensitive_data_scanner_standard_pattern.selected_standard_rules[k] }
 
   lifecycle {
     // This meta-argument avoids disabling the group when modifying the
@@ -82,10 +82,13 @@ resource "datadog_sensitive_data_scanner_rule" "selected_standard_rules" {
     create_before_destroy = true
   }
 
+  name        = each.value.name
+  description = each.value.description
+
   group_id   = datadog_sensitive_data_scanner_group.main.id
   is_enabled = true
 
-  standard_pattern_id = data.datadog_sensitive_data_scanner_standard_pattern.selected_standard_rules[each.value].id
+  standard_pattern_id = each.value.id
 
   tags = ["managed-by:tofu"]
 }
