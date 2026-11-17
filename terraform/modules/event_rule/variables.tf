@@ -101,8 +101,8 @@ variable "targets" {
     arn               = string
     lambda_permission = optional(bool, false)
     role_arn          = optional(string)
-    input      = optional(string)
-    input_path = optional(string)
+    input             = optional(string)
+    input_path        = optional(string)
     input_transformer = optional(object({
       input_paths    = optional(map(string), {})
       input_template = string
