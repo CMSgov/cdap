@@ -158,7 +158,6 @@ func queryFun(m *metabase.Metabase, etlb RunEtlBody) func(_ *starlark.Thread, _ 
 		for rows.Next() {
 			switch queryTable {
 			case "events":
-				zap.L().Debug("starlark scanning events row")
 				var row types.EventRow
 				err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Cluster, &row.Tags, &row.Data)
 				if err != nil {
@@ -182,7 +181,6 @@ func queryFun(m *metabase.Metabase, etlb RunEtlBody) func(_ *starlark.Thread, _ 
 					resultList.Append(d)
 				}
 			case "summary":
-				zap.L().Debug("starlark scanning summary row")
 				var row types.SummaryRow
 				if err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Date, &row.Operation, &row.Tags, &row.Data); err != nil {
 					return starlark.None, err

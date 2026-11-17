@@ -7,7 +7,16 @@
 #         ]
 
 def summarize():
-    query_rows = query("events", "SELECT * from event WHERE tags LIKE '%pocketchange%'")
+    query_rows = query("events", """
+    SELECT * from event 
+    WHERE 
+        json_type(tags, '$') = 'ARRAY' 
+        AND 
+        -- JSON strings must be in double-quotes when
+        -- using the json_contains function.
+        -- https://duckdb.org/docs/2.0/data/json/json_functions#json-scalar-functions
+        json_contains(tags, '"pocketchange"')
+    """)
     sums = {
         "pennies": 0,
         "nickels": 0,

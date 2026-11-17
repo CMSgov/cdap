@@ -14,8 +14,8 @@ http:
     data: |-
       {
         "kind": "daily",
-        "operation": "%",
-        "tags": ["a"],
+        "operation": "total.pocketchange",
+        "tags": [],
         "ymd": "{{YMD}}"
       }
   auth: inherit

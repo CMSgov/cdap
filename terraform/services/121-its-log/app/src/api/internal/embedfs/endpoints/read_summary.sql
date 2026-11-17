@@ -4,10 +4,17 @@ SELECT
     data,
   FROM summary
   WHERE 
-    len(list_intersect(
-      cast($tags as JSON)::STRING[],
-      cast(tags as JSON)::STRING[])
+    (
+      -- An empty list "matches everything"
+      len(cast($tags as JSON)::STRING[]) = 0
+      OR
+      -- there is an intersection between the 
+      -- tag list passed in and the list in the column
+      len(list_intersect(
+        cast($tags as JSON)::STRING[],
+        cast(tags as JSON)::STRING[])
       ) > 0
+    )
     AND
     operation LIKE $operation
   ORDER BY id DESC

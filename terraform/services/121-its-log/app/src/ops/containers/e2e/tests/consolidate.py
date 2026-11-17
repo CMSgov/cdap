@@ -51,7 +51,8 @@ def consolidate(PARAMS, kind="daily"):
             return res.status_code
         res.close()
     except requests.exceptions.Timeout as e:
-        print(e)
+        print("🔴 consolidate timed out")
+        return 408
 
 
 def test_consolidate(PARAMS, kind):

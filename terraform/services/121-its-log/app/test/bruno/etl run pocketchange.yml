@@ -1,0 +1,28 @@
+info:
+  name: etl run pocketchange
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/etl/run"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "kind": "daily",
+        "language": "starlark",
+        "destination": "summary",
+        "name": "sum-pocket-change",
+        "ymd": "{{YMD}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
