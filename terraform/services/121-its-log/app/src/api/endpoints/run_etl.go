@@ -77,3 +77,15 @@ func RunEtl(c *gin.Context) {
 	}
 	StatusOk(c, "etl ran")
 }
+
+// def output_to_csv():
+//   // do stuff
+//   // build a list
+//   csv_shaped_result = {
+// 	"columns": ["a", "b"]
+// 	"rows": [
+// 		[3, 5],
+// 		[8, 16]
+// 	]
+// 	return csv_shaped_result
+//   }

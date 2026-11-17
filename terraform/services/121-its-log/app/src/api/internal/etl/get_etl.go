@@ -34,25 +34,20 @@ func RunAndInsertEtl(m *metabase.Metabase, etlb RunEtlBody) (int, error) {
 		return -1, err
 	}
 
-	switch etlb.Destination {
-	case "summary":
-		// Write the rows back to the summary table.
-		for _, summary := range summaries {
-			_, err := metabase.Exec(m,
-				embedfs.EmbeddedEndpoints.GetOrPanic("create_summary"),
-				[]embedfs.EmbeddedParam{
-					{Name: "date", Value: summary.Date, Type: embedfs.EmbeddedString},
-					{Name: "key_id", Value: etlb.App.KeyId, Type: embedfs.EmbeddedString},
-					{Name: "operation", Value: summary.Operation, Type: embedfs.EmbeddedString},
-					{Name: "tags", Value: summary.Tags, Type: embedfs.EmbeddedJson},
-					{Name: "data", Value: summary.Data, Type: embedfs.EmbeddedJson},
-				})
-			if err != nil {
-				return -1, err
-			}
+	// Write the rows back to the summary table.
+	for _, summary := range summaries {
+		_, err := metabase.Exec(m,
+			embedfs.EmbeddedEndpoints.GetOrPanic("create_summary"),
+			[]embedfs.EmbeddedParam{
+				{Name: "date", Value: summary.Date, Type: embedfs.EmbeddedString},
+				{Name: "key_id", Value: etlb.App.KeyId, Type: embedfs.EmbeddedString},
+				{Name: "operation", Value: summary.Operation, Type: embedfs.EmbeddedString},
+				{Name: "tags", Value: summary.Tags, Type: embedfs.EmbeddedJson},
+				{Name: "data", Value: summary.Data, Type: embedfs.EmbeddedJson},
+			})
+		if err != nil {
+			return -1, err
 		}
-	case "csv":
-		// A CSV
 	}
 
 	return len(summaries), nil
