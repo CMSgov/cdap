@@ -66,13 +66,3 @@ output "nlb_zone_id" {
 output "nlb_security_group_id" {
   value = var.create_nlb ? aws_security_group.nlb[0].id : null
 }
-
-output "privatelink_service_name" {
-  description = "Service name consumers reference in their aws_vpc_endpoint. Null unless enable_privatelink is true."
-  value       = var.enable_privatelink ? aws_vpc_endpoint_service.this[0].service_name : null
-}
-
-output "privatelink_ssm_parameter_name" {
-  value       = var.enable_privatelink ? aws_ssm_parameter.privatelink_service_name[0].name : null
-  description = "SSM path where this service's PrivateLink service_name is published, for cross-repo consumers."
-}
