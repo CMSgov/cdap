@@ -31,6 +31,12 @@ variable "enable_internal_endpoint" {
   EOT
 }
 
+variable "enrolled_upstream_apps" {
+  type        = list(string)
+  default     = []
+  description = "Explicit list of consumer app names. Adds one SAN per app. Requires a cert reissue (new aws_acm_certificate) each time this list changes."
+}
+
 # -------------------------------------------------------
 # Zscaler endpoint (cmscloud.local)
 # -------------------------------------------------------
