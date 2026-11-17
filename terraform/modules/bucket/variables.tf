@@ -41,7 +41,7 @@ variable "platform" {
 }
 
 variable "access_logging" {
-  description = "Use only for log-retention bucket. Cloudwatch as default delivers through a per-bucket CloudWatch log group which is connected to long term retention. The log retention bucket must log directly to the CMS bucket to avoid looping its own access logs back into itself.
+  description = "Use only for log-retention bucket. Cloudwatch as default delivers through a per-bucket CloudWatch log group which is connected to long term retention. The log retention bucket must log directly to the CMS bucket to avoid looping its own access logs back into itself."
   type        = string
   default     = "cloudwatch"
   validation {
