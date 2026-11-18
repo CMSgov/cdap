@@ -10,8 +10,7 @@ terraform.tfvars
 !.terraform-docs.yml
 # Ignore Terraform plan files
 *tfplan*
-*.tfplan
-*.tfstate*
+*tfstate*
 
 # Python cache — use ** since these appear at any depth
 **/__pycache__/
