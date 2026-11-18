@@ -9,7 +9,7 @@
 /cdap/${env}/external/bfd/sensitive/aws_account_id: ENC[AES256_GCM,data:1cCuCq324SFzCeIO,iv:iwXWwizSTBPxhQIANX/j3f/Y/iyCp6B0CcZOBm1DP9c=,tag:H0H2SGp00bIKZz7UYbmgMg==,type:int]
 /cdap/${env}/snyk/api_token: ENC[AES256_GCM,data:77PUOXcaJH/gTQBEDA5wHUSNXAOgseQUGLAezXYtQ4w6Tu+p,iv:GT95QoEquPKQaE1cLoKXP8v6JgzX/WCeAzWiwPNm5Qc=,tag:CI5RIZ9ASUnAe0eaFZFlfg==,type:str]
 /cdap/${env}/code-checks/sensitive/snyk-api-token/cdap: ENC[AES256_GCM,data:0zr/vodDO6YQNsX9SDUr3yaeRhyK4KWN+AT8x9zznUkyS2su,iv:PQ4uRG308n7bjnEpC0UhdhbShJfwsuwdnIydkA6e66s=,tag:OD3+WmaDkpbGqfME1Vtf+A==,type:str]
-/cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:SxtbyAgktMi6MubfEnjfdIQdNelfE3/ajt3FtMNBkOKnZ1iOlDzzuQ==,iv:mYryrj4v2XwKNj2hs0gIigvu3+q5ASgbSLW16wjARN0=,tag:CCibnLyhwV9Dc266KMq8Xw==,type:str]
+/cdap/${env}/codebuild-projects/sensitive/github-token: ENC[AES256_GCM,data:xPwwy908pvMqtoyPMoMNLu9xuvImtGqiYj+aIV7L+J2uox30Czhcmg==,iv:2SJOzSx2T6czWIY0VJm3eAQgqMiNQ+SNYbS7Ibd1Kog=,tag:tbIPDp/ep0bWVIuZ+TSzwQ==,type:str]
 /cdap/${env}/common/nonsensitive/artifactory/url: https://artifactory.cloud.cms.gov/artifactory
 /cdap/${env}/common/nonsensitive/artifactory/user: ab2d-bcda-dpc-plt
 /cdap/${env}/common/nonsensitive/security-events/renotify-after-days: 30
@@ -26,13 +26,13 @@
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/cdap-test
+      aws_profile: ""
       created_at: "2026-01-12T15:49:48Z"
       enc: AQICAHhRVR5bK8ZYKFTKNNSHhEFksAVIRCiMf5uovRP3zJDkeAFoMr3X9NE1emnjv7dPLReMAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxGIkxhuSZecPXOjbAgEQgDtKIJDmCjArvUR79kdmiS6/KjzguJbVsfs0fBgiJZ/BLVmBVzUiQ9fO9HvcwPTOF8rHA1kz6USPhmBSxA==
-      aws_profile: ""
     - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/cdap-test
+      aws_profile: ""
       created_at: "2026-01-12T15:49:48Z"
       enc: AQICAHj/7o5ejG2naYXXtV0msJC+UCEv8bGhFxVAE5it/FT42wG/hszzTI7suLqOYmXNFyXTAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM4W6xb7Tm4JiCfD3xAgEQgDsJw3SujEQIDc6EnUG79oVPM+CtjLt1aiAea82u8pYvv34tuvPlBwuYgzHfySZ0DahyGNyeECblkVWomA==
-      aws_profile: ""
-  unencrypted_regex: /nonsensitive/
   mac_only_encrypted: true
+  unencrypted_regex: /nonsensitive/
   version: 3.13.1
