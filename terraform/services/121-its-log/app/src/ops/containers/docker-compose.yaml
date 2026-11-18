@@ -6,12 +6,13 @@ services:
       replicas: 2
     expose:
       - "80"
+      - "8888"
     volumes:
       - ${HOME}/.its-log/data:/data
       - ${HOME}/.its-log/archive:/archive
       - ${HOME}/.its-log/export:/export
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://itslog:80/v1/health"]
+      test: ["CMD", "curl", "-f", "http://itslog:8888/v1/health"]
       interval: 300s
       retries: 1
       start_period: 5s

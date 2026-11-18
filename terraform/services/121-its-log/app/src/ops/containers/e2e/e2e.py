@@ -1,7 +1,6 @@
 import click
 from pathlib import Path
 from tests import (
-    log_create,
     params,
     test_create_etl,
     test_run_etl,
@@ -11,10 +10,6 @@ from tests import (
     test_consolidate
 
 )
-from http import HTTPStatus
-import sys
-import time
-
 
 # Waits until the its-log healthcheck returns a good value.
 # Useful for debugging
