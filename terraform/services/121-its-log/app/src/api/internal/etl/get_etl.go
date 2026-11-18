@@ -1,6 +1,7 @@
 package etl
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -27,7 +28,7 @@ func RunAndInsertEtl(m *metabase.Metabase, etlb RunEtlBody) (int, error) {
 	}
 
 	// Now, we have the ETL. Run it.
-	var summaries []types.EtlRunResult
+	var summaries []types.M
 	var err error
 	summaries, err = RunAndReturnRows(m, etlb, er)
 	if err != nil {
@@ -39,11 +40,11 @@ func RunAndInsertEtl(m *metabase.Metabase, etlb RunEtlBody) (int, error) {
 		_, err := metabase.Exec(m,
 			embedfs.EmbeddedEndpoints.GetOrPanic("create_summary"),
 			[]embedfs.EmbeddedParam{
-				{Name: "date", Value: summary.Date, Type: embedfs.EmbeddedString},
+				{Name: "date", Value: summary["date"], Type: embedfs.EmbeddedString},
 				{Name: "key_id", Value: etlb.App.KeyId, Type: embedfs.EmbeddedString},
-				{Name: "operation", Value: summary.Operation, Type: embedfs.EmbeddedString},
-				{Name: "tags", Value: summary.Tags, Type: embedfs.EmbeddedJson},
-				{Name: "data", Value: summary.Data, Type: embedfs.EmbeddedJson},
+				{Name: "operation", Value: summary["operation"], Type: embedfs.EmbeddedString},
+				{Name: "tags", Value: summary["tags"], Type: embedfs.EmbeddedJson},
+				{Name: "data", Value: summary["data"], Type: embedfs.EmbeddedJson},
 			})
 		if err != nil {
 			return -1, err
@@ -71,7 +72,7 @@ func userTypeToInternalType(t string) embedfs.EmbeddedParamType {
 	}
 }
 
-func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error) {
+func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]types.M, error) {
 	// Run the ETL
 	// Add another "no insert, delete, update" check here, for thoroughness
 	if !base.CheckNotAllowed(row.Body) {
@@ -88,7 +89,7 @@ func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) (
 		})
 	}
 
-	erunres := make([]types.EtlRunResult, 0)
+	var erunres []types.M
 	switch row.Language {
 	case "sql":
 		rows, err := metabase.Query(m, row.Body, params)
@@ -96,21 +97,10 @@ func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) (
 			return nil, err
 		}
 		defer rows.Close()
-		for rows.Next() {
-			var res types.EtlRunResult
-			serr := rows.Scan(
-				&res.Date,
-				&res.Operation,
-				&res.Tags,
-				&res.Data,
-			)
-			if serr != nil {
-				return nil, serr
-			}
-			if types.IsValidYYYYMMDD(res.Date) != nil {
-				return nil, fmt.Errorf("invalid date returned from sql etl: ['%s']", res.Date)
-			}
-			erunres = append(erunres, res)
+		erunres, err = scanRowsToMaps(rows)
+		if err != nil {
+			zap.L().Info("error scanning rows to map", zap.Error(err))
+			return nil, err
 		}
 	case "starlark":
 		var err error
@@ -122,4 +112,40 @@ func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) (
 	}
 
 	return erunres, nil
+}
+
+// From
+// https://kylewbanks.com/blog/query-result-to-map-in-golang
+func scanRowsToMaps(rows *sql.Rows) ([]types.M, error) {
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+
+	var results []types.M
+
+	for rows.Next() {
+		values := make([]any, len(cols))
+		valuePtrs := make([]any, len(cols))
+		for i := range cols {
+			valuePtrs[i] = &values[i]
+		}
+		if err := rows.Scan(valuePtrs...); err != nil {
+			return nil, err
+		}
+		rowMap := make(types.M, len(cols))
+		for i, colName := range cols {
+			val := values[i]
+			if b, ok := val.([]byte); ok {
+				rowMap[colName] = string(b)
+			} else {
+				rowMap[colName] = val
+			}
+		}
+		results = append(results, rowMap)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return results, nil
 }

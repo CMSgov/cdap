@@ -3,8 +3,10 @@ package etl
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
+	"github.com/stretchr/testify/assert"
 	"go.starlark.net/starlark"
 )
 
@@ -43,6 +45,19 @@ func TestValueToStarlark(t *testing.T) {
 			t.Error(err.Error())
 		}
 	}
+}
+
+func TestTimeRoundTrip(t *testing.T) {
+	nowIsTheTime := time.Now()
+	sv, err := GolangToStarlark(nowIsTheTime)
+	if err != nil {
+		t.Error(err)
+	}
+	gv, err := StarlarkToGolang(sv)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, nowIsTheTime.Format(time.RFC3339), gv)
 }
 
 func TestGetListType(t *testing.T) {

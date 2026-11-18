@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/embedfs"
 	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/metabase"
@@ -20,7 +19,7 @@ import (
 
 // -----------
 // Running Starlark ETLs
-func RunStarlark(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]types.EtlRunResult, error) {
+func RunStarlark(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]types.M, error) {
 
 	// The thread we'll execute the code in.
 	thread := &starlark.Thread{Name: row.Name + "-starlark-thread"}
@@ -65,48 +64,25 @@ func RunStarlark(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]typ
 	// contain starlark dictionaries. These need to be turned into Golang structs.
 	// FIXME: what if someone wants `summary` rows? This does not work.
 	// consider using map[string]any instead.
-	summaries := make([]types.EtlRunResult, 0)
+	// summaries := make([]types.EtlRunResult, 0)
+	summaries := make([]types.M, 0)
+
 	for elem := range v.(*starlark.List).Elements() {
-		srjs := types.EtlRunResult{}
+		// srjs := types.EtlRunResult{}
+		srjs := make(types.M, 0)
 		for _, k := range elem.(*starlark.Dict).Keys() {
 			s, _ := starlark.AsString(k)
-			switch s {
-			case "date":
-				v, found, _ := elem.(*starlark.Dict).Get(k)
-				if found {
-					srjs.Date, _ = starlark.AsString(v)
+			// FIXME: This can now be simplified.
+			// Build a map without worrying about what the keys are.
+			data, found, _ := elem.(*starlark.Dict).Get(k)
+			if found {
+				data, err := StarlarkToGolang(data)
+				if err != nil {
+					return nil, err
 				}
-			case "operation":
-				v, found, _ := elem.(*starlark.Dict).Get(k)
-				if found {
-					srjs.Operation, _ = starlark.AsString(v)
-				}
-			case "tags":
-				v, found, _ := elem.(*starlark.Dict).Get(k)
-				if found {
-					srjs.Tags, _ = starlark.AsString(v)
-				}
-			case "data":
-				data, found, _ := elem.(*starlark.Dict).Get(k)
-				if found {
-					data, err := StarlarkToGolang(data)
-					if err != nil {
-						return nil, err
-					}
-					srjs.Data = data.(map[string]any)
-				}
+				srjs[s] = data
 			}
 		}
-
-		trimmed, err := types.TrimToYYYYMMDD(srjs.Date)
-		if err != nil {
-			if len(srjs.Date) == 0 {
-				return nil, fmt.Errorf("no date returned in starlark summary row")
-			} else {
-				return nil, fmt.Errorf("bad date from starlark summary: ['%s']", srjs.Date)
-			}
-		}
-		srjs.Date = trimmed
 
 		zap.L().Debug("starlark summary",
 			zap.String("summary", fmt.Sprintf("%v", srjs)))
@@ -155,62 +131,24 @@ func queryFun(m *metabase.Metabase, etlb RunEtlBody) func(_ *starlark.Thread, _ 
 		}
 
 		resultList := starlark.NewList([]starlark.Value{})
-		for rows.Next() {
-			switch queryTable {
-			case "events":
-				var row types.EventRow
-				err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Cluster, &row.Tags, &row.Data)
+		maps, err := scanRowsToMaps(rows)
+		if err != nil {
+			return nil, err
+		}
+		// Now we have a list of maps. We need to convert those to
+		// Starlark dictionaries.
+		for _, m := range maps {
+			// Create a new Starlark dictionary
+			d := starlark.NewDict(8)
+			for k, v := range m {
+				conv, err := GolangToStarlark(v)
 				if err != nil {
-					return starlark.None, err
-				} else {
-					tagArr, err := GolangToStarlark(row.Tags)
-					if err != nil {
-						return nil, err
-					}
-					d := starlark.NewDict(8)
-					dataDict, err := GolangToStarlark(row.Data)
-					if err != nil {
-						return nil, err
-					}
-					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
-					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
-					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
-					d.SetKey(starlark.String("cluster"), starlark.String(row.Cluster))
-					d.SetKey(starlark.String("tags"), tagArr)
-					d.SetKey(starlark.String("data"), dataDict)
-					resultList.Append(d)
+					zap.L().Info("error in starlark conversion from db")
+					return nil, err
 				}
-			case "summary":
-				var row types.SummaryRow
-				if err := rows.Scan(&row.ID, &row.Inserted, &row.KeyId, &row.Date, &row.Operation, &row.Tags, &row.Data); err != nil {
-					return starlark.None, err
-				} else {
-					tagArr, err := GolangToStarlark(row.Tags)
-					if err != nil {
-						zap.L().Info("error converting tags", zap.Any("row.Tags", row.Tags))
-						return starlark.None, err
-					}
-					d := starlark.NewDict(10)
-					dataDict, err := GolangToStarlark(row.Data)
-					if err != nil {
-						zap.L().Info("error converting data", zap.Any("row.Data", row.Data))
-						return starlark.None, err
-					}
-					d.SetKey(starlark.String("id"), starlark.MakeInt64(row.ID))
-					d.SetKey(starlark.String("inserted"), starlark.String(row.Inserted.UTC().Format(time.RFC3339)))
-					d.SetKey(starlark.String("key_id"), starlark.String(row.KeyId))
-					trimmed, err := types.TrimToYYYYMMDD(row.Date)
-					if err != nil {
-						return starlark.None, err
-					}
-					d.SetKey(starlark.String("date"), starlark.String(trimmed))
-					d.SetKey(starlark.String("operation"), starlark.String(row.Operation))
-					d.SetKey(starlark.String("tags"), tagArr)
-					d.SetKey(starlark.String("data"), dataDict)
-					zap.L().Debug("summary dict", zap.Any("dict", d))
-					resultList.Append(d)
-				}
+				d.SetKey(starlark.String(k), conv)
 			}
+			resultList.Append(d)
 		}
 
 		return resultList, nil

@@ -3,6 +3,7 @@ package etl
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"go.starlark.net/starlark"
 	"go.uber.org/zap"
@@ -48,6 +49,8 @@ func GolangToStarlark(data any) (starlark.Value, error) {
 		// Starlark only knows int64s. So, when testing round trips,
 		// expect that an `int` will turn into an `int64`.
 		return starlark.MakeInt64(int64(data)), nil
+	case int32:
+		return starlark.MakeInt64(int64(data)), nil
 	case int64:
 		return starlark.MakeInt64(int64(data)), nil
 	case map[string]any:
@@ -62,13 +65,18 @@ func GolangToStarlark(data any) (starlark.Value, error) {
 		return sd, nil
 	case string:
 		return starlark.String(data), nil
+	case time.Time:
+		// Starlark does not have a native time type, so it will
+		// have to become a string. There is a time module that Starlark
+		// developers can use to turn this string back into an object.
+		// FIXME: We could also go to a dictionary, with fields for year, month, etc.
+		return starlark.String(data.Format(time.RFC3339)), nil
 	case []any:
 		sl, err := golangSliceToStarlark(data)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert array of type %T", data)
 		}
 		return sl, nil
-
 	case []float64:
 		sl, err := golangSliceToStarlark(data)
 		if err != nil {
