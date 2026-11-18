@@ -22,11 +22,13 @@ var scts = []struct {
 		"/v1/summary/create",
 		http.StatusCreated,
 		types.M{
-			"ymd":       types.NewYYYYMMDD().String(),
+			"data":      42,
 			"kind":      "daily",
-			"tags":      []string{"a"},
+			"language":  "sql",
 			"operation": "just.42",
-			"data":      42},
+			"tags":      []string{"a"},
+			"ymd":       types.NewYYYYMMDD().String(),
+		},
 	},
 	// Good call, creates DB
 	{
@@ -34,13 +36,13 @@ var scts = []struct {
 		"/v1/summary/create",
 		http.StatusCreated,
 		types.M{
-			"ymd":       types.NewYYYYMMDD().String(),
+			"data":      types.M{"count": 42},
 			"kind":      "daily",
-			"tags":      []string{"a", "b"},
+			"language":  "sql",
 			"operation": "map.42",
-			"data": types.M{
-				"count": 42,
-			}},
+			"tags":      []string{"a", "b"},
+			"ymd":       types.NewYYYYMMDD().String(),
+		},
 	},
 	// Empty object is OK
 	{
@@ -48,11 +50,13 @@ var scts = []struct {
 		"/v1/summary/create",
 		http.StatusCreated,
 		types.M{
-			"ymd":       types.NewYYYYMMDD().String(),
+			"data":      types.M{},
 			"kind":      "daily",
-			"tags":      []string{"x", "y", "z"},
+			"language":  "sql",
 			"operation": "empty.object",
-			"data":      types.M{}},
+			"tags":      []string{"x", "y", "z"},
+			"ymd":       types.NewYYYYMMDD().String(),
+		},
 	},
 }
 

@@ -32,10 +32,10 @@ var srts = []struct {
 		"/v1/summary/read",
 		http.StatusOK,
 		types.M{
-			"ymd":       types.NewYYYYMMDD().String(),
-			"tags":      []string{"a"},
 			"kind":      "daily",
 			"operation": "just.%",
+			"tags":      []string{"a"},
+			"ymd":       types.NewYYYYMMDD().String(),
 		},
 		float64(42),
 	},
@@ -45,10 +45,10 @@ var srts = []struct {
 		"/v1/summary/read",
 		http.StatusOK,
 		types.M{
-			"ymd":       types.NewYYYYMMDD().String(),
-			"tags":      []string{"a"},
 			"kind":      "daily",
 			"operation": "map.42",
+			"tags":      []string{"a"},
+			"ymd":       types.NewYYYYMMDD().String(),
 		},
 		types.M{
 			"count": float64(42),
@@ -62,10 +62,10 @@ var srts = []struct {
 		// it is specified as `nil`.
 		http.StatusBadRequest,
 		types.M{
-			"ymd":       types.NewYYYYMMDD().String(),
-			"tags":      "bad-tags",
 			"kind":      "daily",
 			"operation": "map.42",
+			"tags":      "bad-tags",
+			"ymd":       types.NewYYYYMMDD().String(),
 		},
 		nil,
 	},
@@ -74,10 +74,10 @@ var srts = []struct {
 		"/v1/summary/read",
 		http.StatusOK,
 		types.M{
-			"ymd":       types.NewYYYYMMDD().String(),
-			"tags":      []string{"a"},
 			"kind":      "daily",
 			"operation": "map.42",
+			"tags":      []string{"a"},
+			"ymd":       types.NewYYYYMMDD().String(),
 		},
 		map[string]any{
 			"count": float64(42),
@@ -88,10 +88,11 @@ var srts = []struct {
 		"/v1/summary/read",
 		http.StatusOK,
 		types.M{
-			"ymd":       types.NewYYYYMMDD().String(),
-			"tags":      []string{"x", "y", "z"},
 			"kind":      "daily",
+			"language":  "sql",
 			"operation": "empty.object",
+			"tags":      []string{"x", "y", "z"},
+			"ymd":       types.NewYYYYMMDD().String(),
 		},
 		types.M{},
 	},

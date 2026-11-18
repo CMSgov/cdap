@@ -32,7 +32,6 @@ e2e: container-api container-e2e
 	$(CONTAINER_CMD) compose \
 	-f src/ops/containers/docker-compose-e2e.yaml \
 	up \
-	--no-attach itslog \
 	--abort-on-container-exit
 
 e2e-noisy: container-api container-e2e
