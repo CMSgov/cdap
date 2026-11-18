@@ -26,11 +26,6 @@ import {
 }
 
 import {
-  to = module.export_buckets["dpc-prod"].aws_s3_bucket_logging.this
-  id = "dpc-prod-aurora-export-20251028154132844600000001"
-}
-
-import {
   to = module.export_buckets["dpc-prod"].aws_s3_bucket_lifecycle_configuration.this
   id = "dpc-prod-aurora-export-20251028154132844600000001"
 }
@@ -60,11 +55,6 @@ import {
 }
 
 import {
-  to = module.export_buckets["ab2d-prod"].aws_s3_bucket_logging.this
-  id = "ab2d-prod-aurora-export-20250929183348608700000001"
-}
-
-import {
   to = module.export_buckets["ab2d-prod"].aws_s3_bucket_lifecycle_configuration.this
   id = "ab2d-prod-aurora-export-20250929183348608700000001"
 }
@@ -88,11 +78,6 @@ import {
 
 import {
   to = module.export_buckets["bcda-prod"].aws_s3_bucket_server_side_encryption_configuration.this
-  id = "bcda-prod-aurora-export-20251028154526742600000001"
-}
-
-import {
-  to = module.export_buckets["bcda-prod"].aws_s3_bucket_logging.this
   id = "bcda-prod-aurora-export-20251028154526742600000001"
 }
 

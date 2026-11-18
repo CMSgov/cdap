@@ -92,19 +92,34 @@ data "aws_iam_policy_document" "github_actions_observability" {
       # WAF — required prefix
       "arn:aws:logs:*:*:log-group:aws-waf-logs-${var.app}-${var.env}*",
       "arn:aws:logs:*:*:log-group:aws-waf-logs-${var.app}-${var.env}*:*",
+
+      # S3 server access logs — per-bucket log groups created by the bucket
+      # module, named by generated bucket id (not app-env prefixed)
+      "arn:aws:logs:*:*:log-group:/aws/s3/access-logs/*",
+      "arn:aws:logs:*:*:log-group:/aws/s3/access-logs/*:*",
     ]
   }
 
-  # Vended log delivery (WAF logging to CloudWatch Logs). WAF invokes these on
-  # the caller's behalf during Put/DeleteLoggingConfiguration to manage the
-  # shared AWSLogDeliveryWrite resource policy. These are account level actions
-  # that do not support resource level permissions, so resources must be "*".
+  # Vended log delivery writes. CreateLogDelivery (used by WAF logging) is an
+  # account-level action that does not support resource-level permissions.
+  # Delivery source/destination/delivery resources (used for S3 server access
+  # logs by the bucket module and 701-log-retention) have random IDs and
+  # wildcard-only name patterns, so scoping adds nothing.
   statement {
     sid = "LogsVendedDeliveryWrite"
     actions = [
+      "logs:CreateDelivery",
       "logs:CreateLogDelivery",
+      "logs:DeleteDelivery",
+      "logs:DeleteDeliveryDestination",
+      "logs:DeleteDeliverySource",
       "logs:DeleteLogDelivery",
+      "logs:PutDeliveryDestination",
+      "logs:PutDeliverySource",
       "logs:PutResourcePolicy",
+      "logs:TagResource",
+      "logs:UntagResource",
+      "logs:UpdateDeliveryConfiguration",
     ]
     resources = ["*"]
   }
@@ -114,6 +129,10 @@ data "aws_iam_policy_document" "github_actions_observability" {
     sid = "LogsRead"
     actions = [
       "logs:Describe*",
+      "logs:GetDelivery",
+      "logs:GetDeliveryDestination",
+      "logs:GetDeliveryDestinationPolicy",
+      "logs:GetDeliverySource",
       "logs:GetLogGroupFields",
       "logs:List*",
     ]
