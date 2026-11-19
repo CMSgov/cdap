@@ -2,7 +2,6 @@ services:
   itslog:
     image: itslog-api
     command: /app/entrypoint.bash
-    # https://github.com/docker/compose/issues/10452#issuecomment-2744173626
     attach: false
     stdin_open: true
     tty: true
