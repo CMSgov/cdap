@@ -9,12 +9,13 @@ stack:
   infra_enabled: true # ACM cert + ALB — no compute, can be left applied
   services_enabled: false # ECS services, runs fargate tasks; turn off after testing
 
+# An example of how some settings can be present to override defaults in a given environment
 services:
   caller:
-    cpu: 512
-    memory: 1024
+    cpu: 256
+    memory: 256
     deployment_rollback: false
   worker:
-    cpu: 512
-    memory: 1024
+    cpu: 128
+    memory: 256
     deployment_rollback: false
