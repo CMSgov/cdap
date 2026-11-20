@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.24.0            # currently v8.19.2; bump it
+    rev: v8.24.0            # currently v8.19.2;
     hooks:
       - id: gitleaks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -15,5 +15,5 @@ repos:
       - id: forbid-sensitive-files
         name: Block tfplan/tfstate/tfvars/.env/keys
         language: fail
-        entry: "Sensitive file type; do not commit. Write plans with: tofu plan -out \"$(mktemp)\""
+        entry: "Sensitive file type; do not commit."
         files: '(tfplan|\.plan$|plan\.out$|tfstate|\.tfvars(\.json)?$|(^|/)\.env(\..+)?$|\.pem$|\.key$)'
