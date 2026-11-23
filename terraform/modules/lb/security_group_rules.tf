@@ -109,3 +109,19 @@ resource "aws_vpc_security_group_ingress_rule" "https_from_nlb" {
   ip_protocol                  = "tcp"
   description                  = "Allow HTTPS from PrivateLink NLB"
 }
+
+# Enable NLB to reach the ALB (front_alb mode only)
+resource "aws_vpc_security_group_egress_rule" "https_from_nlb" {
+  count = (
+    var.create_alb && local.managed_sg &&
+    var.create_nlb &&
+    var.nlb_mode == "front_alb"
+  ) ? 1 : 0
+
+  security_group_id            = aws_security_group.nlb[0].id
+  referenced_security_group_id = aws_security_group.alb[0].id
+  from_port                    = var.privatelink_target_port
+  to_port                      = var.privatelink_target_port
+  ip_protocol                  = "tcp"
+  description                  = "Allow HTTPS from PrivateLink NLB"
+}
