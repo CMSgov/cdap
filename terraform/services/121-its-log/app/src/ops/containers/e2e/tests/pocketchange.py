@@ -44,7 +44,7 @@ def test_pocketchange(PARAMS, kind):
     time.sleep(3)
 
     # And, we have to re-consolidate, because the data is not in the summary table.
-    consolidate(PARAMS, "daily")
+    consolidate(PARAMS, kind)
     # Which means the DB gets deleted, so we need to re-load the ETLs.
     create_etl(PARAMS, 'starlark/sum-pocket-change.star', kind)
 
