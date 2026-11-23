@@ -12,13 +12,13 @@ import (
 )
 
 type SummaryPostBody struct {
-	Kind      string   `json:"kind" binding:"required,oneof=daily monthly yearly full"`
-	Operation string   `json:"operation" binding:"required"`
-	Tags      []string `json:"tags"`
-	Data      any      `json:"data" binding:"required"`
-	YMD       string   `json:"ymd" binding:"omitempty"`
-	Year      int      `json:"year" binding:"omitempty,gte=2000"`
-	Month     int      `json:"month" binding:"omitempty,gte=1,lte=12"`
+	ConsolidationTimeframe string   `json:"consolidation_timeframe" binding:"required,oneof=daily monthly yearly full"`
+	Operation              string   `json:"operation" binding:"required"`
+	Tags                   []string `json:"tags"`
+	Data                   any      `json:"data" binding:"required"`
+	YMD                    string   `json:"ymd" binding:"omitempty"`
+	Year                   int      `json:"year" binding:"omitempty,gte=2000"`
+	Month                  int      `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 func SummaryCreate(c *gin.Context) {
@@ -36,7 +36,7 @@ func SummaryCreate(c *gin.Context) {
 
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
-	sdbsp, err := getSummaryDbSetupParams(app, body.Kind, body.YMD, body.Year, body.Month)
+	sdbsp, err := getSummaryDbSetupParams(app, body.ConsolidationTimeframe, body.YMD, body.Year, body.Month)
 	if err != nil {
 		BadRequest(c, err, "could not set up database")
 		return

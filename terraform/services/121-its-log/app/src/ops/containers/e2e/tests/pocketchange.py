@@ -17,7 +17,7 @@ def test_pocketchange(PARAMS, kind):
 
     create_etl(PARAMS, 'starlark/sum-pocket-change.star', kind)
     run_etl(PARAMS, "sum-pocket-change", {
-        "kind": "daily",
+        "consolidation_timeframe": kind,
     })
     js = summary_read(PARAMS, "total.pocketchange", {})
 
@@ -50,7 +50,7 @@ def test_pocketchange(PARAMS, kind):
 
     # Re-run the ETL to update the count
     run_etl(PARAMS, "sum-pocket-change", {
-        "kind": "daily",
+        "consolidation_timeframe": kind,
     })
 
     js = summary_read(PARAMS, "total.pocketchange", {})

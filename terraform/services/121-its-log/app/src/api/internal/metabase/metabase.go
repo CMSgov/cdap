@@ -16,15 +16,15 @@ import (
 )
 
 type Metabase struct {
-	config   MetaParams
-	Kind     MetaType
-	lock     sync.Mutex
-	path     string
-	filename string
-	Context  context.Context
-	db       *sql.DB
-	location FilesystemLocation
-	openMode MetabaseOpenMode
+	config                 MetaParams
+	ConsolidationTimeframe MetaType
+	lock                   sync.Mutex
+	path                   string
+	filename               string
+	Context                context.Context
+	db                     *sql.DB
+	location               FilesystemLocation
+	openMode               MetabaseOpenMode
 }
 
 const DUCKDB_EXTENSION = "duckdb"
@@ -56,62 +56,62 @@ func getPath(kind MetaType) string {
 func NewMetabase(kind MetaType, filename string) (*Metabase, error) {
 
 	return &Metabase{
-		Kind:     kind,
-		Context:  context.Background(),
-		db:       nil,
-		path:     getPath(kind),
-		filename: filename,
+		ConsolidationTimeframe: kind,
+		Context:                context.Background(),
+		db:                     nil,
+		path:                   getPath(kind),
+		filename:               filename,
 	}, nil
 }
 
 func NewInstanceDatabase(config MetaParams) (*Metabase, error) {
 	config.(*InstanceParams).instanceId = viper.GetString("instance.id")
 	return &Metabase{
-		Kind:    Instance,
-		Context: context.Background(),
-		db:      nil,
-		path:    getPath(Instance),
-		config:  config,
+		ConsolidationTimeframe: Instance,
+		Context:                context.Background(),
+		db:                     nil,
+		path:                   getPath(Instance),
+		config:                 config,
 	}, nil
 }
 
 func NewDailyDatabase(config MetaParams) (*Metabase, error) {
 	return &Metabase{
-		Kind:    Daily,
-		Context: context.Background(),
-		db:      nil,
-		path:    getPath(Daily),
-		config:  config,
+		ConsolidationTimeframe: Daily,
+		Context:                context.Background(),
+		db:                     nil,
+		path:                   getPath(Daily),
+		config:                 config,
 	}, nil
 }
 
 func NewMonthlyDatabase(config MetaParams) (*Metabase, error) {
 	return &Metabase{
-		Kind:    Monthly,
-		Context: context.Background(),
-		db:      nil,
-		path:    getPath(Monthly),
-		config:  config,
+		ConsolidationTimeframe: Monthly,
+		Context:                context.Background(),
+		db:                     nil,
+		path:                   getPath(Monthly),
+		config:                 config,
 	}, nil
 }
 
 func NewYearlyDatabase(config MetaParams) (*Metabase, error) {
 	return &Metabase{
-		Kind:    Yearly,
-		Context: context.Background(),
-		db:      nil,
-		path:    getPath(Yearly),
-		config:  config,
+		ConsolidationTimeframe: Yearly,
+		Context:                context.Background(),
+		db:                     nil,
+		path:                   getPath(Yearly),
+		config:                 config,
 	}, nil
 }
 
 func NewFullDatabase(config MetaParams) (*Metabase, error) {
 	return &Metabase{
-		Kind:    Full,
-		Context: context.Background(),
-		db:      nil,
-		path:    getPath(Full),
-		config:  config,
+		ConsolidationTimeframe: Full,
+		Context:                context.Background(),
+		db:                     nil,
+		path:                   getPath(Full),
+		config:                 config,
 	}, nil
 }
 
@@ -128,7 +128,7 @@ func (M *Metabase) ContextDone() {
 }
 
 func (M *Metabase) FullFilename() string {
-	switch M.Kind {
+	switch M.ConsolidationTimeframe {
 	case Instance:
 		filename := fmt.Sprintf("%s_instance_%s_%s.%s",
 			M.config.GetApp().AppId,
@@ -166,7 +166,7 @@ func (M *Metabase) FullFilename() string {
 		)
 		return path.Join(M.path, filename)
 	default:
-		panic("cannot get filename of unknown MetabaseKind")
+		panic("cannot get filename of unknown MetabaseConsolidationTimeframe")
 	}
 
 }

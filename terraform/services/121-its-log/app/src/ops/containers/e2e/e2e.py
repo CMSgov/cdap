@@ -39,20 +39,20 @@ def main(env):
 
     test_create_etl(PARAMS, 'sql/sentinel.sql', 'daily')
     test_run_etl(PARAMS, "sentinel", {
-        "kind": "daily",
+        "consolidation_timeframe": "daily",
     })
     test_create_etl(PARAMS, 'sql/sentinel.sql', 'monthly')
     test_run_etl(PARAMS, "sentinel", {
-        "kind": "monthly",
+        "consolidation_timeframe": "monthly",
     })
     test_create_etl(PARAMS, 'sql/count-total.sql', 'full')
     test_run_etl(PARAMS, "count-total", {
-        "kind": "full",
+        "consolidation_timeframe": "full",
     })
 
     test_create_etl(PARAMS, 'starlark/total-summary-count.star', 'daily')
     test_run_etl(PARAMS, "total-summary-count", {
-        "kind": "daily"
+        "consolidation_timeframe": "daily"
     })
 
     # pocketchange inserts data, runs a Starlark ETL,

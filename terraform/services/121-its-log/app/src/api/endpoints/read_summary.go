@@ -15,12 +15,12 @@ import (
 )
 
 type SummaryReadBody struct {
-	Operation string `json:"operation" binding:"required"`
-	Tags      any    `json:"tags"`
-	Kind      string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
-	YMD       string `json:"ymd" binding:"omitempty,validateYMD"`
-	Year      int    `json:"year" binding:"omitempty,gte=2000"`
-	Month     int    `json:"month" binding:"omitempty,gte=1,lte=12"`
+	Operation              string `json:"operation" binding:"required"`
+	Tags                   any    `json:"tags"`
+	ConsolidationTimeframe string `json:"consolidation_timeframe" binding:"required,oneof=daily monthly yearly full"`
+	YMD                    string `json:"ymd" binding:"omitempty,validateYMD"`
+	Year                   int    `json:"year" binding:"omitempty,gte=2000"`
+	Month                  int    `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 func SummaryRead(c *gin.Context) {
@@ -40,7 +40,7 @@ func SummaryRead(c *gin.Context) {
 
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
-	sdbsp, err := getSummaryDbSetupParams(app, body.Kind, body.YMD, body.Year, body.Month)
+	sdbsp, err := getSummaryDbSetupParams(app, body.ConsolidationTimeframe, body.YMD, body.Year, body.Month)
 	if err != nil {
 		BadRequest(c, err, "could not set up database")
 		return

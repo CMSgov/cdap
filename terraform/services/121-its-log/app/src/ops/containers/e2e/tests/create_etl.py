@@ -35,7 +35,7 @@ def create_etl(PARAMS, filename, kind):
         # Sending a superset of values to
         # cover all the possible `kind` values.
         "name": Path(filename).stem,
-        "kind": kind,
+        "consolidation_timeframe": kind,
         "language": language,
         "b64": encoded,
         "ymd": yyyymmdd(),

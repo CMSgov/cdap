@@ -9,7 +9,7 @@ def summary_read(PARAMS, operation, body):
     url = f'{PARAMS.base()}/v1/summary/read'
     body = {
         "operation": operation,
-        "kind": "daily",
+        "consolidation_timeframe": "daily",
         "tags": [],
         "ymd": yyyymmdd()
     } | body

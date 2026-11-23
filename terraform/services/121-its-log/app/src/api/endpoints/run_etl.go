@@ -29,7 +29,7 @@ func RunEtl(c *gin.Context) {
 
 	// The destination will depend on the kind of consolidation source
 	// we are dealing with.
-	sdbsp, err := getSummaryDbSetupParams(app, body.Kind, body.YMD, body.Year, body.Month)
+	sdbsp, err := getSummaryDbSetupParams(app, body.ConsolidationTimeframe, body.YMD, body.Year, body.Month)
 	if err != nil {
 		BadRequest(c, err, "could not set up database")
 		return
@@ -51,7 +51,7 @@ func RunEtl(c *gin.Context) {
 	// If we're processing a daily db, the YMD is already provided.
 	// If we're processing a monthly, yearly, or full, we're going to have
 	// to use today's date for the YMD.
-	switch body.Kind {
+	switch body.ConsolidationTimeframe {
 	case "daily":
 		// Leave YMD alone
 	default:

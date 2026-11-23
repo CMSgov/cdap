@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "kind": "daily",
+        "consolidation_timeframe": "daily",
         "language": "starlark",
         "destination": "summary",
         "name": "sum-pocket-change",

@@ -50,11 +50,11 @@ func TestCreateEtl(t *testing.T) {
 		t.Logf("%d | %s", ndx, tt.name)
 		encoded := base64.StdEncoding.EncodeToString([]byte(tt.sql))
 		body := types.M{
-			"ymd":      types.NewYYYYMMDD().String(),
-			"kind":     "daily",
-			"language": "sql",
-			"name":     tt.name,
-			"b64":      encoded,
+			"ymd":                     types.NewYYYYMMDD().String(),
+			"consolidation_timeframe": "daily",
+			"language":                "sql",
+			"name":                    tt.name,
+			"b64":                     encoded,
 		}
 
 		_, w := testsupport.TestPost(t, engine, tt.key, "/v1/etl/create", body, tt.status)

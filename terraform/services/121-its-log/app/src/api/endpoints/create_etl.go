@@ -18,12 +18,12 @@ type CreateETLPostBody struct {
 	Name string `json:"name" binding:"required"`
 	// Run a B64 validator that also filters the SQL for
 	// INSERT, DELETE, and UPDATE.
-	B64      string `json:"b64" binding:"required,validateB64SQL"`
-	Kind     string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
-	Language string `json:"language" binding:"required,oneof=sql starlark"`
-	YYYYMMDD string `json:"ymd" binding:"omitempty,validateYMD"`
-	Year     int    `json:"year" binding:"omitempty,gte=2000"`
-	Month    int    `json:"month" binding:"omitempty,gte=1,lte=12"`
+	B64                    string `json:"b64" binding:"required,validateB64SQL"`
+	ConsolidationTimeframe string `json:"consolidation_timeframe" binding:"required,oneof=daily monthly yearly full"`
+	Language               string `json:"language" binding:"required,oneof=sql starlark"`
+	YYYYMMDD               string `json:"ymd" binding:"omitempty,validateYMD"`
+	Year                   int    `json:"year" binding:"omitempty,gte=2000"`
+	Month                  int    `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 func CreateEtl(c *gin.Context) {
@@ -45,7 +45,7 @@ func CreateEtl(c *gin.Context) {
 
 	// And, pad it. DuckDB is very particular about its Base64 values.
 	etl := padToMod4(body.B64)
-	mp, err := getSummaryDbSetupParams(app, body.Kind, body.YYYYMMDD, body.Year, body.Month)
+	mp, err := getSummaryDbSetupParams(app, body.ConsolidationTimeframe, body.YYYYMMDD, body.Year, body.Month)
 	if err != nil {
 		BadRequest(c, err, "cannot set up database params")
 		return

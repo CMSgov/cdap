@@ -11,23 +11,23 @@ def consolidate(PARAMS, kind="daily"):
 
     if kind == "daily":
         body = {
-            "kind": kind,
+            "consolidation_timeframe": kind,
             "ymd": yyyymmdd(),
         }
     elif kind == "monthly":
         body = {
-            "kind": kind,
+            "consolidation_timeframe": kind,
             "month": now.month,
             "year": now.year,
         }
     elif kind == "yearly":
         body = {
-            "kind": kind,
+            "consolidation_timeframe": kind,
             "year": now.year,
         }
     elif kind == "full":
         body = {
-            "kind": kind,
+            "consolidation_timeframe": kind,
         }
     else:
         print("🔴 failed to find consolidation kind")

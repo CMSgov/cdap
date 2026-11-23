@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "kind": "daily",
+        "consolidation_timeframe": "daily",
         "name": "starlark-sentinel",
         "destination": "summary",
         "ymd": "{{YMD}}",

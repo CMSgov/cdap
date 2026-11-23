@@ -13,10 +13,10 @@ import (
 )
 
 type ConsolidateBody struct {
-	Kind     string `json:"kind" binding:"required,oneof=daily monthly yearly full"`
-	YYYYMMDD string `json:"ymd" binding:"omitempty,validateYMD"`
-	Year     int    `json:"year" binding:"omitempty,gte=2000"`
-	Month    int    `json:"month" binding:"omitempty,gte=1,lte=12"`
+	ConsolidationTimeframe string `json:"consolidation_timeframe" binding:"required,oneof=daily monthly yearly full"`
+	YYYYMMDD               string `json:"ymd" binding:"omitempty,validateYMD"`
+	Year                   int    `json:"year" binding:"omitempty,gte=2000"`
+	Month                  int    `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
 // Archives from all instances databases and makes consolidates files
@@ -41,7 +41,7 @@ func Consolidate(c *gin.Context) {
 	}
 
 	err = nil
-	switch body.Kind {
+	switch body.ConsolidationTimeframe {
 	case "daily":
 		if len(body.YYYYMMDD) < 10 {
 			BadRequest(c, errors.New("must provide YYYY-MM-DD"), "must provide ymd")
