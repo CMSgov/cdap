@@ -58,7 +58,18 @@ func SummaryRead(c *gin.Context) {
 	}
 	defer destination.Close()
 
+	ymdDate, err := types.NewYYYYMMDDFromDate(body.YMD)
+	if err != nil {
+		ServerError(c, err, "cannot convert date")
+		return
+	}
+	d, err := ymdDate.AsTime()
+	if err != nil {
+		ServerError(c, err, "cannot convert date")
+		return
+	}
 	params := []embedfs.EmbeddedParam{
+		{Name: "date", Value: d, Type: embedfs.EmbeddedTime},
 		{Name: "tags", Value: body.Tags, Type: embedfs.EmbeddedRaw},
 		{Name: "operation", Value: body.Operation, Type: embedfs.EmbeddedString},
 	}
@@ -73,7 +84,7 @@ func SummaryRead(c *gin.Context) {
 	}
 
 	var summaryRow types.SummaryRow
-	scanErr := row.Scan(&summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
+	scanErr := row.Scan(&summaryRow.Date, &summaryRow.Operation, &summaryRow.Tags, &summaryRow.Data)
 	if scanErr != nil {
 		zap.L().Info("error scanning summary row",
 			zap.String("operation", body.Operation),

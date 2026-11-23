@@ -53,7 +53,7 @@ func TestCreateEtl(t *testing.T) {
 			"ymd":      types.NewYYYYMMDD().String(),
 			"kind":     "daily",
 			"language": "sql",
-			"name":     "sentinel",
+			"name":     tt.name,
 			"b64":      encoded,
 		}
 

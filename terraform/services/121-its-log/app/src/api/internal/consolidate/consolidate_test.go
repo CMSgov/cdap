@@ -27,7 +27,7 @@ var useHomeDirectory bool = false
 
 func TestConsolidate(t *testing.T) {
 	testsupport.SetupTestEnv(t, testsupport.TestStorageTempDirectory)
-	app := types.RandomApp("puppers")
+	app := testsupport.RandomApp("puppers")
 	testsupport.CreateInstanceDbs(t, app, instanceCount, eventsPerInstance)
 	// This consolidates the DBs, and makes sure they exist
 	createConsolidatedDbs(app, t)

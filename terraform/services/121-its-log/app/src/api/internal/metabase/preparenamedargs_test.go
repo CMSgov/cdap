@@ -10,6 +10,7 @@ import (
 	_ "github.com/duckdb/duckdb-go/v2"
 )
 
+// TODO: Add unhappy paths to the test suite.
 var tgnat = []struct {
 	statement string
 	params    []embedfs.EmbeddedParam

@@ -1,9 +1,14 @@
 SELECT 
+    "date",
     operation, 
     tags,
-    data,
+    "data",
   FROM summary
   WHERE 
+    "date" = $date
+    AND
+    operation LIKE $operation
+    AND
     (
       -- An empty list "matches everything"
       len(cast($tags as JSON)::STRING[]) = 0
@@ -15,8 +20,6 @@ SELECT
         cast(tags as JSON)::STRING[])
       ) > 0
     )
-    AND
-    operation LIKE $operation
   ORDER BY id DESC
   LIMIT 1
   ;

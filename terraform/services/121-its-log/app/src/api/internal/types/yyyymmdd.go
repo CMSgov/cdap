@@ -33,6 +33,28 @@ func NewYYYYMMDD() YYYYMMDD {
 	}
 }
 
+func NewYYYYMMDDFromDate(ymd string) (YYYYMMDD, error) {
+	t, err := time.Parse("2006-01-02", ymd)
+	if err != nil {
+		return NewYYYYMMDD(), err
+	}
+	y := YYYYMMDD{
+		Year:      t.Year(),
+		Month:     int(t.Month()),
+		Day:       t.Day(),
+		Separator: "-",
+	}
+	return y, nil
+}
+
+func (ymd YYYYMMDD) AsTime() (time.Time, error) {
+	t, err := time.Parse("2006-01-02", ymd.String())
+	if err != nil {
+		return time.Now(), err
+	}
+	return t, nil
+}
+
 func (ymd YYYYMMDD) SetSeparator(sep string) YYYYMMDD {
 	ymd.Separator = sep
 	return ymd

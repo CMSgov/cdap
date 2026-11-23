@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/base"
 	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 )
 
@@ -151,4 +153,11 @@ func toReader(data any) *strings.Reader {
 	body, _ := json.Marshal(data)
 	content := strings.NewReader(string(body))
 	return content
+}
+
+func RandomApp(base string) types.App {
+	return types.App{
+		AppId: fmt.Sprintf("%s-%04d", base, rand.IntN(1000)),
+		KeyId: base + "_" + uuid.NewString(),
+	}
 }

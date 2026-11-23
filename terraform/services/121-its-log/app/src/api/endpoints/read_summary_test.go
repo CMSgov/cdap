@@ -154,6 +154,10 @@ func TestSummaryRead(t *testing.T) {
 			}
 
 			b := reflect.DeepEqual(ret["data"], tt.expected)
+			if !b {
+				t.Log(ret["data"])
+				t.Log(tt.expected)
+			}
 			assert.True(t, b, "round trip failed")
 		} else if slices.Contains([]int{http.StatusNoContent}, tt.status) {
 			if tt.expected == nil {

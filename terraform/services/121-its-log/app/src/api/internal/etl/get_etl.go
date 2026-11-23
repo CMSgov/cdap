@@ -75,7 +75,7 @@ func userTypeToInternalType(t string) embedfs.EmbeddedParamType {
 func RunAndReturnRows(m *metabase.Metabase, etlb RunEtlBody, row types.EtlRow) ([]types.M, error) {
 	// Run the ETL
 	// Add another "no insert, delete, update" check here, for thoroughness
-	if !base.CheckNotAllowed(row.Body) {
+	if !base.CheckSqlIsClean(row.Body) {
 		return nil, errors.New("sql contains insert/delete/update")
 	}
 

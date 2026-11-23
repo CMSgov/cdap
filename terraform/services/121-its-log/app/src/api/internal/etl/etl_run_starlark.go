@@ -3,8 +3,8 @@ package etl
 import (
 	"fmt"
 	"log"
-	"strings"
 
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/base"
 	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/embedfs"
 	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/metabase"
 	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
@@ -105,11 +105,10 @@ func queryFun(m *metabase.Metabase, etlb RunEtlBody) func(_ *starlark.Thread, _ 
 		}
 
 		// Make sure we don't have INSERT, DELETE, or UPDATE queries from starlark.
-		for _, naughty := range []string{"insert", "delete", "update"} {
-			if strings.Contains(strings.ToLower(queryString), naughty) {
-				return nil, fmt.Errorf("starlark query cannot contain %s", naughty)
-			}
+		if !base.CheckSqlIsClean(queryString) {
+			return nil, fmt.Errorf("starlark query cannot contain insert, delete, or update")
 		}
+
 		// We now want to run the query from starlark, so it has data to operate on.
 		// An SQL step will read from the DB.
 

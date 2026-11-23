@@ -11,6 +11,8 @@ import (
 )
 
 // SummaryCreate
+// TODO: These are a handful of happy-path tests.
+// We should include some failing tests to exercise error pathways.
 var scts = []struct {
 	key    string
 	path   string

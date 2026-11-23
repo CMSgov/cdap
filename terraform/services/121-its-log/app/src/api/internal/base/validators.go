@@ -20,7 +20,7 @@ var validators = []struct {
 	{"validateArrString", validateArrString},
 }
 
-// FIXME: Gin has support for this library
+// TODO: Gin has support for this library
 // https://oneuptime.com/blog/post/2026-01-30-how-to-implement-request-validation-with-go-playground/view#custom-validators
 // We should incorporate it fully. And, improve the error messages that come back.
 func validateYMD(fl validator.FieldLevel) bool {
@@ -33,7 +33,9 @@ func validateYMD(fl validator.FieldLevel) bool {
 	return matched
 }
 
-func CheckNotAllowed(decoded string) bool {
+// Ugh. Retruns false if it finds bad SQL.
+// Returns true if everything is fine.
+func CheckSqlIsClean(decoded string) bool {
 	lowered := strings.ToLower(string(decoded))
 	// And, for fun: let's make sure the words "delete" or "update"
 	// do not appear anywhere in this ETL. We don't want ETLs to be able to
@@ -56,7 +58,7 @@ func validateB64sql(fl validator.FieldLevel) bool {
 		zap.L().Info("validateB64: could not decode", zap.String("b64", b64))
 		return false
 	}
-	return CheckNotAllowed(string(decoded))
+	return CheckSqlIsClean(string(decoded))
 }
 
 func validateArrString(fl validator.FieldLevel) bool {
@@ -67,23 +69,6 @@ func validateArrString(fl validator.FieldLevel) bool {
 	}
 	return true
 }
-
-// func setupValidators() *validator.Validate {
-// 	validate := validator.New()
-
-// 	// Register custom validators with descriptive names
-// 	var err error
-// 	err = validate.RegisterValidation("validateYMD", validateYMD)
-// 	if err != nil {
-// 		panic("could not register ymd validator")
-// 	}
-// 	err = validate.RegisterValidation("validateB64SQL", validateB64sql)
-// 	if err != nil {
-// 		panic("could not register b64 validator")
-// 	}
-
-// 	return validate
-// }
 
 func SetupValidators() error {
 	for _, tv := range validators {

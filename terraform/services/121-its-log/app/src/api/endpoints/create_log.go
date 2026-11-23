@@ -20,10 +20,8 @@ func LogCreate(ch_evt_out chan<- *types.Event) func(c *gin.Context) {
 		evt.AppId = base.GetOrPanic(c, constants.ITSLOG_APPID)
 		evt.KeyId = base.GetOrPanic(c, constants.ITSLOG_KEYID)
 
-		// The tags field comes in as a JSON array. It needs to become
-		// a sorted, dot-separated string.
+		// The tags field comes in as a JSON array. We sort it in place.
 		sort.Strings(evt.Tags)
-		// evt.TagString = strings.Join(evt.Tags, ".")
 
 		// Send the event to the Enqueue-er
 		ch_evt_out <- &evt
