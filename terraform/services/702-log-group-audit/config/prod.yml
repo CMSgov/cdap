@@ -1,0 +1,6 @@
+audit:
+  exceptions:
+    # Firehose delivery diagnostics for the log retention pipeline. Deliberately
+    # unsubscribed. Routing it into the Firehose would feed delivery errors
+    # back into itself (see 701-log-retention)
+    - "/aws/kinesisfirehose/shared-prod-log-retention"

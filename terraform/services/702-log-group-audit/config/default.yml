@@ -1,0 +1,31 @@
+lambda:
+  enabled: true
+  test_command: "pip install -r requirements.txt -r requirements-dev.txt && pytest --cov=. --cov-report=xml:coverage/coverage.xml"
+  language_version: "3.14"
+
+audit:
+  # Exact log group names exempt from the audit. Entries accumulate across
+  # default.yml and <env>.yml (deduplicated). Document why each is exempt.
+  # Excepted groups remain visible in results with classification "exception".
+  exceptions: []
+
+  # Log group name prefixes excluded from the audit entirely: matching groups
+  # appear nowhere in results, counts, or alerts. For groups CDAP teams cannot
+  # act on (e.g. CMS Cloud-managed tooling). Entries
+  # accumulate across default.yml and <env>.yml (deduplicated).
+  exception_prefixes:
+    # CMS Cloud shared logging/tooling (cloudtrail, flowlogs, splunk shippers)
+    - "cms-cloud-"
+    - "/aws/lambda/cms-cloud-"
+    - "/aws/events/cms-cloud-"
+    # Golden-image EC2 agent logs shipped by the CMS Cloud awslogs config
+    - "/aws/ec2/var/"
+    - "amazon-ssm-agent.log"
+    # CMS Cloud security tooling lambdas
+    - "/aws/lambda/CreateActionTarget"
+    - "/aws/lambda/ami_cleanup"
+    - "/aws/lambda/loggroups-retention-policy-lambda"
+    # AWS service-created defaults with no owner
+    - "/aws/apigateway/welcome"
+    - "RDSOSMetrics"
+    - "CLOUDWATCH_LOG_GROUP"
