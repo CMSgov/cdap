@@ -20,12 +20,10 @@ def function_handler(event, context):
     logger.info("Received event: %s", json.dumps(event))
 
     request_type = event.get("RequestType")
-    if request_type == "RoundTripCheck":
+    if request_type == "LivenessCheck":
         return _round_trip_check()
     if request_type == "ScheduledPing":
         return {"status": "ok", "message": "Scheduled rule delivered its fixed input"}
-    if request_type == "LivenessCheck":
-        return {"status": "ok"}
 
     if (
         event.get("source") == os.environ["EVENT_SOURCE"]

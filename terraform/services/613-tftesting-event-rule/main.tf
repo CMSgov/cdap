@@ -32,9 +32,9 @@ module "receiver_function" {
   timeout      = 60
   memory_size  = 256
 
-  # The round-trip check below replaces the module's liveness check, because it must run after the rule exists.
-  liveness_check_enabled = false
-  log_retention_days     = 7
+  # Runs the round-trip check. Referencing the rule makes it wait until the rule exists.
+  liveness_check_triggers = { rule_arn = module.pattern_rule[0].arn }
+  log_retention_days      = 7
 
   environment_variables = {
     RECEIPT_PARAM     = aws_ssm_parameter.receipt[0].name
@@ -98,20 +98,4 @@ module "schedule_rule" {
       input             = jsonencode({ RequestType = "ScheduledPing" })
     }
   }
-}
-
-# Puts an event on the bus from inside the VPC and waits for the receiver to record it.
-# Raises inside the Lambda, and so fails the apply, when the event never arrives.
-resource "aws_lambda_invocation" "roundtrip_check" {
-  count = local.enabled ? 1 : 0
-
-  function_name = module.receiver_function[0].name
-  input         = jsonencode({ RequestType = "RoundTripCheck" })
-
-  triggers = {
-    rule_arn         = module.pattern_rule[0].arn
-    source_code_hash = module.receiver_function[0].source_code_hash
-  }
-
-  depends_on = [module.pattern_rule]
 }

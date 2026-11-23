@@ -25,6 +25,6 @@ event_rule:
 
 ## How the apply validates the rule
 
-After the rules are created, `aws_lambda_invocation.roundtrip_check` invokes the Lambda with `RoundTripCheck`. From the VPC's private subnets the Lambda puts a `cdap.tftesting` event on the default bus with a fresh nonce, then waits up to 45 seconds for the pattern rule to deliver that event back to it and for the nonce to appear in SSM. If it doesn't, the Lambda raises and `tofu apply` fails. A pass shows that the event pattern matches, the target is attached, the Lambda permission works, and in-VPC code can reach EventBridge.
+After the rules are created, the function module's liveness check invokes the Lambda with `LivenessCheck`. From the VPC's private subnets the Lambda puts a `cdap.tftesting` event on the default bus with a fresh nonce, then waits up to 45 seconds for the pattern rule to deliver that event back to it and for the nonce to appear in SSM. If it doesn't, the Lambda raises and `tofu apply` fails. A pass shows that the event pattern matches, the target is attached, the Lambda permission works, and in-VPC code can reach EventBridge.
 
 The check re-runs whenever the rule or the Lambda code changes. SNS delivery isn't asserted; check the topic's delivery logs or the rule's `FailedInvocations` metric if needed.

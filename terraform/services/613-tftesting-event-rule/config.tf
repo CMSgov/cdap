@@ -8,4 +8,8 @@ locals {
 
   event_source      = "cdap.tftesting"
   event_detail_type = "tftesting.roundtrip"
+  event_pattern = jsonencode({
+    source        = [local.event_source]
+    "detail-type" = [local.event_detail_type]
+  })
 }
