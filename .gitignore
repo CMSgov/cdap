@@ -8,6 +8,18 @@ terraform.tfstate*
 terraform.tfvars
 .terraform*
 !.terraform-docs.yml
+# Ignore Terraform plan files
+*tfplan*
+*tfstate*
+*.tfvars
+*.tfvars.json
+*.plan
+plan.out
+crash*.log
+.env
+.env.*
+*.pem
+*.key
 
 # Python cache — use ** since these appear at any depth
 **/__pycache__/
