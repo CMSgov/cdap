@@ -19,7 +19,7 @@ type ConsolidateBody struct {
 	Month    int    `json:"month" binding:"omitempty,gte=1,lte=12"`
 }
 
-// Archives from all instances today into a DailyDatabase
+// Archives from all instances databases and makes consolidates files
 func Consolidate(c *gin.Context) {
 	var body ConsolidateBody
 	var err error

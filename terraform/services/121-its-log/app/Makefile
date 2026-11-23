@@ -34,12 +34,6 @@ e2e: container-api container-e2e
 	up \
 	--abort-on-container-exit
 
-e2e-noisy: container-api container-e2e
-	$(CONTAINER_CMD) compose \
-	-f src/ops/containers/docker-compose-e2e.yaml \
-	up \
-	--abort-on-container-exit
-
 k6: container-api container-k6
 	$(CONTAINER_CMD) compose \
 	-f src/ops/containers/docker-compose-k6.yaml \

@@ -29,8 +29,14 @@ runtime:
         const btoa = require("btoa");
         sql = `
         def summarize():
+          now = time.now()
+          padded_month = ("00" + str(now.month))[-2:]
+          padded_day = ("00" + str(now.day))[-2:]
+          current_date = "{}-{}-{}".format(now.year, padded_month, padded_day)
+
           return [
             {
+              "date": current_date,
               "operation": "starlark-sentinel",
               "tags": ["starlark", "tags"],
               "data": {"eight": 8, "five": 5, "three": 3},
