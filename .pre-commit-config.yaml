@@ -1,5 +1,20 @@
 repos:
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.19.2
+    rev: v8.30.1
     hooks:
       - id: gitleaks
+        args: ["--max-archive-depth=2"]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: [--allow-missing-credentials]
+      - id: check-added-large-files
+  - repo: local
+    hooks:
+      - id: forbid-sensitive-files
+        name: Block tfplan/tfstate/tfvars/.env/keys
+        language: fail
+        entry: "Sensitive file type; do not commit."
+        files: '(tfplan|\.plan$|plan\.out$|tfstate|\.tfvars(\.json)?$|(^|/)\.env(\..+)?$|\.pem$|\.key$)'
