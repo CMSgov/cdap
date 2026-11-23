@@ -5,6 +5,7 @@ variable "platform" {
   description = "Object representing the CDAP platform module."
   type = object({
     account_env_suffix = string
+    account_id         = string
     app                = string
     cdap_env           = string
     cdap_vpc_name      = string
@@ -163,4 +164,64 @@ variable "https_listeners" {
     condition     = length(var.https_listeners) > 0
     error_message = "At least one entry in https_listeners is required — each must include a certificate_arn."
   }
+}
+
+
+variable "create_alb" {
+  description = "Create the Application Load Balancer."
+  type        = bool
+  default     = true
+}
+
+variable "create_nlb" {
+  description = "Create the Network Load Balancer."
+  type        = bool
+  default     = false
+}
+
+variable "nlb_mode" {
+  description = <<-EOT
+    What the NLB forwards to, when create_nlb is true:
+      "front_alb" - used for PrivateLink in front of an
+                    existing ALB.
+      "direct"    - module creates only the bare NLB and its security group.
+                    Can be used for direct to Fargate / mTLS-passthrough traffic.
+  EOT
+  type        = string
+  default     = "front_alb"
+
+  validation {
+    condition     = contains(["front_alb", "direct"], var.nlb_mode)
+    error_message = "nlb_mode must be \"front_alb\" or \"direct\"."
+  }
+}
+
+variable "enable_privatelink" {
+  description = "Create an internal NLB + VPC Endpoint Service for cross-VPC PrivateLink access. Requires create_nlb = true."
+  type        = bool
+  default     = false
+}
+
+variable "privatelink_target_port" {
+  description = "Port the PrivateLink NLB listens on. Only used when nlb_mode = \"front_alb\"; must match a port in var.https_listeners. Ignored in \"direct\" mode."
+  type        = number
+  default     = 443
+}
+
+variable "privatelink_health_check_path" {
+  description = "Path the NLB target group health-checks on the ALB. Must return 2xx/3xx — not the default 404 fixed-response."
+  type        = string
+  default     = "/healthz"
+}
+
+variable "privatelink_private_dns_name" {
+  description = "Verified domain name for this PrivateLink service. Leave null unless public-DNS verification is confirmed possible for this domain."
+  type        = string
+  default     = null
+}
+
+variable "enable_deletion_protection" {
+  description = "Override deletion protection on the ALB. Leave null to default to true for external (!internal) ALBs and false for internal ones."
+  type        = bool
+  default     = null
 }
