@@ -3,15 +3,6 @@ variable "name" {
   type        = string
 }
 
-variable "app" {
-  description = "The application name (ab2d, bcda, dpc, cdap)"
-  type        = string
-  validation {
-    condition     = contains(["ab2d", "bcda", "bb", "bfd", "dpc", "cdap"], var.app)
-    error_message = "Valid value for app is ab2d, bcda, dpc, or cdap."
-  }
-}
-
 variable "kms_key_arn" {
   default     = null
   description = "Use sparingly. The ARN of a custom S3 bucket encryption key used for this bucket."
@@ -22,15 +13,6 @@ variable "use_custom_kms_key" {
   description = "Set true when kms_key_arn is provided, even if its value isn't known until apply."
   type        = bool
   default     = false
-}
-
-variable "env" {
-  description = "The application environment (dev, test, sandbox, prod, mgmt)"
-  type        = string
-  validation {
-    condition     = contains(["dev", "test", "sandbox", "prod", "mgmt"], var.env)
-    error_message = "Valid value for env is dev, test, sandbox, prod, or mgmt."
-  }
 }
 
 variable "force_destroy" {
@@ -48,6 +30,24 @@ variable "additional_bucket_policies" {
   default     = []
   description = "A list of additional bucket policies to be merged with the default."
   type        = list(string)
+}
+
+variable "platform" {
+  description = "Object representing the CDAP platform module. Provides the environment name and the account's primary KMS key for default bucket encryption and the access-logging log group."
+  type = object({
+    env               = string
+    kms_alias_primary = object({ target_key_arn = string })
+  })
+}
+
+variable "access_logging" {
+  description = "Use only for log-retention bucket. Cloudwatch as default delivers through a per-bucket CloudWatch log group which is connected to long term retention. The log retention bucket must log directly to the CMS bucket to avoid looping its own access logs back into itself."
+  type        = string
+  default     = "cloudwatch"
+  validation {
+    condition     = contains(["external", "cloudwatch"], var.access_logging)
+    error_message = "Valid values for access_logging are cloudwatch or external which is reserved for the 701-log-retention bucket."
+  }
 }
 
 variable "object_lock" {

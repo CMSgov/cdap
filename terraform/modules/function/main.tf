@@ -63,9 +63,8 @@ module "zip_bucket" {
   source = "../bucket"
 
   additional_bucket_policies = length(var.github_actions_repos) > 0 ? [data.aws_iam_policy_document.cicd_manage_lambda_objects.json] : []
-  app                        = local.app
-  env                        = local.env
   name                       = "${local.full_name_string}-function"
+  platform                   = var.platform
   ssm_parameter              = "/${local.app}/${local.env}/${local.name}-bucket"
   force_destroy              = true
 }
