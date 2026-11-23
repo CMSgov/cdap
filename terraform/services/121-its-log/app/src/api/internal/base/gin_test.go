@@ -26,7 +26,7 @@ func TestGetOrPanicNoPanic(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	// Set some context
 	c.Set("in-context", "value")
-	// If the panics, this will throw the error.
+	// If the call panics, this will throw the error.
 	defer func() {
 		if r := recover(); r != nil {
 			t.Error("code should not have panicked at the disco")
