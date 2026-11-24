@@ -83,8 +83,7 @@ published:
 - `notification_apps: ["cdap"]`: alerts only for the listed apps
 
 The audit always runs and writes full results to S3, and each suppressed
-alert is logged by the Lambda. Alerts are currently limited to `cdap` in
-`default.yml` while the audit output is validated.
+alert is logged by the Lambda.
 
 ## What this creates
 
