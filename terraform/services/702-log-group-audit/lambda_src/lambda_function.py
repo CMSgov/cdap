@@ -13,6 +13,9 @@ Full results (all classifications) are written to S3, one object per
 (app, env) so each team can find its own findings. One SNS message per
 (app, env) with findings is published to the CDAP alarm topic, shaped like
 a CloudWatch alarm so alarm-to-slack routes it to the owning team's channel.
+
+Account IDs are never logged or published: log output, alert text, and error
+messages mask anything shaped like a 12-digit AWS account ID.
 """
 
 from datetime import datetime, timezone
@@ -42,8 +45,20 @@ MAX_NAMES_IN_REASON = 10
 
 FINDINGS = ('unmanaged', 'misconfigured')
 
+# Anything shaped like an AWS account ID, bounded so longer digit runs and
+# dates don't partially match
+ACCOUNT_ID_RE = re.compile(r'\b\d{12}\b')
+
 client_cache = {}
 ssm_parameter_cache = {}
+
+
+def scrub(text):
+    """
+    Masks anything shaped like an AWS account ID. Applied to everything that
+    leaves the function as text: log output, alert text, and error messages.
+    """
+    return ACCOUNT_ID_RE.sub('[REDACTED]', text)
 
 
 def get_client(service):
@@ -334,7 +349,8 @@ def publish_findings(grouped, run_date, generated_at):
                 '(terraform tag + log-retention subscription filter)'),
             'NewStateValue': 'ALARM',
             'OldStateValue': 'OK',
-            'NewStateReason': new_state_reason(app, env, records, findings, s3_uri),
+            'NewStateReason': scrub(
+                new_state_reason(app, env, records, findings, s3_uri)),
             'StateChangeTime': generated_at,
             'Region': region,
         }
@@ -364,15 +380,19 @@ def handle_liveness_event():
             f'Liveness check failed: missing environment variables: {", ".join(missing)}')
 
     try:
-        firehose_arn = get_ssm_parameter(os.environ['FIREHOSE_ARN_SSM_PARAM'])
+        get_ssm_parameter(os.environ['FIREHOSE_ARN_SSM_PARAM'])
     except (BotoCoreError, ClientError) as e:
+        # from None: the chained original would be logged with unscrubbed ARNs
         raise RuntimeError(
-            f'Liveness check failed: cannot read Firehose ARN parameter: {e}') from e
+            'Liveness check failed: cannot read Firehose ARN parameter: '
+            f'{scrub(str(e))}') from None
 
     get_exceptions()  # raises on malformed EXCEPTIONS JSON
     get_exception_prefixes()  # raises on malformed EXCEPTION_PREFIXES JSON
 
-    log({'msg': 'Liveness check passed', 'firehose_arn': firehose_arn})
+    # The parameter path, not its value: the Firehose ARN contains the account ID
+    log({'msg': 'Liveness check passed',
+         'firehose_arn_param': os.environ['FIREHOSE_ARN_SSM_PARAM']})
     return {'statusCode': 200, 'body': 'Liveness check passed'}
 
 
@@ -389,10 +409,15 @@ def lambda_handler(event, _):
     run_date = now.strftime('%Y-%m-%d')
     generated_at = now.isoformat()
 
-    records = audit()
-    grouped = group_by_owner(records)
-    write_results(grouped, run_date, generated_at)
-    published = publish_findings(grouped, run_date, generated_at)
+    try:
+        records = audit()
+        grouped = group_by_owner(records)
+        write_results(grouped, run_date, generated_at)
+        published = publish_findings(grouped, run_date, generated_at)
+    except (BotoCoreError, ClientError) as e:
+        # from None: the chained original would be logged by the Lambda
+        # runtime with unscrubbed ARNs (and so account IDs)
+        raise RuntimeError(f'Audit failed: {scrub(str(e))}') from None
 
     counts = count_by_classification(records)
     log({'msg': 'Audit complete', 'log_groups': len(records), 'counts': counts,
@@ -407,7 +432,8 @@ def lambda_handler(event, _):
 
 def log(data):
     """
-    Enriches the log message with the current time and prints it to standard out.
+    Enriches the log message with the current time, masks account IDs, and
+    prints it to standard out.
     """
     data['time'] = datetime.now().astimezone(tz=timezone.utc).isoformat()
-    print(json.dumps(data))
+    print(scrub(json.dumps(data)))

@@ -295,6 +295,49 @@ def test_new_state_reason_truncates_long_lists():
     assert '15 of 15' in reason
 
 
+# ── Account ID scrubbing ──────────────────────────────────────────────────────
+
+def test_log_masks_account_ids(capsys):
+    lambda_function.log({'msg': 'arn:aws:sns:us-east-1:123456789012:cdap-alarms'})
+    out = capsys.readouterr().out
+    assert '123456789012' not in out
+    assert '[REDACTED]' in out
+
+
+def test_alerts_mask_account_ids():
+    name = '/aws/codebuild/123456789012-bcda-dev-build'
+    clients = make_clients([name], set(), set())
+    run_handler(clients)
+    message = clients['sns'].publish.call_args.kwargs['Message']
+    assert '123456789012' not in message
+    assert '[REDACTED]' in message
+
+
+def test_liveness_failure_masks_account_ids():
+    clients = make_clients([], set(), set())
+    clients['ssm'].get_parameter.side_effect = lambda_function.ClientError(
+        {'Error': {'Code': 'AccessDenied',
+                   'Message': 'User arn:aws:sts::123456789012:assumed-role/x denied'}},
+        'GetParameter')
+    with patch_clients(clients):
+        with pytest.raises(RuntimeError, match='Firehose ARN') as excinfo:
+            lambda_function.lambda_handler({'RequestType': 'LivenessCheck'}, None)
+    assert '123456789012' not in str(excinfo.value)
+    assert excinfo.value.__cause__ is None  # no chained raw boto error in logs
+
+
+def test_audit_failure_masks_account_ids():
+    clients = make_clients(LOG_GROUPS, TAGGED, ROUTED)
+    clients['s3'].put_object.side_effect = lambda_function.ClientError(
+        {'Error': {'Code': 'AccessDenied',
+                   'Message': 'arn:aws:s3:::123456789012-bucket denied'}},
+        'PutObject')
+    with pytest.raises(RuntimeError, match='Audit failed') as excinfo:
+        run_handler(clients)
+    assert '123456789012' not in str(excinfo.value)
+    assert excinfo.value.__cause__ is None
+
+
 # ── Liveness check ────────────────────────────────────────────────────────────
 
 def test_liveness_check_passes():
