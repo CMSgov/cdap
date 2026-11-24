@@ -1,0 +1,44 @@
+info:
+  name: etl create starlark global-metrics
+  type: http
+  seq: 14
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/etl/create"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "consolidation_timeframe": "daily",
+        "language": "starlark",
+        "name": "global-metrics",
+        "ymd": "{{YMD}}",
+        "b64": "{{B64}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const fs = require('fs');
+        const path = require('path');
+
+        // Read file and convert directly to a Base64 string
+        // Resolve path relative to the collection root (bru.cwd()) or use an absolute path
+
+        const filePath = path.join(bru.cwd(), 'global-metrics.star');
+        const star = fs.readFileSync(filePath, { encoding: 'base64' });
+        const encoded = Buffer.from(star.trim().toString('base64'));
+        bru.setVar("B64", encoded.toString());
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

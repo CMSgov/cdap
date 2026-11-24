@@ -1,0 +1,35 @@
+info:
+  name: etl run global-metrics
+  type: http
+  seq: 16
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/etl/run"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "consolidation_timeframe": "daily",
+        "name": "global-metrics",
+        "destination": "summary",
+        "ymd": "{{YMD}}",
+        "params": [
+          { 
+            "name": "importantnumber",
+            "value": 8,
+            "type": "int"
+          }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

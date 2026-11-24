@@ -1,0 +1,109 @@
+APP_GLOBAL_METRIC_KEYS = [
+    'fhir_v1_patient_call_synthetic_count',
+    'fhir_v1_coverage_call_synthetic_count',
+    'fhir_v1_eob_call_synthetic_count',
+    'fhir_v1_call_synthetic_count',
+    'fhir_v1_patient_call_real_count',
+    'fhir_v1_coverage_call_real_count',
+    'fhir_v1_eob_call_real_count',
+    'fhir_v1_call_real_count',
+    'fhir_v1_metadata_call_count',
+    'fhir_v1_coverage_since_call_synthetic_count',
+    'fhir_v1_coverage_since_call_real_count',
+    'fhir_v1_eob_since_call_synthetic_count',
+    'fhir_v1_eob_since_call_real_count',
+
+    'fhir_v2_patient_call_synthetic_count',
+    'fhir_v2_coverage_call_synthetic_count',
+    'fhir_v2_eob_call_synthetic_count',
+    'fhir_v2_call_synthetic_count',
+    'fhir_v2_patient_call_real_count',
+    'fhir_v2_coverage_call_real_count',
+    'fhir_v2_eob_call_real_count',
+    'fhir_v2_call_real_count',
+    'fhir_v2_metadata_call_count',
+    'fhir_v2_coverage_since_call_synthetic_count',
+    'fhir_v2_coverage_since_call_real_count',
+    'fhir_v2_eob_since_call_synthetic_count',
+    'fhir_v2_eob_since_call_real_count',
+
+    'fhir_v3_generate_insurance_card_call_synthetic_count',
+    'fhir_v3_patient_call_synthetic_count',
+    'fhir_v3_coverage_call_synthetic_count',
+    'fhir_v3_eob_call_synthetic_count',
+    'fhir_v3_call_synthetic_count',
+    'fhir_v3_generate_insurance_card_call_real_count',
+    'fhir_v3_patient_call_real_count',
+    'fhir_v3_coverage_call_real_count',
+    'fhir_v3_eob_call_real_count',
+    'fhir_v3_call_real_count',
+    'fhir_v3_metadata_call_count',
+    'fhir_v3_coverage_since_call_synthetic_count',
+    'fhir_v3_coverage_since_call_real_count',
+    'fhir_v3_eob_since_call_synthetic_count',
+    'fhir_v3_eob_since_call_real_count',
+
+    'fhir_v3_eob_shared_systems_call_real_count',
+    'fhir_v3_eob_shared_systems_call_synthetic_count',
+
+    'auth_v1_v2_user_makes_it_to_permission_screen_bene_count',
+    'auth_v1_v2_user_clicks_connect_bene_count',
+    'auth_v3_user_makes_it_to_permission_screen_bene_count',
+    'auth_v3_user_clicks_connect_bene_count',
+
+    'auth_samhsa_presented_sharing_real_bene_count',
+    'auth_samhsa_presented_sharing_synthetic_bene_count',
+    'auth_samhsa_presented_not_sharing_real_bene_count',
+    'auth_samhsa_presented_not_sharing_synthetic_bene_count',
+    'auth_samhsa_not_presented_real_bene_count',
+    'auth_samhsa_not_presented_synthetic_bene_count',
+
+    'successful_client_credentials_call',
+    'unsuccessful_client_credentials_call',
+    'successful_patient_match_call',
+    'unsuccessful_patient_match_call'
+]
+
+
+# needed this function as starlark does not seem to have a sum function
+def sum_total(list_of_summary_values):
+    total = 0
+    for value in list_of_summary_values:
+        total += int(value)
+    return total
+
+def summarize():
+    now = time.now()
+    padded_month = ("00" + str(now.month))[-2:]
+    padded_day = ("00" + str(now.day))[-2:]
+    current_date = "{}-{}-{}".format(now.year, padded_month, padded_day)
+
+    summaries = []
+    for value in APP_GLOBAL_METRIC_KEYS:
+        # Grab all summary records for specific app-level value
+        # Starlark does not support string formatting, hence concatenation
+        # We only need the value back
+        app_value = "app_" + value
+        summary_query = "SELECT * from summary WHERE operation LIKE '%{}%';".format(app_value)
+        summary_rows = query('summary', summary_query)
+        print(value)
+        print(summary_rows)
+        # Only grab the value from the retrieved summaries
+        summary_values_for_specific_metric = []
+        for row in summary_rows:
+            if "data" in row:
+                summary_values_for_specific_metric.append(row.get("data"))
+
+        total = sum_total(summary_values_for_specific_metric)
+        print(app_value, total)
+
+        # Construct the global summary record and append it to the list that will be returned
+        global_summary = {
+            'date': current_date,
+            'tags': ['global'],
+            'operation': value,
+            'data': total
+        }
+        summaries.append(global_summary)
+
+    return summaries

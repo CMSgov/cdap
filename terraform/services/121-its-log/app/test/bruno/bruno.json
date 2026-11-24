@@ -1,0 +1,11 @@
+{
+  "version": "1",
+  "name": "its-log collection",
+  "type": "collection",
+  "scripts": {
+    "moduleWhitelist": ["fs", "path", "btoa"],
+    "filesystemAccess": {
+      "allow": true
+    }
+  }
+}
