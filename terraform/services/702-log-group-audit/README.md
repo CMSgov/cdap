@@ -72,12 +72,18 @@ Two mechanisms, both in `config/default.yml` (all envs) or `config/<env>.yml`
 
 Document why each entry is exempt with a comment.
 
-## Pausing Slack alerts
+## Limiting Slack alerts
 
-Set `audit.notifications_enabled: false` in `config/default.yml` (all envs)
-or `config/<env>.yml` (one env) to suppress the SNS findings alerts without
-stopping the audit: full results are still written to S3, and each
-suppressed alert is logged by the Lambda. Alerts are currently disabled in
+`audit.notification_apps` in `config/default.yml` (all envs) or
+`config/<env>.yml` (one env) controls which teams' findings alerts are
+published:
+
+- key absent: alerts for every app (normal operation)
+- `notification_apps: []`: all alerts suppressed
+- `notification_apps: ["cdap"]`: alerts only for the listed apps
+
+The audit always runs and writes full results to S3, and each suppressed
+alert is logged by the Lambda. Alerts are currently limited to `cdap` in
 `default.yml` while the audit output is validated.
 
 ## What this creates

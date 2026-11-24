@@ -100,13 +100,16 @@ def get_exception_prefixes():
     return tuple(json.loads(os.environ.get('EXCEPTION_PREFIXES', '[]')))
 
 
-def notifications_enabled():
+def get_notification_apps():
     """
-    Whether findings alerts are published to SNS, set from Tofu config.
-    When disabled, the audit still runs and writes results to S3, but alerts
-    are only logged, so test runs don't page teams in Slack.
+    Apps whose findings alerts are published to SNS, set from Tofu config.
+    Unset (null) means every app. An empty list suppresses all alerts, and a
+    partial list (e.g. ["cdap"]) limits alerts to those teams, for example
+    while the audit output is validated. Suppressed owners still appear in
+    the S3 results, and each suppressed alert is logged.
     """
-    return os.environ.get('NOTIFICATIONS_ENABLED', 'true') == 'true'
+    apps = json.loads(os.environ.get('NOTIFICATION_APPS', 'null'))
+    return set(APPS if apps is None else apps)
 
 
 def resolve_token(log_group_name, tokens):
@@ -325,10 +328,10 @@ def publish_findings(grouped, run_date, generated_at):
     Publishes one SNS message per (app, env) that has findings, built like
     a CloudWatch alarm so alarm-to-slack parses AlarmName into app/env and
     routes it to the owning team's Slack channel. Owners with no findings get
-    no message. When notifications are disabled via config, alerts are logged
-    instead of published.
+    no message. Alerts for apps outside the config-managed notification
+    allowlist are logged instead of published.
     """
-    enabled = notifications_enabled()
+    notify_apps = get_notification_apps()
     topic_arn = os.environ['SNS_TOPIC_ARN']
     bucket = os.environ['RESULTS_BUCKET']
     prefix = os.environ.get('RESULTS_PREFIX', 'results/')
@@ -354,13 +357,13 @@ def publish_findings(grouped, run_date, generated_at):
             'StateChangeTime': generated_at,
             'Region': region,
         }
-        if enabled:
+        if app in notify_apps:
             get_client('sns').publish(TopicArn=topic_arn, Message=json.dumps(message))
             published += 1
             log({'msg': 'Published findings alert', 'app': app, 'env': env,
                  'findings': len(findings)})
         else:
-            log({'msg': 'Notifications disabled, suppressed findings alert',
+            log({'msg': 'Notifications disabled for app, suppressed findings alert',
                  'alarm_name': message['AlarmName'], 'findings': len(findings)})
     return published
 
@@ -389,6 +392,7 @@ def handle_liveness_event():
 
     get_exceptions()  # raises on malformed EXCEPTIONS JSON
     get_exception_prefixes()  # raises on malformed EXCEPTION_PREFIXES JSON
+    get_notification_apps()  # raises on malformed NOTIFICATION_APPS JSON
 
     # The parameter path, not its value: the Firehose ARN contains the account ID
     log({'msg': 'Liveness check passed',

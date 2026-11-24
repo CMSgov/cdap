@@ -252,8 +252,8 @@ def test_handler_publishes_one_alert_per_owner_with_findings():
     assert all(c.kwargs['TopicArn'] == TOPIC_ARN for c in publishes)
 
 
-def test_handler_suppresses_alerts_when_notifications_disabled(monkeypatch):
-    monkeypatch.setenv('NOTIFICATIONS_ENABLED', 'false')
+def test_handler_suppresses_all_alerts_with_empty_allowlist(monkeypatch):
+    monkeypatch.setenv('NOTIFICATION_APPS', '[]')
     clients = make_clients(LOG_GROUPS, TAGGED, ROUTED)
     result = run_handler(clients)
 
@@ -261,6 +261,26 @@ def test_handler_suppresses_alerts_when_notifications_disabled(monkeypatch):
     assert result['alerts_published'] == 0
     # Full results still written: two owner objects + summary
     assert clients['s3'].put_object.call_count == 3
+
+
+def test_handler_alerts_only_allowlisted_apps(monkeypatch):
+    monkeypatch.setenv('NOTIFICATION_APPS', '["cdap"]')
+    clients = make_clients(LOG_GROUPS, TAGGED, ROUTED)
+    result = run_handler(clients)
+
+    publishes = clients['sns'].publish.call_args_list
+    names = {json.loads(c.kwargs['Message'])['AlarmName'] for c in publishes}
+    # bcda-dev has findings too, but only cdap is allowlisted
+    assert names == {'cdap-test-log-group-audit'}
+    assert result['alerts_published'] == 1
+
+
+def test_liveness_check_fails_on_malformed_notification_apps(monkeypatch):
+    monkeypatch.setenv('NOTIFICATION_APPS', 'not json')
+    clients = make_clients([], set(), set())
+    with patch_clients(clients):
+        with pytest.raises(json.JSONDecodeError):
+            lambda_function.lambda_handler({'RequestType': 'LivenessCheck'}, None)
 
 
 def test_handler_publishes_nothing_when_compliant():

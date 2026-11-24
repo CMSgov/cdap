@@ -4,11 +4,11 @@ lambda:
   language_version: "3.14"
 
 audit:
-  # Kill switch for Slack findings alerts (SNS publishes). The audit still
-  # runs and writes full results to S3, and suppressed alerts are logged.
-  # Disabled while the audit output is being validated. Set to true to
-  # resume alerts. <env>.yml overrides this value.
-  notifications_enabled: false
+  # Apps whose findings alerts are published to Slack. Remove the key to
+  # alert every team, set [] to alert none. The audit always runs and writes
+  # full results to S3, and suppressed alerts are logged. Limited to cdap
+  # while the audit output is validated. <env>.yml overrides this value.
+  notification_apps: ["cdap"]
 
   # Exact log group names exempt from the audit. Entries accumulate across
   # default.yml and <env>.yml (deduplicated). Document why each is exempt.
