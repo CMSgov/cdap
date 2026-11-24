@@ -57,7 +57,7 @@ test-docker:
 clean:
 	rm -rf dist lib node_modules
 
-PARAMS      ?= SONARQUBE_URL=/sonarqube/url
+PARAMS      ?= SONARQUBE_URL=/cdap/common/sensitive/sonarqube/url
 AWS_REGION  ?= us-east-1
 AWS_PROFILE ?= default
 
