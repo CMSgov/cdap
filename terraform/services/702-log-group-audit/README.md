@@ -53,6 +53,10 @@ the function module's `aws_lambda_invocation`) verifies required configuration
 and that the Firehose ARN parameter is readable, failing the Tofu apply
 otherwise.
 
+Nothing sensitive leaves the function: CloudWatch log output, Slack alert
+text, and error messages all pass through a scrubber that masks anything
+shaped like a 12-digit AWS account ID, and ARNs are never logged.
+
 ## Adding an exception
 
 Two mechanisms, both in `config/default.yml` (all envs) or `config/<env>.yml`
