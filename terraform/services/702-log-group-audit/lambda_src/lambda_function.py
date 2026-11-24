@@ -338,14 +338,14 @@ def publish_findings(grouped, run_date, generated_at):
             'StateChangeTime': generated_at,
             'Region': region,
         }
-        if not enabled:
+        if enabled:
+            get_client('sns').publish(TopicArn=topic_arn, Message=json.dumps(message))
+            published += 1
+            log({'msg': 'Published findings alert', 'app': app, 'env': env,
+                 'findings': len(findings)})
+        else:
             log({'msg': 'Notifications disabled, suppressed findings alert',
                  'alarm_name': message['AlarmName'], 'findings': len(findings)})
-            continue
-        get_client('sns').publish(TopicArn=topic_arn, Message=json.dumps(message))
-        published += 1
-        log({'msg': 'Published findings alert', 'app': app, 'env': env,
-             'findings': len(findings)})
     return published
 
 
