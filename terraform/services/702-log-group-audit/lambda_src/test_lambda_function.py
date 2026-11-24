@@ -252,6 +252,17 @@ def test_handler_publishes_one_alert_per_owner_with_findings():
     assert all(c.kwargs['TopicArn'] == TOPIC_ARN for c in publishes)
 
 
+def test_handler_suppresses_alerts_when_notifications_disabled(monkeypatch):
+    monkeypatch.setenv('NOTIFICATIONS_ENABLED', 'false')
+    clients = make_clients(LOG_GROUPS, TAGGED, ROUTED)
+    result = run_handler(clients)
+
+    clients['sns'].publish.assert_not_called()
+    assert result['alerts_published'] == 0
+    # Full results still written: two owner objects + summary
+    assert clients['s3'].put_object.call_count == 3
+
+
 def test_handler_publishes_nothing_when_compliant():
     clients = make_clients(
         ['/aws/lambda/cdap-test-log-group-audit'],

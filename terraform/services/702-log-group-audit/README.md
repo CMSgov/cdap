@@ -68,6 +68,14 @@ Two mechanisms, both in `config/default.yml` (all envs) or `config/<env>.yml`
 
 Document why each entry is exempt with a comment.
 
+## Pausing Slack alerts
+
+Set `audit.notifications_enabled: false` in `config/default.yml` (all envs)
+or `config/<env>.yml` (one env) to suppress the SNS findings alerts without
+stopping the audit: full results are still written to S3, and each
+suppressed alert is logged by the Lambda. Alerts are currently disabled in
+`default.yml` while the audit output is validated.
+
 ## What this creates
 
 - The audit Lambda via the [function module](../../modules/function)

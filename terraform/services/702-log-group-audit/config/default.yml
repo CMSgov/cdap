@@ -4,6 +4,12 @@ lambda:
   language_version: "3.14"
 
 audit:
+  # Kill switch for Slack findings alerts (SNS publishes). The audit still
+  # runs and writes full results to S3, and suppressed alerts are logged.
+  # Disabled while the audit output is being validated. Set to true to
+  # resume alerts. <env>.yml overrides this value.
+  notifications_enabled: false
+
   # Exact log group names exempt from the audit. Entries accumulate across
   # default.yml and <env>.yml (deduplicated). Document why each is exempt.
   # Excepted groups remain visible in results with classification "exception".

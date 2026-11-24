@@ -85,6 +85,15 @@ def get_exception_prefixes():
     return tuple(json.loads(os.environ.get('EXCEPTION_PREFIXES', '[]')))
 
 
+def notifications_enabled():
+    """
+    Whether findings alerts are published to SNS, set from Tofu config.
+    When disabled, the audit still runs and writes results to S3, but alerts
+    are only logged, so test runs don't page teams in Slack.
+    """
+    return os.environ.get('NOTIFICATIONS_ENABLED', 'true') == 'true'
+
+
 def resolve_token(log_group_name, tokens):
     """
     Finds the earliest delimiter-bounded occurrence of any token in the log
@@ -301,9 +310,10 @@ def publish_findings(grouped, run_date, generated_at):
     Publishes one SNS message per (app, env) that has findings, built like
     a CloudWatch alarm so alarm-to-slack parses AlarmName into app/env and
     routes it to the owning team's Slack channel. Owners with no findings get
-    no message.
+    no message. When notifications are disabled via config, alerts are logged
+    instead of published.
     """
-    sns = get_client('sns')
+    enabled = notifications_enabled()
     topic_arn = os.environ['SNS_TOPIC_ARN']
     bucket = os.environ['RESULTS_BUCKET']
     prefix = os.environ.get('RESULTS_PREFIX', 'results/')
@@ -328,7 +338,11 @@ def publish_findings(grouped, run_date, generated_at):
             'StateChangeTime': generated_at,
             'Region': region,
         }
-        sns.publish(TopicArn=topic_arn, Message=json.dumps(message))
+        if not enabled:
+            log({'msg': 'Notifications disabled, suppressed findings alert',
+                 'alarm_name': message['AlarmName'], 'findings': len(findings)})
+            continue
+        get_client('sns').publish(TopicArn=topic_arn, Message=json.dumps(message))
         published += 1
         log({'msg': 'Published findings alert', 'app': app, 'env': env,
              'findings': len(findings)})

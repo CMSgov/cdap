@@ -18,6 +18,14 @@ locals {
     try(local.env_audit.exception_prefixes, [])
   ))
 
+  # Alert kill switch. The audit still runs and writes results to S3.
+  # env.yml wins over default.yml, enabled when neither sets it.
+  notifications_enabled = try(
+    local.env_audit.notifications_enabled,
+    local.default_audit.notifications_enabled,
+    true
+  )
+
   # CDAP SSM namespace, derived from the platform module
   ssm_prefix = "/${module.platform.app}/${module.platform.env}"
 
@@ -80,6 +88,7 @@ module "log_group_audit_function" {
     ENV                    = var.env
     EXCEPTIONS             = jsonencode(local.exceptions)
     EXCEPTION_PREFIXES     = jsonencode(local.exception_prefixes)
+    NOTIFICATIONS_ENABLED  = tostring(local.notifications_enabled)
     RESULTS_BUCKET         = module.results_bucket.id
     RESULTS_PREFIX         = local.results_prefix
     SNS_TOPIC_ARN          = data.aws_ssm_parameter.alarms_topic_arn.value
