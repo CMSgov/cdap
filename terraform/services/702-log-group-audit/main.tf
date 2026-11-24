@@ -18,14 +18,18 @@ locals {
     try(local.env_audit.exception_prefixes, [])
   ))
 
+  # CDAP SSM namespace, derived from the platform module
+  ssm_prefix = "/${module.platform.app}/${module.platform.env}"
+
   # Published by 701-log-retention
-  firehose_arn_ssm_param = "/cdap/${var.env}/common/nonsensitive/log-retention/firehose-arn"
+  firehose_arn_ssm_param = "${local.ssm_prefix}/common/nonsensitive/log-retention/firehose-arn"
 
   results_prefix = "results/"
 }
 
 data "aws_ssm_parameter" "alarms_topic_arn" {
-  name = "/cdap/${var.env}/cdap-alarm-topic/nonsensitive/alarms-topic-arn"
+  # cdap-alarm-topic is the 205 service name, not the app namespace
+  name = "${local.ssm_prefix}/cdap-alarm-topic/nonsensitive/alarms-topic-arn"
 }
 
 module "results_bucket" {

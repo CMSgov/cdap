@@ -89,7 +89,7 @@ Document why each entry is exempt with a comment.
 
 | Name | Version |
 | ---- | ------- |
-| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.73.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -109,8 +109,7 @@ No requirements.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
-| <a name="input_app"></a> [app](#input\_app) | The application name is supported (cdap) | `string` | n/a | yes |
-| <a name="input_env"></a> [env](#input\_env) | The application environment | `string` | n/a | yes |
+| <a name="input_env"></a> [env](#input\_env) | The application environment (test, prod) | `string` | n/a | yes |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

@@ -1,14 +1,5 @@
-variable "app" {
-  description = "The application name is supported (cdap)"
-  type        = string
-  validation {
-    condition     = contains(["cdap"], var.app)
-    error_message = "Valid values for app is only cdap."
-  }
-}
-
 variable "env" {
-  description = "The application environment"
+  description = "The application environment (test, prod)"
   type        = string
   validation {
     condition     = contains(["test", "prod"], var.env)
