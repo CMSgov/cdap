@@ -4,6 +4,10 @@ services:
     untagged_expiry_days: 2
   - name: "mtls-sidecar"
     untagged_expiry_days: 20
+  # CrowdStrike Falcon Container sensor, mirrored from CMS Artifactory, for ECS Fargate runtime
+  # protection (CLDSPT-117168). Resolves to repo "cdap-crowdstrike-falcon": one per AWS account.
+  - name: "crowdstrike-falcon"
+    untagged_expiry_days: 20
   - name: "its-log"
     untagged_expiry_days: 20
     account_id_paths:

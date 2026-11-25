@@ -115,6 +115,7 @@ data "aws_iam_policy_document" "github_actions_compute" {
     resources = [
       "arn:aws:ecr:*:*:repository/${var.app}*",
       "arn:aws:ecr:*:*:repository/cdap-mtls-sidecar",
+      "arn:aws:ecr:*:*:repository/cdap-crowdstrike-falcon",
     ]
   }
 
