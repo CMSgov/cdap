@@ -1,0 +1,60 @@
+opencollection: 1.0.0
+
+info:
+  name: its-log
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  variables:
+    - name: host
+      value: localhost
+    - name: port
+      value: "8888"
+    - name: scheme
+      value: http
+    - name: api-key-logging
+      value: "1234567890123456123456789012345612345678901234561234567890123456"
+    - name: api-key-admin
+      value: abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcdefgh
+  scripts:
+    - type: before-request
+      code: |-
+        // https://stackoverflow.com/a/3067896
+        Date.prototype.yyyymmdd = function() {
+          var mm = this.getMonth() + 1; 
+          var dd = this.getDate();
+
+          return [this.getFullYear(),
+                  '-',
+                  (mm>9 ? '' : '0') + mm,
+                  '-',
+                  (dd>9 ? '' : '0') + dd
+                 ].join('');
+        };
+
+        var date = new Date();
+        bru.setVar("YMD", date.yyyymmdd());
+
+docs:
+  content: |+
+    # welcome to its-log
+
+    This is a Bruno collection. You can open it in the standalone app for Mac/Windows/Linux, or via the VSCode extension of the same name.
+
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

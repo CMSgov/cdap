@@ -2,12 +2,20 @@ from .params import PARAMS
 import requests
 import sys
 
+from .dates import yyyymmdd
+from datetime import datetime
+
 
 def run_etl(PARAMS, etl, body={}):
+    now = datetime.now()
+
     url = f'{PARAMS.base()}/v1/etl/run'
     default = {
         "name": etl,
-        "date": "today",
+        "ymd": yyyymmdd(),
+        "year": now.year,
+        "month": now.month,
+        "destination": "summary"
     }
     body = default | body
 

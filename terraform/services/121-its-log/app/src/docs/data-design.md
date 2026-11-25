@@ -40,10 +40,12 @@ The events table stores four values:
 The summary table stores:
 
 * last_run: a timestamp for when the row in question was last generated
+* date: YYYY-MM-DD
 * key_id: the API generating the summary
 * operation: the ETL action that led to this row (e.g. `count.total` vs. `count.by-tag`)
+* tags: possibly null; indicates tags operated on
 * value: for operations that count across unique values
-* count: the number of rows or events counted by this operation
+* hash: ...
 
 ## ETL table
 

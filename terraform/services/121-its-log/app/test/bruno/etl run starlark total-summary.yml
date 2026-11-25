@@ -1,0 +1,29 @@
+info:
+  name: etl run starlark total-summary
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/etl/run"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "consolidation_timeframe": "daily",
+        "language": "starlark",
+        "destination": "summary",
+        "name": "total-summary",
+        "ymd": "{{YMD}}",
+        "b64": "{{B64}}"
+      }
+  auth: inherit
+  
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -6,6 +6,16 @@ const ITSLOG_KEYID = "KeyId"
 const OK = "ok"
 const ERROR = "error"
 
+const TODAY = "today"
+const YESTERDAY = "yesterday"
+const CONSOLIDATED = "consolidated"
+
+const ()
+const SQL = "sql"
+const GOLANG = "golang"
+const STARLARK = "starlark"
+const SEQUENCE = "sequence"
+
 const (
 	Log = iota + 1
 	ReadOnly
