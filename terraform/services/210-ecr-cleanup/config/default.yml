@@ -11,6 +11,7 @@ cleanup:
 
   exclusion_list:
     - "cdap-mtls-sidecar"   # for testing, governed by its ECR lifecycle policy
+    - "cdap-crowdstrike-falcon"   # pinned sensor versions are pushed rarely; governed by its ECR lifecycle policy
 
   repo_overrides:
     cdap-tftesting-service:
