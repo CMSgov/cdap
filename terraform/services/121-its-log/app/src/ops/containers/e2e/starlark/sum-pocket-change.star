@@ -7,7 +7,16 @@
 #         ]
 
 def summarize():
-    query_rows = query("events", "SELECT * from itslog_events WHERE tags = 'pocketchange'")
+    query_rows = query("events", """
+    SELECT * from event 
+    WHERE 
+        json_type(tags, '$') = 'ARRAY' 
+        AND 
+        -- JSON strings must be in double-quotes when
+        -- using the json_contains function.
+        -- https://duckdb.org/docs/2.0/data/json/json_functions#json-scalar-functions
+        json_contains(tags, '"pocketchange"')
+    """)
     sums = {
         "pennies": 0,
         "nickels": 0,
@@ -16,15 +25,27 @@ def summarize():
     }
     for row in query_rows:
         # Convert the value field from JSON to a dictionary
-        d = json.decode(row["value"])
+        d = row["data"]
         # Sum up what we find
         for coin in ["pennies", "nickels", "dimes", "quarters"]:
             if coin in d:
                 sums[coin] = sums[coin] + d[coin]
     total = sums["pennies"] + (sums["nickels"] * 5) + (sums["dimes"] * 10) + (sums["quarters"] * 25)
+    now = time.now()
+    padded_month = ("00" + str(now.month))[-2:]
+    padded_day = ("00" + str(now.day))[-2:]
+    current_date = "{}-{}-{}".format(now.year, padded_month, padded_day)
+
     result = [
-        {"operation": "total.pocketchange", "count": total},
-        {"operation": "total.pocketchange.json", "value": json.encode(sums), "count": 0}
+        {
+            "date":  current_date,
+            "operation": "total.pocketchange", 
+            "data": {"count": total}
+        },
+        {
+            "date": current_date,
+            "operation": "total.pocketchange.json", 
+            "data": sums}
     ]
     print(result)
     return result

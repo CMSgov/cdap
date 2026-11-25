@@ -1,0 +1,57 @@
+info:
+  name: etl create starlark total-summary
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{scheme}}://{{host}}:{{port}}/v1/etl/create"
+  headers:
+    - name: x-api-key
+      value: "{{api-key-admin}}"
+  body:
+    type: json
+    data: |-
+      {
+        "consolidation_timeframe": "daily",
+        "language": "starlark",
+        "destination": "summary",
+        "name": "total-summary",
+        "ymd": "{{YMD}}",
+        "b64": "{{B64}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const btoa = require("btoa");
+        sql = `
+        def summarize():
+            query_rows = query("summary", "SELECT * from summary")
+            total = 0
+            for row in query_rows:
+                total += len(row["operation"])
+            now = time.now()
+            padded_month = ("00" + str(now.month))[-2:]
+            padded_day = ("00" + str(now.day))[-2:]
+            current_date = "{}-{}-{}".format(now.year, padded_month, padded_day)
+
+            result = [
+                {
+                    "date": current_date,
+                    "operation": "total.summary", 
+                    "data": {"count": total}
+                },
+            ]
+            return result
+        `
+        encoded = btoa(sql.trim())
+        bru.setVar("B64", encoded);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

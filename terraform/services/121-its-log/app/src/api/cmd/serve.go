@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"math/rand/v2"
 	"os"
 
-	"github.com/navapbc/its-log/internal/base"
-	"github.com/navapbc/its-log/internal/endpoints"
-	"github.com/navapbc/its-log/internal/types"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/endpoints"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/base"
+	"github.com/CMSgov/cdap/terraform/services/121-its-log/app/src/api/internal/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -43,6 +45,28 @@ func serve_cmd(cmd *cobra.Command, args []string) {
 	}
 
 	zap.L().Info("storage path", zap.String("storage.path", viper.GetString("storage.path")))
+	zap.L().Info("archive path", zap.String("archive.path", viper.GetString("archive.path")))
+	// Randomize the instance if we are debugging, and it is the right shape.
+	// If there is no instance ID, we need to grab it from the env.
+	// This has a particular shape in Fargate.
+	if len(viper.GetString("instance.id")) > 0 {
+		// Leave it.
+	} else if viper.GetString("ginmode") == "debug" {
+		id := fmt.Sprintf("DEBUG-INSTANCE-%d", rand.IntN(64))
+		viper.Set("instance.id", id)
+	} else {
+		if len(os.Getenv("ECS_CONTAINER_METADATA_URI_V4")) > 0 {
+			// FIXME
+			// curl -s "${ECS_CONTAINER_METADATA_URI_V4}/task" | jq -r '.TaskARN' | awk -F/ '{print $NF}'
+			viper.Set("instance.id", fmt.Sprintf("%s-%d",
+				"aws-instance-", rand.IntN(64)))
+		} else {
+			// We're local
+			viper.Set("instance.id", fmt.Sprintf("%s-%d",
+				os.Getenv("HOSTNAME"), rand.IntN(64)))
+		}
+	}
+	zap.L().Info("instance id", zap.String("instance.id", viper.GetString("instance.id")))
 
 	// FIXME: Need CTRL-C/OS signal handling
 	endpoints.Serve(types.ServeParams{
