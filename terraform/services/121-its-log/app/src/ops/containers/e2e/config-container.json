@@ -1,5 +1,5 @@
 {
-    "ITSLOG_SERVE_HOST": "itslog",
+    "ITSLOG_SERVE_HOST": "proxy",
     "ITSLOG_SERVE_PORT": "8888",
     "ITSLOG_APIKEY_PUPPERLOG": {
         "app_id": "pupper",

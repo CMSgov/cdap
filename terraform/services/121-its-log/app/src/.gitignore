@@ -12,3 +12,5 @@ _base/*
 **.duckdb.wal
 **.prof
 **.test
+__debug**
+**.out
