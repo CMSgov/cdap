@@ -181,9 +181,9 @@ resource "aws_lambda_invocation" "liveness_check" {
   count         = var.liveness_check_enabled ? 1 : 0
   function_name = aws_lambda_function.this.function_name
 
-  triggers = {
+  triggers = merge(var.liveness_check_triggers, {
     s3_version = aws_lambda_function.this.s3_object_version
-  }
+  })
 
   input = jsonencode({
     RequestType = "LivenessCheck"

@@ -102,6 +102,12 @@ variable "liveness_check_enabled" {
   default     = true
 }
 
+variable "liveness_check_triggers" {
+  description = "Additional values that re-run the liveness check when they change, e.g. { rule_arn = module.rule.arn }. Referencing a resource also makes the check wait for it."
+  type        = map(string)
+  default     = {}
+}
+
 variable "rollback_version" {
   description = <<-EOT
     S3 object version ID of a previous "function.zip" to roll back to.
