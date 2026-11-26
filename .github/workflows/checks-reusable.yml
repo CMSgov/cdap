@@ -132,8 +132,8 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            SONAR_HOST_URL=/sonarqube/url
-            SONAR_TOKEN=/sonarqube/token
+            SONAR_HOST_URL=/cdap/common/sensitive/sonarqube/url
+            SONAR_TOKEN=/cdap/common/sensitive/sonarqube/token
 
       - name: Set up Go (non-container tests)
         if: inputs.language == 'go'
